@@ -1,4 +1,3 @@
-
 /*
 
 users(id, name, email, role(admin,client), user_type(gust, client), gust_token, phone, phone_code, is_phone_verified, is_email_verified, is_active, created_at, updated_at)
@@ -32,4 +31,3 @@ order_payments(id, order_id, total_price,vat_value,vat_type(fixed, percentage), 
 
 
 */
-
