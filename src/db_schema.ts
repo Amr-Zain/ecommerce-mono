@@ -28,6 +28,15 @@ order_items(id, order_id, product_id, variant_id, quantity, unit_price_snapshot,
 order_items_translations(id, order_item_id, lang_id(ar,en), name_snapshot, description_snapshot)
 order_payments(id, order_id, total_price,vat_value,vat_type(fixed, percentage), payment_method, payment_status, is_active, created_at, updated_at)
 
+static_pages(id, slug, is_active, created_at, updated_at)
+static_pages_translations(id, static_page_id, lang_id(ar,en), title, content)
+page_sections(id, static_page_id, sort_order, is_activeq, created_at, updated_at)
+page_sections_translations(id, page_section_id, lang_id(ar,en), title, content)
 
+sliders(id, image, sort_order, start_date, end_date, is_active, created_at, updated_at)
+sliders_translations(id, slider_id, lang_id(ar,en), title)
+
+faqs(id, question, answer, sort_order, is_active, created_at, updated_at)
+faqs_translations(id, faq_id, lang_id(ar,en), question, answer)
 
 */
