@@ -3,6 +3,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // Implements NestJS graceful shut down hooks (recommended for Prisma)
+  app.enableShutdownHooks();
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap().catch((err) => {
