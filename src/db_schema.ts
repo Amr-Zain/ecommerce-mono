@@ -1,6 +1,7 @@
 /*
 
-users(id, name, email, role(admin,client), user_type(gust, client), gust_token, phone, phone_code, is_phone_verified, is_email_verified, is_active, created_at, updated_at)
+users(id, name, email, role_id, user_type(gust, client), gust_token, phone, phone_code, is_phone_verified, is_email_verified, is_active, created_at, updated_at)
+roles(id, ar_name, en_name, is_active, created_at, updated_at)
 
 addresses(id, user_id, address, city_id, country_id, street_name, building_number, is_default, created_at, updated_at)
 countries(id, phone_code, phone_length, shipping_price, is_active, phone_start_with, created_at, updated_at)
@@ -39,81 +40,10 @@ sliders_translations(id, slider_id, lang_id(ar,en), title)
 faqs(id, question, answer, sort_order, is_active, created_at, updated_at)
 faqs_translations(id, faq_id, lang_id(ar,en), question, answer)
 
-
 -- PostgreSQL E-commerce Schema
 -- =========================================================
 
--- Optional
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
--- =========================================================
--- ENUMS
--- =========================================================
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role_enum') THEN
-        CREATE TYPE user_role_enum AS ENUM ('admin', 'client');
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_type_enum') THEN
-        CREATE TYPE user_type_enum AS ENUM ('guest', 'client');
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'discount_type_enum') THEN
-        CREATE TYPE discount_type_enum AS ENUM ('fixed', 'percentage');
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'media_model_type_enum') THEN
-        CREATE TYPE media_model_type_enum AS ENUM (
-            'product',
-            'category',
-            'brand',
-            'slider',
-            'static_page',
-            'page_section'
-        );
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'media_type_enum') THEN
-        CREATE TYPE media_type_enum AS ENUM ('image', 'video');
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'lang_enum') THEN
-        CREATE TYPE lang_enum AS ENUM ('ar', 'en');
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status_enum') THEN
-        CREATE TYPE order_status_enum AS ENUM (
-            'pending',
-            'confirmed',
-            'processing',
-            'shipped',
-            'delivered',
-            'cancelled',
-            'refunded'
-        );
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_method_enum') THEN
-        CREATE TYPE payment_method_enum AS ENUM (
-            'cash',
-            'card',
-            'online',
-            'wallet',
-            'bank_transfer'
-        );
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status_enum') THEN
-        CREATE TYPE payment_status_enum AS ENUM (
-            'pending',
-            'paid',
-            'failed',
-            'refunded',
-            'partially_refunded'
-        );
-    END IF;
-END$$;
 
 -- =========================================================
 -- COMMON UPDATED_AT TRIGGER
@@ -129,13 +59,23 @@ $$ LANGUAGE plpgsql;
 -- =========================================================
 -- USERS
 -- =========================================================
+CREATE TABLE roles (
+    id BIGSERIAL PRIMARY KEY,
+    name_ar VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE,
-    role user_role_enum NOT NULL DEFAULT 'client',
-    user_type user_type_enum NOT NULL DEFAULT 'client',
+    role BIGINT REFERENCES roles(id) ON DELETE SET NULL,
+    user_type VARCHAR(20) NOT NULL DEFAULT 'client',
     guest_token VARCHAR(255) UNIQUE,
+    password VARCHAR(255),
     phone VARCHAR(50),
     phone_code VARCHAR(10),
     is_phone_verified BOOLEAN NOT NULL DEFAULT FALSE,
@@ -144,15 +84,20 @@ CREATE TABLE users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_users_email_or_guest
+    CONSTRAINT chk_users_user_type
+        CHECK (user_type IN ('guest', 'client')),
+
+    CONSTRAINT chk_users_email_or_phone_or_guest
         CHECK (
             email IS NOT NULL
+            OR (phone IS NOT NULL AND phone_code IS NOT NULL)
             OR guest_token IS NOT NULL
         )
 );
 
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_phone ON users(phone);
+CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_guest_token ON users(guest_token);
 
 CREATE TRIGGER trg_users_updated_at
@@ -169,7 +114,7 @@ CREATE TABLE countries (
     phone_length INT,
     shipping_price NUMERIC(12,2) NOT NULL DEFAULT 0,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    phone_start_with VARCHAR(20),
+    phone_start_with NUMERIC(1, 0) NOT NULL CHECK (phone_start_with >= 0 AND phone_start_with <= 9),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -177,12 +122,16 @@ CREATE TABLE countries (
 CREATE TABLE countries_translations (
     id BIGSERIAL PRIMARY KEY,
     country_id BIGINT NOT NULL REFERENCES countries(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     name VARCHAR(255) NOT NULL,
     nationality VARCHAR(255),
     short_name VARCHAR(50),
     currency_code VARCHAR(10),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT chk_countries_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (country_id, lang_id)
 );
 
@@ -197,8 +146,12 @@ CREATE TABLE cities (
 CREATE TABLE cities_translations (
     id BIGSERIAL PRIMARY KEY,
     city_id BIGINT NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     name VARCHAR(255) NOT NULL,
+
+    CONSTRAINT chk_cities_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (city_id, lang_id)
 );
 
@@ -239,7 +192,6 @@ BEFORE UPDATE ON addresses
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
 
--- optional: only one default address per user
 CREATE UNIQUE INDEX uq_addresses_one_default_per_user
 ON addresses(user_id)
 WHERE is_default = TRUE;
@@ -260,8 +212,12 @@ CREATE TABLE categories (
 CREATE TABLE categories_translations (
     id BIGSERIAL PRIMARY KEY,
     category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     name VARCHAR(255) NOT NULL,
+
+    CONSTRAINT chk_categories_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (category_id, lang_id)
 );
 
@@ -281,9 +237,9 @@ CREATE TABLE products (
     category_id BIGINT REFERENCES categories(id) ON DELETE SET NULL,
     has_variants BOOLEAN NOT NULL DEFAULT FALSE,
     image TEXT,
-    price NUMERIC(12,2) NOT NULL DEFAULT 0,
-    discount_value NUMERIC(12,2) NOT NULL DEFAULT 0,
-    discount_type discount_type_enum,
+    price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    discount_value DECIMAL(12,2) NOT NULL DEFAULT 0,
+    discount_type VARCHAR(20),
     stock_quantity INT NOT NULL DEFAULT 0,
     barcode VARCHAR(100),
     sku VARCHAR(100),
@@ -291,17 +247,26 @@ CREATE TABLE products (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_products_stock_quantity CHECK (stock_quantity >= 0),
-    CONSTRAINT chk_products_price CHECK (price >= 0),
-    CONSTRAINT chk_products_discount_value CHECK (discount_value >= 0)
+    CONSTRAINT chk_products_discount_type
+        CHECK (discount_type IS NULL OR discount_type IN ('fixed', 'percentage')),
+    CONSTRAINT chk_products_stock_quantity
+        CHECK (stock_quantity >= 0),
+    CONSTRAINT chk_products_price
+        CHECK (price >= 0),
+    CONSTRAINT chk_products_discount_value
+        CHECK (discount_value >= 0)
 );
 
 CREATE TABLE products_translations (
     id BIGSERIAL PRIMARY KEY,
     product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
+
+    CONSTRAINT chk_products_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (product_id, lang_id)
 );
 
@@ -320,15 +285,28 @@ EXECUTE FUNCTION set_updated_at();
 CREATE TABLE media (
     hash VARCHAR(255) PRIMARY KEY,
     entity_id BIGINT NOT NULL,
-    model_type media_model_type_enum NOT NULL,
-    type media_type_enum NOT NULL,
-    url TEXT NOT NULL
+    model_type VARCHAR(30) NOT NULL,
+    type VARCHAR(10) NOT NULL,
+    url TEXT NOT NULL,
+
+    CONSTRAINT chk_media_model_type
+        CHECK (model_type IN (
+            'product',
+            'category',
+            'brand',
+            'slider',
+            'static_page',
+            'page_section'
+        )),
+
+    CONSTRAINT chk_media_type
+        CHECK (type IN ('image', 'video'))
 );
 
 CREATE INDEX idx_media_entity_model ON media(entity_id, model_type);
 
 -- =========================================================
--- ATTRIBUTES / ATTRIBUTE VALUES (normalized)
+-- ATTRIBUTES / ATTRIBUTE VALUES
 -- =========================================================
 CREATE TABLE attributes (
     id BIGSERIAL PRIMARY KEY,
@@ -338,8 +316,12 @@ CREATE TABLE attributes (
 CREATE TABLE attributes_translations (
     id BIGSERIAL PRIMARY KEY,
     attribute_id BIGINT NOT NULL REFERENCES attributes(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     name VARCHAR(255) NOT NULL,
+
+    CONSTRAINT chk_attributes_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (attribute_id, lang_id)
 );
 
@@ -352,8 +334,12 @@ CREATE TABLE attribute_values (
 CREATE TABLE attribute_values_translations (
     id BIGSERIAL PRIMARY KEY,
     value_id BIGINT NOT NULL REFERENCES attribute_values(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     name VARCHAR(255) NOT NULL,
+
+    CONSTRAINT chk_attribute_values_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (value_id, lang_id)
 );
 
@@ -372,7 +358,8 @@ CREATE TABLE product_variants (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_product_variants_stock_quantity CHECK (stock_quantity >= 0)
+    CONSTRAINT chk_product_variants_stock_quantity
+        CHECK (stock_quantity >= 0)
 );
 
 CREATE TABLE variant_attributes (
@@ -411,7 +398,6 @@ CREATE TABLE reviews (
 CREATE INDEX idx_reviews_user_id ON reviews(user_id);
 CREATE INDEX idx_reviews_product_id ON reviews(product_id);
 
--- optional: one review per user per product
 CREATE UNIQUE INDEX uq_reviews_user_product
 ON reviews(user_id, product_id);
 
@@ -423,12 +409,16 @@ CREATE TABLE product_prices (
     product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     price NUMERIC(12,2) NOT NULL,
     discount_value NUMERIC(12,2) NOT NULL DEFAULT 0,
-    discount_type discount_type_enum,
+    discount_type VARCHAR(20),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_product_prices_price CHECK (price >= 0),
-    CONSTRAINT chk_product_prices_discount_value CHECK (discount_value >= 0)
+    CONSTRAINT chk_product_prices_discount_type
+        CHECK (discount_type IS NULL OR discount_type IN ('fixed', 'percentage')),
+    CONSTRAINT chk_product_prices_price
+        CHECK (price >= 0),
+    CONSTRAINT chk_product_prices_discount_value
+        CHECK (discount_value >= 0)
 );
 
 CREATE INDEX idx_product_prices_product_id ON product_prices(product_id);
@@ -442,15 +432,44 @@ CREATE TABLE orders (
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     address_id BIGINT REFERENCES addresses(id) ON DELETE SET NULL,
     vat_value NUMERIC(12,2) NOT NULL DEFAULT 0,
-    vat_type discount_type_enum,
-    status order_status_enum NOT NULL DEFAULT 'pending',
-    payment_method payment_method_enum NOT NULL,
-    payment_status payment_status_enum NOT NULL DEFAULT 'pending',
+    vat_type VARCHAR(20),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    payment_method VARCHAR(30) NOT NULL,
+    payment_status VARCHAR(30) NOT NULL DEFAULT 'pending',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_orders_vat_value CHECK (vat_value >= 0)
+    CONSTRAINT chk_orders_vat_type
+        CHECK (vat_type IS NULL OR vat_type IN ('fixed', 'percentage')),
+    CONSTRAINT chk_orders_status
+        CHECK (status IN (
+            'pending',
+            'confirmed',
+            'processing',
+            'shipped',
+            'delivered',
+            'cancelled',
+            'refunded'
+        )),
+    CONSTRAINT chk_orders_payment_method
+        CHECK (payment_method IN (
+            'cash',
+            'card',
+            'online',
+            'wallet',
+            'bank_transfer'
+        )),
+    CONSTRAINT chk_orders_payment_status
+        CHECK (payment_status IN (
+            'pending',
+            'paid',
+            'failed',
+            'refunded',
+            'partially_refunded'
+        )),
+    CONSTRAINT chk_orders_vat_value
+        CHECK (vat_value >= 0)
 );
 
 CREATE INDEX idx_orders_user_id ON orders(user_id);
@@ -474,21 +493,30 @@ CREATE TABLE order_items (
     quantity INT NOT NULL DEFAULT 1,
     unit_price_snapshot NUMERIC(12,2) NOT NULL DEFAULT 0,
     discount_value_snapshot NUMERIC(12,2) NOT NULL DEFAULT 0,
-    discount_type_snapshot discount_type_enum,
+    discount_type_snapshot VARCHAR(20),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_order_items_quantity CHECK (quantity > 0),
-    CONSTRAINT chk_order_items_unit_price CHECK (unit_price_snapshot >= 0),
-    CONSTRAINT chk_order_items_discount CHECK (discount_value_snapshot >= 0)
+    CONSTRAINT chk_order_items_discount_type_snapshot
+        CHECK (discount_type_snapshot IS NULL OR discount_type_snapshot IN ('fixed', 'percentage')),
+    CONSTRAINT chk_order_items_quantity
+        CHECK (quantity > 0),
+    CONSTRAINT chk_order_items_unit_price
+        CHECK (unit_price_snapshot >= 0),
+    CONSTRAINT chk_order_items_discount
+        CHECK (discount_value_snapshot >= 0)
 );
 
 CREATE TABLE order_items_translations (
     id BIGSERIAL PRIMARY KEY,
     order_item_id BIGINT NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     name_snapshot VARCHAR(255) NOT NULL,
     description_snapshot TEXT,
+
+    CONSTRAINT chk_order_items_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (order_item_id, lang_id)
 );
 
@@ -504,14 +532,34 @@ CREATE TABLE order_payments (
     order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     total_price NUMERIC(12,2) NOT NULL DEFAULT 0,
     vat_value NUMERIC(12,2) NOT NULL DEFAULT 0,
-    vat_type discount_type_enum,
-    payment_method payment_method_enum NOT NULL,
-    payment_status payment_status_enum NOT NULL DEFAULT 'pending',
+    vat_type VARCHAR(20),
+    payment_method VARCHAR(30) NOT NULL,
+    payment_status VARCHAR(30) NOT NULL DEFAULT 'pending',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT chk_order_payments_total_price CHECK (total_price >= 0),
-    CONSTRAINT chk_order_payments_vat_value CHECK (vat_value >= 0)
+    CONSTRAINT chk_order_payments_vat_type
+        CHECK (vat_type IS NULL OR vat_type IN ('fixed', 'percentage')),
+    CONSTRAINT chk_order_payments_payment_method
+        CHECK (payment_method IN (
+            'cash',
+            'card',
+            'online',
+            'wallet',
+            'bank_transfer'
+        )),
+    CONSTRAINT chk_order_payments_payment_status
+        CHECK (payment_status IN (
+            'pending',
+            'paid',
+            'failed',
+            'refunded',
+            'partially_refunded'
+        )),
+    CONSTRAINT chk_order_payments_total_price
+        CHECK (total_price >= 0),
+    CONSTRAINT chk_order_payments_vat_value
+        CHECK (vat_value >= 0)
 );
 
 CREATE INDEX idx_order_payments_order_id ON order_payments(order_id);
@@ -531,9 +579,13 @@ CREATE TABLE static_pages (
 CREATE TABLE static_pages_translations (
     id BIGSERIAL PRIMARY KEY,
     static_page_id BIGINT NOT NULL REFERENCES static_pages(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT,
+
+    CONSTRAINT chk_static_pages_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (static_page_id, lang_id)
 );
 
@@ -557,9 +609,13 @@ CREATE TABLE page_sections (
 CREATE TABLE page_sections_translations (
     id BIGSERIAL PRIMARY KEY,
     page_section_id BIGINT NOT NULL REFERENCES page_sections(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     title VARCHAR(255),
     content TEXT,
+
+    CONSTRAINT chk_page_sections_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (page_section_id, lang_id)
 );
 
@@ -591,8 +647,12 @@ CREATE TABLE sliders (
 CREATE TABLE sliders_translations (
     id BIGSERIAL PRIMARY KEY,
     slider_id BIGINT NOT NULL REFERENCES sliders(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     title VARCHAR(255),
+
+    CONSTRAINT chk_sliders_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (slider_id, lang_id)
 );
 
@@ -617,9 +677,13 @@ CREATE TABLE faqs (
 CREATE TABLE faqs_translations (
     id BIGSERIAL PRIMARY KEY,
     faq_id BIGINT NOT NULL REFERENCES faqs(id) ON DELETE CASCADE,
-    lang_id lang_enum NOT NULL,
+    lang_id VARCHAR(2) NOT NULL,
     question TEXT NOT NULL,
     answer TEXT NOT NULL,
+
+    CONSTRAINT chk_faqs_translations_lang
+        CHECK (lang_id IN ('ar', 'en')),
+
     UNIQUE (faq_id, lang_id)
 );
 

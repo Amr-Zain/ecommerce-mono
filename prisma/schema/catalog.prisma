@@ -1,0 +1,171 @@
+model Category {
+  id           BigInt                @id @default(autoincrement())
+  parentId     BigInt?               @map("parent_id")
+  parent       Category?             @relation("CategoryParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Category[]            @relation("CategoryParent")
+  image        String?               @db.Text
+  sortOrder    Int                   @default(0) @map("sort_order")
+  isActive     Boolean               @default(true) @map("is_active")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @default(now()) @updatedAt @map("updated_at")
+  translations CategoryTranslation[]
+  products     Product[]
+
+  @@index([parentId])
+  @@index([sortOrder])
+  @@map("categories")
+}
+
+model CategoryTranslation {
+  id         BigInt   @id @default(autoincrement())
+  categoryId BigInt   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  langId     String   @map("lang_id")
+  name       String
+
+  @@unique([categoryId, langId])
+  @@map("categories_translations")
+}
+
+model Product {
+  id               BigInt               @id @default(autoincrement())
+  categoryId       BigInt?              @map("category_id")
+  category         Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  hasVariants      Boolean              @default(false) @map("has_variants")
+  image            String?              @db.Text
+  price            Decimal              @default(0) @map("price") @db.Decimal(12, 2)
+  discountValue    Decimal              @default(0) @map("discount_value") @db.Decimal(12, 2)
+  discountType     String?              @map("discount_type")
+  stockQuantity    Int                  @default(0) @map("stock_quantity")
+  barcode          String?              @map("barcode")
+  sku              String?              @map("sku")
+  isActive         Boolean              @default(true) @map("is_active")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @default(now()) @updatedAt @map("updated_at")
+  translations     ProductTranslation[]
+  variants         ProductVariant[]
+  variantAttribute VariantAttribute[]
+  reviews          Review[]
+  prices           ProductPrice[]
+  orderItems       OrderItem[]
+
+  @@index([categoryId])
+  @@index([sku])
+  @@index([barcode])
+  @@map("products")
+}
+
+model ProductTranslation {
+  id          BigInt  @id @default(autoincrement())
+  productId   BigInt  @map("product_id")
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  langId      String  @map("lang_id") // Removed Lang enum
+  name        String
+  description String? @db.Text
+
+  @@unique([productId, langId])
+  @@map("products_translations")
+}
+
+model Media {
+  hash      String @id
+  entityId  BigInt @map("entity_id")
+  modelType String @map("model_type")
+  type      String
+  url       String @db.Text
+
+  @@index([entityId, modelType])
+  @@map("media")
+}
+
+model Attribute {
+  id           BigInt                 @id @default(autoincrement())
+  createdAt    DateTime               @default(now()) @map("created_at")
+  translations AttributeTranslation[]
+  values       AttributeValue[]
+  variants     VariantAttribute[]
+
+  @@map("attributes")
+}
+
+model AttributeTranslation {
+  id          BigInt    @id @default(autoincrement())
+  attributeId BigInt    @map("attribute_id")
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  langId      String    @map("lang_id") // Removed Lang enum
+  name        String
+
+  @@unique([attributeId, langId])
+  @@map("attributes_translations")
+}
+
+model AttributeValue {
+  id           BigInt                      @id @default(autoincrement())
+  attributeId  BigInt                      @map("attribute_id")
+  attribute    Attribute                   @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  createdAt    DateTime                    @default(now()) @map("created_at")
+  translations AttributeValueTranslation[]
+  variants     VariantAttribute[]
+
+  @@index([attributeId])
+  @@map("attribute_values")
+}
+
+model AttributeValueTranslation {
+  id      BigInt         @id @default(autoincrement())
+  valueId BigInt         @map("value_id")
+  value   AttributeValue @relation(fields: [valueId], references: [id], onDelete: Cascade)
+  langId  String         @map("lang_id") // Removed Lang enum
+  name    String
+
+  @@unique([valueId, langId])
+  @@map("attribute_values_translations")
+}
+
+model ProductVariant {
+  id            BigInt             @id @default(autoincrement())
+  productId     BigInt             @map("product_id")
+  product       Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stockQuantity Int                @default(0) @map("stock_quantity")
+  barcode       String?            @map("barcode")
+  sku           String?            @map("sku")
+  isActive      Boolean            @default(true) @map("is_active")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @default(now()) @updatedAt @map("updated_at")
+  attributes    VariantAttribute[]
+  orderItems    OrderItem[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model VariantAttribute {
+  productId        BigInt         @map("product_id")
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productVariantId BigInt         @map("product_variant_id")
+  variant          ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  attributeId      BigInt         @map("attribute_id")
+  attribute        Attribute      @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  valueId          BigInt         @map("value_id")
+  value            AttributeValue @relation(fields: [valueId], references: [id], onDelete: Cascade)
+
+  @@id([productVariantId, attributeId])
+  @@unique([productId, productVariantId, attributeId, valueId])
+  @@index([productVariantId])
+  @@map("variant_attributes")
+}
+
+model ProductPrice {
+  id            BigInt  @id @default(autoincrement())
+  productId     BigInt  @map("product_id")
+  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  price         Decimal @map("price") @db.Decimal(12, 2)
+  discountValue Decimal @default(0) @map("discount_value") @db.Decimal(12, 2)
+  discountType  String? @map("discount_type")
+  isActive      Boolean @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([productId])
+  @@index([productId, isActive])
+  @@map("product_prices")
+}

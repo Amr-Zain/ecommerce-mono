@@ -1,0 +1,77 @@
+model Country {
+  id             BigInt                @id @default(autoincrement())
+  phoneCode      String                @map("phone_code")
+  phoneLength    Int?                  @map("phone_length")
+  shippingPrice  Decimal               @default(0) @map("shipping_price") @db.Decimal(12, 2)
+  isActive       Boolean               @default(true) @map("is_active")
+  phoneStartWith Int                   @map("phone_start_with")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @default(now()) @updatedAt @map("updated_at")
+  translations   CountryTranslation[]
+  cities         City[]
+  addresses      Address[]
+
+  @@map("countries")
+}
+
+model CountryTranslation {
+  id           BigInt   @id @default(autoincrement())
+  countryId    BigInt   @map("country_id")
+  country      Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  langId       String   @map("lang_id")
+  name         String
+  nationality  String?
+  shortName    String?  @map("short_name")
+  currencyCode String?  @map("currency_code")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@unique([countryId, langId])
+  @@map("countries_translations")
+}
+
+model City {
+  id           BigInt            @id @default(autoincrement())
+  countryId    BigInt            @map("country_id")
+  country      Country           @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  isActive     Boolean           @default(true) @map("is_active")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at")
+  translations CityTranslation[]
+  addresses    Address[]
+
+  @@index([countryId])
+  @@map("cities")
+}
+
+model CityTranslation {
+  id     BigInt @id @default(autoincrement())
+  cityId BigInt @map("city_id")
+  city   City   @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  langId String @map("lang_id") // Removed Lang enum
+  name   String
+
+  @@unique([cityId, langId])
+  @@map("cities_translations")
+}
+
+model Address {
+  id             BigInt   @id @default(autoincrement())
+  userId         BigInt   @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address        String   @db.Text
+  cityId         BigInt?  @map("city_id")
+  city           City?    @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  countryId      BigInt?  @map("country_id")
+  country        Country? @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  streetName     String?  @map("street_name")
+  buildingNumber String?  @map("building_number")
+  isDefault      Boolean  @default(false) @map("is_default")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+  orders         Order[]
+
+  @@index([userId])
+  @@index([cityId])
+  @@index([countryId])
+  @@map("addresses")
+}
