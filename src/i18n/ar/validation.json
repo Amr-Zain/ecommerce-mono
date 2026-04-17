@@ -1,0 +1,9 @@
+{
+  "NOT_EMPTY": "لا يمكن ترك {property} فارغاً",
+  "INVALID_EMAIL": "{property} ليس عنوان بريد إلكتروني صالح",
+  "INVALID_BOOLEAN": "{property} يجب أن يكون قيمة منطقية",
+  "MIN": "{property} بقيمة \"{value}\" يجب أن يكون على الأقل {constraints.0}",
+  "MAX": "{property} بقيمة \"{value}\" يجب أن يكون أقل من {constraints.0}",
+  "IS_STRING": "{property} يجب أن يكون نصاً",
+  "IS_NUMBER": "{property} يجب أن يكون رقماً"
+}

@@ -4,6 +4,11 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import databaseConfig from './config/database.config';
+import {
+  I18nModule,
+  AcceptLanguageResolver,
+} from 'nestjs-i18n';
+import * as path from 'path';
 
 @Module({
   imports: [
@@ -13,6 +18,20 @@ import databaseConfig from './config/database.config';
       expandVariables: true,
     }),
     PrismaModule,
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      fallbacks: {
+        'en-*': 'en',
+        'ar-*': 'ar',
+      },
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        // watch: true,
+      },
+      resolvers: [
+        AcceptLanguageResolver,
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
