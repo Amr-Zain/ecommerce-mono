@@ -9,6 +9,7 @@ import {
   AcceptLanguageResolver,
 } from 'nestjs-i18n';
 import * as path from 'path';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import * as path from 'path';
       expandVariables: true,
     }),
     PrismaModule,
+    MediaModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       fallbacks: {
@@ -26,8 +28,8 @@ import * as path from 'path';
       },
       loaderOptions: {
         path: path.join(__dirname, '/i18n/'),
-        // watch: true,
       },
+      typesOutputPath: path.join(__dirname, '../src/generated/i18n.generated.ts'),
       resolvers: [
         AcceptLanguageResolver,
       ],

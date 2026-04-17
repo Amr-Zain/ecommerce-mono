@@ -5,5 +5,6 @@
   "MIN": "{property} بقيمة \"{value}\" يجب أن يكون على الأقل {constraints.0}",
   "MAX": "{property} بقيمة \"{value}\" يجب أن يكون أقل من {constraints.0}",
   "IS_STRING": "{property} يجب أن يكون نصاً",
-  "IS_NUMBER": "{property} يجب أن يكون رقماً"
+  "IS_NUMBER": "{property} يجب أن يكون رقماً",
+  "INVALID_MEDIA_MODEL": "اسم الكيان ({property}) غير صالح"
 }

@@ -1,0 +1,30 @@
+model Media {
+  id           BigInt   @id @default(autoincrement())
+  uuid         String   @unique @default(uuid()) @db.Uuid
+  attachHash   String?  @map("attach_hash")
+  model        String
+  modelId      String?  @map("model_id")
+  collection   String?
+  path         String   @db.Text
+  filename     String
+  originalName String   @map("original_name")
+  extension    String
+  mimeType     String   @map("mime_type")
+  type         String
+  size         Int
+  metadata     Json?    @db.JsonB
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  categories Category[] @relation("CategoryImage")
+  products   Product[]  @relation("ProductImage")
+  sliders    Slider[]   @relation("SliderImage")
+  users      User[]     @relation("UserImage")
+
+  @@index([uuid])
+  @@index([model, modelId])
+  @@index([model, modelId, collection])
+  @@index([model, attachHash])
+  @@index([type])
+  @@map("media")
+}

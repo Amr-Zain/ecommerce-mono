@@ -51,7 +51,8 @@ model PageSectionTranslation {
 
 model Slider {
   id           BigInt              @id @default(autoincrement())
-  image        String              @db.Text
+  imageId      BigInt?             @map("image_id")
+  image        Media?              @relation("SliderImage", fields: [imageId], references: [id], onDelete: SetNull)
   sortOrder    Int                 @default(0) @map("sort_order")
   startDate    DateTime?           @map("start_date")
   endDate      DateTime?           @map("end_date")
@@ -65,10 +66,10 @@ model Slider {
 }
 
 model SliderTranslation {
-  id       BigInt @id @default(autoincrement())
-  sliderId BigInt @map("slider_id")
-  slider   Slider @relation(fields: [sliderId], references: [id], onDelete: Cascade)
-  langId   String @map("lang_id") // Removed Lang enum
+  id       BigInt  @id @default(autoincrement())
+  sliderId BigInt  @map("slider_id")
+  slider   Slider  @relation(fields: [sliderId], references: [id], onDelete: Cascade)
+  langId   String  @map("lang_id") // Removed Lang enum
   title    String?
 
   @@unique([sliderId, langId])

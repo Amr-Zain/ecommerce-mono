@@ -5,5 +5,6 @@
   "MIN": "{property} with value: \"{value}\" needs to be at least {constraints.0}",
   "MAX": "{property} with value: \"{value}\" needs to be less than {constraints.0}",
   "IS_STRING": "{property} must be a string",
-  "IS_NUMBER": "{property} must be a number"
+  "IS_NUMBER": "{property} must be a number",
+  "INVALID_MEDIA_MODEL": "{property} must be a valid entity name"
 }

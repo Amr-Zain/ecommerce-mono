@@ -7,5 +7,7 @@
   "Bad Request": "طلب غير صالح",
   "Unauthorized": "غير مصرح بالدخول",
   "Forbidden": "الدخول ممنوع",
-  "Conflict": "تعارض في المورد"
+  "Conflict": "تعارض في المورد",
+  "FILE_REQUIRED": "ملف واحد على الأقل مطلوب",
+  "FILES_REQUIRED": "يجب إرفاق ملف واحد على الأقل"
 }

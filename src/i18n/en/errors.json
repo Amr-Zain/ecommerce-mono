@@ -7,5 +7,7 @@
   "Bad Request": "Bad request",
   "Unauthorized": "Unauthorized access",
   "Forbidden": "Access forbidden",
-  "Conflict": "Resource conflict"
+  "Conflict": "Resource conflict",
+  "FILE_REQUIRED": "A file map payload is strictly required",
+  "FILES_REQUIRED": "At least one file parameter payload is required"
 }
