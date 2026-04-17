@@ -1,4 +1,11 @@
 {
   "user_not_found": "User was not found",
-  "invalid_input": "Invalid input provided"
+  "invalid_input": "Invalid input provided",
+  "INTERNAL_SERVER_ERROR": "Internal server error",
+  "Internal Server Error": "Internal server error",
+  "Not Found": "Resource not found",
+  "Bad Request": "Bad request",
+  "Unauthorized": "Unauthorized access",
+  "Forbidden": "Access forbidden",
+  "Conflict": "Resource conflict"
 }

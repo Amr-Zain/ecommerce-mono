@@ -1,4 +1,11 @@
 {
   "user_not_found": "المستخدم غير موجود",
-  "invalid_input": "المدخلات غير صالحة"
+  "invalid_input": "المدخلات غير صالحة",
+  "INTERNAL_SERVER_ERROR": "خطأ داخلي في الخادم",
+  "Internal Server Error": "خطأ داخلي في الخادم",
+  "Not Found": "المورد غير موجود",
+  "Bad Request": "طلب غير صالح",
+  "Unauthorized": "غير مصرح بالدخول",
+  "Forbidden": "الدخول ممنوع",
+  "Conflict": "تعارض في المورد"
 }

@@ -1,16 +1,18 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
-import { AppExceptionFilter } from './common/filters/app-exception.filter';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
+  const httpAdapterHost = app.get(HttpAdapterHost);
+
   // App exception filters & pipes setup
   app.useGlobalPipes(new I18nValidationPipe({ transform: true, whitelist: true }));
   app.useGlobalFilters(
-    new I18nValidationExceptionFilter({ detailedErrors: false }),
-    new AppExceptionFilter()
+    new AllExceptionsFilter(httpAdapterHost),
+    new I18nValidationExceptionFilter({ detailedErrors: false })
   );
 
   // Implements NestJS graceful shut down hooks (recommended for Prisma)
