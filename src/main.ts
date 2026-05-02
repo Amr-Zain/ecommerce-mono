@@ -3,9 +3,14 @@ import { AppModule } from './app.module';
 import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
+// Add BigInt serialization support for JSON
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   const httpAdapterHost = app.get(HttpAdapterHost);
 
   // App exception filters & pipes setup
