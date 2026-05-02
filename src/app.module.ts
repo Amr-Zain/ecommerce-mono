@@ -10,6 +10,8 @@ import {
 } from 'nestjs-i18n';
 import * as path from 'path';
 import { MediaModule } from './media/media.module';
+import { CommonModule } from './common/common.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -19,7 +21,9 @@ import { MediaModule } from './media/media.module';
       expandVariables: true,
     }),
     PrismaModule,
+    CommonModule,
     MediaModule,
+    UsersModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       fallbacks: {
@@ -27,7 +31,8 @@ import { MediaModule } from './media/media.module';
         'ar-*': 'ar',
       },
       loaderOptions: {
-        path: path.join(__dirname, '/i18n/'),
+        path: path.join(__dirname, '../../src/i18n/'),
+        watch: true,
       },
       typesOutputPath: path.join(__dirname, '../src/generated/i18n.generated.ts'),
       resolvers: [
@@ -37,5 +42,5 @@ import { MediaModule } from './media/media.module';
   ],
   controllers: [AppController],
   providers: [AppService],
-})
-export class AppModule {}
+}) 
+export class AppModule { }
