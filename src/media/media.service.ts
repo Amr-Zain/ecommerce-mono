@@ -1,10 +1,9 @@
 import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService, Prisma } from '../prisma';
 import { StorageInterface } from './storage/storage.interface';
 import { UploadMediaDto } from './dto/upload-media.dto';
 import { AttachMediaDto } from './dto/attach-media.dto';
 import { MediaType } from './enums/media-type.enum';
-import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import * as path from 'path';
 
@@ -13,9 +12,10 @@ export class MediaService {
   private readonly logger = new Logger(MediaService.name);
 
   constructor(
+
     private readonly prisma: PrismaService,
     @Inject('StorageInterface') private readonly storage: StorageInterface,
-  ) {}
+  ) { }
 
   /**
    * Determine logical generic type based on mime
@@ -41,7 +41,7 @@ export class MediaService {
   async uploadMultiple(files: Express.Multer.File[], dto: UploadMediaDto) {
     const attachHash = dto.modelId ? null : dto.attachHash || randomUUID();
     const idOrHash = dto.modelId || attachHash; // Passed to folder logic
-    
+
     if (!idOrHash) {
       throw new Error('Fatal error resolving an attachable identification.');
     }
@@ -119,11 +119,11 @@ export class MediaService {
       model,
       modelId,
     };
-    
+
     if (collection) where.collection = collection;
 
     const items = await this.prisma.media.findMany({ where, orderBy: { createdAt: 'asc' } });
-    
+
     return items.map((i) => ({ ...i, id: i.id.toString() }));
   }
 
@@ -136,7 +136,7 @@ export class MediaService {
 
     // Hard delete from DB as per requirement
     await this.prisma.media.delete({ where: { id: media.id } });
-    
+
     return true;
   }
 }
