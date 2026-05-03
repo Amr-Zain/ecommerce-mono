@@ -30,27 +30,11 @@ export class AdvancedQueryDto {
     // Nested filters object: filters[field]=value
     @IsOptional()
     @IsObject()
-    @Transform(({ value }) => {
-        if (typeof value === 'object') return value;
-        try {
-            return JSON.parse(value);
-        } catch {
-            return {};
-        }
-    })
     filters?: Record<string, any> = {};
 
     // Nested sort object: sort[field]=direction
     @IsOptional()
     @IsObject()
-    @Transform(({ value }) => {
-        if (typeof value === 'object') return value;
-        try {
-            return JSON.parse(value);
-        } catch {
-            return {};
-        }
-    })
     sort?: Record<string, 'asc' | 'desc'> = {};
 
     // Search query

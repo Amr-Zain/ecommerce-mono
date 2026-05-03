@@ -6,13 +6,13 @@ import {
     Patch,
     Param,
     Delete,
-    Query,
     ParseIntPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
+import { ParsedQuery } from '../common/decorators/parsed-query.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -28,7 +28,7 @@ export class UsersController {
     }
 
     @Get()
-    async findAll(@Query() query: UserQueryDto) {
+    async findAll(@ParsedQuery(UserQueryDto) query: UserQueryDto) {
         const result = await this.usersService.findAll(query);
         return {
             success: true,
