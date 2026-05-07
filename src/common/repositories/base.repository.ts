@@ -3,24 +3,22 @@ import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { PaginationUtil } from '../utils/pagination.util';
 
-/**
- * Type for Prisma where clause
- */
+
 type WhereClause = Record<string, unknown>;
 
-/**
- * Type for Prisma include clause
- */
 type IncludeClause = Record<string, boolean | unknown>;
 
-/**
- * Type for Prisma orderBy clause
- */
+
+type SelectClause = Record<string, boolean | unknown>;
+
+type QueryOptions =
+    | { select: SelectClause; include?: never }
+    | { include: IncludeClause; select?: never }
+    | { select?: never; include?: never };
+
+
 type OrderByClause = Record<string, 'asc' | 'desc'> | Record<string, 'asc' | 'desc'>[];
 
-/**
- * Type for create/update data
- */
 type DataInput = Record<string, unknown>;
 
 export abstract class BaseRepository<T> {
@@ -42,7 +40,7 @@ export abstract class BaseRepository<T> {
     protected async paginate(
         query: AdvancedQueryDto,
         where?: WhereClause,
-        include?: IncludeClause,
+        options?: QueryOptions,
     ): Promise<PaginatedResult<T>> {
         const orderBy = this.buildOrderBy(query.sort);
         const model = this.getModel() as {
@@ -50,13 +48,19 @@ export abstract class BaseRepository<T> {
             count: (args?: unknown) => Promise<number>;
         };
 
-        // If paginate is false, return all results
+        const queryArgs: any = {
+            where,
+            orderBy,
+        };
+
+        if (options?.select) {
+            queryArgs.select = options.select;
+        } else if (options?.include) {
+            queryArgs.include = options.include;
+        }
+
         if (query.paginate === false) {
-            const data = await model.findMany({
-                where,
-                orderBy,
-                include,
-            });
+            const data = await model.findMany(queryArgs);
 
             return {
                 data,
@@ -73,15 +77,11 @@ export abstract class BaseRepository<T> {
 
         // Normal pagination
         const { skip, take } = PaginationUtil.getPrismaParams(query);
+        queryArgs.skip = skip;
+        queryArgs.take = take;
 
         const [data, total] = await Promise.all([
-            model.findMany({
-                where,
-                skip,
-                take,
-                orderBy,
-                include,
-            }),
+            model.findMany(queryArgs),
             model.count({ where }),
         ]);
 
@@ -93,48 +93,64 @@ export abstract class BaseRepository<T> {
         );
     }
 
-    /**
-     * Find one by ID
-     */
-    async findById(id: number | bigint, include?: IncludeClause): Promise<T | null> {
+
+    async findById(id: number | bigint, options?: QueryOptions): Promise<T | null> {
         const model = this.getModel() as {
             findUnique: (args: unknown) => Promise<T | null>;
         };
-        return model.findUnique({
+
+        const queryArgs: any = {
             where: { id },
-            include,
-        });
+        };
+
+        if (options?.select) {
+            queryArgs.select = options.select;
+        } else if (options?.include) {
+            queryArgs.include = options.include;
+        }
+
+        return model.findUnique(queryArgs);
     }
 
-    /**
-     * Find one by condition
-     */
-    async findOne(where: WhereClause, include?: IncludeClause): Promise<T | null> {
+   
+    async findOne(where: WhereClause, options?: QueryOptions): Promise<T | null> {
         const model = this.getModel() as {
             findFirst: (args?: unknown) => Promise<T | null>;
         };
-        return model.findFirst({
+
+        const queryArgs: any = {
             where,
-            include,
-        });
+        };
+
+        if (options?.select) {
+            queryArgs.select = options.select;
+        } else if (options?.include) {
+            queryArgs.include = options.include;
+        }
+
+        return model.findFirst(queryArgs);
     }
 
-    /**
-     * Find many by condition
-     */
-    async findMany(where?: WhereClause, include?: IncludeClause): Promise<T[]> {
+   
+    async findMany(where?: WhereClause, options?: QueryOptions): Promise<T[]> {
         const model = this.getModel() as {
             findMany: (args?: unknown) => Promise<T[]>;
         };
-        return model.findMany({
+
+        const queryArgs: any = {
             where,
-            include,
-        });
+        };
+
+        if (options?.select) {
+            queryArgs.select = options.select;
+        } else if (options?.include) {
+            queryArgs.include = options.include;
+        }
+
+        return model.findMany(queryArgs);
     }
 
-    /**
-     * Create a new record
-     */
+
     async create(data: DataInput): Promise<T> {
         const model = this.getModel() as {
             create: (args: unknown) => Promise<T>;
@@ -142,9 +158,6 @@ export abstract class BaseRepository<T> {
         return model.create({ data });
     }
 
-    /**
-     * Update a record
-     */
     async update(id: number | bigint, data: DataInput): Promise<T> {
         const model = this.getModel() as {
             update: (args: unknown) => Promise<T>;
@@ -155,9 +168,6 @@ export abstract class BaseRepository<T> {
         });
     }
 
-    /**
-     * Delete a record
-     */
     async delete(id: number | bigint): Promise<T> {
         const model = this.getModel() as {
             delete: (args: unknown) => Promise<T>;
@@ -167,9 +177,7 @@ export abstract class BaseRepository<T> {
         });
     }
 
-    /**
-     * Count records
-     */
+
     async count(where?: WhereClause): Promise<number> {
         const model = this.getModel() as {
             count: (args?: unknown) => Promise<number>;
@@ -177,18 +185,11 @@ export abstract class BaseRepository<T> {
         return model.count({ where });
     }
 
-    /**
-     * Check if record exists
-     */
     async exists(where: WhereClause): Promise<boolean> {
         const count = await this.count(where);
         return count > 0;
     }
 
-    /**
-     * Build orderBy clause from sort object
-     * Example: { created_at: 'asc', name: 'desc' }
-     */
     protected buildOrderBy(sort?: Record<string, 'asc' | 'desc'>): OrderByClause {
         if (!sort || Object.keys(sort).length === 0) {
             return { createdAt: 'desc' };

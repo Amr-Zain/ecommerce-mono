@@ -22,23 +22,26 @@ export class UsersRepository extends BaseRepository<User> {
         return this.prisma.user;
     }
 
-    
+
     async findAll(query: AdvancedQueryDto): Promise<PaginatedResult<User>> {
         const where = this.buildWhereClause(query);
-        const include = {
-            role: true,
-            image: true,
-        };
 
-        return this.paginate(query, where, include);
+        return this.paginate(query, where, {
+            include: {
+                role: true,
+                image: true,
+            },
+        });
     }
 
     async findByEmail(email: string): Promise<User | null> {
         return this.findOne(
             { email },
             {
-                role: true,
-                image: true,
+                include: {
+                    role: true,
+                    image: true,
+                },
             },
         );
     }
@@ -48,10 +51,12 @@ export class UsersRepository extends BaseRepository<User> {
      */
     async findByIdWithRelations(id: bigint): Promise<User | null> {
         return this.findById(id, {
-            role: true,
-            image: true,
-            addresses: true,
-            reviews: true,
+            include: {
+                role: true,
+                image: true,
+                addresses: true,
+                reviews: true,
+            },
         });
     }
 
