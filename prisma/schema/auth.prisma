@@ -1,40 +1,78 @@
 model Role {
-  id        BigInt   @id @default(autoincrement())
-  nameAr    String   @map("name_ar")
-  nameEn    String   @map("name_en")
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  users     User[]
+  id          BigInt       @id @default(autoincrement())
+  nameAr      String       @map("name_ar")
+  nameEn      String       @map("name_en")
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
+  users       User[]
+  permissions Permission[]
 
   @@map("roles")
 }
 
+model Permission {
+  id        BigInt   @id @default(autoincrement())
+  roleId    BigInt   @map("role_id")
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  resource  String   // e.g., "users", "orders", "products"
+  action    String   // e.g., "create", "read", "update", "delete", "list"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([roleId, resource, action])
+  @@index([roleId])
+  @@map("permissions")
+}
+
 model User {
-  id              BigInt    @id @default(autoincrement())
-  name            String
-  email           String?   @unique
-  imageId         BigInt?   @map("image_id")
-  image           Media?    @relation("UserImage", fields: [imageId], references: [id], onDelete: SetNull)
-  roleId          BigInt?   @map("role")
-  role            Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  userType        String    @default("client") @map("user_type")
-  guestToken      String?   @unique @map("guest_token")
-  password        String?
-  phone           String?
-  phoneCode       String?   @map("phone_code")
-  isPhoneVerified Boolean   @default(false) @map("is_phone_verified")
-  isEmailVerified Boolean   @default(false) @map("is_email_verified")
-  isActive        Boolean   @default(true) @map("is_active")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
-  addresses       Address[]
-  reviews         Review[]
-  orders          Order[]
+  id                      BigInt                 @id @default(autoincrement())
+  name                    String
+  email                   String?                @unique
+  imageId                 BigInt?                @map("image_id")
+  image                   Media?                 @relation("UserImage", fields: [imageId], references: [id], onDelete: SetNull)
+  roleId                  BigInt?                @map("role")
+  role                    Role?                  @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  userType                String                 @default("client") @map("user_type")
+  guestToken              String?                @unique @map("guest_token")
+  password                String?
+  phone                   String?
+  phoneCode               String?                @map("phone_code")
+  isPhoneVerified         Boolean                @default(false) @map("is_phone_verified")
+  isEmailVerified         Boolean                @default(false) @map("is_email_verified")
+  isActive                Boolean                @default(true) @map("is_active")
+  emailVerificationCode   String?                @map("email_verification_code") // 4-digit code
+  emailVerificationExpiry DateTime?              @map("email_verification_expiry")
+  phoneVerificationCode   String?                @map("phone_verification_code") // 4-digit code
+  phoneVerificationExpiry DateTime?              @map("phone_verification_expiry")
+  passwordResetCode       String?                @map("password_reset_code") // 4-digit code
+  passwordResetExpiry     DateTime?              @map("password_reset_expiry")
+  createdAt               DateTime               @default(now()) @map("created_at")
+  updatedAt               DateTime               @default(now()) @updatedAt @map("updated_at")
+  addresses               Address[]
+  reviews                 Review[]
+  orders                  Order[]
+  refreshTokens           RefreshToken[]
 
   @@index([email])
   @@index([phone])
   @@index([roleId])
   @@index([guestToken])
   @@map("users")
+}
+
+model RefreshToken {
+  id         BigInt   @id @default(autoincrement())
+  userId     BigInt   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  deviceInfo String?  @map("device_info") // Browser, OS, etc.
+  ipAddress  String?  @map("ip_address")
+  expiresAt  DateTime @map("expires_at")
+  isRevoked  Boolean  @default(false) @map("is_revoked")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
 }
