@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
@@ -12,6 +13,9 @@ import * as path from 'path';
 import { MediaModule } from './media/media.module';
 import { CommonModule } from './common/common.module';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from './auth/guards/permissions.guard';
 
 @Module({
   imports: [
@@ -24,6 +28,7 @@ import { UsersModule } from './users/users.module';
     CommonModule,
     MediaModule,
     UsersModule,
+    AuthModule,
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       fallbacks: {
@@ -41,6 +46,16 @@ import { UsersModule } from './users/users.module';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
-}) 
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
+    },
+  ],
+})
 export class AppModule { }
