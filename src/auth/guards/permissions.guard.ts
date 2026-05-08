@@ -19,7 +19,12 @@ export class PermissionsGuard implements CanActivate {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
 
-        if (!user || !user.role || !user.role.permissions) {
+        // Only enforce permissions for admin users
+        if (!user || user.userType !== 'admin') {
+            return true;
+        }
+
+        if (!user.role || !user.role.permissions) {
             throw new ForbiddenException('Access denied: No permissions');
         }
 

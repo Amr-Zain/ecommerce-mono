@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { RouterModule } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
@@ -12,8 +13,9 @@ import {
 import * as path from 'path';
 import { MediaModule } from './media/media.module';
 import { CommonModule } from './common/common.module';
-import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { ClientModule } from './client/client.module';
+import { AdminModule } from './admin/admin.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from './auth/guards/permissions.guard';
 
@@ -27,8 +29,20 @@ import { PermissionsGuard } from './auth/guards/permissions.guard';
     PrismaModule,
     CommonModule,
     MediaModule,
-    UsersModule,
     AuthModule,
+    ClientModule,
+    AdminModule,
+    // Set path prefixes for modules
+    RouterModule.register([
+      {
+        path: 'admin',
+        module: AdminModule,
+      },
+      {
+        path: 'client',
+        module: ClientModule,
+      },
+    ]),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       fallbacks: {
@@ -48,10 +62,10 @@ import { PermissionsGuard } from './auth/guards/permissions.guard';
   controllers: [AppController],
   providers: [
     AppService,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: JwtAuthGuard,
-    // },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: PermissionsGuard,

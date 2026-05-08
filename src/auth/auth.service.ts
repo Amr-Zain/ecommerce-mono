@@ -224,6 +224,7 @@ export class AuthService {
             sub: user.id.toString(),
             email: user.email,
             role: user.role?.nameEn,
+            userType: user.userType,
             type: 'access',
         };
 
