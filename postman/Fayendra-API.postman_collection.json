@@ -7,6 +7,317 @@
 	},
 	"item": [
 		{
+			"name": "App",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}",
+							"host": ["{{baseUrl}}"]
+						},
+						"description": "Check if the API server is running"
+					},
+					"response": []
+				}
+			],
+			"description": "General application endpoints"
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"1234567890\",\n  \"phoneCode\": \"+1\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "Register a new user account"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"code\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/verify-email",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "verify-email"]
+						},
+						"description": "Verify email using the code sent to user"
+					},
+					"response": []
+				},
+				{
+					"name": "Resend Email Verification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/resend-email-verification",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "resend-email-verification"]
+						},
+						"description": "Resend the email verification code"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Login and get access token"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "refresh"]
+						},
+						"description": "Refresh access token using refresh token"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout"]
+						},
+						"description": "Logout current session"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout All",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout-all",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout-all"]
+						},
+						"description": "Logout from all sessions"
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/forgot-password",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "forgot-password"]
+						},
+						"description": "Request password reset code"
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"code\": \"123456\",\n  \"newPassword\": \"newPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/reset-password",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "reset-password"]
+						},
+						"description": "Reset password using the code"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Phone",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"1234567890\",\n  \"code\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/verify-phone",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "verify-phone"]
+						},
+						"description": "Verify phone number using code"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Phone Verification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"1234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/send-phone-verification",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "send-phone-verification"]
+						},
+						"description": "Send verification code to phone number"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile (Me)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "me"]
+						},
+						"description": "Get current user profile"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Sessions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/sessions",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "sessions"]
+						},
+						"description": "Get all active sessions for the user"
+					},
+					"response": []
+				},
+				{
+					"name": "Revoke Session",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/sessions/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "sessions", "1"]
+						},
+						"description": "Revoke a specific session"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication and session management"
+		},
+		{
 			"name": "Users",
 			"item": [
 				{
@@ -248,6 +559,169 @@
 				}
 			],
 			"description": "User management endpoints"
+		},
+		{
+			"name": "Media",
+			"item": [
+				{
+					"name": "Upload Single",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "model",
+									"value": "user",
+									"type": "text"
+								},
+								{
+									"key": "modelId",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "collection",
+									"value": "avatar",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/media/upload",
+							"host": ["{{baseUrl}}"],
+							"path": ["media", "upload"]
+						},
+						"description": "Upload a single media file"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Many",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "model",
+									"value": "product",
+									"type": "text"
+								},
+								{
+									"key": "modelId",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "collection",
+									"value": "gallery",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/media/upload-many",
+							"host": ["{{baseUrl}}"],
+							"path": ["media", "upload-many"]
+						},
+						"description": "Upload multiple media files"
+					},
+					"response": []
+				},
+				{
+					"name": "Attach Media",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"product\",\n  \"modelId\": \"1\",\n  \"mediaUuids\": [\"uuid-1\", \"uuid-2\"],\n  \"collection\": \"gallery\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/media/attach",
+							"host": ["{{baseUrl}}"],
+							"path": ["media", "attach"]
+						},
+						"description": "Attach existing temporary media to an entity"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Media by UUID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/media/some-uuid",
+							"host": ["{{baseUrl}}"],
+							"path": ["media", "some-uuid"]
+						},
+						"description": "Get media details by its UUID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Media by Entity",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/media/by-entity/product/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["media", "by-entity", "product", "1"]
+						},
+						"description": "Get all media for a specific entity"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Media by Entity and Collection",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/media/by-entity/product/1/gallery",
+							"host": ["{{baseUrl}}"],
+							"path": ["media", "by-entity", "product", "1", "gallery"]
+						},
+						"description": "Get media for a specific entity and collection"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Media",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/media/some-uuid",
+							"host": ["{{baseUrl}}"],
+							"path": ["media", "some-uuid"]
+						},
+						"description": "Delete media by its UUID"
+					},
+					"response": []
+				}
+			],
+			"description": "Media management endpoints (upload, attach, delete)"
 		}
 	],
 	"variable": [

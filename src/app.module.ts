@@ -48,10 +48,10 @@ import { PermissionsGuard } from './auth/guards/permissions.guard';
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: JwtAuthGuard,
+    // },
     {
       provide: APP_GUARD,
       useClass: PermissionsGuard,

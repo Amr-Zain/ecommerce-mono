@@ -100,6 +100,97 @@ This directory contains Postman collections and environments for testing the Fay
 - **Method:** GET
 - **URL:** `{{baseUrl}}/users/count/total`
 
+### Auth Module
+
+#### 1. Register
+- **Method:** POST
+- **URL:** `{{baseUrl}}/auth/register`
+- **Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "password123",
+  "phone": "1234567890",
+  "phoneCode": "+1"
+}
+```
+
+#### 2. Verify Email
+- **Method:** POST
+- **URL:** `{{baseUrl}}/auth/verify-email`
+- **Body:**
+```json
+{
+  "email": "john.doe@example.com",
+  "code": "123456"
+}
+```
+
+#### 3. Resend Email Verification
+- **Method:** POST
+- **URL:** `{{baseUrl}}/auth/resend-email-verification`
+- **Body:**
+```json
+{
+  "email": "john.doe@example.com"
+}
+```
+
+#### 4. Login
+- **Method:** POST
+- **URL:** `{{baseUrl}}/auth/login`
+- **Body:**
+```json
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+```
+
+#### 4. Refresh Token
+- **Method:** POST
+- **URL:** `{{baseUrl}}/auth/refresh`
+- **Body:**
+```json
+{
+  "refreshToken": "{{refreshToken}}"
+}
+```
+
+#### 5. Get Profile (Me)
+- **Method:** GET
+- **URL:** `{{baseUrl}}/auth/me`
+
+### Media Module
+
+#### 1. Upload Single
+- **Method:** POST
+- **URL:** `{{baseUrl}}/media/upload`
+- **Body:** Multipart/form-data (`file`, `model`, `modelId`, `collection`)
+
+#### 2. Upload Many
+- **Method:** POST
+- **URL:** `{{baseUrl}}/media/upload-many`
+- **Body:** Multipart/form-data (`files`, `model`, `modelId`, `collection`)
+
+#### 3. Attach Media
+- **Method:** POST
+- **URL:** `{{baseUrl}}/media/attach`
+- **Body:**
+```json
+{
+  "model": "product",
+  "modelId": "1",
+  "mediaUuids": ["uuid-1", "uuid-2"],
+  "collection": "gallery"
+}
+```
+
+#### 4. Get Media by UUID
+- **Method:** GET
+- **URL:** `{{baseUrl}}/media/:uuid`
+
 ## Query Parameters Guide
 
 ### Pagination
