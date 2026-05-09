@@ -6,10 +6,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import databaseConfig from './config/database.config';
-import {
-  I18nModule,
-  AcceptLanguageResolver,
-} from 'nestjs-i18n';
+import { I18nModule, AcceptLanguageResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { MediaModule } from './media/media.module';
 import { CommonModule } from './common/common.module';
@@ -54,9 +51,7 @@ import { PermissionsGuard } from './auth/guards/permissions.guard';
         watch: true,
       },
       typesOutputPath: path.join(__dirname, '../src/generated/i18n.generated.ts'),
-      resolvers: [
-        AcceptLanguageResolver,
-      ],
+      resolvers: [AcceptLanguageResolver],
     }),
   ],
   controllers: [AppController],
@@ -72,4 +67,4 @@ import { PermissionsGuard } from './auth/guards/permissions.guard';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

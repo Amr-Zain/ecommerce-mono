@@ -3,7 +3,7 @@ import { QueryBuilderService } from './services/query-builder.service';
 
 @Global()
 @Module({
-    providers: [QueryBuilderService],
-    exports: [QueryBuilderService],
+  providers: [QueryBuilderService],
+  exports: [QueryBuilderService],
 })
-export class CommonModule { }
+export class CommonModule {}

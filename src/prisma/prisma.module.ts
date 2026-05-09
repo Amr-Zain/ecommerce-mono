@@ -12,6 +12,6 @@ export class PrismaModule {
       where: {
         id: 1,
       },
-    }); 
+    });
   }
 }

@@ -12,27 +12,21 @@ import { PermissionDiscoveryService } from './services/permission-discovery.serv
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-    imports: [
-        PrismaModule,
-        PassportModule,
-        DiscoveryModule,
-        JwtModule.registerAsync({
-            imports: [ConfigModule],
-            useFactory: async (configService: ConfigService) => ({
-                secret: configService.get<string>('JWT_SECRET'),
-                signOptions: { expiresIn: '15m' },
-            }),
-            inject: [ConfigService],
-        }),
-    ],
-    controllers: [AuthController],
-    providers: [
-        AuthService,
-        LocalStrategy,
-        JwtStrategy,
-        JwtRefreshStrategy,
-        PermissionDiscoveryService,
-    ],
-    exports: [AuthService],
+  imports: [
+    PrismaModule,
+    PassportModule,
+    DiscoveryModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '15m' },
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtRefreshStrategy, PermissionDiscoveryService],
+  exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -41,6 +41,7 @@ common/
 ## Guidelines
 
 ### Utils (Pure Functions)
+
 - No dependencies
 - No `@Injectable()` decorator
 - Stateless
@@ -48,30 +49,36 @@ common/
 - Examples: date formatting, string manipulation
 
 ### Services
+
 - Injectable with `@Injectable()`
 - Can have dependencies
 - Reusable business logic
 - Examples: query building, data transformation
 
 ### Decorators
+
 - Custom parameter/method/class decorators
 - Examples: `@ParsedQuery()`, `@CurrentUser()`
 
 ### Guards
+
 - Authorization/authentication logic
 - Examples: rate limiting, API key validation
 
 ### Interceptors
+
 - Request/response transformation
 - Logging
 - Examples: logging, response wrapping
 
 ### Filters
+
 - Exception handling
 - Error formatting
 - Examples: HTTP exception filter
 
 ### Pipes
+
 - Data transformation
 - Validation
 - Examples: BigInt parsing, custom validation

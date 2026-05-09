@@ -12,10 +12,9 @@ export class MediaService {
   private readonly logger = new Logger(MediaService.name);
 
   constructor(
-
     private readonly prisma: PrismaService,
     @Inject('StorageInterface') private readonly storage: StorageInterface,
-  ) { }
+  ) {}
 
   /**
    * Determine logical generic type based on mime
@@ -24,14 +23,9 @@ export class MediaService {
     if (mimeType.startsWith('image/')) return MediaType.IMAGE;
     if (mimeType.startsWith('video/')) return MediaType.VIDEO;
     if (mimeType.startsWith('audio/')) return MediaType.AUDIO;
-    if (
-      mimeType.includes('pdf') ||
-      mimeType.includes('msword') ||
-      mimeType.includes('document')
-    )
+    if (mimeType.includes('pdf') || mimeType.includes('msword') || mimeType.includes('document'))
       return MediaType.DOCUMENT;
-    if (mimeType.includes('zip') || mimeType.includes('tar') || mimeType.includes('rar'))
-      return MediaType.ARCHIVE;
+    if (mimeType.includes('zip') || mimeType.includes('tar') || mimeType.includes('rar')) return MediaType.ARCHIVE;
     return MediaType.OTHER;
   }
 
@@ -50,11 +44,7 @@ export class MediaService {
 
     for (const file of files) {
       // 1. Upload physically
-      const { path: filePath, filename } = await this.storage.uploadFile(
-        file,
-        dto.model,
-        idOrHash,
-      );
+      const { path: filePath, filename } = await this.storage.uploadFile(file, dto.model, idOrHash);
 
       // 2. Infer meta attributes
       const mimeType = file.mimetype;

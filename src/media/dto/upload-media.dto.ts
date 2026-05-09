@@ -1,5 +1,4 @@
 import { IsOptional, IsString, IsNotEmpty, IsIn } from 'class-validator';
-import { Type } from 'class-transformer';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 import { I18nTranslations } from '../../generated/i18n.generated';
@@ -13,7 +12,7 @@ export const ALLOWED_MEDIA_MODELS = [
   'static_page',
   'page_section',
   'faq',
-  'attribute'
+  'attribute',
 ];
 
 export class UploadMediaDto {

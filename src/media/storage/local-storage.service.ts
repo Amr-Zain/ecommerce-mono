@@ -26,7 +26,7 @@ export class LocalStorageService implements StorageInterface {
 
     // Structure: /uploads/{model}/{modelId or hash}/{yyyy}/{mm}/
     const uploadDir = path.join(this.baseUploadsPath, model, idOrHash, year, month);
-    
+
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -39,7 +39,7 @@ export class LocalStorageService implements StorageInterface {
 
     // Return relative path to be stored taking uploads as root or absolute relative
     const dbPath = `/uploads/${model}/${idOrHash}/${year}/${month}/${newFilename}`;
-    
+
     return {
       path: dbPath,
       filename: newFilename,

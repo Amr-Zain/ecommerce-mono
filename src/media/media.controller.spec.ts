@@ -50,8 +50,7 @@ describe('MediaController', () => {
     });
 
     it('should throw AppException if file is missing', async () => {
-      await expect(controller.uploadSingle(undefined as any, { model: 'product' }))
-        .rejects.toThrow(AppException);
+      await expect(controller.uploadSingle(undefined as any, { model: 'product' })).rejects.toThrow(AppException);
     });
   });
 
@@ -67,10 +66,8 @@ describe('MediaController', () => {
     });
 
     it('should throw AppException if files are missing or empty', async () => {
-      await expect(controller.uploadMany([], { model: 'product' }))
-        .rejects.toThrow(AppException);
-      await expect(controller.uploadMany(undefined as any, { model: 'product' }))
-        .rejects.toThrow(AppException);
+      await expect(controller.uploadMany([], { model: 'product' })).rejects.toThrow(AppException);
+      await expect(controller.uploadMany(undefined as any, { model: 'product' })).rejects.toThrow(AppException);
     });
   });
 

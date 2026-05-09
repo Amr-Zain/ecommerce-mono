@@ -1,11 +1,4 @@
-import {
-    ExceptionFilter,
-    Catch,
-    ArgumentsHost,
-    HttpException,
-    HttpStatus,
-    Logger,
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 /**
@@ -14,38 +7,32 @@ import { Request, Response } from 'express';
  */
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
-    private readonly logger = new Logger(HttpExceptionFilter.name);
+  private readonly logger = new Logger(HttpExceptionFilter.name);
 
-    catch(exception: HttpException, host: ArgumentsHost) {
-        const ctx = host.switchToHttp();
-        const response = ctx.getResponse<Response>();
-        const request = ctx.getRequest<Request>();
-        const status = exception.getStatus();
-        const exceptionResponse = exception.getResponse();
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+    const status = exception.getStatus();
+    const exceptionResponse = exception.getResponse();
 
-        const errorResponse = {
-            success: false,
-            statusCode: status,
-            timestamp: new Date().toISOString(),
-            path: request.url,
-            method: request.method,
-            message:
-                typeof exceptionResponse === 'string'
-                    ? exceptionResponse
-                    : (exceptionResponse as any).message || exception.message,
-            error:
-                typeof exceptionResponse === 'object'
-                    ? (exceptionResponse as any).error
-                    : undefined,
-        };
+    const errorResponse = {
+      success: false,
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      method: request.method,
+      message:
+        typeof exceptionResponse === 'string'
+          ? exceptionResponse
+          : ((exceptionResponse as { message?: string }).message ?? exception.message),
+      error: typeof exceptionResponse === 'object' ? (exceptionResponse as { error?: string }).error : undefined,
+    };
 
-        // Log error
-        this.logger.error(
-            `${request.method} ${request.url} - ${status} - ${errorResponse.message}`,
-        );
+    this.logger.error(`${request.method} ${request.url} - ${status} - ${errorResponse.message}`);
 
-        response.status(status).json(errorResponse);
-    }
+    response.status(status).json(errorResponse);
+  }
 }
 
 /**
@@ -53,38 +40,30 @@ export class HttpExceptionFilter implements ExceptionFilter {
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-    private readonly logger = new Logger(AllExceptionsFilter.name);
+  private readonly logger = new Logger(AllExceptionsFilter.name);
 
-    catch(exception: unknown, host: ArgumentsHost) {
-        const ctx = host.switchToHttp();
-        const response = ctx.getResponse<Response>();
-        const request = ctx.getRequest<Request>();
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
 
-        const status =
-            exception instanceof HttpException
-                ? exception.getStatus()
-                : HttpStatus.INTERNAL_SERVER_ERROR;
+    const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+    const message = exception instanceof HttpException ? exception.message : 'Internal server error';
 
-        const message =
-            exception instanceof HttpException
-                ? exception.message
-                : 'Internal server error';
+    const errorResponse = {
+      success: false,
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      method: request.method,
+      message,
+    };
 
-        const errorResponse = {
-            success: false,
-            statusCode: status,
-            timestamp: new Date().toISOString(),
-            path: request.url,
-            method: request.method,
-            message,
-        };
+    this.logger.error(
+      `${request.method} ${request.url} - ${status} - ${message}`,
+      exception instanceof Error ? exception.stack : '',
+    );
 
-        // Log error with stack trace
-        this.logger.error(
-            `${request.method} ${request.url} - ${status} - ${message}`,
-            exception instanceof Error ? exception.stack : '',
-        );
-
-        response.status(status).json(errorResponse);
-    }
+    response.status(status).json(errorResponse);
+  }
 }

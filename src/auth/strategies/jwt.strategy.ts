@@ -7,44 +7,44 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-    constructor(
-        configService: ConfigService,
-        private prisma: PrismaService,
-    ) {
-        const secret = configService.get<string>('JWT_SECRET');
-        if (!secret) {
-            throw new Error('JWT_SECRET is not configured');
-        }
-
-        super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-            ignoreExpiration: false,
-            secretOrKey: secret,
-        });
+  constructor(
+    configService: ConfigService,
+    private prisma: PrismaService,
+  ) {
+    const secret = configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new Error('JWT_SECRET is not configured');
     }
 
-    async validate(payload: JwtPayload) {
-        // Only validate access tokens
-        if (payload.type !== 'access') {
-            throw new UnauthorizedException('Invalid token type');
-        }
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: secret,
+    });
+  }
 
-        // Fetch user with role and permissions
-        const user = await this.prisma.user.findUnique({
-            where: { id: BigInt(payload.sub) },
-            include: {
-                role: {
-                    include: {
-                        permissions: true,
-                    },
-                },
-            },
-        });
-
-        if (!user || !user.isActive) {
-            throw new UnauthorizedException('User not found or inactive');
-        }
-
-        return user;
+  async validate(payload: JwtPayload) {
+    // Only validate access tokens
+    if (payload.type !== 'access') {
+      throw new UnauthorizedException('Invalid token type');
     }
+
+    // Fetch user with role and permissions
+    const user = await this.prisma.user.findUnique({
+      where: { id: BigInt(payload.sub) },
+      include: {
+        role: {
+          include: {
+            permissions: true,
+          },
+        },
+      },
+    });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User not found or inactive');
+    }
+
+    return user;
+  }
 }

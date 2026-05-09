@@ -1,69 +1,68 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../prisma';
 
+type FilterValue = string | number | boolean;
+type WhereCondition = Record<string, FilterValue | Record<string, unknown>>;
+
 @Injectable()
 export class QueryBuilderService {
-    /**
-     * Build where conditions from filters object
-     * Example: { is_active: '1', role_id: '2' } => { isActive: true, roleId: 2n }
-     */
-    buildFiltersCondition(filters: Record<string, any>): any {
-        if (!filters || Object.keys(filters).length === 0) {
-            return {};
-        }
-
-        const conditions: any = {};
-
-        for (const [key, value] of Object.entries(filters)) {
-            // Convert string booleans to actual booleans
-            if (value === '1' || value === 'true') {
-                conditions[key] = true;
-            } else if (value === '0' || value === 'false') {
-                conditions[key] = false;
-            } else {
-                conditions[key] = value;
-            }
-        }
-
-        return conditions;
+  /**
+   * Build where conditions from filters object
+   */
+  buildFiltersCondition(filters: Record<string, FilterValue>): WhereCondition {
+    if (!filters || Object.keys(filters).length === 0) {
+      return {};
     }
 
-    /**
-     * Build search condition for multiple fields
-     */
-    buildSearchCondition(search: string, fields: string[]): any {
-        if (!search || fields.length === 0) {
-            return {};
-        }
+    const conditions: WhereCondition = {};
 
-        return {
-            OR: fields.map((field) => ({
-                [field]: {
-                    contains: search,
-                    mode: 'insensitive' as Prisma.QueryMode,
-                },
-            })),
-        };
+    for (const [key, value] of Object.entries(filters)) {
+      if (value === '1' || value === 'true' || value === true) {
+        conditions[key] = true;
+      } else if (value === '0' || value === 'false' || value === false) {
+        conditions[key] = false;
+      } else {
+        conditions[key] = value;
+      }
     }
 
-    /**
-     * Combine multiple where conditions
-     */
-    combineWhereConditions(...conditions: any[]): any {
-        const validConditions = conditions.filter(
-            (c) => c && Object.keys(c).length > 0,
-        );
+    return conditions;
+  }
 
-        if (validConditions.length === 0) {
-            return {};
-        }
-
-        if (validConditions.length === 1) {
-            return validConditions[0];
-        }
-
-        return {
-            AND: validConditions,
-        };
+  /**
+   * Build search condition for multiple fields
+   */
+  buildSearchCondition(search: string, fields: string[]): WhereCondition {
+    if (!search || fields.length === 0) {
+      return {};
     }
+
+    return {
+      OR: fields.map((field) => ({
+        [field]: {
+          contains: search,
+          mode: 'insensitive' as Prisma.QueryMode,
+        },
+      })) as unknown as FilterValue,
+    };
+  }
+
+  /**
+   * Combine multiple where conditions
+   */
+  combineWhereConditions(...conditions: WhereCondition[]): WhereCondition {
+    const validConditions = conditions.filter((c) => c && Object.keys(c).length > 0);
+
+    if (validConditions.length === 0) {
+      return {};
+    }
+
+    if (validConditions.length === 1) {
+      return validConditions[0];
+    }
+
+    return {
+      AND: validConditions as unknown as FilterValue,
+    };
+  }
 }

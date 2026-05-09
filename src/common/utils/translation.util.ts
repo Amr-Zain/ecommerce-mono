@@ -3,235 +3,147 @@
  * Helper functions for working with translated entities
  */
 
-/**
- * Fields to exclude from translation objects when flattening
- */
 const TRANSLATION_META_FIELDS = ['id', 'langId', 'createdAt', 'updatedAt'];
 
-/**
- * Foreign key fields to exclude (pattern: ends with 'Id')
- */
-const isForeignKeyField = (key: string): boolean => {
-    return key.endsWith('Id') && key !== 'langId';
-};
+const isForeignKeyField = (key: string): boolean => key.endsWith('Id') && key !== 'langId';
+
+export type TranslationRecord = Record<string, unknown> & { langId?: string };
+export type EntityWithTranslations = Record<string, unknown> & { translations?: TranslationRecord[] };
+
+function extractTranslationFields(
+  translation: TranslationRecord,
+  translationFields?: string[],
+): Record<string, unknown> {
+  const extracted: Record<string, unknown> = {};
+
+  if (translationFields) {
+    for (const field of translationFields) {
+      if (translation[field] !== undefined) {
+        extracted[field] = translation[field];
+      }
+    }
+  } else {
+    for (const key of Object.keys(translation)) {
+      if (!TRANSLATION_META_FIELDS.includes(key) && !isForeignKeyField(key)) {
+        extracted[key] = translation[key];
+      }
+    }
+  }
+
+  return extracted;
+}
 
 /**
  * Flatten translations into the main entity
- * Converts: { id: 1, translations: [{ name: 'Egypt', nationality: 'Egyptian' }] }
- * To: { id: 1, name: 'Egypt', nationality: 'Egyptian' }
- * 
- * @param entity - Entity with translations array
- * @param translationFields - Fields to extract from translation (default: all)
- * @param keepTranslations - Keep the translations array in the result (default: false)
- * @returns Entity with translation fields flattened
  */
-export function flattenTranslations<T extends { translations?: any[] }>(
-    entity: T,
-    translationFields?: string[],
-    keepTranslations: boolean = false,
-): Omit<T, 'translations'> & Record<string, any> {
-    if (!entity.translations || entity.translations.length === 0) {
-        const { translations, ...rest } = entity as any;
-        return rest;
-    }
+export function flattenTranslations<T extends EntityWithTranslations>(
+  entity: T,
+  translationFields?: string[],
+  keepTranslations = false,
+): Omit<T, 'translations'> & Record<string, unknown> {
+  if (!entity.translations || entity.translations.length === 0) {
+    const { translations: _t, ...rest } = entity;
+    return rest as Omit<T, 'translations'> & Record<string, unknown>;
+  }
 
-    const translation = entity.translations[0];
-    const { translations, ...entityWithoutTranslations } = entity as any;
+  const translation = entity.translations[0];
+  const { translations: _t, ...entityWithoutTranslations } = entity;
 
-    // If specific fields are requested, only extract those
-    if (translationFields) {
-        const extractedFields: Record<string, any> = {};
-        translationFields.forEach((field) => {
-            if (translation[field] !== undefined) {
-                extractedFields[field] = translation[field];
-            }
-        });
+  const extracted = extractTranslationFields(translation, translationFields);
+  const result: Record<string, unknown> = { ...entityWithoutTranslations, ...extracted };
 
-        const result = { ...entityWithoutTranslations, ...extractedFields };
+  if (keepTranslations) {
+    result['translations'] = entity.translations;
+  }
 
-        // Keep translations array if requested
-        if (keepTranslations) {
-            result.translations = entity.translations;
-        }
-
-        return result;
-    }
-
-    // Otherwise, extract all translation fields except meta fields and foreign keys
-    const extractedFields: Record<string, any> = {};
-    Object.keys(translation).forEach((key) => {
-        // Skip meta fields and foreign key fields
-        if (!TRANSLATION_META_FIELDS.includes(key) && !isForeignKeyField(key)) {
-            extractedFields[key] = translation[key];
-        }
-    });
-
-    const result = { ...entityWithoutTranslations, ...extractedFields };
-
-    // Keep translations array if requested
-    if (keepTranslations) {
-        result.translations = entity.translations;
-    }
-
-    return result;
+  return result as Omit<T, 'translations'> & Record<string, unknown>;
 }
 
 /**
  * Flatten translations for an array of entities
- * 
- * @param entities - Array of entities with translations
- * @param translationFields - Fields to extract from translation (default: all)
- * @param keepTranslations - Keep the translations array in the result (default: false)
- * @returns Array of entities with translation fields flattened
  */
-export function flattenTranslationsArray<T extends { translations?: any[] }>(
-    entities: T[],
-    translationFields?: string[],
-    keepTranslations: boolean = false,
-): Array<Omit<T, 'translations'> & Record<string, any>> {
-    return entities.map((entity) => flattenTranslations(entity, translationFields, keepTranslations));
+export function flattenTranslationsArray<T extends EntityWithTranslations>(
+  entities: T[],
+  translationFields?: string[],
+  keepTranslations = false,
+): Array<Omit<T, 'translations'> & Record<string, unknown>> {
+  return entities.map((entity) => flattenTranslations(entity, translationFields, keepTranslations));
 }
 
 /**
  * Get translation for specific language from translations array
- * 
- * @param translations - Array of translations
- * @param langId - Language ID (e.g., 'en', 'ar')
- * @param fallbackLangId - Fallback language if requested language not found
- * @returns Translation object or null
  */
 export function getTranslation<T extends { langId: string }>(
-    translations: T[],
-    langId: string,
-    fallbackLangId: string = 'en',
+  translations: T[],
+  langId: string,
+  fallbackLangId = 'en',
 ): T | null {
-    if (!translations || translations.length === 0) {
-        return null;
-    }
+  if (!translations || translations.length === 0) {
+    return null;
+  }
 
-    // Try to find requested language
-    const translation = translations.find((t) => t.langId === langId);
-    if (translation) {
-        return translation;
-    }
-
-    // Fallback to fallback language
-    const fallbackTranslation = translations.find((t) => t.langId === fallbackLangId);
-    if (fallbackTranslation) {
-        return fallbackTranslation;
-    }
-
-    // Return first available translation
-    return translations[0];
+  return (
+    translations.find((t) => t.langId === langId) ??
+    translations.find((t) => t.langId === fallbackLangId) ??
+    translations[0]
+  );
 }
 
-
-export function hasTranslation(translations: any[], langId: string): boolean {
-    return translations.some((t) => t.langId === langId);
+export function hasTranslation(translations: TranslationRecord[], langId: string): boolean {
+  return translations.some((t) => t.langId === langId);
 }
 
-
-export function getAvailableLanguages(translations: any[]): string[] {
-    return translations.map((t) => t.langId);
+export function getAvailableLanguages(translations: TranslationRecord[]): string[] {
+  return translations.map((t) => t.langId ?? '').filter(Boolean);
 }
 
 /**
  * Flatten all translations into language-specific keys
- * For entities with 1 translation: flattens to top level WITHOUT language keys
- * For entities with 2+ translations: creates language keys (ar, en, etc.) with all translations
- * 
- * @param entity - Entity with translations array
- * @param requestedLangId - Language ID for top-level fields (e.g., 'en', 'ar')
- * @param translationFields - Fields to extract from translation (default: all)
- * @param keepTranslations - Keep the translations array in the result (default: false)
- * @returns Entity with all translations as language keys
  */
-export function flattenAllTranslations<T extends { translations?: any[] }>(
-    entity: T,
-    requestedLangId: string,
-    translationFields?: string[],
-    keepTranslations: boolean = false,
-): Omit<T, 'translations'> & Record<string, any> {
-    if (!entity.translations || entity.translations.length === 0) {
-        const { translations, ...rest } = entity as any;
-        return rest;
+export function flattenAllTranslations<T extends EntityWithTranslations>(
+  entity: T,
+  requestedLangId: string,
+  translationFields?: string[],
+  keepTranslations = false,
+): Omit<T, 'translations'> & Record<string, unknown> {
+  if (!entity.translations || entity.translations.length === 0) {
+    const { translations: _t, ...rest } = entity;
+    return rest as Omit<T, 'translations'> & Record<string, unknown>;
+  }
+
+  if (entity.translations.length === 1) {
+    return flattenTranslations(entity, translationFields, keepTranslations);
+  }
+
+  const { translations, ...entityWithoutTranslations } = entity;
+  const result: Record<string, unknown> = { ...entityWithoutTranslations };
+
+  for (const translation of translations) {
+    const langId = translation.langId;
+    if (langId) {
+      result[langId] = extractTranslationFields(translation, translationFields);
     }
+  }
 
-    // For single translation, use existing flattenTranslations logic (NO language keys)
-    if (entity.translations.length === 1) {
-        return flattenTranslations(entity, translationFields, keepTranslations);
-    }
+  const requestedTranslation = translations.find((t) => t.langId === requestedLangId) ?? translations[0];
 
-    // For multiple translations, create language-specific keys
-    const { translations, ...entityWithoutTranslations } = entity as any;
-    const result: any = { ...entityWithoutTranslations };
+  Object.assign(result, extractTranslationFields(requestedTranslation, translationFields));
 
-    // Helper to extract fields from a translation
-    const extractTranslationFields = (translation: any): Record<string, any> => {
-        const extractedFields: Record<string, any> = {};
+  if (keepTranslations) {
+    result['translations'] = translations;
+  }
 
-        if (translationFields) {
-            // Extract only specified fields
-            translationFields.forEach((field) => {
-                if (translation[field] !== undefined) {
-                    extractedFields[field] = translation[field];
-                }
-            });
-        } else {
-            // Extract all fields except meta fields and foreign keys
-            Object.keys(translation).forEach((key) => {
-                if (!TRANSLATION_META_FIELDS.includes(key) && !isForeignKeyField(key)) {
-                    extractedFields[key] = translation[key];
-                }
-            });
-        }
-
-        return extractedFields;
-    };
-
-    // Create language-specific keys for all translations
-    entity.translations.forEach((translation) => {
-        const langId = translation.langId;
-        result[langId] = extractTranslationFields(translation);
-    });
-
-    // Add top-level translation fields using the requested language
-    const requestedTranslation = entity.translations.find((t) => t.langId === requestedLangId);
-    if (requestedTranslation) {
-        const topLevelFields = extractTranslationFields(requestedTranslation);
-        Object.assign(result, topLevelFields);
-    } else {
-        // Fallback to first translation if requested language not found
-        const topLevelFields = extractTranslationFields(entity.translations[0]);
-        Object.assign(result, topLevelFields);
-    }
-
-    // Keep translations array if requested
-    if (keepTranslations) {
-        result.translations = entity.translations;
-    }
-
-    return result;
+  return result as Omit<T, 'translations'> & Record<string, unknown>;
 }
 
 /**
  * Flatten all translations for an array of entities
- * For entities with 1 translation: flattens to top level WITHOUT language keys
- * For entities with 2+ translations: creates language keys (ar, en, etc.) with all translations
- * 
- * @param entities - Array of entities with translations
- * @param requestedLangId - Language ID for top-level fields (e.g., 'en', 'ar')
- * @param translationFields - Fields to extract from translation (default: all)
- * @param keepTranslations - Keep the translations array in the result (default: false)
- * @returns Array of entities with all translations as language keys
  */
-export function flattenAllTranslationsArray<T extends { translations?: any[] }>(
-    entities: T[],
-    requestedLangId: string,
-    translationFields?: string[],
-    keepTranslations: boolean = false,
-): Array<Omit<T, 'translations'> & Record<string, any>> {
-    return entities.map((entity) =>
-        flattenAllTranslations(entity, requestedLangId, translationFields, keepTranslations)
-    );
+export function flattenAllTranslationsArray<T extends EntityWithTranslations>(
+  entities: T[],
+  requestedLangId: string,
+  translationFields?: string[],
+  keepTranslations = false,
+): Array<Omit<T, 'translations'> & Record<string, unknown>> {
+  return entities.map((entity) => flattenAllTranslations(entity, requestedLangId, translationFields, keepTranslations));
 }

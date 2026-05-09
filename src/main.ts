@@ -4,7 +4,7 @@ import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 // Add BigInt serialization support for JSON
-(BigInt.prototype as any).toJSON = function () {
+(BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function (this: bigint) {
   return this.toString();
 };
 
@@ -13,14 +13,12 @@ async function bootstrap() {
 
   const httpAdapterHost = app.get(HttpAdapterHost);
 
-  // App exception filters & pipes setup
   app.useGlobalPipes(new I18nValidationPipe({ transform: true, whitelist: true }));
   app.useGlobalFilters(
     new AllExceptionsFilter(httpAdapterHost),
-    new I18nValidationExceptionFilter({ detailedErrors: false })
+    new I18nValidationExceptionFilter({ detailedErrors: false }),
   );
 
-  // Implements NestJS graceful shut down hooks (recommended for Prisma)
   app.enableShutdownHooks();
 
   const port = process.env.PORT ?? 3000;

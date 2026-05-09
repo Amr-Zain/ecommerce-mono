@@ -1,11 +1,4 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { I18nContext, I18nValidationException } from 'nestjs-i18n';
 
@@ -34,28 +27,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return;
     }
 
-    const httpStatus =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    const httpStatus = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    let responseMessage: string | any = 'Internal server error';
+    let responseMessage: string = 'Internal server error';
     let translationKey = 'errors.INTERNAL_SERVER_ERROR';
-    let args = {};
+    let args: Record<string, unknown> = {};
 
     if (exception instanceof HttpException) {
       const response = exception.getResponse();
-      
+
       // If it's our custom AppException, extract key and args
       if ('key' in exception) {
-        translationKey = (exception as any).key;
-        args = (exception as any).args || {};
+        const appEx = exception as { key: string; args?: Record<string, unknown> };
+        translationKey = appEx.key;
+        args = appEx.args ?? {};
         responseMessage = translationKey;
       } else {
         // Standard NestJS HttpException
         responseMessage =
           typeof response === 'object' && response !== null && 'message' in response
-            ? (response as any).message
+            ? String((response as { message: unknown }).message)
             : exception.message;
 
         // Automatically form translation keys for standard HTTP errors if desired
@@ -70,11 +61,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Process Internationalization
     const i18n = I18nContext.current(host);
     const originalMessage = Array.isArray(responseMessage) ? responseMessage[0] : responseMessage;
-    
+
     let localizedMessage = originalMessage;
 
     if (i18n) {
-      // The t() function returns the key itself if no translation is found. 
+      // The t() function returns the key itself if no translation is found.
       // We fall back to the original message if translation fails (result equals key).
       const translation = i18n.t(translationKey, { args, defaultValue: originalMessage });
       localizedMessage = translation;

@@ -22,10 +22,7 @@ export class MediaController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadSingle(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() dto: UploadMediaDto,
-  ) {
+  async uploadSingle(@UploadedFile() file: Express.Multer.File, @Body() dto: UploadMediaDto) {
     if (!file) throw new AppException('errors.FILE_REQUIRED', {}, HttpStatus.BAD_REQUEST);
     const result = await this.mediaService.uploadMultiple([file], dto);
     return {
@@ -36,10 +33,7 @@ export class MediaController {
 
   @Post('upload-many')
   @UseInterceptors(FilesInterceptor('files'))
-  async uploadMany(
-    @UploadedFiles() files: Express.Multer.File[],
-    @Body() dto: UploadMediaDto,
-  ) {
+  async uploadMany(@UploadedFiles() files: Express.Multer.File[], @Body() dto: UploadMediaDto) {
     if (!files || files.length === 0) {
       throw new AppException('errors.FILES_REQUIRED', {}, HttpStatus.BAD_REQUEST);
     }
@@ -63,10 +57,7 @@ export class MediaController {
   }
 
   @Get('by-entity/:model/:modelId')
-  async getByEntity(
-    @Param('model') model: string,
-    @Param('modelId') modelId: string,
-  ) {
+  async getByEntity(@Param('model') model: string, @Param('modelId') modelId: string) {
     const data = await this.mediaService.findByEntity(model, modelId);
     return { success: true, data };
   }

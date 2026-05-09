@@ -3,6 +3,6 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { UsersModule } from '../users/users.module';
 
 @Module({
-    imports: [DashboardModule, UsersModule],
+  imports: [DashboardModule, UsersModule],
 })
-export class AdminModule { }
+export class AdminModule {}

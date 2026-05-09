@@ -7,9 +7,7 @@ export default registerAs('database', () => {
   const host = process.env.POSTGRES_HOST;
   const port = parseInt(process.env.POSTGRES_PORT || '5432', 10);
 
-  const url =
-    process.env.DATABASE_URL ||
-    `postgresql://${user}:${password}@${host}:${port}/${db}?schema=public`;
+  const url = process.env.DATABASE_URL || `postgresql://${user}:${password}@${host}:${port}/${db}?schema=public`;
 
   return {
     url,
