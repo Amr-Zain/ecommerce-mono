@@ -45,8 +45,7 @@ describe('MediaController', () => {
 
       const result = await controller.uploadSingle(file, dto);
       expect(mockService.uploadMultiple).toHaveBeenCalledWith([file], dto);
-      expect(result.success).toBe(true);
-      expect(result.data.id).toBe('1');
+      expect(result.id).toBe('1');
     });
 
     it('should throw AppException if file is missing', async () => {
@@ -62,7 +61,7 @@ describe('MediaController', () => {
 
       const result = await controller.uploadMany(files, dto);
       expect(mockService.uploadMultiple).toHaveBeenCalledWith(files, dto);
-      expect(result.data).toHaveLength(2);
+      expect(result).toHaveLength(2);
     });
 
     it('should throw AppException if files are missing or empty', async () => {
@@ -87,7 +86,7 @@ describe('MediaController', () => {
       mockService.findByEntity.mockResolvedValue([{ id: '1' }]);
       const result = await controller.getByEntity('product', '5');
       expect(mockService.findByEntity).toHaveBeenCalledWith('product', '5');
-      expect(result.data).toHaveLength(1);
+      expect(result).toHaveLength(1);
     });
   });
 
@@ -95,7 +94,7 @@ describe('MediaController', () => {
     it('should remove target by UUID', async () => {
       const result = await controller.delete('123-uuid');
       expect(mockService.deleteByUuid).toHaveBeenCalledWith('123-uuid');
-      expect(result.success).toBe(true);
+      expect(result.message).toBe('Media deleted');
     });
   });
 });

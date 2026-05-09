@@ -12,18 +12,7 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Request } from 'express';
-
-interface AuthUser {
-  id: bigint;
-  name: string;
-  email: string;
-  phone?: string;
-  role?: { id: bigint; nameEn: string; nameAr: string };
-  isEmailVerified: boolean;
-  isPhoneVerified: boolean;
-  isActive: boolean;
-  [key: string]: unknown;
-}
+import type { AuthUserPayload } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
@@ -59,13 +48,13 @@ export class AuthController {
       throw new UnauthorizedException('User not authenticated');
     }
 
-    return this.authService.login(req.user as AuthUser, deviceInfo, ipAddress);
+    return this.authService.login(req.user as AuthUserPayload, deviceInfo, ipAddress);
   }
 
   @Public()
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
-  async refresh(@CurrentUser() user: AuthUser, @Body() refreshTokenDto: RefreshTokenDto) {
+  async refresh(@CurrentUser() user: AuthUserPayload, @Body() refreshTokenDto: RefreshTokenDto) {
     return this.authService.refreshAccessToken(user, refreshTokenDto.refreshToken);
   }
 
@@ -75,7 +64,7 @@ export class AuthController {
   }
 
   @Post('logout-all')
-  async logoutAll(@CurrentUser() user: AuthUser) {
+  async logoutAll(@CurrentUser() user: AuthUserPayload) {
     return this.authService.logoutAll(user.id);
   }
 
@@ -104,11 +93,11 @@ export class AuthController {
   }
 
   @Get('me')
-  getProfile(@CurrentUser() user: AuthUser) {
+  getProfile(@CurrentUser() user: AuthUserPayload) {
     return {
       id: user.id.toString(),
       name: user.name,
-      email: user.email,
+      email: user.email ?? '',
       phone: user.phone,
       role: user.role
         ? {
@@ -124,12 +113,12 @@ export class AuthController {
   }
 
   @Get('sessions')
-  async getSessions(@CurrentUser() user: AuthUser) {
+  async getSessions(@CurrentUser() user: AuthUserPayload) {
     return this.authService.getSessions(user.id);
   }
 
   @Delete('sessions/:sessionId')
-  async revokeSession(@CurrentUser() user: AuthUser, @Param('sessionId') sessionId: string) {
+  async revokeSession(@CurrentUser() user: AuthUserPayload, @Param('sessionId') sessionId: string) {
     return this.authService.revokeSession(user.id, BigInt(sessionId));
   }
 }

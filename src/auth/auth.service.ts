@@ -8,22 +8,31 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '../prisma';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { randomBytes } from 'crypto';
 
-interface LoginUser {
-  id: bigint;
-  name: string;
-  email: string;
-  isEmailVerified: boolean;
-  isPhoneVerified: boolean;
-  userType?: string;
-  role?: { id: bigint; nameEn: string; nameAr: string; permissions?: unknown[] };
-  [key: string]: unknown;
-}
+/** Same include as local/JWT validation — single source for “user + role + permissions”. */
+export type AuthUserPayload = Prisma.UserGetPayload<{
+  include: {
+    role: {
+      include: { permissions: true };
+    };
+  };
+}>;
+
+type AuthSessionSummary = Prisma.RefreshTokenGetPayload<{
+  select: {
+    id: true;
+    deviceInfo: true;
+    ipAddress: true;
+    createdAt: true;
+    expiresAt: true;
+  };
+}>;
 
 @Injectable()
 export class AuthService {
@@ -36,7 +45,7 @@ export class AuthService {
   /**
    * Validate user credentials
    */
-  async validateUser(email: string, password: string): Promise<unknown> {
+  async validateUser(email: string, password: string): Promise<AuthUserPayload | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
@@ -182,7 +191,12 @@ export class AuthService {
   /**
    * Login user
    */
-  async login(user: LoginUser, deviceInfo?: string, ipAddress?: string): Promise<AuthResponseDto> {
+  async login(user: AuthUserPayload, deviceInfo?: string, ipAddress?: string): Promise<AuthResponseDto> {
+    const emailAddr = user.email;
+    if (emailAddr == null || emailAddr === '') {
+      throw new UnauthorizedException('User email is missing');
+    }
+
     // Check if email is verified
     if (!user.isEmailVerified) {
       throw new UnauthorizedException('Please verify your email before logging in');
@@ -197,7 +211,7 @@ export class AuthService {
       user: {
         id: user.id.toString(),
         name: user.name,
-        email: user.email,
+        email: emailAddr,
         role: user.role
           ? {
               id: user.role.id.toString(),
@@ -215,7 +229,7 @@ export class AuthService {
    * Generate access and refresh tokens
    */
   private async generateTokens(
-    user: LoginUser,
+    user: AuthUserPayload,
     deviceInfo?: string,
     ipAddress?: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
@@ -223,9 +237,14 @@ export class AuthService {
     const tokenId = randomBytes(32).toString('hex');
 
     // Access token payload
+    const emailAddr = user.email;
+    if (emailAddr == null || emailAddr === '') {
+      throw new UnauthorizedException('User email is missing');
+    }
+
     const accessPayload: JwtPayload = {
       sub: user.id.toString(),
-      email: user.email,
+      email: emailAddr,
       role: user.role?.nameEn,
       userType: user.userType,
       type: 'access',
@@ -234,19 +253,22 @@ export class AuthService {
     // Refresh token payload
     const refreshPayload: JwtPayload = {
       sub: user.id.toString(),
-      email: user.email,
+      email: emailAddr,
       type: 'refresh',
       jti: tokenId,
     };
 
     // Sign tokens
+    const accessSecret = this.getJwtSigningSecretOrThrow('JWT_SECRET');
+    const refreshSecret = this.getJwtSigningSecretOrThrow('JWT_REFRESH_SECRET');
+
     const accessToken = this.jwtService.sign(accessPayload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
+      secret: accessSecret,
       expiresIn: '15m',
     });
 
     const refreshToken = this.jwtService.sign(refreshPayload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      secret: refreshSecret,
       expiresIn: '7d',
     });
 
@@ -268,7 +290,7 @@ export class AuthService {
    * Refresh access token
    */
   async refreshAccessToken(
-    user: LoginUser,
+    user: AuthUserPayload,
     oldRefreshToken: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     // Decode old refresh token to get token ID
@@ -471,7 +493,7 @@ export class AuthService {
   /**
    * Get user sessions
    */
-  async getSessions(userId: bigint) {
+  async getSessions(userId: bigint): Promise<AuthSessionSummary[]> {
     return this.prisma.refreshToken.findMany({
       where: {
         userId,
@@ -508,5 +530,13 @@ export class AuthService {
     });
 
     return { message: 'Session revoked successfully' };
+  }
+
+  private getJwtSigningSecretOrThrow(envKey: 'JWT_SECRET' | 'JWT_REFRESH_SECRET'): string {
+    const secret = this.configService.get<string>(envKey);
+    if (!secret || secret.trim() === '') {
+      throw new Error(`${envKey} is not configured`);
+    }
+    return secret;
   }
 }
