@@ -10,18 +10,21 @@ import { Injectable, Logger } from '@nestjs/common';
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
 
-  async sendVerificationSms(phone: string, code: string): Promise<void> {
+  sendVerificationSms(phone: string, code: string): Promise<void> {
     this.logger.log(`Sending verification SMS to ${phone} with code: ${code}`);
     // TODO: Implement SMS sending
+    return Promise.resolve();
   }
 
-  async sendPasswordResetSms(phone: string, code: string): Promise<void> {
+  sendPasswordResetSms(phone: string, code: string): Promise<void> {
     this.logger.log(`Sending password reset SMS to ${phone} with code: ${code}`);
     // TODO: Implement SMS sending
+    return Promise.resolve();
   }
 
-  async sendNotification(phone: string, message: string): Promise<void> {
+  sendNotification(phone: string, message: string): Promise<void> {
     this.logger.log(`Sending notification SMS to ${phone}: ${message}`);
     // TODO: Implement SMS sending
+    return Promise.resolve();
   }
 }

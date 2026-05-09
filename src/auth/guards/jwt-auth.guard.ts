@@ -9,10 +9,7 @@ interface AuthenticatedUser {
   [key: string]: unknown;
 }
 
-interface AuthenticatedRequest extends Request {
-  user?: AuthenticatedUser;
-  route?: { path: string };
-}
+type AuthenticatedRequest = Request & { user?: AuthenticatedUser };
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -31,7 +28,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const path = request.route?.path ?? request.url;
+    const path = this.resolveRoutePath(request);
 
     if (path.startsWith('/admin') || path.startsWith('/client')) {
       const result = super.canActivate(context);
@@ -53,6 +50,24 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     return super.canActivate(context);
+  }
+
+  /** Express `route` is often typed as `any`; never read `.route` directly — use keyed access as `unknown`. */
+  private resolveRoutePath(request: AuthenticatedRequest): string {
+    const url = typeof request.url === 'string' ? request.url : '';
+    if (typeof request !== 'object' || request === null) {
+      return url;
+    }
+
+    const routeUnknown: unknown = (request as unknown as Record<PropertyKey, unknown>)['route'];
+    if (routeUnknown && typeof routeUnknown === 'object') {
+      const routeObj = routeUnknown as Record<PropertyKey, unknown>;
+      const routePathUnknown = routeObj['path'];
+      if (typeof routePathUnknown === 'string') {
+        return routePathUnknown;
+      }
+    }
+    return url;
   }
 
   private validateUserType(request: AuthenticatedRequest, path: string): boolean {

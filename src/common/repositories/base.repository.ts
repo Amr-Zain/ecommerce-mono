@@ -5,9 +5,9 @@ import { PaginationUtil } from '../utils/pagination.util';
 
 type WhereClause = Record<string, unknown>;
 
-type IncludeClause = Record<string, boolean | unknown>;
+type IncludeClause = Record<string, boolean | object>;
 
-type SelectClause = Record<string, boolean | unknown>;
+type SelectClause = Record<string, boolean | object>;
 
 type QueryOptions =
   | { select: SelectClause; include?: never }
@@ -45,7 +45,7 @@ export abstract class BaseRepository<T> {
       count: (args?: unknown) => Promise<number>;
     };
 
-    const queryArgs: any = {
+    const queryArgs: Record<string, unknown> = {
       where,
       orderBy,
     };
@@ -87,7 +87,7 @@ export abstract class BaseRepository<T> {
       findUnique: (args: unknown) => Promise<T | null>;
     };
 
-    const queryArgs: any = {
+    const queryArgs: Record<string, unknown> = {
       where: { id },
     };
 
@@ -105,7 +105,7 @@ export abstract class BaseRepository<T> {
       findFirst: (args?: unknown) => Promise<T | null>;
     };
 
-    const queryArgs: any = {
+    const queryArgs: Record<string, unknown> = {
       where,
     };
 
@@ -123,7 +123,7 @@ export abstract class BaseRepository<T> {
       findMany: (args?: unknown) => Promise<T[]>;
     };
 
-    const queryArgs: any = {
+    const queryArgs: Record<string, unknown> = {
       where,
     };
 

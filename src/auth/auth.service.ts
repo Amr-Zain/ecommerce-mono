@@ -292,7 +292,7 @@ export class AuthService {
    * Logout (revoke refresh token)
    */
   async logout(refreshToken: string): Promise<{ message: string }> {
-    const decoded = this.jwtService.decode(refreshToken);
+    const decoded = this.jwtService.decode<JwtPayload>(refreshToken);
 
     if (decoded?.jti) {
       await this.prisma.refreshToken.updateMany({

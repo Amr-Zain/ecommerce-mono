@@ -3,9 +3,11 @@ import { PrismaService, Prisma } from '../../prisma';
 import { QueryBuilderService } from 'src/common/services/query-builder.service';
 import { BaseRepository } from 'src/common/repositories/base.repository';
 import { AdvancedQueryDto } from 'src/common/dto/advanced-query.dto';
+import { PaginatedResult } from 'src/common/dto/pagination.dto';
 
+export type CountryType = Prisma.CountryGetPayload<{ include: { translations: true } }>;
 @Injectable()
-export class CountriesRepository extends BaseRepository<Prisma.CountryGetPayload<never>> {
+export class CountriesRepository extends BaseRepository<CountryType> {
   constructor(
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,
@@ -16,14 +18,7 @@ export class CountriesRepository extends BaseRepository<Prisma.CountryGetPayload
   getModel() {
     return this.prisma.country;
   }
-
-  /**
-   * Find all countries with translations for specific language
-   * @param query - Query parameters
-   * @param langId - Language ID (e.g., 'en', 'ar')
-   * @returns Paginated countries with only the requested language translation
-   */
-  async findAll(query: AdvancedQueryDto, langId: string = 'en') {
+  async findAll(query: AdvancedQueryDto, langId: string = 'en'): Promise<PaginatedResult<CountryType>> {
     const where = this.buildWhereClause(query, langId);
 
     return this.paginate(query, where, {
@@ -36,26 +31,15 @@ export class CountriesRepository extends BaseRepository<Prisma.CountryGetPayload
     });
   }
 
-  /**
-   * Find country by ID with translations for specific language
-   * @param id - Country ID
-   * @param langId - Language ID (e.g., 'en', 'ar')
-   * @returns Country with only the requested language translation
-   */
-  async createCountry(country: Prisma.CountryCreateInput) {
+  async createCountry(country: Prisma.CountryCreateInput): Promise<CountryType> {
     return this.create(country);
   }
 
-  async updateCountry(country: Prisma.CountryUpdateInput, id: number) {
+  async updateCountry(country: Prisma.CountryUpdateInput, id: number): Promise<CountryType> {
     return this.update(id, country);
   }
 
-  /**
-   * Find country by ID with all translations (for admin editing)
-   * @param id - Country ID
-   * @returns Country with all translations
-   */
-  async findByIdWithRelations(id: number | bigint, langId: string = 'en') {
+  async findByIdWithRelations(id: number | bigint, langId: string = 'en'): Promise<CountryType | null> {
     return this.findById(id, {
       include: {
         translations: {
@@ -66,18 +50,22 @@ export class CountriesRepository extends BaseRepository<Prisma.CountryGetPayload
     });
   }
 
-  async findByIdWithAllTranslations(id: number | bigint) {
+  async findByIdWithAllTranslations(id: number | bigint): Promise<CountryType | null> {
     return this.findById(id, {
       include: {
         translations: true,
       },
     });
   }
-
+  async deleteCountry(id: number | bigint): Promise<CountryType> {
+    return this.delete(id);
+  }
   private buildWhereClause(query: AdvancedQueryDto, langId?: string): Prisma.CountryWhereInput {
-    const conditions = [];
-
-    conditions.push(this.queryBuilder.buildFiltersCondition(query.filters!));
+    const conditions: Prisma.CountryWhereInput[] = [];
+    const filters = query.filters ?? {};
+    if (Object.keys(filters).length > 0) {
+      conditions.push(this.queryBuilder.buildFiltersCondition<Prisma.CountryWhereInput>(filters));
+    }
 
     if (query.search && langId) {
       // Search in translations for the specific language

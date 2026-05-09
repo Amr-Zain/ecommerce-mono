@@ -6,6 +6,7 @@ import { UserQueryDto } from './dto/user-query.dto';
 import { PaginatedResult } from '../common/dto/pagination.dto';
 import { User } from './users.repository';
 import * as bcrypt from 'bcrypt';
+import { Prisma } from '../prisma';
 
 @Injectable()
 export class UsersService {
@@ -57,7 +58,7 @@ export class UsersService {
       hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     }
 
-    const data: any = {
+    const data: Prisma.UserCreateInput = {
       name: createUserDto.name,
       email: createUserDto.email,
       password: hashedPassword,
@@ -98,18 +99,10 @@ export class UsersService {
     }
 
     // Hash password if being updated
-    const data: any = { ...updateUserDto };
+    const data = this.toUserUpdateInput(updateUserDto);
 
     if (updateUserDto.password) {
       data.password = await bcrypt.hash(updateUserDto.password, 10);
-    }
-
-    // Handle role update
-    if (updateUserDto.roleId) {
-      data.role = {
-        connect: { id: updateUserDto.roleId },
-      };
-      delete data.roleId;
     }
 
     return this.usersRepository.updateUser(id, data);
@@ -134,5 +127,34 @@ export class UsersService {
    */
   async count(): Promise<number> {
     return this.usersRepository.count();
+  }
+
+  private toUserUpdateInput(dto: UpdateUserDto): Prisma.UserUpdateInput {
+    const data: Prisma.UserUpdateInput = {};
+
+    this.assignIfDefined(data, 'name', dto.name);
+    this.assignIfDefined(data, 'email', dto.email);
+    this.assignIfDefined(data, 'phone', dto.phone);
+    this.assignIfDefined(data, 'phoneCode', dto.phoneCode);
+    this.assignIfDefined(data, 'userType', dto.userType);
+    this.assignIfDefined(data, 'isActive', dto.isActive);
+
+    if (dto.roleId) {
+      data.role = {
+        connect: { id: dto.roleId },
+      };
+    }
+
+    return data;
+  }
+
+  private assignIfDefined<K extends keyof Prisma.UserUpdateInput>(
+    target: Prisma.UserUpdateInput,
+    key: K,
+    value: Prisma.UserUpdateInput[K] | undefined,
+  ): void {
+    if (value !== undefined) {
+      target[key] = value;
+    }
   }
 }

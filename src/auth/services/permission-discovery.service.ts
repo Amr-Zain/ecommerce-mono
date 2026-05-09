@@ -1,7 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
-import { Controller } from '@nestjs/common/interfaces';
 import { PERMISSIONS_KEY, RequiredPermission } from '../decorators/permissions.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -43,15 +42,22 @@ export class PermissionDiscoveryService implements OnModuleInit {
   /**
    * Scan a controller for permission metadata
    */
-  private scanController(wrapper: InstanceWrapper<Controller>, discoveredPermissions: Set<string>) {
+  private scanController(wrapper: InstanceWrapper<unknown>, discoveredPermissions: Set<string>) {
     const { instance } = wrapper;
     if (!instance) return;
 
-    const prototype = Object.getPrototypeOf(instance);
+    const prototype = Object.getPrototypeOf(instance) as object | null;
+    if (!prototype || typeof prototype !== 'object') {
+      return;
+    }
     const methodNames = this.metadataScanner.getAllMethodNames(prototype);
+    const prototypeRecord = prototype as Record<string, unknown>;
 
     for (const methodName of methodNames) {
-      const method = prototype[methodName];
+      const method = prototypeRecord[methodName];
+      if (typeof method !== 'function') {
+        continue;
+      }
 
       // Get permissions from method decorator
       const permissions = this.reflector.get<RequiredPermission[]>(PERMISSIONS_KEY, method);
@@ -79,7 +85,9 @@ export class PermissionDiscoveryService implements OnModuleInit {
     // Parse permission strings
     permissions.forEach((perm) => {
       const [resource, action] = perm.split(':');
-      permissionMap.set(perm, { resource, action });
+      if (resource && action) {
+        permissionMap.set(perm, { resource, action });
+      }
     });
 
     // Get all existing permissions from database

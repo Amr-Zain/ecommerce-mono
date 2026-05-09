@@ -13,11 +13,7 @@ export class UsersController {
   @Post()
   @RequirePermissions({ resource: 'users', action: 'create' })
   async create(@Body() createUserDto: CreateUserDto) {
-    const user = await this.usersService.create(createUserDto);
-    return {
-      success: true,
-      data: user,
-    };
+    return this.usersService.create(createUserDto);
   }
 
   @Get()
@@ -25,29 +21,21 @@ export class UsersController {
   async findAll(@ParsedQuery(UserQueryDto) query: UserQueryDto) {
     const result = await this.usersService.findAll(query);
     return {
-      success: true,
-      ...result,
+      items: result.data,
+      meta: result.meta,
     };
   }
 
   @Get(':id')
   @RequirePermissions({ resource: 'users', action: 'read' })
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    const user = await this.usersService.findOne(BigInt(id));
-    return {
-      success: true,
-      data: user,
-    };
+    return this.usersService.findOne(BigInt(id));
   }
 
   @Patch(':id')
   @RequirePermissions({ resource: 'users', action: 'update' })
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto) {
-    const user = await this.usersService.update(BigInt(id), updateUserDto);
-    return {
-      success: true,
-      data: user,
-    };
+    return this.usersService.update(BigInt(id), updateUserDto);
   }
 
   @Delete(':id')
@@ -55,7 +43,6 @@ export class UsersController {
   async remove(@Param('id', ParseIntPipe) id: number) {
     const user = await this.usersService.remove(BigInt(id));
     return {
-      success: true,
       data: user,
       message: 'User deleted successfully',
     };
@@ -65,9 +52,6 @@ export class UsersController {
   @RequirePermissions({ resource: 'users', action: 'list' })
   async count() {
     const total = await this.usersService.count();
-    return {
-      success: true,
-      data: { total },
-    };
+    return { total };
   }
 }

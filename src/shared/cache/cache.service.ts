@@ -11,50 +11,53 @@ export class CacheService {
   private readonly logger = new Logger(CacheService.name);
   private cache = new Map<string, { value: unknown; expiry: number }>();
 
-  async get<T>(key: string): Promise<T | null> {
+  get<T>(key: string): Promise<T | null> {
     const cached = this.cache.get(key);
 
     if (!cached) {
-      return null;
+      return Promise.resolve(null);
     }
 
     if (Date.now() > cached.expiry) {
       this.cache.delete(key);
-      return null;
+      return Promise.resolve(null);
     }
 
     this.logger.debug(`Cache hit: ${key}`);
-    return cached.value as T;
+    return Promise.resolve(cached.value as T);
   }
 
-  async set(key: string, value: unknown, ttl = 3600): Promise<void> {
+  set(key: string, value: unknown, ttl = 3600): Promise<void> {
     const expiry = Date.now() + ttl * 1000;
     this.cache.set(key, { value, expiry });
     this.logger.debug(`Cache set: ${key} (TTL: ${ttl}s)`);
+    return Promise.resolve();
   }
 
-  async del(key: string): Promise<void> {
+  del(key: string): Promise<void> {
     this.cache.delete(key);
     this.logger.debug(`Cache deleted: ${key}`);
+    return Promise.resolve();
   }
 
-  async clear(): Promise<void> {
+  clear(): Promise<void> {
     this.cache.clear();
     this.logger.log('Cache cleared');
+    return Promise.resolve();
   }
 
-  async has(key: string): Promise<boolean> {
+  has(key: string): Promise<boolean> {
     const cached = this.cache.get(key);
 
     if (!cached) {
-      return false;
+      return Promise.resolve(false);
     }
 
     if (Date.now() > cached.expiry) {
       this.cache.delete(key);
-      return false;
+      return Promise.resolve(false);
     }
 
-    return true;
+    return Promise.resolve(true);
   }
 }

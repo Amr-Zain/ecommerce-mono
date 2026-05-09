@@ -9,5 +9,6 @@
   "IS_BOOLEAN": "{property} must be a boolean",
   "MIN_LENGTH": "{property} must be at least {constraints.0} characters",
   "MAX_LENGTH": "{property} must be at most {constraints.0} characters",
-  "INVALID_MEDIA_MODEL": "{property} must be a valid entity name"
+  "INVALID_MEDIA_MODEL": "{property} must be a valid entity name",
+  "IS_ARRAY": "{property} must be an array"
 }

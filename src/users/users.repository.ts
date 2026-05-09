@@ -86,14 +86,14 @@ export class UsersRepository extends BaseRepository<User> {
 
     // Apply filters from filters object
     if (query.filters && Object.keys(query.filters).length > 0) {
-      const filterCondition = this.queryBuilder.buildFiltersCondition(query.filters);
+      const filterCondition = this.queryBuilder.buildFiltersCondition<Prisma.UserWhereInput>(query.filters);
       conditions.push(filterCondition);
     }
 
     // Search in name and email
     if (query.search) {
       const searchCondition = this.queryBuilder.buildSearchCondition(query.search, ['name', 'email']);
-      conditions.push(searchCondition);
+      conditions.push(searchCondition as Prisma.UserWhereInput);
     }
 
     return this.queryBuilder.combineWhereConditions(...conditions);

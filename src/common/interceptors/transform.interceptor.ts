@@ -2,109 +2,132 @@ import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nes
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { flattenAllTranslations, flattenAllTranslationsArray, EntityWithTranslations } from '../utils/translation.util';
-
-export interface Response<T> {
-  success: boolean;
-  data: T;
-  timestamp: string;
-}
-
-interface PaginatedData {
-  data: EntityWithTranslations[];
-  [key: string]: unknown;
-}
-
-interface NestedPaginatedData {
-  data: PaginatedData;
-  [key: string]: unknown;
-}
-
-type ResponseData = EntityWithTranslations | EntityWithTranslations[] | PaginatedData | NestedPaginatedData;
+import { flattenAllTranslations, flattenAllTranslationsArray } from '../utils/translation.util';
+import { EntityWithTranslations } from '../types/i18n/translation.types';
+import { ApiResponse, ControllerPayload, DataWithMessagePayload, PaginatedPayload } from '../types/http/response.types';
+import { PaginationMeta } from '../dto/pagination.dto';
 
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
+export class TransformInterceptor<T> implements NestInterceptor<ControllerPayload<T>, ApiResponse<T | T[]>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResponse<T | T[]>> {
     const request = context.switchToHttp().getRequest<Request>();
     const acceptLanguage = (request.headers['accept-language'] as string) || 'en';
     const requestedLangId = acceptLanguage.split(',')[0].split('-')[0].trim();
 
     return next.handle().pipe(
-      map((data: T) => {
-        const transformedData = this.applyTranslationTransformation(data as ResponseData, requestedLangId);
+      map((payload: ControllerPayload<T>) => {
+        const normalized = this.normalizePayload(payload);
+        const transformedData = this.applyTranslationTransformation(normalized.data, requestedLangId);
 
         return {
           success: true,
-          data: transformedData as unknown as T,
+          data: transformedData as T | T[],
           timestamp: new Date().toISOString(),
+          message: normalized.message,
+          meta: normalized.meta,
         };
       }),
     );
   }
 
+  private normalizePayload(payload: ControllerPayload<T>): {
+    data: unknown;
+    message?: string;
+    meta?: PaginationMeta;
+  } {
+    if (!this.isObjectRecord(payload)) {
+      return { data: payload };
+    }
+
+    const maybeObject = payload as Record<string, unknown>;
+
+    if (this.isPaginatedPayload(maybeObject)) {
+      const paginated = maybeObject;
+      return {
+        data: paginated.items,
+        meta: paginated.meta,
+      };
+    }
+
+    if (this.isDataWithMessagePayload(maybeObject)) {
+      const withMessage = maybeObject;
+      return {
+        data: withMessage.data,
+        message: withMessage.message,
+      };
+    }
+
+    return { data: payload };
+  }
+
   /**
-   * Apply translation transformation to response data
-   * Handles various response structures (simple, array, paginated, nested)
+   * Apply translation transformation to response data.
+   * Supports entities and arrays of entities with translations.
    */
-  private applyTranslationTransformation(data: ResponseData, requestedLangId: string): ResponseData {
+  private applyTranslationTransformation(data: unknown, requestedLangId: string): unknown {
     if (!data) {
       return data;
     }
 
-    // Check if data is an array of entities with translations
     if (Array.isArray(data)) {
-      const arr = data;
-      const hasTranslations = arr.length > 0 && Array.isArray(arr[0]?.translations) && arr[0].translations.length > 0;
-      if (hasTranslations) {
-        return flattenAllTranslationsArray(arr, requestedLangId);
+      if (this.isTranslationEntityArray(data)) {
+        return flattenAllTranslationsArray(data, requestedLangId);
       }
       return data;
     }
 
-    const obj = data as Record<string, unknown>;
-
-    // Check if data is a simple object with translations
-    if (Array.isArray(obj['translations']) && (obj['translations'] as unknown[]).length > 0) {
-      return flattenAllTranslations(obj as EntityWithTranslations, requestedLangId);
-    }
-
-    // Check for nested paginated structure: { data: { data: [...], meta: {...} } }
-    if (
-      obj['data'] &&
-      typeof obj['data'] === 'object' &&
-      !Array.isArray(obj['data']) &&
-      Array.isArray((obj['data'] as Record<string, unknown>)['data'])
-    ) {
-      const inner = obj['data'] as Record<string, unknown>;
-      const nestedData = inner['data'] as EntityWithTranslations[];
-      const hasTranslations =
-        nestedData.length > 0 && Array.isArray(nestedData[0]?.translations) && nestedData[0].translations.length > 0;
-      if (hasTranslations) {
-        return {
-          ...obj,
-          data: {
-            ...inner,
-            data: flattenAllTranslationsArray(nestedData, requestedLangId),
-          },
-        };
-      }
-      return data;
-    }
-
-    // Check for paginated structure: { data: [...], meta: {...} }
-    if (Array.isArray(obj['data'])) {
-      const arr2 = obj['data'] as WithTranslations[];
-      const hasTranslations =
-        arr2.length > 0 && Array.isArray(arr2[0]?.translations) && arr2[0].translations.length > 0;
-      if (hasTranslations) {
-        return {
-          ...obj,
-          data: flattenAllTranslationsArray(arr2, requestedLangId),
-        };
-      }
-      return data;
+    if (this.isTranslationEntity(data)) {
+      return flattenAllTranslations(data, requestedLangId);
     }
 
     return data;
+  }
+
+  private isPaginatedPayload(value: unknown): value is PaginatedPayload<T> {
+    if (!this.isObjectRecord(value)) {
+      return false;
+    }
+
+    return Array.isArray(value['items']) && this.isPaginationMeta(value['meta']);
+  }
+
+  private isDataWithMessagePayload(value: unknown): value is DataWithMessagePayload<T> {
+    if (!this.isObjectRecord(value)) {
+      return false;
+    }
+
+    return 'data' in value && ('message' in value || Object.keys(value).length <= 2);
+  }
+
+  private isObjectRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+  }
+
+  private isPaginationMeta(value: unknown): value is PaginationMeta {
+    if (!this.isObjectRecord(value)) {
+      return false;
+    }
+
+    return (
+      typeof value['page'] === 'number' &&
+      typeof value['limit'] === 'number' &&
+      typeof value['total'] === 'number' &&
+      typeof value['totalPages'] === 'number' &&
+      typeof value['hasNextPage'] === 'boolean' &&
+      typeof value['hasPreviousPage'] === 'boolean'
+    );
+  }
+
+  private isTranslationEntity(value: unknown): value is EntityWithTranslations {
+    if (!this.isObjectRecord(value)) {
+      return false;
+    }
+
+    const translations = value['translations'];
+    return Array.isArray(translations) && translations.length > 0;
+  }
+
+  private isTranslationEntityArray(value: unknown[]): value is EntityWithTranslations[] {
+    return value.length > 0 && this.isTranslationEntity(value[0]);
   }
 }

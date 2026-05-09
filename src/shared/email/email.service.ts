@@ -10,23 +10,27 @@ import { Injectable, Logger } from '@nestjs/common';
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
-  async sendVerificationEmail(email: string, code: string): Promise<void> {
+  sendVerificationEmail(email: string, code: string): Promise<void> {
     this.logger.log(`Sending verification email to ${email} with code: ${code}`);
     // TODO: Implement email sending
+    return Promise.resolve();
   }
 
-  async sendPasswordResetEmail(email: string, code: string): Promise<void> {
+  sendPasswordResetEmail(email: string, code: string): Promise<void> {
     this.logger.log(`Sending password reset email to ${email} with code: ${code}`);
     // TODO: Implement email sending
+    return Promise.resolve();
   }
 
-  async sendWelcomeEmail(email: string, name: string): Promise<void> {
+  sendWelcomeEmail(email: string, name: string): Promise<void> {
     this.logger.log(`Sending welcome email to ${email} for ${name}`);
     // TODO: Implement email sending
+    return Promise.resolve();
   }
 
-  async sendNotification(email: string, subject: string, message: string): Promise<void> {
+  sendNotification(email: string, subject: string, message: string): Promise<void> {
     this.logger.log(`Sending notification to ${email}: ${subject} - ${message}`);
     // TODO: Implement email sending
+    return Promise.resolve();
   }
 }

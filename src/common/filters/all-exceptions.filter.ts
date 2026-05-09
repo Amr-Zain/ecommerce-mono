@@ -34,7 +34,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let args: Record<string, unknown> = {};
 
     if (exception instanceof HttpException) {
-      const response = exception.getResponse();
+      const responseUnknown: unknown = exception.getResponse();
 
       // If it's our custom AppException, extract key and args
       if ('key' in exception) {
@@ -44,14 +44,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
         responseMessage = translationKey;
       } else {
         // Standard NestJS HttpException
-        responseMessage =
-          typeof response === 'object' && response !== null && 'message' in response
-            ? String((response as { message: unknown }).message)
+        const rawMessage =
+          typeof responseUnknown === 'object' && responseUnknown !== null && 'message' in responseUnknown
+            ? (responseUnknown as { message: unknown }).message
             : exception.message;
+
+        responseMessage =
+          typeof rawMessage === 'string'
+            ? rawMessage
+            : Array.isArray(rawMessage) && typeof rawMessage[0] === 'string'
+              ? rawMessage[0]
+              : String(exception.message ?? 'HTTP exception');
 
         // Automatically form translation keys for standard HTTP errors if desired
         // e.g. "Not Found" -> "errors.Not Found"
-        translationKey = `errors.${Array.isArray(responseMessage) ? responseMessage[0] : responseMessage}`;
+        translationKey = `errors.${responseMessage}`;
       }
     } else {
       // Log unhandled non-HTTP exceptions (like DB errors)
@@ -60,24 +67,39 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // Process Internationalization
     const i18n = I18nContext.current(host);
-    const originalMessage = Array.isArray(responseMessage) ? responseMessage[0] : responseMessage;
 
-    let localizedMessage = originalMessage;
+    let localizedMessage: string = responseMessage;
 
     if (i18n) {
-      // The t() function returns the key itself if no translation is found.
-      // We fall back to the original message if translation fails (result equals key).
-      const translation = i18n.t(translationKey, { args, defaultValue: originalMessage });
-      localizedMessage = translation;
+      // nestjs-i18n `t()` can return primitives; avoid String(object) ([object Object]).
+      const translationResult: unknown = i18n.t(translationKey, {
+        args,
+        defaultValue: responseMessage,
+      });
+      localizedMessage = this.localizeFromTranslationResult(translationResult, responseMessage);
     }
+
+    const requestUrlUnknown: unknown = httpAdapter.getRequestUrl(ctx.getRequest());
 
     const responseBody = {
       statusCode: httpStatus,
       message: localizedMessage,
       timestamp: new Date().toISOString(),
-      path: httpAdapter.getRequestUrl(ctx.getRequest()),
+      path: typeof requestUrlUnknown === 'string' ? requestUrlUnknown : '',
     };
 
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+  }
+
+  private localizeFromTranslationResult(result: unknown, fallback: string): string {
+    if (typeof result === 'string') {
+      return result;
+    }
+
+    if (typeof result === 'number' || typeof result === 'boolean' || typeof result === 'bigint') {
+      return String(result);
+    }
+
+    return fallback;
   }
 }

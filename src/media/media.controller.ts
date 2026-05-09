@@ -25,10 +25,7 @@ export class MediaController {
   async uploadSingle(@UploadedFile() file: Express.Multer.File, @Body() dto: UploadMediaDto) {
     if (!file) throw new AppException('errors.FILE_REQUIRED', {}, HttpStatus.BAD_REQUEST);
     const result = await this.mediaService.uploadMultiple([file], dto);
-    return {
-      success: true,
-      data: result[0],
-    };
+    return result[0];
   }
 
   @Post('upload-many')
@@ -37,29 +34,23 @@ export class MediaController {
     if (!files || files.length === 0) {
       throw new AppException('errors.FILES_REQUIRED', {}, HttpStatus.BAD_REQUEST);
     }
-    const result = await this.mediaService.uploadMultiple(files, dto);
-    return {
-      success: true,
-      data: result,
-    };
+    return this.mediaService.uploadMultiple(files, dto);
   }
 
   @Post('attach')
   async attach(@Body() dto: AttachMediaDto) {
     const result = await this.mediaService.attachTempMedia(dto);
-    return { success: true, attachedCount: result.count };
+    return { attachedCount: result.count };
   }
 
   @Get(':uuid')
   async getByUuid(@Param('uuid') uuid: string) {
-    const data = await this.mediaService.findByUuid(uuid);
-    return { success: true, data };
+    return this.mediaService.findByUuid(uuid);
   }
 
   @Get('by-entity/:model/:modelId')
   async getByEntity(@Param('model') model: string, @Param('modelId') modelId: string) {
-    const data = await this.mediaService.findByEntity(model, modelId);
-    return { success: true, data };
+    return this.mediaService.findByEntity(model, modelId);
   }
 
   @Get('by-entity/:model/:modelId/:collection')
@@ -68,13 +59,12 @@ export class MediaController {
     @Param('modelId') modelId: string,
     @Param('collection') collection: string,
   ) {
-    const data = await this.mediaService.findByEntity(model, modelId, collection);
-    return { success: true, data };
+    return this.mediaService.findByEntity(model, modelId, collection);
   }
 
   @Delete(':uuid')
   async delete(@Param('uuid') uuid: string) {
     await this.mediaService.deleteByUuid(uuid);
-    return { success: true, message: 'Media deleted' };
+    return { message: 'Media deleted' };
   }
 }

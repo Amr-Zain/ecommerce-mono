@@ -6,18 +6,14 @@ import { CountryQueryDto } from './dto/country-query.dto';
 import { ParsedQuery } from '../../common/decorators/parsed-query.decorator';
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
 
-@Controller('admin/countries')
+@Controller('countries')
 export class CountriesController {
   constructor(private readonly countriesService: CountriesService) {}
 
   @Post()
   @RequirePermissions({ resource: 'countries', action: 'create' })
   async create(@Body() createCountryDto: CreateCountryDto) {
-    const country = await this.countriesService.createCountry(createCountryDto);
-    return {
-      success: true,
-      data: country,
-    };
+    return this.countriesService.createCountry(createCountryDto);
   }
 
   @Get()
@@ -25,37 +21,28 @@ export class CountriesController {
   async findAll(@ParsedQuery(CountryQueryDto) query: CountryQueryDto) {
     const result = await this.countriesService.getAllCountries(query);
     return {
-      success: true,
-      ...result,
+      items: result.data,
+      meta: result.meta,
     };
   }
 
   @Get(':id')
   @RequirePermissions({ resource: 'countries', action: 'read' })
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    const country = await this.countriesService.getCountryById(BigInt(id));
-    return {
-      success: true,
-      data: country,
-    };
+    return this.countriesService.getCountryById(BigInt(id));
   }
 
   @Patch(':id')
   @RequirePermissions({ resource: 'countries', action: 'update' })
   async update(@Param('id', ParseIntPipe) id: number, @Body() updateCountryDto: UpdateCountryDto) {
-    const country = await this.countriesService.updateCountry(id, updateCountryDto);
-    return {
-      success: true,
-      data: country,
-    };
+    return this.countriesService.updateCountry(id, updateCountryDto);
   }
 
   @Delete(':id')
   @RequirePermissions({ resource: 'countries', action: 'delete' })
   async remove(@Param('id', ParseIntPipe) id: number) {
-    const country = await this.countriesService.deleteCountry(BigInt(id));
+    const country = await this.countriesService.deleteCountry(id);
     return {
-      success: true,
       data: country,
       message: 'Country deleted successfully',
     };

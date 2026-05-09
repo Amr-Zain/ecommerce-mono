@@ -6,12 +6,4 @@ import { PrismaService } from './prisma.service';
   providers: [PrismaService],
   exports: [PrismaService],
 })
-export class PrismaModule {
-  constructor(private readonly prismaService: PrismaService) {
-    this.prismaService.user.findFirst({
-      where: {
-        id: 1,
-      },
-    });
-  }
-}
+export class PrismaModule {}

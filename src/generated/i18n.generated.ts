@@ -33,6 +33,7 @@ export type I18nTranslations = {
         "MIN_LENGTH": string;
         "MAX_LENGTH": string;
         "INVALID_MEDIA_MODEL": string;
+        "IS_ARRAY": string;
     };
 };
 /* prettier-ignore */

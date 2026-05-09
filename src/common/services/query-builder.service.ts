@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '../../prisma';
 
 type FilterValue = string | number | boolean;
-type WhereCondition = Record<string, FilterValue | Record<string, unknown>>;
 
 @Injectable()
 export class QueryBuilderService {
   /**
    * Build where conditions from filters object
    */
-  buildFiltersCondition(filters: Record<string, FilterValue>): WhereCondition {
+  buildFiltersCondition<T>(filters: Record<string, FilterValue>): T {
     if (!filters || Object.keys(filters).length === 0) {
-      return {};
+      return {} as T;
     }
 
-    const conditions: WhereCondition = {};
+    const conditions: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(filters)) {
       if (value === '1' || value === 'true' || value === true) {
@@ -26,35 +24,35 @@ export class QueryBuilderService {
       }
     }
 
-    return conditions;
+    return conditions as unknown as T;
   }
 
   /**
    * Build search condition for multiple fields
    */
-  buildSearchCondition(search: string, fields: string[]): WhereCondition {
+  buildSearchCondition<T>(search: string, fields: string[]): T {
     if (!search || fields.length === 0) {
-      return {};
+      return {} as T;
     }
 
     return {
       OR: fields.map((field) => ({
         [field]: {
           contains: search,
-          mode: 'insensitive' as Prisma.QueryMode,
+          mode: 'insensitive',
         },
-      })) as unknown as FilterValue,
-    };
+      })),
+    } as unknown as T;
   }
 
   /**
    * Combine multiple where conditions
    */
-  combineWhereConditions(...conditions: WhereCondition[]): WhereCondition {
-    const validConditions = conditions.filter((c) => c && Object.keys(c).length > 0);
+  combineWhereConditions<T>(...conditions: T[]): T {
+    const validConditions = conditions.filter((c) => c && Object.keys(c as object).length > 0);
 
     if (validConditions.length === 0) {
-      return {};
+      return {} as T;
     }
 
     if (validConditions.length === 1) {
@@ -62,7 +60,7 @@ export class QueryBuilderService {
     }
 
     return {
-      AND: validConditions as unknown as FilterValue,
-    };
+      AND: validConditions,
+    } as unknown as T;
   }
 }

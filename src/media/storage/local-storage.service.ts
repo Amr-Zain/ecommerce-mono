@@ -15,11 +15,7 @@ export class LocalStorageService implements StorageInterface {
     }
   }
 
-  async uploadFile(
-    file: Express.Multer.File,
-    model: string,
-    idOrHash: string,
-  ): Promise<{ path: string; filename: string }> {
+  uploadFile(file: Express.Multer.File, model: string, idOrHash: string): Promise<{ path: string; filename: string }> {
     const now = new Date();
     const year = now.getFullYear().toString();
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -40,13 +36,13 @@ export class LocalStorageService implements StorageInterface {
     // Return relative path to be stored taking uploads as root or absolute relative
     const dbPath = `/uploads/${model}/${idOrHash}/${year}/${month}/${newFilename}`;
 
-    return {
+    return Promise.resolve({
       path: dbPath,
       filename: newFilename,
-    };
+    });
   }
 
-  async deleteFile(filePath: string): Promise<void> {
+  deleteFile(filePath: string): Promise<void> {
     try {
       const absolutePath = path.join(process.cwd(), filePath);
       if (fs.existsSync(absolutePath)) {
@@ -56,6 +52,8 @@ export class LocalStorageService implements StorageInterface {
       const errorMessage = e instanceof Error ? e.message : String(e);
       this.logger.error(`Failed to delete file ${filePath}: ${errorMessage}`);
     }
+
+    return Promise.resolve();
   }
 
   getFileUrl(filePath: string): string {

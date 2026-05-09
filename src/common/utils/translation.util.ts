@@ -1,3 +1,5 @@
+import { EntityWithTranslations, TranslationRecord } from '../types/i18n/translation.types';
+
 /**
  * Translation utility functions
  * Helper functions for working with translated entities
@@ -6,9 +8,6 @@
 const TRANSLATION_META_FIELDS = ['id', 'langId', 'createdAt', 'updatedAt'];
 
 const isForeignKeyField = (key: string): boolean => key.endsWith('Id') && key !== 'langId';
-
-export type TranslationRecord = Record<string, unknown> & { langId?: string };
-export type EntityWithTranslations = Record<string, unknown> & { translations?: TranslationRecord[] };
 
 function extractTranslationFields(
   translation: TranslationRecord,

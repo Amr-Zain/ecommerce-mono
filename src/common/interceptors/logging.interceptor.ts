@@ -13,12 +13,14 @@ export class LoggingInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<Request>();
-    const { method, url, body } = request;
+    const method = request.method;
+    const url = request.url;
+    const body = request.body as Record<string, unknown> | undefined;
     const now = Date.now();
 
     this.logger.log(`→ ${method} ${url}`);
 
-    if (Object.keys((body as Record<string, unknown>) || {}).length > 0) {
+    if (body && Object.keys(body).length > 0) {
       this.logger.debug(`Request body: ${JSON.stringify(body)}`);
     }
 
