@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Delete, ParseIntPipe, Body } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { ParsedQuery } from '../common/decorators/parsed-query.decorator';
+import { BodyOmitUndefined } from '../common/decorators/omit-undefined.decorator';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
 import type { PaginationMeta } from '../common/dto/pagination.dto';
 import type { User } from './users.repository';
@@ -39,7 +40,10 @@ export class UsersController {
 
   @Patch(':id')
   @RequirePermissions({ resource: 'users', action: 'update' })
-  async update(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto): Promise<User> {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @BodyOmitUndefined() updateUserDto: UpdateUserDto,
+  ): Promise<User> {
     return this.usersService.update(BigInt(id), updateUserDto);
   }
 

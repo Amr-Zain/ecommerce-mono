@@ -1,5 +1,5 @@
 import { Controller, Post, Body, UseGuards, Get, Req, Param, Delete, UnauthorizedException } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService, AuthUserPayload } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
@@ -12,7 +12,18 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Request } from 'express';
-import type { AuthUserPayload } from './auth.service';
+
+interface AuthUser {
+  id: bigint;
+  name: string;
+  email: string;
+  phone?: string;
+  role?: { id: bigint; nameEn: string; nameAr: string };
+  isEmailVerified: boolean;
+  isPhoneVerified: boolean;
+  isActive: boolean;
+  [key: string]: unknown;
+}
 
 @Controller('auth')
 export class AuthController {
@@ -97,7 +108,7 @@ export class AuthController {
     return {
       id: user.id.toString(),
       name: user.name,
-      email: user.email ?? '',
+      email: user.email,
       phone: user.phone,
       role: user.role
         ? {
@@ -113,12 +124,12 @@ export class AuthController {
   }
 
   @Get('sessions')
-  async getSessions(@CurrentUser() user: AuthUserPayload) {
+  async getSessions(@CurrentUser() user: AuthUser) {
     return this.authService.getSessions(user.id);
   }
 
   @Delete('sessions/:sessionId')
-  async revokeSession(@CurrentUser() user: AuthUserPayload, @Param('sessionId') sessionId: string) {
+  async revokeSession(@CurrentUser() user: AuthUser, @Param('sessionId') sessionId: string) {
     return this.authService.revokeSession(user.id, BigInt(sessionId));
   }
 }

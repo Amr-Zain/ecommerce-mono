@@ -146,3 +146,5 @@ export function flattenAllTranslationsArray<T extends EntityWithTranslations>(
 ): Array<Omit<T, 'translations'> & Record<string, unknown>> {
   return entities.map((entity) => flattenAllTranslations(entity, requestedLangId, translationFields, keepTranslations));
 }
+
+export type { EntityWithTranslations };

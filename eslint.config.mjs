@@ -27,7 +27,6 @@ export default tseslint.config(
   {
     rules: {
       // Type safety rules (warn instead of error for development)
-      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
       '@typescript-eslint/no-unsafe-assignment': 'warn',

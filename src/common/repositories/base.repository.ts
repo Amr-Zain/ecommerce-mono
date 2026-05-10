@@ -5,9 +5,9 @@ import { PaginationUtil } from '../utils/pagination.util';
 
 type WhereClause = Record<string, unknown>;
 
-type IncludeClause = Record<string, boolean | object>;
+type IncludeClause = Record<string, boolean | Record<string, unknown>>;
 
-type SelectClause = Record<string, boolean | object>;
+type SelectClause = Record<string, boolean>;
 
 type QueryOptions =
   | { select: SelectClause; include?: never }
@@ -17,6 +17,15 @@ type QueryOptions =
 type OrderByClause = Record<string, 'asc' | 'desc'> | Record<string, 'asc' | 'desc'>[];
 
 type DataInput = Record<string, unknown>;
+
+interface QueryArgs {
+  where?: WhereClause;
+  orderBy?: OrderByClause;
+  select?: SelectClause;
+  include?: IncludeClause;
+  skip?: number;
+  take?: number;
+}
 
 export abstract class BaseRepository<T> {
   constructor(protected readonly prisma: PrismaService) {}
@@ -41,14 +50,11 @@ export abstract class BaseRepository<T> {
   ): Promise<PaginatedResult<T>> {
     const orderBy = this.buildOrderBy(query.sort);
     const model = this.getModel() as {
-      findMany: (args?: unknown) => Promise<T[]>;
-      count: (args?: unknown) => Promise<number>;
+      findMany: (args?: QueryArgs) => Promise<T[]>;
+      count: (args?: Pick<QueryArgs, 'where'>) => Promise<number>;
     };
 
-    const queryArgs: Record<string, unknown> = {
-      where,
-      orderBy,
-    };
+    const queryArgs: QueryArgs = { where, orderBy };
 
     if (options?.select) {
       queryArgs.select = options.select;
@@ -72,7 +78,6 @@ export abstract class BaseRepository<T> {
       };
     }
 
-    // Normal pagination
     const { skip, take } = PaginationUtil.getPrismaParams(query);
     queryArgs.skip = skip;
     queryArgs.take = take;
@@ -84,10 +89,14 @@ export abstract class BaseRepository<T> {
 
   async findById(id: number | bigint, options?: QueryOptions): Promise<T | null> {
     const model = this.getModel() as {
-      findUnique: (args: unknown) => Promise<T | null>;
+      findUnique: (args: {
+        where: { id: number | bigint };
+        select?: SelectClause;
+        include?: IncludeClause;
+      }) => Promise<T | null>;
     };
 
-    const queryArgs: Record<string, unknown> = {
+    const queryArgs: { where: { id: number | bigint }; select?: SelectClause; include?: IncludeClause } = {
       where: { id },
     };
 
@@ -102,12 +111,10 @@ export abstract class BaseRepository<T> {
 
   async findOne(where: WhereClause, options?: QueryOptions): Promise<T | null> {
     const model = this.getModel() as {
-      findFirst: (args?: unknown) => Promise<T | null>;
+      findFirst: (args?: QueryArgs) => Promise<T | null>;
     };
 
-    const queryArgs: Record<string, unknown> = {
-      where,
-    };
+    const queryArgs: QueryArgs = { where };
 
     if (options?.select) {
       queryArgs.select = options.select;
@@ -120,12 +127,10 @@ export abstract class BaseRepository<T> {
 
   async findMany(where?: WhereClause, options?: QueryOptions): Promise<T[]> {
     const model = this.getModel() as {
-      findMany: (args?: unknown) => Promise<T[]>;
+      findMany: (args?: QueryArgs) => Promise<T[]>;
     };
 
-    const queryArgs: Record<string, unknown> = {
-      where,
-    };
+    const queryArgs: QueryArgs = { where };
 
     if (options?.select) {
       queryArgs.select = options.select;
@@ -138,33 +143,28 @@ export abstract class BaseRepository<T> {
 
   async create(data: DataInput): Promise<T> {
     const model = this.getModel() as {
-      create: (args: unknown) => Promise<T>;
+      create: (args: { data: DataInput }) => Promise<T>;
     };
     return model.create({ data });
   }
 
   async update(id: number | bigint, data: DataInput): Promise<T> {
     const model = this.getModel() as {
-      update: (args: unknown) => Promise<T>;
+      update: (args: { where: { id: number | bigint }; data: DataInput }) => Promise<T>;
     };
-    return model.update({
-      where: { id },
-      data,
-    });
+    return model.update({ where: { id }, data });
   }
 
   async delete(id: number | bigint): Promise<T> {
     const model = this.getModel() as {
-      delete: (args: unknown) => Promise<T>;
+      delete: (args: { where: { id: number | bigint } }) => Promise<T>;
     };
-    return model.delete({
-      where: { id },
-    });
+    return model.delete({ where: { id } });
   }
 
   async count(where?: WhereClause): Promise<number> {
     const model = this.getModel() as {
-      count: (args?: unknown) => Promise<number>;
+      count: (args?: Pick<QueryArgs, 'where'>) => Promise<number>;
     };
     return model.count({ where });
   }
@@ -179,7 +179,6 @@ export abstract class BaseRepository<T> {
       return { createdAt: 'desc' };
     }
 
-    // Convert sort object to array of orderBy objects
     return Object.entries(sort).map(([field, direction]) => ({
       [field]: direction,
     }));

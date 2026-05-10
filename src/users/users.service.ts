@@ -7,6 +7,7 @@ import { PaginatedResult } from '../common/dto/pagination.dto';
 import { User } from './users.repository';
 import * as bcrypt from 'bcrypt';
 import { Prisma } from '../prisma';
+import { omitUndefined } from '../common/utils/omit-undefined.util';
 
 @Injectable()
 export class UsersService {
@@ -130,31 +131,15 @@ export class UsersService {
   }
 
   private toUserUpdateInput(dto: UpdateUserDto): Prisma.UserUpdateInput {
-    const data: Prisma.UserUpdateInput = {};
+    const { password: _omitPassword, roleId, ...rest } = dto;
+    const data = omitUndefined(rest as Record<string, unknown>) as Prisma.UserUpdateInput;
 
-    this.assignIfDefined(data, 'name', dto.name);
-    this.assignIfDefined(data, 'email', dto.email);
-    this.assignIfDefined(data, 'phone', dto.phone);
-    this.assignIfDefined(data, 'phoneCode', dto.phoneCode);
-    this.assignIfDefined(data, 'userType', dto.userType);
-    this.assignIfDefined(data, 'isActive', dto.isActive);
-
-    if (dto.roleId) {
+    if (roleId) {
       data.role = {
-        connect: { id: dto.roleId },
+        connect: { id: roleId },
       };
     }
 
     return data;
-  }
-
-  private assignIfDefined<K extends keyof Prisma.UserUpdateInput>(
-    target: Prisma.UserUpdateInput,
-    key: K,
-    value: Prisma.UserUpdateInput[K] | undefined,
-  ): void {
-    if (value !== undefined) {
-      target[key] = value;
-    }
   }
 }
