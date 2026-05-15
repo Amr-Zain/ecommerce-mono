@@ -21,6 +21,8 @@ export type I18nTranslations = {
         "Conflict": string;
         "FILE_REQUIRED": string;
         "FILES_REQUIRED": string;
+        "MEDIA_MISMATCH": string;
+        "MEDIA_NOT_FOUND": string;
     };
     "validation": {
         "NOT_EMPTY": string;

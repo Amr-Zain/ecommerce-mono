@@ -88,7 +88,7 @@ export class AuthService {
 
     // Generate verification code (hardcoded to 1111 for now)
     const verificationCode = '1111';
-    const verificationExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const verificationExpiry = new Date(Date.now() + 150 * 60 * 1000); // 150 minutes
 
     // Create user
     await this.prisma.user.create({
