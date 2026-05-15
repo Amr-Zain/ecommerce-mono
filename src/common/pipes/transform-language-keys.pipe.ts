@@ -87,7 +87,7 @@ export class TransformLanguageKeysPipe implements PipeTransform {
         if (translationData && typeof translationData === 'object' && !Array.isArray(translationData)) {
           translations.push({
             [languageIdProperty]: langCode,
-            ...(translationData as TranslationData),
+            ...omitUndefined(translationData as TranslationData),
           });
           delete cleanedValue[langCode];
         }
@@ -105,7 +105,7 @@ export class TransformLanguageKeysPipe implements PipeTransform {
         ) {
           translations.push({
             [languageIdProperty]: key.toLowerCase(),
-            ...(translationData as TranslationData),
+            ...omitUndefined(translationData as TranslationData),
           });
           delete cleanedValue[key];
         }
@@ -114,6 +114,16 @@ export class TransformLanguageKeysPipe implements PipeTransform {
       return {
         ...cleanedValue,
         [translationsProperty]: translations,
+      };
+    }
+
+    // If translations array already exists, clean its items
+    if (Array.isArray(value[translationsProperty])) {
+      return {
+        ...value,
+        [translationsProperty]: (value[translationsProperty] as Array<Record<string, unknown>>).map((item) =>
+          omitUndefined(item),
+        ),
       };
     }
 

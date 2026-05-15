@@ -19,13 +19,13 @@ model Category {
 }
 
 model CategoryTranslation {
-  id         BigInt   @id @default(autoincrement())
-  categoryId BigInt   @map("category_id")
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  langId     String   @map("lang_id")
-  name       String
+  id       BigInt   @id @default(autoincrement())
+  recordId BigInt   @map("category_id")
+  category Category @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  langId   String   @map("lang_id")
+  name     String
 
-  @@unique([categoryId, langId])
+  @@unique([recordId, langId])
   @@map("categories_translations")
 }
 
@@ -61,13 +61,13 @@ model Product {
 
 model ProductTranslation {
   id          BigInt  @id @default(autoincrement())
-  productId   BigInt  @map("product_id")
-  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  recordId    BigInt  @map("product_id")
+  product     Product @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId      String  @map("lang_id") // Removed Lang enum
   name        String
   description String? @db.Text
 
-  @@unique([productId, langId])
+  @@unique([recordId, langId])
   @@map("products_translations")
 }
 
@@ -82,13 +82,13 @@ model Attribute {
 }
 
 model AttributeTranslation {
-  id          BigInt    @id @default(autoincrement())
-  attributeId BigInt    @map("attribute_id")
-  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
-  langId      String    @map("lang_id") // Removed Lang enum
-  name        String
+  id        BigInt    @id @default(autoincrement())
+  recordId  BigInt    @map("attribute_id")
+  attribute Attribute @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  langId    String    @map("lang_id") // Removed Lang enum
+  name      String
 
-  @@unique([attributeId, langId])
+  @@unique([recordId, langId])
   @@map("attributes_translations")
 }
 
@@ -105,13 +105,13 @@ model AttributeValue {
 }
 
 model AttributeValueTranslation {
-  id      BigInt         @id @default(autoincrement())
-  valueId BigInt         @map("value_id")
-  value   AttributeValue @relation(fields: [valueId], references: [id], onDelete: Cascade)
-  langId  String         @map("lang_id") // Removed Lang enum
-  name    String
+  id       BigInt         @id @default(autoincrement())
+  recordId BigInt         @map("value_id")
+  value    AttributeValue @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  langId   String         @map("lang_id") // Removed Lang enum
+  name     String
 
-  @@unique([valueId, langId])
+  @@unique([recordId, langId])
   @@map("attribute_values_translations")
 }
 

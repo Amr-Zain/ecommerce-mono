@@ -145,14 +145,43 @@ export abstract class BaseRepository<T> {
     const model = this.getModel() as {
       create: (args: { data: DataInput }) => Promise<T>;
     };
-    return model.create({ data });
+
+    const { translations, ...scalarData } = data;
+    const createData: DataInput = { ...scalarData };
+
+    if (Array.isArray(translations) && translations.length > 0) {
+      createData.translations = {
+        create: translations,
+      };
+    }
+
+    return model.create({ data: createData });
   }
 
   async update(id: number | bigint, data: DataInput): Promise<T> {
     const model = this.getModel() as {
       update: (args: { where: { id: number | bigint }; data: DataInput }) => Promise<T>;
     };
-    return model.update({ where: { id }, data });
+
+    const { translations, ...scalarData } = data;
+    const updateData: DataInput = { ...scalarData };
+
+    if (Array.isArray(translations) && translations.length > 0) {
+      updateData.translations = {
+        upsert: translations.map((t: Record<string, unknown>) => ({
+          where: { recordId_langId: { recordId: BigInt(id), langId: t.langId } },
+          update: t,
+          create: t,
+        })),
+      };
+    } else if (translations === undefined) {
+      // If translations is not provided in the payload, don't touch it
+    } else if (Array.isArray(translations) && translations.length === 0) {
+      // If translations is an empty array, optionally handle it (e.g., delete all)
+      // For now, we'll follow the upsert logic which does nothing for an empty array
+    }
+
+    return model.update({ where: { id }, data: updateData });
   }
 
   async delete(id: number | bigint): Promise<T> {

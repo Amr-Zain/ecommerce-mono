@@ -46,13 +46,13 @@ model OrderItem {
 
 model OrderItemTranslation {
   id                  BigInt    @id @default(autoincrement())
-  orderItemId         BigInt    @map("order_item_id")
-  orderItem           OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  recordId            BigInt    @map("order_item_id")
+  orderItem           OrderItem @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId              String    @map("lang_id") // Removed Lang enum
   nameSnapshot        String    @map("name_snapshot")
   descriptionSnapshot String?   @map("description_snapshot") @db.Text
 
-  @@unique([orderItemId, langId])
+  @@unique([recordId, langId])
   @@map("order_items_translations")
 }
 
