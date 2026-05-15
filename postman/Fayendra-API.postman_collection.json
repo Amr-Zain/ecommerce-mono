@@ -17,13 +17,10 @@
 						"url": {
 							"raw": "{{baseUrl}}",
 							"host": ["{{baseUrl}}"]
-						},
-						"description": "Check if the API server is running"
-					},
-					"response": []
+						}
+					}
 				}
-			],
-			"description": "General application endpoints"
+			]
 		},
 		{
 			"name": "Auth",
@@ -32,703 +29,520 @@
 					"name": "Register",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"1234567890\",\n  \"phoneCode\": \"+1\"\n}"
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"1234567890\",\n  \"phoneCode\": \"+1\"\n}",
+							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/register",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "register"]
-						},
-						"description": "Register a new user account"
-					},
-					"response": []
+						}
+					}
 				},
 				{
 					"name": "Verify Email",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"code\": \"123456\"\n}"
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"code\": \"123456\"\n}",
+							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/verify-email",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "verify-email"]
-						},
-						"description": "Verify email using the code sent to user"
-					},
-					"response": []
+						}
+					}
 				},
 				{
 					"name": "Resend Email Verification",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}",
+							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/resend-email-verification",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "resend-email-verification"]
-						},
-						"description": "Resend the email verification code"
-					},
-					"response": []
+						}
+					}
 				},
 				{
 					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data) {",
+									"        pm.environment.set(\"accessToken\", response.data.accessToken);",
+									"        pm.environment.set(\"refreshToken\", response.data.refreshToken);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+							"raw": "{\n  \"email\": \"admin@fayendra.com\",\n  \"password\": \"password123\"\n}",
+							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/login",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "login"]
-						},
-						"description": "Login and get access token"
-					},
-					"response": []
+						}
+					}
 				},
 				{
 					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data) {",
+									"        pm.environment.set(\"accessToken\", response.data.accessToken);",
+									"        pm.environment.set(\"refreshToken\", response.data.refreshToken);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/refresh",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "refresh"]
-						},
-						"description": "Refresh access token using refresh token"
-					},
-					"response": []
-				},
-				{
-					"name": "Logout",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/auth/logout",
-							"host": ["{{baseUrl}}"],
-							"path": ["auth", "logout"]
-						},
-						"description": "Logout current session"
-					},
-					"response": []
-				},
-				{
-					"name": "Logout All",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/auth/logout-all",
-							"host": ["{{baseUrl}}"],
-							"path": ["auth", "logout-all"]
-						},
-						"description": "Logout from all sessions"
-					},
-					"response": []
+						}
+					}
 				},
 				{
 					"name": "Forgot Password",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}",
+							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/forgot-password",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "forgot-password"]
-						},
-						"description": "Request password reset code"
-					},
-					"response": []
+						}
+					}
 				},
 				{
 					"name": "Reset Password",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"code\": \"123456\",\n  \"newPassword\": \"newPassword123\"\n}"
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"code\": \"123456\",\n  \"newPassword\": \"newPassword123\"\n}",
+							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/reset-password",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "reset-password"]
-						},
-						"description": "Reset password using the code"
-					},
-					"response": []
+						}
+					}
 				},
 				{
 					"name": "Verify Phone",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"phone\": \"1234567890\",\n  \"code\": \"123456\"\n}"
+							"raw": "{\n  \"phone\": \"1234567890\",\n  \"code\": \"123456\"\n}",
+							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/verify-phone",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "verify-phone"]
-						},
-						"description": "Verify phone number using code"
-					},
-					"response": []
+						}
+					}
 				},
 				{
 					"name": "Send Phone Verification",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"phone\": \"1234567890\"\n}"
+							"raw": "{\n  \"phone\": \"1234567890\"\n}",
+							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
 							"raw": "{{baseUrl}}/auth/send-phone-verification",
 							"host": ["{{baseUrl}}"],
 							"path": ["auth", "send-phone-verification"]
-						},
-						"description": "Send verification code to phone number"
-					},
-					"response": []
+						}
+					}
 				},
 				{
-					"name": "Get Profile (Me)",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/auth/me",
-							"host": ["{{baseUrl}}"],
-							"path": ["auth", "me"]
+					"name": "Profile & Sessions",
+					"item": [
+						{
+							"name": "Get Profile (Me)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/auth/me",
+									"host": ["{{baseUrl}}"],
+									"path": ["auth", "me"]
+								}
+							}
 						},
-						"description": "Get current user profile"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Sessions",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/auth/sessions",
-							"host": ["{{baseUrl}}"],
-							"path": ["auth", "sessions"]
+						{
+							"name": "Get Sessions",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/auth/sessions",
+									"host": ["{{baseUrl}}"],
+									"path": ["auth", "sessions"]
+								}
+							}
 						},
-						"description": "Get all active sessions for the user"
-					},
-					"response": []
-				},
-				{
-					"name": "Revoke Session",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/auth/sessions/1",
-							"host": ["{{baseUrl}}"],
-							"path": ["auth", "sessions", "1"]
+						{
+							"name": "Revoke Session",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/auth/sessions/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["auth", "sessions", "1"]
+								}
+							}
 						},
-						"description": "Revoke a specific session"
-					},
-					"response": []
+						{
+							"name": "Logout",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/auth/logout",
+									"host": ["{{baseUrl}}"],
+									"path": ["auth", "logout"]
+								}
+							}
+						},
+						{
+							"name": "Logout All Sessions",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/auth/logout-all",
+									"host": ["{{baseUrl}}"],
+									"path": ["auth", "logout-all"]
+								}
+							}
+						}
+					],
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "{{accessToken}}",
+								"type": "string"
+							}
+						]
+					}
 				}
-			],
-			"description": "Authentication and session management"
+			]
 		},
 		{
-			"name": "Users",
+			"name": "Admin",
 			"item": [
 				{
-					"name": "Create User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
+					"name": "Users",
+					"item": [
+						{
+							"name": "List Users",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/users?page=1&limit=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "users"]
+								}
 							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"1234567890\",\n  \"phoneCode\": \"+1\",\n  \"userType\": \"client\",\n  \"isActive\": true\n}"
 						},
-						"url": {
-							"raw": "{{baseUrl}}/users",
-							"host": ["{{baseUrl}}"],
-							"path": ["users"]
-						},
-						"description": "Create a new user"
-					},
-					"response": []
-				},
-				{
-					"name": "Get All Users (Paginated)",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users?page=1&limit=10",
-							"host": ["{{baseUrl}}"],
-							"path": ["users"],
-							"query": [
-								{
-									"key": "page",
-									"value": "1",
-									"description": "Page number"
-								},
-								{
-									"key": "limit",
-									"value": "10",
-									"description": "Items per page (max 100)"
+						{
+							"name": "Get User by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/users/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "users", "1"]
 								}
-							]
-						},
-						"description": "Get all users with pagination"
-					},
-					"response": []
-				},
-				{
-					"name": "Get All Users (No Pagination)",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users?paginate=0",
-							"host": ["{{baseUrl}}"],
-							"path": ["users"],
-							"query": [
-								{
-									"key": "paginate",
-									"value": "0",
-									"description": "Disable pagination to get all results"
-								}
-							]
-						},
-						"description": "Get all users without pagination"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Active Users",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users?filters[isActive]=1&page=1&limit=10",
-							"host": ["{{baseUrl}}"],
-							"path": ["users"],
-							"query": [
-								{
-									"key": "filters[isActive]",
-									"value": "1",
-									"description": "Filter by active status"
-								},
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "limit",
-									"value": "10"
-								}
-							]
-						},
-						"description": "Get only active users"
-					},
-					"response": []
-				},
-				{
-					"name": "Search Users",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users?search=john&page=1&limit=10",
-							"host": ["{{baseUrl}}"],
-							"path": ["users"],
-							"query": [
-								{
-									"key": "search",
-									"value": "john",
-									"description": "Search in name and email fields"
-								},
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "limit",
-									"value": "10"
-								}
-							]
-						},
-						"description": "Search users by name or email"
-					},
-					"response": []
-				},
-				{
-					"name": "Filter and Sort Users",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users?filters[isActive]=1&filters[isEmailVerified]=1&sort[createdAt]=desc&sort[name]=asc&page=1&limit=10",
-							"host": ["{{baseUrl}}"],
-							"path": ["users"],
-							"query": [
-								{
-									"key": "filters[isActive]",
-									"value": "1",
-									"description": "Filter by active status"
-								},
-								{
-									"key": "filters[isEmailVerified]",
-									"value": "1",
-									"description": "Filter by email verified status"
-								},
-								{
-									"key": "sort[createdAt]",
-									"value": "desc",
-									"description": "Sort by creation date descending"
-								},
-								{
-									"key": "sort[name]",
-									"value": "asc",
-									"description": "Then sort by name ascending"
-								},
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "limit",
-									"value": "10"
-								}
-							]
-						},
-						"description": "Filter active and verified users, sorted by creation date and name"
-					},
-					"response": []
-				},
-				{
-					"name": "Get User by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users/1",
-							"host": ["{{baseUrl}}"],
-							"path": ["users", "1"]
-						},
-						"description": "Get a single user by ID"
-					},
-					"response": []
-				},
-				{
-					"name": "Update User",
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"isActive\": true\n}"
 						},
-						"url": {
-							"raw": "{{baseUrl}}/users/1",
-							"host": ["{{baseUrl}}"],
-							"path": ["users", "1"]
+						{
+							"name": "Create User",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Test Admin\",\n  \"email\": \"test@fayendra.com\",\n  \"password\": \"password123\",\n  \"userType\": \"admin\"\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/users",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "users"]
+								}
+							}
 						},
-						"description": "Update user information"
-					},
-					"response": []
+						{
+							"name": "Update User",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Test Admin Updated\"\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/users/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "users", "1"]
+								}
+							}
+						},
+						{
+							"name": "Delete User",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/users/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "users", "1"]
+								}
+							}
+						}
+					]
 				},
 				{
-					"name": "Delete User",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users/1",
-							"host": ["{{baseUrl}}"],
-							"path": ["users", "1"]
+					"name": "Geo",
+					"item": [
+						{
+							"name": "Countries",
+							"item": [
+								{
+									"name": "List Countries",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/admin/countries?page=1&limit=10",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "countries"]
+										}
+									}
+								},
+								{
+									"name": "Get Country by ID",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/admin/countries/1",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "countries", "1"]
+										}
+									}
+								},
+								{
+									"name": "Create Country",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"translations\": [\n        {\"langId\": \"en\", \"name\": \"Saudi Arabia\", \"nationality\": \"Saudi\"},\n        {\"langId\": \"ar\", \"name\": \"السعودية\", \"nationality\": \"سعودي\"}\n    ],\n    \"code\": \"SA\",\n    \"phoneCode\": \"966\"\n}",
+											"options": { "raw": { "language": "json" } }
+										},
+										"url": {
+											"raw": "{{baseUrl}}/admin/countries",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "countries"]
+										}
+									}
+								},
+								{
+									"name": "Update Country",
+									"request": {
+										"method": "PATCH",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"translations\": [\n        {\"langId\": \"en\", \"name\": \"Saudi Arabia Updated\"}\n    ]\n}",
+											"options": { "raw": { "language": "json" } }
+										},
+										"url": {
+											"raw": "{{baseUrl}}/admin/countries/1",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "countries", "1"]
+										}
+									}
+								},
+								{
+									"name": "Delete Country",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/admin/countries/1",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "countries", "1"]
+										}
+									}
+								}
+							]
 						},
-						"description": "Delete a user by ID"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Users Count",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/users/count/total",
-							"host": ["{{baseUrl}}"],
-							"path": ["users", "count", "total"]
-						},
-						"description": "Get total count of users"
-					},
-					"response": []
+						{
+							"name": "Cities",
+							"item": [
+								{
+									"name": "List Cities",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/admin/cities?page=1&limit=10",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "cities"]
+										}
+									}
+								},
+								{
+									"name": "Get City by ID",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/admin/cities/1",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "cities", "1"]
+										}
+									}
+								},
+								{
+									"name": "Create City",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"countryId\": 1,\n    \"translations\": [\n        {\"langId\": \"en\", \"name\": \"Riyadh\"},\n        {\"langId\": \"ar\", \"name\": \"الرياض\"}\n    ]\n}",
+											"options": { "raw": { "language": "json" } }
+										},
+										"url": {
+											"raw": "{{baseUrl}}/admin/cities",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "cities"]
+										}
+									}
+								},
+								{
+									"name": "Update City",
+									"request": {
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"translations\": [\n        {\"langId\": \"en\", \"name\": \"Riyadh Updated\"}\n    ]\n}",
+											"options": { "raw": { "language": "json" } }
+										},
+										"url": {
+											"raw": "{{baseUrl}}/admin/cities/1",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "cities", "1"]
+										}
+									}
+								},
+								{
+									"name": "Delete City",
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/admin/cities/1",
+											"host": ["{{baseUrl}}"],
+											"path": ["admin", "cities", "1"]
+										}
+									}
+								}
+							]
+						}
+					]
 				}
 			],
-			"description": "User management endpoints"
-		},
-		{
-			"name": "Media",
-			"item": [
-				{
-					"name": "Upload Single",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "file",
-									"type": "file",
-									"src": []
-								},
-								{
-									"key": "model",
-									"value": "user",
-									"type": "text"
-								},
-								{
-									"key": "modelId",
-									"value": "1",
-									"type": "text"
-								},
-								{
-									"key": "collection",
-									"value": "avatar",
-									"type": "text"
-								}
-							]
-						},
-						"url": {
-							"raw": "{{baseUrl}}/media/upload",
-							"host": ["{{baseUrl}}"],
-							"path": ["media", "upload"]
-						},
-						"description": "Upload a single media file"
-					},
-					"response": []
-				},
-				{
-					"name": "Upload Many",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "files",
-									"type": "file",
-									"src": []
-								},
-								{
-									"key": "model",
-									"value": "product",
-									"type": "text"
-								},
-								{
-									"key": "modelId",
-									"value": "1",
-									"type": "text"
-								},
-								{
-									"key": "collection",
-									"value": "gallery",
-									"type": "text"
-								}
-							]
-						},
-						"url": {
-							"raw": "{{baseUrl}}/media/upload-many",
-							"host": ["{{baseUrl}}"],
-							"path": ["media", "upload-many"]
-						},
-						"description": "Upload multiple media files"
-					},
-					"response": []
-				},
-				{
-					"name": "Attach Media",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"model\": \"product\",\n  \"modelId\": \"1\",\n  \"mediaUuids\": [\"uuid-1\", \"uuid-2\"],\n  \"collection\": \"gallery\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/media/attach",
-							"host": ["{{baseUrl}}"],
-							"path": ["media", "attach"]
-						},
-						"description": "Attach existing temporary media to an entity"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Media by UUID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/media/some-uuid",
-							"host": ["{{baseUrl}}"],
-							"path": ["media", "some-uuid"]
-						},
-						"description": "Get media details by its UUID"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Media by Entity",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/media/by-entity/product/1",
-							"host": ["{{baseUrl}}"],
-							"path": ["media", "by-entity", "product", "1"]
-						},
-						"description": "Get all media for a specific entity"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Media by Entity and Collection",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/media/by-entity/product/1/gallery",
-							"host": ["{{baseUrl}}"],
-							"path": ["media", "by-entity", "product", "1", "gallery"]
-						},
-						"description": "Get media for a specific entity and collection"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Media",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/media/some-uuid",
-							"host": ["{{baseUrl}}"],
-							"path": ["media", "some-uuid"]
-						},
-						"description": "Delete media by its UUID"
-					},
-					"response": []
-				}
-			],
-			"description": "Media management endpoints (upload, attach, delete)"
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{accessToken}}",
+						"type": "string"
+					}
+				]
+			}
 		}
 	],
 	"variable": [
-		{
-			"key": "baseUrl",
-			"value": "http://localhost:3000",
-			"type": "string"
-		}
+		{ "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+		{ "key": "accessToken", "value": "", "type": "string" },
+		{ "key": "refreshToken", "value": "", "type": "string" }
 	]
 }

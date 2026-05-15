@@ -38,7 +38,7 @@ export default tseslint.config(
 
       // NestJS-specific adjustments
       '@typescript-eslint/no-extraneous-class': 'off', // Allow empty module classes
-      '@typescript-eslint/no-non-null-assertion': 'warn', // Warn instead of error for non-null assertions
+      '@typescript-eslint/no-non-null-assertion': 'off', // Warn instead of error for non-null assertions
       '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
 
       // Keep useful rules

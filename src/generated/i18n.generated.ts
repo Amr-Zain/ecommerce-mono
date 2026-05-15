@@ -35,6 +35,11 @@ export type I18nTranslations = {
         "MAX_LENGTH": string;
         "INVALID_MEDIA_MODEL": string;
         "IS_ARRAY": string;
+        "INVALID_URL": string;
+        "MIN_FILE_SIZE": string;
+        "IS_NOT_EMPTY": string;
+        "IS_NUMERIC": string;
+        "IS_LENGTH": string;
     };
 };
 /* prettier-ignore */

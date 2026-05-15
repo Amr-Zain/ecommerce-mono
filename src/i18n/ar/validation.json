@@ -10,5 +10,10 @@
   "MIN_LENGTH": "{property} يجب أن يكون على الأقل {constraints.0} حرفاً",
   "MAX_LENGTH": "{property} يجب أن يكون على الأكثر {constraints.0} حرفاً",
   "INVALID_MEDIA_MODEL": "اسم الكيان ({property}) غير صالح",
-  "IS_ARRAY": "{property} يجب أن يكون مصفوفة"
+  "IS_ARRAY": "{property} يجب أن يكون مصفوفة",
+  "INVALID_URL": "{property} يجب أن يكون رابطاً صالحاً",
+  "MIN_FILE_SIZE": "{property} يجب أن يكون على الأقل {constraints.0} ميجابايت",
+  "IS_NOT_EMPTY": "{property} مطلوب ",
+  "IS_NUMERIC": "{property} يجب أن يكون رقماً",
+  "IS_LENGTH": "{property} يجب أن يكون على الأقل {constraints.0} حرفاً وأن يكون بحد أقصى {constraints.1} حرفاً"
 }

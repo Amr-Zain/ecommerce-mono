@@ -24,6 +24,12 @@ export interface TransformLanguageKeysOptions {
    * @default true
    */
   removeUndefined?: boolean;
+
+  /**
+   * Whether to recursively transform nested objects
+   * @default false
+   */
+  recursive?: boolean;
 }
 
 type TranslationData = Record<string, unknown>;
@@ -42,6 +48,7 @@ export class TransformLanguageKeysPipe implements PipeTransform {
       languageIdProperty: 'langId',
       removeUndefined: true,
       additionalLanguageCodes: [],
+      recursive: false,
       ...options,
     };
   }
@@ -55,15 +62,36 @@ export class TransformLanguageKeysPipe implements PipeTransform {
       return value;
     }
 
-    // Step 1: Transform language keys to translations array
-    const transformedValue = this.transformLanguageKeys(value as Record<string, unknown>);
+    // Step 1: Transform language keys to translations array (recursive or flat)
+    const transformedValue = this.options.recursive
+      ? this.deepTransform(value, this.options)
+      : this.transformLanguageKeys(value as Record<string, unknown>);
 
     // Step 2: Remove undefined values if enabled
     if (this.options.removeUndefined) {
-      return omitUndefined(transformedValue);
+      return omitUndefined(transformedValue as object);
     }
 
     return transformedValue;
+  }
+
+  private deepTransform(value: unknown, config: TransformLanguageKeysOptions): unknown {
+    if (!value || typeof value !== 'object') {
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((item) => this.deepTransform(item, config));
+    }
+
+    const obj = value as Record<string, unknown>;
+    const result: Record<string, unknown> = { ...obj };
+
+    for (const key in result) {
+      result[key] = this.deepTransform(result[key], config);
+    }
+
+    return this.transformLanguageKeys(result);
   }
 
   private transformLanguageKeys(value: Record<string, unknown>): Record<string, unknown> {

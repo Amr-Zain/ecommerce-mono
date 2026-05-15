@@ -10,5 +10,10 @@
   "MIN_LENGTH": "{property} must be at least {constraints.0} characters",
   "MAX_LENGTH": "{property} must be at most {constraints.0} characters",
   "INVALID_MEDIA_MODEL": "{property} must be a valid entity name",
-  "IS_ARRAY": "{property} must be an array"
+  "IS_ARRAY": "{property} must be an array",
+  "INVALID_URL": "{property} must be a valid url",
+  "MIN_FILE_SIZE": "{property} must be at least {constraints.0} mb",
+  "IS_NOT_EMPTY": "{property} required",
+  "IS_NUMERIC": "{property} must be a number",
+  "IS_LENGTH": "{property} must be at least {constraints.0} characters and at most {constraints.1} characters"
 }

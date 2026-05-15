@@ -1,30 +1,30 @@
-import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
+import { IsString, IsNotEmpty, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CityTranslationDto {
+export class CreateStaticPageTranslaitonsDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   langId!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  name!: string;
+  title!: string;
+
+  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  content!: string;
 }
 
-export class createCityDto {
-  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
-  @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.IS_INT') })
-  countryId!: number;
-
-  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
-  @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
+export class CreateStaticPageDto {
+  @Type(() => CreateStaticPageTranslaitonsDto)
   @ValidateNested({ each: true })
-  @Type(() => CityTranslationDto)
-  translations!: CityTranslationDto[];
+  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
+  translations!: CreateStaticPageTranslaitonsDto[];
 
-  @IsOptional()
-  @IsBoolean({ message: i18nValidationMessage<I18nTranslations>('validation.IS_BOOLEAN') })
-  isActive?: boolean;
+  @Type(() => CreateStaticPageTranslaitonsDto)
+  @ValidateNested({ each: true })
+  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
+  sections!: CreateStaticPageTranslaitonsDto[];
 }

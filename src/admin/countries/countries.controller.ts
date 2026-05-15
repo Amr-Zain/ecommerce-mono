@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Delete, ParseIntPipe, Body } from '@nestjs/common';
 import { CountriesService } from './countries.service';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { UpdateCountryDto } from './dto/update-country.dto';
 import { CountryQueryDto } from './dto/country-query.dto';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
-import { BodyTransformLanguageKeys } from '@/common/decorators/transform-language-keys.decorator';
+import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 
 @Controller('countries')
 export class CountriesController {
@@ -13,7 +13,8 @@ export class CountriesController {
 
   @Post()
   @RequirePermissions({ resource: 'countries', action: 'create' })
-  async create(@BodyTransformLanguageKeys() createCountryDto: CreateCountryDto) {
+  @UseLanguageTransform()
+  async create(@Body() createCountryDto: CreateCountryDto) {
     return this.countriesService.createCountry(createCountryDto);
   }
 
@@ -31,7 +32,8 @@ export class CountriesController {
 
   @Patch(':id')
   @RequirePermissions({ resource: 'countries', action: 'update' })
-  async update(@Param('id', ParseIntPipe) id: number, @BodyTransformLanguageKeys() updateCountryDto: UpdateCountryDto) {
+  @UseLanguageTransform()
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateCountryDto: UpdateCountryDto) {
     return await this.countriesService.updateCountry(id, updateCountryDto);
   }
 
