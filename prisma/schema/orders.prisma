@@ -46,7 +46,7 @@ model OrderItem {
 
 model OrderItemTranslation {
   id                  BigInt    @id @default(autoincrement())
-  recordId            BigInt    @map("order_item_id")
+  recordId            BigInt    @map("record_id")
   orderItem           OrderItem @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId              String    @map("lang_id") // Removed Lang enum
   nameSnapshot        String    @map("name_snapshot")

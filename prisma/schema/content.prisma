@@ -12,7 +12,7 @@ model StaticPage {
 
 model StaticPageTranslation {
   id       BigInt     @id @default(autoincrement())
-  recordId BigInt     @map("static_page_id")
+  recordId BigInt     @map("record_id")
   staticPage StaticPage @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId   String     @map("lang_id") // Removed Lang enum
   title    String
@@ -39,7 +39,7 @@ model PageSection {
 
 model PageSectionTranslation {
   id          BigInt      @id @default(autoincrement())
-  recordId    BigInt      @map("page_section_id")
+  recordId    BigInt      @map("record_id")
   pageSection PageSection @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId      String      @map("lang_id") // Removed Lang enum
   title       String?
@@ -67,7 +67,7 @@ model Slider {
 
 model SliderTranslation {
   id       BigInt  @id @default(autoincrement())
-  recordId BigInt  @map("slider_id")
+  recordId BigInt  @map("record_id")
   slider   Slider  @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId   String  @map("lang_id") // Removed Lang enum
   title    String?
@@ -90,7 +90,7 @@ model Faq {
 
 model FaqTranslation {
   id       BigInt @id @default(autoincrement())
-  recordId BigInt @map("faq_id")
+  recordId BigInt @map("record_id")
   faq      Faq    @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId   String @map("lang_id") // Removed Lang enum
   question String @db.Text

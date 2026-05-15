@@ -16,7 +16,7 @@ model Country {
 
 model CountryTranslation {
   id           BigInt   @id @default(autoincrement())
-  recordId     BigInt   @map("country_id")
+  recordId     BigInt   @map("record_id")
   country      Country  @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId       String   @map("lang_id")
   name         String
@@ -45,7 +45,7 @@ model City {
 
 model CityTranslation {
   id       BigInt @id @default(autoincrement())
-  recordId BigInt @map("city_id")
+  recordId BigInt @map("record_id")
   city     City   @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId   String @map("lang_id") // Removed Lang enum
   name     String

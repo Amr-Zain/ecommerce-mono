@@ -20,7 +20,7 @@ model Category {
 
 model CategoryTranslation {
   id       BigInt   @id @default(autoincrement())
-  recordId BigInt   @map("category_id")
+  recordId BigInt   @map("record_id")
   category Category @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId   String   @map("lang_id")
   name     String
@@ -61,7 +61,7 @@ model Product {
 
 model ProductTranslation {
   id          BigInt  @id @default(autoincrement())
-  recordId    BigInt  @map("product_id")
+  recordId    BigInt  @map("record_id")
   product     Product @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId      String  @map("lang_id") // Removed Lang enum
   name        String
@@ -83,7 +83,7 @@ model Attribute {
 
 model AttributeTranslation {
   id        BigInt    @id @default(autoincrement())
-  recordId  BigInt    @map("attribute_id")
+  recordId  BigInt    @map("record_id")
   attribute Attribute @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId    String    @map("lang_id") // Removed Lang enum
   name      String
@@ -106,7 +106,7 @@ model AttributeValue {
 
 model AttributeValueTranslation {
   id       BigInt         @id @default(autoincrement())
-  recordId BigInt         @map("value_id")
+  recordId BigInt         @map("record_id")
   value    AttributeValue @relation(fields: [recordId], references: [id], onDelete: Cascade)
   langId   String         @map("lang_id") // Removed Lang enum
   name     String
