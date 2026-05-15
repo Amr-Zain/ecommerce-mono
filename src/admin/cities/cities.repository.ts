@@ -3,16 +3,22 @@ import { BaseRepository } from '@/common/repositories/base.repository';
 import { PrismaService, Prisma } from '../../prisma';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { QueryBuilderService } from 'src/common/services/query-builder.service';
+import { MediaService } from 'src/media/media.service';
 
 type City = Prisma.CityGetPayload<{ include: { translations: true } }>;
 
 @Injectable()
 export class CitiesRepository extends BaseRepository<City> {
+  protected readonly modelName = Prisma.ModelName.City;
+  protected readonly isSingleMedia = true;
+  protected readonly allowedMediaTypes = ['image'];
+
   constructor(
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,
+    private readonly mediaServiceInstance: MediaService,
   ) {
-    super(prisma);
+    super(prisma, mediaServiceInstance);
   }
   getModel() {
     return this.prisma.city;
@@ -65,10 +71,7 @@ export class CitiesRepository extends BaseRepository<City> {
   }
 
   async deleteCity(id: number | bigint): Promise<City> {
-    return this.prisma.city.delete({
-      where: { id },
-      include: { translations: true },
-    });
+    return this.delete(id);
   }
 
   private buildWhereClause(query: AdvancedQueryDto, langId?: string): Prisma.CityWhereInput {
