@@ -21,10 +21,13 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
         // 1. Recursively transform translations throughout the object
         const transformedData = this.deepTransform(data, requestedLangId);
 
-        // 2. Format paginated results (flatten 'data' to 'items')
-        let finalData = transformedData;
-        if (this.isPaginated(transformedData)) {
-          const paginated = transformedData as Record<string, unknown>;
+        // 2. Transform media paths to full URLs
+        const dataWithFullPaths = this.transformMediaPaths(transformedData);
+
+        // 3. Format paginated results (flatten 'data' to 'items')
+        let finalData = dataWithFullPaths;
+        if (this.isPaginated(dataWithFullPaths)) {
+          const paginated = dataWithFullPaths as Record<string, unknown>;
           const { data: items, ...rest } = paginated;
           finalData = { items, ...rest };
         }
@@ -94,6 +97,41 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
 
       // Remove the original translations array
       delete result['translations'];
+    }
+
+    return result;
+  }
+
+  /**
+   * Recursively traverses an object/array to append base URL to 'path' if it's a media path.
+   */
+  private transformMediaPaths(data: unknown): unknown {
+    if (!data || typeof data !== 'object' || data instanceof Date || data instanceof Buffer) {
+      return data;
+    }
+
+    if (Array.isArray(data)) {
+      return data.map((item: unknown) => this.transformMediaPaths(item));
+    }
+
+    const result = { ...(data as Record<string, unknown>) };
+
+    // If this object has a 'path' and looks like a Media object
+    if (
+      typeof result['path'] === 'string' &&
+      result['path'].startsWith('/uploads') &&
+      (result['filename'] || result['mimeType']) // Heuristic for Media record
+    ) {
+      const baseUrl = process.env.APP_URL || 'http://localhost:3000';
+      result['path'] = `${baseUrl}${result['path']}`;
+    }
+
+    // Recurse into all properties
+    for (const key in result) {
+      const value = result[key];
+      if (value && typeof value === 'object') {
+        result[key] = this.transformMediaPaths(value);
+      }
     }
 
     return result;
