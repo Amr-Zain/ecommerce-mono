@@ -1,9 +1,12 @@
+import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@/common/repositories/base.repository';
 import { PrismaService, Prisma } from '../../prisma';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { QueryBuilderService } from 'src/common/services/query-builder.service';
 
 type City = Prisma.CityGetPayload<{ include: { translations: true } }>;
+
+@Injectable()
 export class CitiesRepository extends BaseRepository<City> {
   constructor(
     prisma: PrismaService,
@@ -27,7 +30,6 @@ export class CitiesRepository extends BaseRepository<City> {
               },
             },
           },
-          take: 1,
         },
         translations: {
           where: {
@@ -44,11 +46,11 @@ export class CitiesRepository extends BaseRepository<City> {
         translations: true,
         country: {
           include: {
-            translations: true,
-            where: {
-              langId,
+            translations: {
+              where: {
+                langId,
+              },
             },
-            take: 1,
           },
         },
       },
