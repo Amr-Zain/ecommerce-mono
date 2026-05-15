@@ -4,18 +4,24 @@ import { BaseRepository } from '../common/repositories/base.repository';
 import { QueryBuilderService } from '../common/services/query-builder.service';
 import { AdvancedQueryDto } from '../common/dto/advanced-query.dto';
 import { PaginatedResult } from '../common/dto/pagination.dto';
+import { MediaService } from '../media/media.service';
 
 export type User = Prisma.UserGetPayload<{
-  include: { role: true; image: true };
+  include: { role: true; media: true };
 }>;
 
 @Injectable()
 export class UsersRepository extends BaseRepository<User> {
+  protected readonly modelName = Prisma.ModelName.User;
+  protected readonly isSingleMedia = true;
+  protected readonly allowedMediaTypes = ['image'];
+
   constructor(
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,
+    private readonly mediaServiceInstance: MediaService,
   ) {
-    super(prisma);
+    super(prisma, mediaServiceInstance);
   }
 
   protected getModel() {
@@ -28,7 +34,6 @@ export class UsersRepository extends BaseRepository<User> {
     return this.paginate(query, where, {
       include: {
         role: true,
-        image: true,
       },
     });
   }
@@ -39,7 +44,6 @@ export class UsersRepository extends BaseRepository<User> {
       {
         include: {
           role: true,
-          image: true,
         },
       },
     );
@@ -52,7 +56,6 @@ export class UsersRepository extends BaseRepository<User> {
     return this.findById(id, {
       include: {
         role: true,
-        image: true,
         addresses: true,
         reviews: true,
       },
