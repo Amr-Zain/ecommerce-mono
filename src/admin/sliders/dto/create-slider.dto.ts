@@ -1,8 +1,17 @@
-import { IsString, IsOptional, IsBoolean, IsInt, IsArray, ValidateNested, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  IsArray,
+  ValidateNested,
+  IsDateString,
+  IsNotEmpty,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { IsNotEmpty } from 'class-validator';
+import { IsAfter } from '@/common/decorators/is-after.decorator';
 
 export class SliderTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
@@ -15,7 +24,7 @@ export class SliderTranslationDto {
 }
 
 export class CreateSliderDto {
-  @IsOptional()
+  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.IS_INT') })
   sortOrder?: number;
 
@@ -25,6 +34,7 @@ export class CreateSliderDto {
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsDateString({}, { message: i18nValidationMessage<I18nTranslations>('validation.INVALID_URL') })
+  @IsAfter('startDate', { message: i18nValidationMessage<I18nTranslations>('validation.DATE_MUST_BE_AFTER') })
   endDate?: string;
 
   @IsOptional()

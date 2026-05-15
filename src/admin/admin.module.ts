@@ -6,7 +6,7 @@ import { CountriesModule } from './countries/countries.module';
 import { CitiesModule } from './cities/cities.module';
 import { SlidersModule } from './sliders/sliders.module';
 import { FaqsModule } from './faqs/faqs.module';
-import { StaticPagesModule } from './Static-pages/static-pages.module';
+import { StaticPagesModule } from './static-pages/static-pages.module';
 
 @Module({
   imports: [

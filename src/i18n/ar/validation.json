@@ -15,5 +15,6 @@
   "MIN_FILE_SIZE": "{property} يجب أن يكون على الأقل {constraints.0} ميجابايت",
   "IS_NOT_EMPTY": "{property} مطلوب ",
   "IS_NUMERIC": "{property} يجب أن يكون رقماً",
-  "IS_LENGTH": "{property} يجب أن يكون على الأقل {constraints.0} حرفاً وأن يكون بحد أقصى {constraints.1} حرفاً"
+  "IS_LENGTH": "{property} يجب أن يكون على الأقل {constraints.0} حرفاً وأن يكون بحد أقصى {constraints.1} حرفاً",
+  "DATE_MUST_BE_AFTER": "{property} يجب أن يكون بعد تاريخ {constraints.0}"
 }
