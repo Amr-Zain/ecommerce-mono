@@ -59,4 +59,24 @@ export class LocalStorageService implements StorageInterface {
   getFileUrl(filePath: string): string {
     return filePath; // Since it's local, we might serve it via a static controller
   }
+
+  async moveDir(model: string, oldIdOrHash: string, newIdOrHash: string): Promise<string> {
+    const oldDir = path.join(this.baseUploadsPath, model, oldIdOrHash);
+    const newDir = path.join(this.baseUploadsPath, model, newIdOrHash);
+
+    if (fs.existsSync(oldDir)) {
+      if (!fs.existsSync(path.dirname(newDir))) {
+        await fs.promises.mkdir(path.dirname(newDir), { recursive: true });
+      }
+
+      // If the destination directory already exists, remove it first to allow rename
+      if (fs.existsSync(newDir)) {
+        await fs.promises.rm(newDir, { recursive: true, force: true });
+      }
+
+      await fs.promises.rename(oldDir, newDir);
+    }
+
+    return `/uploads/${model}/${newIdOrHash}`;
+  }
 }

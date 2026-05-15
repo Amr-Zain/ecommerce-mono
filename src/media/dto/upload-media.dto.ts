@@ -1,19 +1,10 @@
 import { IsOptional, IsString, IsNotEmpty, IsIn } from 'class-validator';
+import { Prisma } from '@prisma/client';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 import { I18nTranslations } from '../../generated/i18n.generated';
 
-export const ALLOWED_MEDIA_MODELS = [
-  'user',
-  'category',
-  'product',
-  'slider',
-  'review',
-  'static_page',
-  'page_section',
-  'faq',
-  'attribute',
-];
+export const ALLOWED_MEDIA_MODELS = Object.values(Prisma.ModelName).map((model) => model.toLowerCase());
 
 export class UploadMediaDto {
   @IsString()
@@ -36,4 +27,7 @@ export class UploadMediaDto {
   @IsString()
   @IsOptional()
   attachHash?: string;
+
+  @IsOptional()
+  isMain?: boolean;
 }

@@ -17,6 +17,16 @@ export class MediaService {
   ) {}
 
   /**
+   * Helper to format path to full URL
+   */
+  formatPath(filePath: string): string {
+    if (!filePath) return filePath;
+    if (filePath.startsWith('http')) return filePath;
+    const baseUrl = process.env.APP_URL || 'http://localhost:3000';
+    return `${baseUrl}${filePath}`;
+  }
+
+  /**
    * Determine logical generic type based on mime
    */
   private getLogicalType(mimeType: string): string {
@@ -51,11 +61,19 @@ export class MediaService {
       const extension = path.extname(file.originalname).replace('.', '') || 'unknown';
       const logicalType = dto.type || this.getLogicalType(mimeType);
 
+      // Map model name to relation ID key (e.g., "static_page" -> "staticPageId")
+      const relationIdKey =
+        dto.model
+          .split('_')
+          .map((word, index) => (index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
+          .join('') + 'Id';
+
       // 3. Save to DB
       const result = await this.prisma.media.create({
         data: {
           model: dto.model,
-          modelId: dto.modelId || null,
+          modelId: dto.modelId ? BigInt(dto.modelId) : null,
+          [relationIdKey]: dto.modelId ? BigInt(dto.modelId) : null,
           attachHash: dto.modelId ? null : attachHash,
           collection: dto.collection || null,
           path: filePath,
@@ -65,6 +83,7 @@ export class MediaService {
           mimeType: mimeType,
           type: logicalType,
           size: file.size,
+          isMain: dto.isMain || false,
           metadata: {},
         },
       });
@@ -83,19 +102,47 @@ export class MediaService {
    * Links temporarily uploaded media to a model once it has been created
    */
   async attachTempMedia(dto: AttachMediaDto) {
-    const result = await this.prisma.media.updateMany({
+    const mediaItems = await this.prisma.media.findMany({
       where: {
         model: dto.model,
         attachHash: dto.attachHash,
         modelId: null,
       },
-      data: {
-        modelId: dto.modelId,
-        attachHash: null, // Clear the hash once attached safely
-      },
     });
 
-    return { count: result.count };
+    if (mediaItems.length === 0) return { count: 0 };
+
+    // 1. Move directories on disk
+    const newPathBase = await this.storage.moveDir(dto.model, dto.attachHash, dto.modelId);
+
+    // 2. Update DB records
+    const bigIntModelId = BigInt(dto.modelId);
+
+    // Map model name to relation ID key (e.g., "static_page" -> "staticPageId")
+    const relationIdKey =
+      dto.model
+        .split('_')
+        .map((word, index) => (index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
+        .join('') + 'Id';
+
+    let count = 0;
+
+    for (const item of mediaItems) {
+      const newPath = item.path.replace(`/uploads/${dto.model}/${dto.attachHash}`, newPathBase);
+
+      await this.prisma.media.update({
+        where: { id: item.id },
+        data: {
+          modelId: bigIntModelId,
+          [relationIdKey]: bigIntModelId,
+          attachHash: null,
+          path: newPath,
+        },
+      });
+      count++;
+    }
+
+    return { count };
   }
 
   async findByUuid(uuid: string) {
@@ -107,7 +154,7 @@ export class MediaService {
   async findByEntity(model: string, modelId: string, collection?: string) {
     const where: Prisma.MediaWhereInput = {
       model,
-      modelId,
+      modelId: BigInt(modelId),
     };
 
     if (collection) where.collection = collection;
