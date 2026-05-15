@@ -58,12 +58,9 @@ export class CountriesRepository extends BaseRepository<CountryType> {
     });
   }
   async deleteCountry(id: number | bigint): Promise<CountryType> {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.countryTranslation.deleteMany({ where: { countryId: id } });
-      return tx.country.delete({
-        where: { id },
-        include: { translations: true },
-      });
+    return this.prisma.country.delete({
+      where: { id },
+      include: { translations: true },
     });
   }
   private buildWhereClause(query: AdvancedQueryDto, langId?: string): Prisma.CountryWhereInput {
