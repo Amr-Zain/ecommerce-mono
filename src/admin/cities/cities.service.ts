@@ -19,7 +19,7 @@ export class CitiesService {
     return this.CitiesRepo.updateCity(id, city as unknown as Prisma.CityUpdateInput);
   }
 
-  async findAll(query: CityQueryDto): Promise<PaginatedResult<CityModel>> {
+  async findAll(query: CityQueryDto): Promise<PaginatedResult<CityModel> | CityModel[]> {
     return this.CitiesRepo.findAll(query);
   }
 

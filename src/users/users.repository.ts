@@ -22,7 +22,7 @@ export class UsersRepository extends BaseRepository<User> {
     return this.prisma.user;
   }
 
-  async findAll(query: AdvancedQueryDto): Promise<PaginatedResult<User>> {
+  async findAll(query: AdvancedQueryDto): Promise<PaginatedResult<User> | User[]> {
     const where = this.buildWhereClause(query);
 
     return this.paginate(query, where, {

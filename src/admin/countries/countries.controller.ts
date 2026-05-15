@@ -20,23 +20,19 @@ export class CountriesController {
   @Get()
   @RequirePermissions({ resource: 'countries', action: 'list' })
   async findAll(@ParsedQuery(CountryQueryDto) query: CountryQueryDto) {
-    const result = await this.countriesService.getAllCountries(query);
-    return {
-      items: result.data,
-      meta: result.meta,
-    };
+    return this.countriesService.getAllCountries(query);
   }
 
   @Get(':id')
   @RequirePermissions({ resource: 'countries', action: 'read' })
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.countriesService.getCountryById(BigInt(id));
+    return await this.countriesService.getCountryById(BigInt(id));
   }
 
   @Patch(':id')
   @RequirePermissions({ resource: 'countries', action: 'update' })
   async update(@Param('id', ParseIntPipe) id: number, @BodyTransformLanguageKeys() updateCountryDto: UpdateCountryDto) {
-    return this.countriesService.updateCountry(id, updateCountryDto);
+    return await this.countriesService.updateCountry(id, updateCountryDto);
   }
 
   @Delete(':id')

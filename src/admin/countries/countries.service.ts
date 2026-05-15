@@ -10,7 +10,7 @@ import { UpdateCountryDto } from './dto/update-country.dto';
 export class CountriesService {
   constructor(private readonly repo: CountriesRepository) {}
 
-  async getAllCountries(query: AdvancedQueryDto): Promise<PaginatedResult<CountryType>> {
+  async getAllCountries(query: AdvancedQueryDto): Promise<PaginatedResult<CountryType> | CountryType[]> {
     return this.repo.findAll(query);
   }
 

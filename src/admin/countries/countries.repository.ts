@@ -18,7 +18,7 @@ export class CountriesRepository extends BaseRepository<CountryType> {
   getModel() {
     return this.prisma.country;
   }
-  async findAll(query: AdvancedQueryDto, langId: string = 'en'): Promise<PaginatedResult<CountryType>> {
+  async findAll(query: AdvancedQueryDto, langId: string = 'en'): Promise<PaginatedResult<CountryType> | CountryType[]> {
     const where = this.buildWhereClause(query, langId);
 
     return this.paginate(query, where, {

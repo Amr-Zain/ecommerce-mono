@@ -6,7 +6,7 @@ import { UserQueryDto } from './dto/user-query.dto';
 import { ParsedQuery } from '../common/decorators/parsed-query.decorator';
 import { BodyOmitUndefined } from '../common/decorators/omit-undefined.decorator';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
-import type { PaginationMeta } from '../common/dto/pagination.dto';
+import type { PaginatedResult } from '../common/dto/pagination.dto';
 import type { User } from './users.repository';
 
 @Controller('users')
@@ -21,15 +21,8 @@ export class UsersController {
 
   @Get()
   @RequirePermissions({ resource: 'users', action: 'list' })
-  async findAll(@ParsedQuery(UserQueryDto) query: UserQueryDto): Promise<{
-    items: User[];
-    meta: PaginationMeta;
-  }> {
-    const result = await this.usersService.findAll(query);
-    return {
-      items: result.data,
-      meta: result.meta,
-    };
+  async findAll(@ParsedQuery(UserQueryDto) query: UserQueryDto): Promise<PaginatedResult<User> | User[]> {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')

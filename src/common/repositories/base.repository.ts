@@ -47,7 +47,7 @@ export abstract class BaseRepository<T> {
     query: AdvancedQueryDto,
     where?: WhereClause,
     options?: QueryOptions,
-  ): Promise<PaginatedResult<T>> {
+  ): Promise<PaginatedResult<T> | T[]> {
     const orderBy = this.buildOrderBy(query.sort);
     const model = this.getModel() as {
       findMany: (args?: QueryArgs) => Promise<T[]>;
@@ -63,19 +63,7 @@ export abstract class BaseRepository<T> {
     }
 
     if (query.paginate === false) {
-      const data = await model.findMany(queryArgs);
-
-      return {
-        data,
-        meta: {
-          page: 1,
-          limit: data.length,
-          total: data.length,
-          totalPages: 1,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
-      };
+      return model.findMany(queryArgs);
     }
 
     const { skip, take } = PaginationUtil.getPrismaParams(query);

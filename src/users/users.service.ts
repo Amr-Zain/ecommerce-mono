@@ -16,7 +16,7 @@ export class UsersService {
   /**
    * Get all users with pagination and filters
    */
-  async findAll(query: UserQueryDto): Promise<PaginatedResult<User>> {
+  async findAll(query: UserQueryDto): Promise<PaginatedResult<User> | User[]> {
     return this.usersRepository.findAll(query);
   }
 
@@ -33,9 +33,6 @@ export class UsersService {
     return user;
   }
 
-  /**
-   * Get user by email
-   */
   async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findByEmail(email);
   }

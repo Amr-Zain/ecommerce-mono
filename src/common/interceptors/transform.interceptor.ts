@@ -2,25 +2,12 @@ import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nes
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { flattenAllTranslations, flattenAllTranslationsArray, EntityWithTranslations } from '../utils/translation.util';
 
 export interface Response<T> {
   success: boolean;
   data: T;
-  timestamp: string;
+  // timestamp: string;
 }
-
-interface PaginatedData {
-  data: EntityWithTranslations[];
-  [key: string]: unknown;
-}
-
-interface NestedPaginatedData {
-  data: PaginatedData;
-  [key: string]: unknown;
-}
-
-type ResponseData = EntityWithTranslations | EntityWithTranslations[] | PaginatedData | NestedPaginatedData;
 
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
@@ -30,81 +17,85 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
     const requestedLangId = acceptLanguage.split(',')[0].split('-')[0].trim();
 
     return next.handle().pipe(
-      map((data: T) => {
-        const transformedData = this.applyTranslationTransformation(data as ResponseData, requestedLangId);
+      map((data: unknown) => {
+        // 1. Recursively transform translations throughout the object
+        const transformedData = this.deepTransform(data, requestedLangId);
+
+        // 2. Format paginated results (flatten 'data' to 'items')
+        let finalData = transformedData;
+        if (this.isPaginated(transformedData)) {
+          const paginated = transformedData as Record<string, unknown>;
+          const { data: items, ...rest } = paginated;
+          finalData = { items, ...rest };
+        }
 
         return {
           success: true,
-          data: transformedData as unknown as T,
-          timestamp: new Date().toISOString(),
+          data: finalData as T,
+          // timestamp: new Date().toISOString(),
         };
       }),
     );
   }
 
+  private isPaginated(data: unknown): boolean {
+    return (
+      data !== null &&
+      typeof data === 'object' &&
+      !Array.isArray(data) &&
+      Array.isArray((data as Record<string, unknown>).data) &&
+      !!(data as Record<string, unknown>).meta
+    );
+  }
+
   /**
-   * Apply translation transformation to response data
-   * Handles various response structures (simple, array, paginated, nested)
+   * Recursively traverses an object/array to flatten 'translations' everywhere.
    */
-  private applyTranslationTransformation(data: ResponseData, requestedLangId: string): ResponseData {
-    if (!data) {
+  private deepTransform(data: unknown, langId: string): unknown {
+    if (!data || typeof data !== 'object' || data instanceof Date || data instanceof Buffer) {
       return data;
     }
 
-    // Check if data is an array of entities with translations
+    // Handle Arrays
     if (Array.isArray(data)) {
-      const arr = data;
-      const hasTranslations = arr.length > 0 && Array.isArray(arr[0]?.translations) && arr[0].translations.length > 0;
-      if (hasTranslations) {
-        return flattenAllTranslationsArray(arr, requestedLangId);
+      return data.map((item: unknown) => this.deepTransform(item, langId));
+    }
+
+    // Handle Objects
+    const result = { ...(data as Record<string, unknown>) };
+
+    // 1. Recurse into all child properties first
+    for (const key in result) {
+      const value = result[key];
+      if (key !== 'translations' && value && typeof value === 'object') {
+        result[key] = this.deepTransform(value, langId);
       }
-      return data;
     }
 
-    const obj = data as Record<string, unknown>;
+    // 2. Flatten current object's translations
+    const translations = result['translations'];
+    if (Array.isArray(translations)) {
+      translations.forEach((t: unknown) => {
+        if (t && typeof t === 'object' && !Array.isArray(t)) {
+          const translation = t as Record<string, unknown>;
+          const { langId: tLang, ...fields } = translation;
 
-    // Check if data is a simple object with translations
-    if (Array.isArray(obj['translations']) && (obj['translations'] as unknown[]).length > 0) {
-      return flattenAllTranslations(obj as EntityWithTranslations, requestedLangId);
+          if (typeof tLang === 'string') {
+            // Add language-specific key (e.g., result.en = { name: '...' })
+            result[tLang] = fields;
+
+            // If this is the requested language, promote fields to root
+            if (tLang === langId) {
+              Object.assign(result, fields);
+            }
+          }
+        }
+      });
+
+      // Remove the original translations array
+      delete result['translations'];
     }
 
-    // Check for nested paginated structure: { data: { data: [...], meta: {...} } }
-    if (
-      obj['data'] &&
-      typeof obj['data'] === 'object' &&
-      !Array.isArray(obj['data']) &&
-      Array.isArray((obj['data'] as Record<string, unknown>)['data'])
-    ) {
-      const inner = obj['data'] as Record<string, unknown>;
-      const nestedData = inner['data'] as EntityWithTranslations[];
-      const hasTranslations =
-        nestedData.length > 0 && Array.isArray(nestedData[0]?.translations) && nestedData[0].translations.length > 0;
-      if (hasTranslations) {
-        return {
-          ...obj,
-          data: {
-            ...inner,
-            data: flattenAllTranslationsArray(nestedData, requestedLangId),
-          },
-        };
-      }
-      return data;
-    }
-
-    // Check for paginated structure: { data: [...], meta: {...} }
-    if (Array.isArray(obj['data'])) {
-      const arr2 = obj['data'] as EntityWithTranslations[];
-      const hasTranslations =
-        arr2.length > 0 && Array.isArray(arr2[0]?.translations) && arr2[0].translations.length > 0;
-      if (hasTranslations) {
-        return {
-          ...obj,
-          data: flattenAllTranslationsArray(arr2, requestedLangId),
-        };
-      }
-      return data;
-    }
-
-    return data;
+    return result;
   }
 }
