@@ -4,6 +4,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { UsersModule } from '../users/users.module';
 import { CountriesModule } from './countries/countries.module';
 import { CitiesModule } from './cities/cities.module';
+import { SlidersModule } from './sliders/sliders.module';
+import { FaqsModule } from './faqs/faqs.module';
+import { StaticPagesModule } from './Static-pages/static-pages.module';
 
 @Module({
   imports: [
@@ -11,6 +14,9 @@ import { CitiesModule } from './cities/cities.module';
     UsersModule,
     CountriesModule,
     CitiesModule,
+    SlidersModule,
+    FaqsModule,
+    StaticPagesModule,
     RouterModule.register([
       {
         path: 'admin',
@@ -19,6 +25,9 @@ import { CitiesModule } from './cities/cities.module';
           { path: '', module: UsersModule },
           { path: '', module: CountriesModule },
           { path: '', module: CitiesModule },
+          { path: '', module: SlidersModule },
+          { path: '', module: FaqsModule },
+          { path: '', module: StaticPagesModule },
         ],
       },
     ]),

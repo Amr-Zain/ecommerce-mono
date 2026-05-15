@@ -1,0 +1,36 @@
+import { Injectable } from '@nestjs/common';
+import { Prisma } from '@/prisma';
+import { SlidersRepository, SliderType } from './sliders.repository';
+import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
+import { PaginatedResult } from '@/common/dto/pagination.dto';
+import { CreateSliderDto } from './dto/create-slider.dto';
+import { UpdateSliderDto } from './dto/update-slider.dto';
+
+@Injectable()
+export class SlidersService {
+  constructor(private readonly repo: SlidersRepository) {}
+
+  async getAllSliders(query: AdvancedQueryDto): Promise<PaginatedResult<SliderType> | SliderType[]> {
+    return this.repo.findAll(query);
+  }
+
+  async updateSlider(id: number, slider: UpdateSliderDto): Promise<SliderType> {
+    return this.repo.update(id, slider as unknown as Prisma.SliderUpdateInput);
+  }
+
+  async deleteSlider(id: number): Promise<SliderType> {
+    return this.repo.delete(id);
+  }
+
+  async createSlider(slider: CreateSliderDto): Promise<SliderType> {
+    return this.repo.create(slider as unknown as Prisma.SliderCreateInput);
+  }
+
+  async getSliderById(id: number | bigint): Promise<SliderType | null> {
+    return this.repo.findById(id);
+  }
+
+  async getSliderByIdWithAllTranslations(id: number | bigint): Promise<SliderType | null> {
+    return this.repo.findByIdWithAllTranslations(id);
+  }
+}
