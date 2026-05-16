@@ -9,16 +9,12 @@ type City = Prisma.CityGetPayload<{ include: { translations: true } }>;
 
 @Injectable()
 export class CitiesRepository extends BaseRepository<City> {
-  protected readonly modelName = Prisma.ModelName.City;
-  protected readonly isSingleMedia = true;
-  protected readonly allowedMediaTypes = ['image'];
-
   constructor(
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,
-    private readonly mediaServiceInstance: MediaService,
+    mediaService: MediaService,
   ) {
-    super(prisma, mediaServiceInstance);
+    super(prisma, mediaService);
   }
   getModel() {
     return this.prisma.city;

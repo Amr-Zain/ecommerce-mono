@@ -6,22 +6,24 @@ import { AdvancedQueryDto } from '../../common/dto/advanced-query.dto';
 import { PaginatedResult } from '../../common/dto/pagination.dto';
 import { MediaService } from '../../media/media.service';
 
+import { MediaType } from '../../media/enums/media-type.enum';
+
 export type User = Prisma.UserGetPayload<{
-  include: { role: true; media: true };
+  include: { role: true };
 }>;
 
 @Injectable()
 export class UsersRepository extends BaseRepository<User> {
-  protected readonly modelName = Prisma.ModelName.User;
-  protected readonly isSingleMedia = true;
-  protected readonly allowedMediaTypes = ['image'];
+  protected readonly mediaConfig = {
+    avatar: { collection: 'avatar', single: true, allowedTypes: [MediaType.IMAGE] },
+  };
 
   constructor(
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,
-    private readonly mediaServiceInstance: MediaService,
+    mediaService: MediaService,
   ) {
-    super(prisma, mediaServiceInstance);
+    super(prisma, mediaService);
   }
 
   protected getModel() {

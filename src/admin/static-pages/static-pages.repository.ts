@@ -6,24 +6,26 @@ import { Prisma, PrismaService } from '@/prisma';
 import { Injectable } from '@nestjs/common';
 import { MediaService } from '@/media/media.service';
 
+import { MediaType } from '@/media/enums/media-type.enum';
+
 export type StaticPage = Prisma.StaticPageGetPayload<{
   include: {
     translations: true;
     sections: true;
-    media: true;
   };
 }>;
 @Injectable()
 export class StaticPagesRepository extends BaseRepository<StaticPage> {
-  protected readonly modelName = Prisma.ModelName.StaticPage;
-  protected readonly allowedMediaTypes = ['image', 'pdf'];
+  protected readonly mediaConfig = {
+    image: { collection: 'image', single: true, allowedTypes: [MediaType.IMAGE, MediaType.DOCUMENT] },
+  };
 
   constructor(
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,
-    private readonly mediaServiceInstance: MediaService,
+    mediaService: MediaService,
   ) {
-    super(prisma, mediaServiceInstance);
+    super(prisma, mediaService);
   }
   getModel() {
     return this.prisma.staticPage;

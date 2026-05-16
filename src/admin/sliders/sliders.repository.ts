@@ -6,20 +6,22 @@ import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { MediaService } from '@/media/media.service';
 
+import { MediaType } from '@/media/enums/media-type.enum';
+
 export type SliderType = Prisma.SliderGetPayload<{ include: { translations: true } }>;
 
 @Injectable()
 export class SlidersRepository extends BaseRepository<SliderType> {
-  protected readonly modelName = Prisma.ModelName.Slider;
-  protected readonly isSingleMedia = true;
-  protected readonly allowedMediaTypes = ['image', 'video'];
+  protected readonly mediaConfig = {
+    slide: { collection: 'slide', single: true, allowedTypes: [MediaType.IMAGE, MediaType.VIDEO] },
+  };
 
   constructor(
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,
-    private readonly mediaServiceInstance: MediaService,
+    mediaService: MediaService,
   ) {
-    super(prisma, mediaServiceInstance);
+    super(prisma, mediaService);
   }
 
   protected getModel() {

@@ -11,8 +11,6 @@ export type Role = Prisma.RoleGetPayload<{
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> {
-  protected readonly modelName = Prisma.ModelName.Role;
-
   constructor(
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,

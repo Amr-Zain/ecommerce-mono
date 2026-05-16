@@ -6,19 +6,21 @@ import { AdvancedQueryDto } from 'src/common/dto/advanced-query.dto';
 import { PaginatedResult } from 'src/common/dto/pagination.dto';
 import { MediaService } from 'src/media/media.service';
 
+import { MediaType } from 'src/media/enums/media-type.enum';
+
 export type CountryType = Prisma.CountryGetPayload<{ include: { translations: true } }>;
 @Injectable()
 export class CountriesRepository extends BaseRepository<CountryType> {
-  protected readonly modelName = Prisma.ModelName.Country;
-  protected readonly isSingleMedia = true;
-  protected readonly allowedMediaTypes = ['image'];
+  protected readonly mediaConfig = {
+    flag: { collection: 'flag', single: true, allowedTypes: [MediaType.IMAGE] },
+  };
 
   constructor(
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,
-    private readonly mediaServiceInstance: MediaService,
+    mediaService: MediaService,
   ) {
-    super(prisma, mediaServiceInstance);
+    super(prisma, mediaService);
   }
 
   getModel() {
