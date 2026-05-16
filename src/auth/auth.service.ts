@@ -52,7 +52,6 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-
   /**
    * Validate user credentials
    */

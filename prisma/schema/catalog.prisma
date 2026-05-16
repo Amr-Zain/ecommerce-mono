@@ -1,37 +1,37 @@
-model Category {
+model Collection {
   id       BigInt     @id @default(autoincrement())
   parentId BigInt?    @map("parent_id")
-  parent   Category?  @relation("CategoryParent", fields: [parentId], references: [id], onDelete: SetNull)
-  children Category[] @relation("CategoryParent")
+  parent   Collection? @relation("CollectionParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children Collection[] @relation("CollectionParent")
 
-  sortOrder    Int                   @default(0) @map("sort_order")
-  isActive     Boolean               @default(true) @map("is_active")
-  createdAt    DateTime              @default(now()) @map("created_at")
-  updatedAt    DateTime              @default(now()) @updatedAt @map("updated_at")
-  translations CategoryTranslation[]
+  sortOrder    Int                      @default(0) @map("sort_order")
+  isActive     Boolean                  @default(true) @map("is_active")
+  createdAt    DateTime                 @default(now()) @map("created_at")
+  updatedAt    DateTime                 @default(now()) @updatedAt @map("updated_at")
+  translations CollectionTranslation[]
   products     Product[]
 
   @@index([parentId])
   @@index([sortOrder])
-  @@map("categories")
+  @@map("collections")
 }
 
-model CategoryTranslation {
-  id       BigInt   @id @default(autoincrement())
-  recordId BigInt   @map("record_id")
-  category Category @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  langId   String   @map("lang_id")
-  name     String
+model CollectionTranslation {
+  id         BigInt     @id @default(autoincrement())
+  recordId   BigInt     @map("record_id")
+  collection Collection @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  langId     String     @map("lang_id")
+  name       String
 
   @@unique([recordId, langId])
-  @@map("categories_translations")
+  @@map("collections_translations")
 }
 
 model Product {
-  id          BigInt    @id @default(autoincrement())
-  categoryId  BigInt?   @map("category_id")
-  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  hasVariants Boolean   @default(false) @map("has_variants")
+  id           BigInt    @id @default(autoincrement())
+  collectionId BigInt?   @map("collection_id")
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  hasVariants  Boolean   @default(false) @map("has_variants")
 
   price            Decimal              @default(0) @map("price") @db.Decimal(12, 2)
   discountValue    Decimal              @default(0) @map("discount_value") @db.Decimal(12, 2)
@@ -49,7 +49,7 @@ model Product {
   prices           ProductPrice[]
   orderItems       OrderItem[]
 
-  @@index([categoryId])
+  @@index([collectionId])
   @@index([sku])
   @@index([barcode])
   @@map("products")
@@ -59,7 +59,7 @@ model ProductTranslation {
   id          BigInt  @id @default(autoincrement())
   recordId    BigInt  @map("record_id")
   product     Product @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  langId      String  @map("lang_id") // Removed Lang enum
+  langId      String  @map("lang_id")
   name        String
   description String? @db.Text
 
@@ -81,7 +81,7 @@ model AttributeTranslation {
   id        BigInt    @id @default(autoincrement())
   recordId  BigInt    @map("record_id")
   attribute Attribute @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  langId    String    @map("lang_id") // Removed Lang enum
+  langId    String    @map("lang_id")
   name      String
 
   @@unique([recordId, langId])
@@ -104,7 +104,7 @@ model AttributeValueTranslation {
   id       BigInt         @id @default(autoincrement())
   recordId BigInt         @map("record_id")
   value    AttributeValue @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  langId   String         @map("lang_id") // Removed Lang enum
+  langId   String         @map("lang_id")
   name     String
 
   @@unique([recordId, langId])
