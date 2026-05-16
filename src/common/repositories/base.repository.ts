@@ -67,7 +67,7 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
   /**
    * Whether to automatically include the media relation in queries
    */
-  protected readonly hasMedia: boolean = true;
+  protected readonly hasMedia: boolean = false;
 
   /**
    * Helper to merge default includes (like media) into user-provided options
@@ -202,9 +202,9 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     return model.findMany(queryArgs);
   }
 
-  async create(data: DataInput): Promise<T> {
+  async create(data: DataInput, options?: QueryOptions): Promise<T> {
     const model = this.getModel() as {
-      create: (args: { data: DataInput }) => Promise<T>;
+      create: (args: { data: DataInput; include?: IncludeClause; select?: SelectClause }) => Promise<T>;
     };
 
     const media = data[this.mediaKey];
@@ -226,9 +226,18 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       };
     }
 
-    const record = await model.create({ data: finalData });
+    const mergedOptions = this.applyDefaultIncludes(options);
+    const createArgs: { data: DataInput; include?: IncludeClause; select?: SelectClause } = { data: finalData };
+
+    if (mergedOptions.select) {
+      createArgs.select = mergedOptions.select;
+    } else if (mergedOptions.include) {
+      createArgs.include = mergedOptions.include;
+    }
+
+    const record = await model.create(createArgs);
     const recordId = record.id;
-    console.log('🚀 ~ CountriesRepository ~ createCountry ~ country:', recordId, media);
+    console.log('🚀 ~ BaseRepository ~ create ~ record:', recordId, media);
     if (media && recordId) {
       await this.handleMediaAttachment(recordId, media);
     }
@@ -236,9 +245,14 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     return record;
   }
 
-  async update(id: number | bigint, data: DataInput): Promise<T> {
+  async update(id: number | bigint, data: DataInput, options?: QueryOptions): Promise<T> {
     const model = this.getModel() as {
-      update: (args: { where: { id: number | bigint }; data: DataInput }) => Promise<T>;
+      update: (args: {
+        where: { id: number | bigint };
+        data: DataInput;
+        include?: IncludeClause;
+        select?: SelectClause;
+      }) => Promise<T>;
     };
 
     const media = data[this.mediaKey];
@@ -264,7 +278,24 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       };
     }
 
-    const record = await model.update({ where: { id }, data: finalData });
+    const mergedOptions = this.applyDefaultIncludes(options);
+    const updateArgs: {
+      where: { id: number | bigint };
+      data: DataInput;
+      include?: IncludeClause;
+      select?: SelectClause;
+    } = {
+      where: { id },
+      data: finalData,
+    };
+
+    if (mergedOptions.select) {
+      updateArgs.select = mergedOptions.select;
+    } else if (mergedOptions.include) {
+      updateArgs.include = mergedOptions.include;
+    }
+
+    const record = await model.update(updateArgs);
 
     if (media) {
       await this.handleMediaAttachment(id, media);
