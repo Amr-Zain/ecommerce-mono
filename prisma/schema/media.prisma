@@ -4,8 +4,8 @@ model Media {
   attachHash   String?  @map("attach_hash")
   model        String
   modelId      BigInt?  @map("model_id")
+  collection   String   @default("default")
   isMain       Boolean  @default(false) @map("is_main")
-  collection   String?
   path         String   @db.Text
   filename     String
   originalName String   @map("original_name")
@@ -17,36 +17,10 @@ model Media {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
-  // Model-specific Foreign Keys
-  categoryId    BigInt? @map("category_id")
-  productId     BigInt? @map("product_id")
-  attributeId   BigInt? @map("attribute_id")
-  staticPageId  BigInt? @map("static_page_id")
-  pageSectionId BigInt? @map("page_section_id")
-  sliderId      BigInt? @map("slider_id")
-  faqId         BigInt? @map("faq_id")
-  reviewId      BigInt? @map("review_id")
-  userId        BigInt? @map("user_id")
-  countryId     BigInt? @map("country_id")
-  cityId        BigInt? @map("city_id")
-
-  // Relations
-  category    Category?    @relation("CategoryMedia", fields: [categoryId], references: [id], onDelete: Cascade)
-  product     Product?     @relation("ProductMedia", fields: [productId], references: [id], onDelete: Cascade)
-  attribute   Attribute?   @relation("AttributeMedia", fields: [attributeId], references: [id], onDelete: Cascade)
-  staticPage  StaticPage?  @relation("StaticPageMedia", fields: [staticPageId], references: [id], onDelete: Cascade)
-  pageSection PageSection? @relation("PageSectionMedia", fields: [pageSectionId], references: [id], onDelete: Cascade)
-  slider      Slider?      @relation("SliderMedia", fields: [sliderId], references: [id], onDelete: Cascade)
-  faq         Faq?         @relation("FaqMedia", fields: [faqId], references: [id], onDelete: Cascade)
-  review      Review?      @relation("ReviewMedia", fields: [reviewId], references: [id], onDelete: Cascade)
-  user        User?        @relation("UserMedia", fields: [userId], references: [id], onDelete: Cascade)
-  country     Country?     @relation("CountryMedia", fields: [countryId], references: [id], onDelete: Cascade)
-  city        City?        @relation("CityMedia", fields: [cityId], references: [id], onDelete: Cascade)
-
   @@index([uuid])
   @@index([model, modelId])
   @@index([model, modelId, collection])
   @@index([model, attachHash])
-  @@index([type])
+  @@index([collection])
   @@map("media")
 }

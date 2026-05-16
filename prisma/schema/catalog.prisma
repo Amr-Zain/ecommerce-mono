@@ -3,8 +3,6 @@ model Category {
   parentId BigInt?    @map("parent_id")
   parent   Category?  @relation("CategoryParent", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryParent")
-  model    String     @default("category")
-  media    Media[]    @relation("CategoryMedia")
 
   sortOrder    Int                   @default(0) @map("sort_order")
   isActive     Boolean               @default(true) @map("is_active")
@@ -13,7 +11,6 @@ model Category {
   translations CategoryTranslation[]
   products     Product[]
 
-  @@unique([model, id])
   @@index([parentId])
   @@index([sortOrder])
   @@map("categories")
@@ -34,9 +31,7 @@ model Product {
   id          BigInt    @id @default(autoincrement())
   categoryId  BigInt?   @map("category_id")
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  model       String    @default("product")
   hasVariants Boolean   @default(false) @map("has_variants")
-  media      Media[] @relation("ProductMedia")
 
   price            Decimal              @default(0) @map("price") @db.Decimal(12, 2)
   discountValue    Decimal              @default(0) @map("discount_value") @db.Decimal(12, 2)
@@ -54,7 +49,6 @@ model Product {
   prices           ProductPrice[]
   orderItems       OrderItem[]
 
-  @@unique([model, id])
   @@index([categoryId])
   @@index([sku])
   @@index([barcode])
@@ -76,13 +70,10 @@ model ProductTranslation {
 model Attribute {
   id           BigInt                 @id @default(autoincrement())
   createdAt    DateTime               @default(now()) @map("created_at")
-  model        String                 @default("attribute")
   translations AttributeTranslation[]
   values       AttributeValue[]
   variants     VariantAttribute[]
-  media        Media[]                @relation("AttributeMedia")
 
-  @@unique([model, id])
   @@map("attributes")
 }
 

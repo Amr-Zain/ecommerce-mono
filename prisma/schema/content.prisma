@@ -4,12 +4,9 @@ model StaticPage {
   isActive     Boolean                 @default(true) @map("is_active")
   createdAt    DateTime                @default(now()) @map("created_at")
   updatedAt    DateTime                @default(now()) @updatedAt @map("updated_at")
-  model        String                  @default("static_page")
   translations StaticPageTranslation[]
   sections     PageSection[]
-  media        Media[]                 @relation("StaticPageMedia")
 
-  @@unique([model, id])
   @@map("static_pages")
 }
 
@@ -33,11 +30,8 @@ model PageSection {
   isActive     Boolean                  @default(true) @map("is_active")
   createdAt    DateTime                 @default(now()) @map("created_at")
   updatedAt    DateTime                 @default(now()) @updatedAt @map("updated_at")
-  model        String                   @default("page_section")
   translations PageSectionTranslation[]
-  media        Media[]                  @relation("PageSectionMedia")
 
-  @@unique([model, id])
   @@index([staticPageId])
   @@index([sortOrder])
   @@map("page_sections")
@@ -57,8 +51,6 @@ model PageSectionTranslation {
 
 model Slider {
   id           BigInt              @id @default(autoincrement())
-  model        String              @default("slider")
-  media        Media[]             @relation("SliderMedia")
   sortOrder    Int                 @default(0) @map("sort_order")
   startDate    DateTime?           @map("start_date")
   endDate      DateTime?           @map("end_date")
@@ -67,7 +59,6 @@ model Slider {
   updatedAt    DateTime            @default(now()) @updatedAt @map("updated_at")
   translations SliderTranslation[]
 
-  @@unique([model, id])
   @@index([sortOrder])
   @@map("sliders")
 }
@@ -89,11 +80,8 @@ model Faq {
   isActive     Boolean          @default(true) @map("is_active")
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @default(now()) @updatedAt @map("updated_at")
-  model        String           @default("faq")
   translations FaqTranslation[]
-  media        Media[]          @relation("FaqMedia")
 
-  @@unique([model, id])
   @@index([sortOrder])
   @@map("faqs")
 }
@@ -121,10 +109,7 @@ model Review {
   isVerified Boolean  @default(false) @map("is_verified")
   isActive   Boolean  @default(true) @map("is_active")
   createdAt  DateTime @default(now()) @map("created_at")
-  model      String   @default("review")
-  media      Media[]  @relation("ReviewMedia")
 
-  @@unique([model, id])
   @@unique([userId, productId])
   @@index([userId])
   @@index([productId])

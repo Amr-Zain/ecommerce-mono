@@ -11,10 +11,6 @@ model Country {
   cities         City[]
   addresses      Address[]
 
-  model          String               @default("country")
-  media          Media[]              @relation("CountryMedia")
-
-  @@unique([model, id])
   @@map("countries")
 }
 
@@ -43,10 +39,6 @@ model City {
   translations CityTranslation[]
   addresses    Address[]
 
-  model        String            @default("city")
-  media        Media[]           @relation("CityMedia")
-
-  @@unique([model, id])
   @@index([countryId])
   @@map("cities")
 }
