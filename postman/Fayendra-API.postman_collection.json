@@ -943,6 +943,140 @@
 							}
 						}
 					]
+				},
+				{
+					"name": "Collections",
+					"item": [
+						{
+							"name": "List Collections",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/collections?page=1&limit=10&custom_filter=collection",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "collections"],
+									"query": [
+										{ "key": "page", "value": "1" },
+										{ "key": "limit", "value": "10" },
+										{ "key": "custom_filter", "value": "collection", "description": "collection|sub_collection|sub_sub_collections" }
+									]
+								}
+							}
+						},
+						{
+							"name": "Get Collection by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/collections/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "collections", "1"]
+								}
+							}
+						},
+						{
+							"name": "Create Collection",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"parentId\": null,\n  \"translations\": [\n    {\"langId\": \"en\", \"name\": \"New Collection\"},\n    {\"langId\": \"ar\", \"name\": \"مجموعة جديدة\"}\n  ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/collections",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "collections"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Attributes",
+					"item": [
+						{
+							"name": "List Attributes",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/attributes?page=1&limit=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "attributes"]
+								}
+							}
+						},
+						{
+							"name": "Get Attribute by ID (with values)",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/attributes/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "attributes", "1"]
+								}
+							}
+						},
+						{
+							"name": "Create Attribute",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"translations\": [\n    {\"langId\": \"en\", \"name\": \"Color\"},\n    {\"langId\": \"ar\", \"name\": \"اللون\"}\n  ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/attributes",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "attributes"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Attribute Values",
+					"item": [
+						{
+							"name": "List Attribute Values",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/attribute-values?attributeId=1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "attribute-values"],
+									"query": [
+										{ "key": "attributeId", "value": "1" }
+									]
+								}
+							}
+						},
+						{
+							"name": "Create Attribute Value",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"attributeId\": 1,\n  \"translations\": [\n    {\"langId\": \"en\", \"name\": \"Red\"},\n    {\"langId\": \"ar\", \"name\": \"أحمر\"}\n  ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/attribute-values",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "attribute-values"]
+								}
+							}
+						}
+					]
 				}
 			]
 		}
