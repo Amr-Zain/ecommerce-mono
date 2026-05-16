@@ -31,8 +31,4 @@ export class CreateFaqDto {
   @ValidateNested({ each: true })
   @Type(() => FaqTranslationDto)
   translations!: FaqTranslationDto[];
-
-  @IsOptional()
-  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  media?: string;
 }

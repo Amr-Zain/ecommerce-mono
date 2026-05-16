@@ -48,5 +48,5 @@ export class CreateSliderDto {
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  media!: string;
+  slide!: string;
 }

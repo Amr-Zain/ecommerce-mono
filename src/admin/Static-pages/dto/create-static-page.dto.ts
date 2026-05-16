@@ -27,4 +27,8 @@ export class CreateStaticPageDto {
   @ValidateNested({ each: true })
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   sections!: CreateStaticPageTranslaitonsDto[];
+
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
+  image!: string;
 }
