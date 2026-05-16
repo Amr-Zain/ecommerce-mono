@@ -16,5 +16,6 @@
   "IS_NOT_EMPTY": "{property} required",
   "IS_NUMERIC": "{property} must be a number",
   "IS_LENGTH": "{property} must be at least {constraints.0} characters and at most {constraints.1} characters",
-  "DATE_MUST_BE_AFTER": "{property} must be after {constraints.0}"
+  "DATE_MUST_BE_AFTER": "{property} must be after {constraints.0}",
+  "PASSWORDS_MATCH": "Passwords must match"
 }

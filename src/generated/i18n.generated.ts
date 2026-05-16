@@ -8,6 +8,9 @@ export type I18nTranslations = {
     "common": {
         "greeting": string;
         "welcome": string;
+        "deleted_successfully": string;
+        "updated_successfully": string;
+        "created_successfully": string;
     };
     "errors": {
         "user_not_found": string;
@@ -23,6 +26,9 @@ export type I18nTranslations = {
         "FILES_REQUIRED": string;
         "MEDIA_MISMATCH": string;
         "MEDIA_NOT_FOUND": string;
+        "email_exists": string;
+        "supervisor_not_found": string;
+        "client_not_found": string;
     };
     "validation": {
         "NOT_EMPTY": string;
@@ -42,6 +48,8 @@ export type I18nTranslations = {
         "IS_NOT_EMPTY": string;
         "IS_NUMERIC": string;
         "IS_LENGTH": string;
+        "DATE_MUST_BE_AFTER": string;
+        "PASSWORDS_MATCH": string;
     };
 };
 /* prettier-ignore */

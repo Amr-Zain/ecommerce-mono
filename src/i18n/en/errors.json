@@ -11,5 +11,8 @@
   "FILE_REQUIRED": "A file map payload is strictly required",
   "FILES_REQUIRED": "At least one file parameter payload is required",
   "MEDIA_MISMATCH": "This file belongs to another section and cannot be attached here",
-  "MEDIA_NOT_FOUND": "The uploaded file was not found or has expired"
+  "MEDIA_NOT_FOUND": "The uploaded file was not found or has expired",
+  "email_exists": "Email already exists",
+  "supervisor_not_found": "Supervisor with ID {id} not found",
+  "client_not_found": "Client with ID {id} not found"
 }

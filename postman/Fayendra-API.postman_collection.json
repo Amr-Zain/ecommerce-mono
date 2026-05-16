@@ -5,6 +5,32 @@
 		"description": "Complete API collection for Fayendra E-commerce platform",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		}
+	],
 	"item": [
 		{
 			"name": "Media",
@@ -125,6 +151,7 @@
 				{
 					"name": "Register",
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -142,6 +169,7 @@
 				{
 					"name": "Verify Email",
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -159,6 +187,7 @@
 				{
 					"name": "Resend Email Verification",
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -193,6 +222,7 @@
 						}
 					],
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -227,6 +257,7 @@
 						}
 					],
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -244,6 +275,7 @@
 				{
 					"name": "Forgot Password",
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -261,6 +293,7 @@
 				{
 					"name": "Reset Password",
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -278,6 +311,7 @@
 				{
 					"name": "Verify Phone",
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -295,6 +329,7 @@
 				{
 					"name": "Send Phone Verification",
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [],
 						"body": {
@@ -377,17 +412,7 @@
 								}
 							}
 						}
-					],
-					"auth": {
-						"type": "bearer",
-						"bearer": [
-							{
-								"key": "token",
-								"value": "{{accessToken}}",
-								"type": "string"
-							}
-						]
-					}
+					]
 				}
 			]
 		},
@@ -395,75 +420,191 @@
 			"name": "Admin",
 			"item": [
 				{
-					"name": "Users",
+					"name": "Supervisors",
 					"item": [
 						{
-							"name": "List Users",
+							"name": "List Supervisors",
 							"request": {
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/admin/users?page=1&limit=10",
+									"raw": "{{baseUrl}}/admin/supervisors?page=1&limit=10",
 									"host": ["{{baseUrl}}"],
-									"path": ["admin", "users"]
+									"path": ["admin", "supervisors"]
 								}
 							}
 						},
 						{
-							"name": "Get User by ID",
+							"name": "Get Supervisor by ID",
 							"request": {
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/admin/users/1",
+									"raw": "{{baseUrl}}/admin/supervisors/1",
 									"host": ["{{baseUrl}}"],
-									"path": ["admin", "users", "1"]
+									"path": ["admin", "supervisors", "1"]
 								}
 							}
 						},
 						{
-							"name": "Create User",
+							"name": "Create Supervisor",
 							"request": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"Test Admin\",\n  \"email\": \"test@fayendra.com\",\n  \"password\": \"password123\",\n  \"userType\": \"admin\"\n}",
+									"raw": "{\n  \"name\": \"Test Supervisor\",\n  \"email\": \"test@fayendra.com\",\n  \"password\": \"password123\",\n  \"passwordConfirm\": \"password123\",\n  \"roleId\": 1\n}",
 									"options": { "raw": { "language": "json" } }
 								},
 								"url": {
-									"raw": "{{baseUrl}}/admin/users",
+									"raw": "{{baseUrl}}/admin/supervisors",
 									"host": ["{{baseUrl}}"],
-									"path": ["admin", "users"]
+									"path": ["admin", "supervisors"]
 								}
 							}
 						},
 						{
-							"name": "Update User",
+							"name": "Update Supervisor",
 							"request": {
 								"method": "PATCH",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"Test Admin Updated\"\n}",
+									"raw": "{\n  \"name\": \"Test Supervisor Updated\"\n}",
 									"options": { "raw": { "language": "json" } }
 								},
 								"url": {
-									"raw": "{{baseUrl}}/admin/users/1",
+									"raw": "{{baseUrl}}/admin/supervisors/1",
 									"host": ["{{baseUrl}}"],
-									"path": ["admin", "users", "1"]
+									"path": ["admin", "supervisors", "1"]
 								}
 							}
 						},
 						{
-							"name": "Delete User",
+							"name": "Delete Supervisor",
 							"request": {
 								"method": "DELETE",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/admin/users/1",
+									"raw": "{{baseUrl}}/admin/supervisors/1",
 									"host": ["{{baseUrl}}"],
-									"path": ["admin", "users", "1"]
+									"path": ["admin", "supervisors", "1"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Clients",
+					"item": [
+						{
+							"name": "List Clients",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/clients?page=1&limit=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "clients"]
+								}
+							}
+						},
+						{
+							"name": "Get Client by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/clients/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "clients", "1"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Roles",
+					"item": [
+						{
+							"name": "List Roles",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/roles?page=1&limit=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "roles"]
+								}
+							}
+						},
+						{
+							"name": "Get Role by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/roles/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "roles", "1"]
+								}
+							}
+						},
+						{
+							"name": "Get Categorized Permissions",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/permissions",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "permissions"]
+								}
+							}
+						},
+						{
+							"name": "Create Role",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"translations\": [\n    {\"langId\": \"en\", \"name\": \"Manager\"},\n    {\"langId\": \"ar\", \"name\": \"مدير\"}\n  ],\n  \"permissions\": [\n    {\"resource\": \"supervisors\", \"action\": \"list\"},\n    {\"resource\": \"supervisors\", \"action\": \"read\"}\n  ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/roles",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "roles"]
+								}
+							}
+						},
+						{
+							"name": "Update Role",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"translations\": [\n    {\"langId\": \"en\", \"name\": \"Manager Updated\"}\n  ],\n  \"permissions\": [\n    {\"resource\": \"supervisors\", \"action\": \"list\"}\n  ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/roles/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "roles", "1"]
+								}
+							}
+						},
+						{
+							"name": "Delete Role",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/roles/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "roles", "1"]
 								}
 							}
 						}
@@ -623,18 +764,187 @@
 							]
 						}
 					]
+				},
+				{
+					"name": "Sliders",
+					"item": [
+						{
+							"name": "List Sliders",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/sliders?page=1&limit=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "sliders"]
+								}
+							}
+						},
+						{
+							"name": "Get Slider by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/sliders/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "sliders", "1"]
+								}
+							}
+						},
+						{
+							"name": "Create Slider",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"translations\": [\n        {\"langId\": \"en\", \"title\": \"Summer Sale\"},\n        {\"langId\": \"ar\", \"title\": \"عروض الصيف\"}\n    ],\n    \"sortOrder\": 0,\n    \"startDate\": \"2026-05-01T00:00:00Z\",\n    \"endDate\": \"2026-08-31T23:59:59Z\",\n    \"media\": \"MEDIA_HASH_HERE\"\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/sliders",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "sliders"]
+								}
+							}
+						},
+						{
+							"name": "Update Slider",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"translations\": [\n        {\"langId\": \"en\", \"title\": \"Summer Sale Updated\"}\n    ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/sliders/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "sliders", "1"]
+								}
+							}
+						},
+						{
+							"name": "Delete Slider",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/sliders/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "sliders", "1"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "FAQs",
+					"item": [
+						{
+							"name": "List FAQs",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/faqs?page=1&limit=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "faqs"]
+								}
+							}
+						},
+						{
+							"name": "Get FAQ by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/faqs/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "faqs", "1"]
+								}
+							}
+						},
+						{
+							"name": "Create FAQ",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"translations\": [\n        {\n            \"langId\": \"en\", \n            \"question\": \"What is your return policy?\",\n            \"answer\": \"You can return any item within 30 days.\"\n        },\n        {\n            \"langId\": \"ar\", \n            \"question\": \"ما هي سياسة الاسترجاع؟\",\n            \"answer\": \"يمكنك استرجاع أي منتج خلال 30 يوم.\"\n        }\n    ],\n    \"sortOrder\": 0\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/faqs",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "faqs"]
+								}
+							}
+						},
+						{
+							"name": "Update FAQ",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"translations\": [\n        {\"langId\": \"en\", \"question\": \"What is your updated return policy?\"}\n    ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/faqs/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "faqs", "1"]
+								}
+							}
+						},
+						{
+							"name": "Delete FAQ",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/faqs/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "faqs", "1"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Static Pages",
+					"item": [
+						{
+							"name": "List Static Pages",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/static-pages?page=1&limit=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "static-pages"]
+								}
+							}
+						},
+						{
+							"name": "Get Static Page by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/static-pages/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "static-pages", "1"]
+								}
+							}
+						}
+					]
 				}
-			],
-			"auth": {
-				"type": "bearer",
-				"bearer": [
-					{
-						"key": "token",
-						"value": "{{accessToken}}",
-						"type": "string"
-					}
-				]
-			}
+			]
 		}
 	],
 	"variable": [

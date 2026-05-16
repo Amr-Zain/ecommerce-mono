@@ -16,5 +16,6 @@
   "IS_NOT_EMPTY": "{property} مطلوب ",
   "IS_NUMERIC": "{property} يجب أن يكون رقماً",
   "IS_LENGTH": "{property} يجب أن يكون على الأقل {constraints.0} حرفاً وأن يكون بحد أقصى {constraints.1} حرفاً",
-  "DATE_MUST_BE_AFTER": "{property} يجب أن يكون بعد تاريخ {constraints.0}"
+  "DATE_MUST_BE_AFTER": "{property} يجب أن يكون بعد تاريخ {constraints.0}",
+  "PASSWORDS_MATCH": "يجب أن تتطابق كلمات المرور"
 }

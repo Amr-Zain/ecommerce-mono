@@ -1,4 +1,7 @@
 {
   "greeting": "مرحباً",
-  "welcome": "أهلاً بك في تطبيقنا"
+  "welcome": "أهلاً بك في تطبيقنا",
+  "deleted_successfully": "تم الحذف بنجاح",
+  "updated_successfully": "تم التعديل بنجاح",
+  "created_successfully": "تم الإضافة بنجاح"
 }
