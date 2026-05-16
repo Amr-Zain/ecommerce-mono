@@ -1,6 +1,6 @@
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
+import { I18nValidationPipe } from 'nestjs-i18n';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 // Add BigInt serialization support for JSON
@@ -14,10 +14,7 @@ async function bootstrap() {
   const httpAdapterHost = app.get(HttpAdapterHost);
 
   app.useGlobalPipes(new I18nValidationPipe({ transform: true, whitelist: true }));
-  app.useGlobalFilters(
-    new AllExceptionsFilter(httpAdapterHost),
-    new I18nValidationExceptionFilter({ detailedErrors: false }),
-  );
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost));
 
   app.enableShutdownHooks();
 

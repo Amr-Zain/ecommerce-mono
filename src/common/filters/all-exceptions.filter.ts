@@ -1,6 +1,6 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
-import { I18nContext, I18nValidationException } from 'nestjs-i18n';
+import { I18nContext, I18nValidationException, I18nValidationError } from 'nestjs-i18n';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -9,97 +9,125 @@ export class AllExceptionsFilter implements ExceptionFilter {
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    // In certain situations `httpAdapter` might not be available in the
-    // constructor method, thus we should resolve it here.
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
+    const response = ctx.getResponse<unknown>();
+    const i18n = I18nContext.current(host);
 
-    // Let the validation filter handle its own exceptions if possible,
-    // though Nest usually defers to the closest matching filter.
-    if (exception instanceof I18nValidationException) {
-      // Just parse its specific payload if we accidentally catch it
-      const responseBody = {
-        statusCode: exception.getStatus(),
-        message: 'Validation failed',
-        errors: exception.errors,
-      };
-      httpAdapter.reply(ctx.getResponse(), responseBody, exception.getStatus());
-      return;
-    }
-
-    const httpStatus = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    let responseMessage: string = 'Internal server error';
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message = 'Internal server error';
+    let errors: Record<string, string> = {};
     let translationKey = 'errors.INTERNAL_SERVER_ERROR';
     let args: Record<string, unknown> = {};
 
-    if (exception instanceof HttpException) {
-      const responseUnknown: unknown = exception.getResponse();
+    if (exception instanceof I18nValidationException) {
+      status = exception.getStatus();
+      translationKey = 'errors.VALIDATION_FAILED';
+      message = 'Validation failed';
 
-      // If it's our custom AppException, extract key and args
-      if ('key' in exception) {
-        const appEx = exception as { key: string; args?: Record<string, unknown> };
-        translationKey = appEx.key;
-        args = appEx.args ?? {};
-        responseMessage = translationKey;
+      // Translate each individual validation error
+      errors = this.formatI18nErrors(exception.errors, i18n);
+    } else if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const responseUnknown = exception.getResponse();
+
+      if (typeof responseUnknown === 'object' && responseUnknown !== null) {
+        const res = responseUnknown as Record<string, unknown>;
+
+        // Handle ValidationPipe errors (non-i18n)
+        if (Array.isArray(res.message)) {
+          translationKey = 'errors.VALIDATION_FAILED';
+          message = 'Validation failed';
+          (res.message as string[]).forEach((msg: string) => {
+            const [field] = msg.split(' ');
+            errors[field] = msg;
+          });
+        } else {
+          message = (res.message as string) || exception.message;
+        }
+
+        // Custom AppException handling
+        if ('key' in exception) {
+          const appEx = exception as unknown as { key: string; args?: Record<string, unknown> };
+          translationKey = appEx.key;
+          args = appEx.args ?? {};
+          message = translationKey;
+        } else {
+          translationKey = `errors.${message}`;
+        }
       } else {
-        // Standard NestJS HttpException
-        const rawMessage =
-          typeof responseUnknown === 'object' && responseUnknown !== null && 'message' in responseUnknown
-            ? (responseUnknown as { message: unknown }).message
-            : exception.message;
-
-        responseMessage =
-          typeof rawMessage === 'string'
-            ? rawMessage
-            : Array.isArray(rawMessage) && typeof rawMessage[0] === 'string'
-              ? rawMessage[0]
-              : String(exception.message ?? 'HTTP exception');
-
-        // Automatically form translation keys for standard HTTP errors if desired
-        // e.g. "Not Found" -> "errors.Not Found"
-        translationKey = `errors.${responseMessage}`;
+        message = exception.message;
+        translationKey = `errors.${message}`;
       }
     } else {
-      // Log unhandled non-HTTP exceptions (like DB errors)
       this.logger.error(exception);
     }
 
-    // Process Internationalization
-    const i18n = I18nContext.current(host);
-
-    let localizedMessage: string = responseMessage;
-
-    if (i18n) {
-      // nestjs-i18n `t()` can return primitives; avoid String(object) ([object Object]).
+    // Process Internationalization for the main message
+    if (i18n && translationKey) {
       const translationResult: unknown = i18n.t(translationKey, {
         args,
-        defaultValue: responseMessage,
+        defaultValue: message,
       });
-      localizedMessage = this.localizeFromTranslationResult(translationResult, responseMessage);
+      message = typeof translationResult === 'string' ? translationResult : message;
     }
 
-    const requestUrlUnknown: unknown = httpAdapter.getRequestUrl(ctx.getRequest());
+    const isProduction = process.env.NODE_ENV === 'production';
 
-    const responseBody = {
-      statusCode: httpStatus,
-      message: localizedMessage,
+    const responseBody: Record<string, unknown> = {
+      statusCode: status,
+      message: message,
+      errors: Object.keys(errors).length > 0 ? errors : undefined,
       timestamp: new Date().toISOString(),
-      path: typeof requestUrlUnknown === 'string' ? requestUrlUnknown : '',
+      path: httpAdapter.getRequestUrl(ctx.getRequest()),
     };
 
-    httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+    // Add dev logs if not in production
+    if (!isProduction && exception instanceof Error) {
+      responseBody.stack = exception.stack;
+      responseBody.details = exception.message;
+    }
+
+    httpAdapter.reply(response, responseBody, status);
   }
 
-  private localizeFromTranslationResult(result: unknown, fallback: string): string {
-    if (typeof result === 'string') {
-      return result;
-    }
+  private formatI18nErrors(errors: I18nValidationError[], i18n?: I18nContext): Record<string, string> {
+    const formattedErrors: Record<string, string> = {};
 
-    if (typeof result === 'number' || typeof result === 'boolean' || typeof result === 'bigint') {
-      return String(result);
-    }
+    errors.forEach((error) => {
+      if (error.constraints) {
+        const constraints = Object.values(error.constraints);
+        if (constraints.length > 0) {
+          const rawMessage = constraints[0];
+          let translatedMessage = rawMessage;
 
-    return fallback;
+          // Parse and translate i18n constraint strings (format: key|{json_args})
+          if (i18n && rawMessage.includes('|')) {
+            try {
+              const [key, argsStr] = rawMessage.split('|');
+              const args = JSON.parse(argsStr) as Record<string, unknown>;
+              const result = i18n.t(key, { args });
+              if (typeof result === 'string') {
+                translatedMessage = result;
+              }
+            } catch {
+              // Fallback to raw if parsing fails
+            }
+          }
+
+          formattedErrors[error.property] = translatedMessage;
+        }
+      }
+
+      // Handle nested errors recursively
+      if (error.children && error.children.length > 0) {
+        const children = this.formatI18nErrors(error.children, i18n);
+        Object.entries(children).forEach(([key, value]) => {
+          formattedErrors[`${error.property}.${key}`] = value;
+        });
+      }
+    });
+
+    return formattedErrors;
   }
 }
