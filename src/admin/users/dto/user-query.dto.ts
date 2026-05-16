@@ -1,4 +1,4 @@
-import { AdvancedQueryDto } from '../../common/dto/advanced-query.dto';
+import { AdvancedQueryDto } from '../../../common/dto/advanced-query.dto';
 
 export class UserQueryDto extends AdvancedQueryDto {
   // All filtering is now handled through the filters object

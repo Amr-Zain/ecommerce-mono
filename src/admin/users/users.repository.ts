@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService, Prisma } from '../prisma';
-import { BaseRepository } from '../common/repositories/base.repository';
-import { QueryBuilderService } from '../common/services/query-builder.service';
-import { AdvancedQueryDto } from '../common/dto/advanced-query.dto';
-import { PaginatedResult } from '../common/dto/pagination.dto';
-import { MediaService } from '../media/media.service';
+import { PrismaService, Prisma } from '../../prisma';
+import { BaseRepository } from '../../common/repositories/base.repository';
+import { QueryBuilderService } from '../../common/services/query-builder.service';
+import { AdvancedQueryDto } from '../../common/dto/advanced-query.dto';
+import { PaginatedResult } from '../../common/dto/pagination.dto';
+import { MediaService } from '../../media/media.service';
 
 export type User = Prisma.UserGetPayload<{
   include: { role: true; media: true };
@@ -38,6 +38,33 @@ export class UsersRepository extends BaseRepository<User> {
     });
   }
 
+  async findAllAdmins(query: AdvancedQueryDto): Promise<PaginatedResult<User> | User[]> {
+    query.filters = { ...(query.filters || {}), userType: 'admin' };
+    const result = await this.findAll(query);
+    return this.excludePasswords(result);
+  }
+
+  async findAllClients(query: AdvancedQueryDto): Promise<PaginatedResult<User> | User[]> {
+    query.filters = { ...(query.filters || {}), userType: 'client' };
+    const result = await this.findAll(query);
+    return this.excludePasswords(result);
+  }
+
+  async findByIdAndType(id: bigint, type: 'admin' | 'client'): Promise<User | null> {
+    const user = await this.findById(id, {
+      include: {
+        role: true,
+        addresses: true,
+        reviews: true,
+      },
+    });
+
+    if (user && user.userType === type) {
+      return this.excludePassword(user);
+    }
+    return null;
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.findOne(
       { email },
@@ -63,15 +90,18 @@ export class UsersRepository extends BaseRepository<User> {
   }
 
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
-    return this.create(data);
+    const user = await this.create(data);
+    return this.excludePassword(user);
   }
 
   async updateUser(id: bigint, data: Prisma.UserUpdateInput): Promise<User> {
-    return this.update(id, data);
+    const user = await this.update(id, data);
+    return this.excludePassword(user);
   }
 
   async deleteUser(id: bigint): Promise<User> {
-    return this.delete(id);
+    const user = await this.delete(id);
+    return this.excludePassword(user);
   }
 
   async emailExists(email: string, excludeId?: bigint): Promise<boolean> {
@@ -82,6 +112,22 @@ export class UsersRepository extends BaseRepository<User> {
     }
 
     return this.exists(where);
+  }
+
+  public excludePassword(user: User): User {
+    if (!user) return user;
+    const { password: _p, ...userWithoutPassword } = user;
+    return userWithoutPassword as User;
+  }
+
+  public excludePasswords(result: PaginatedResult<User> | User[]): PaginatedResult<User> | User[] {
+    if (Array.isArray(result)) {
+      return result.map((u) => this.excludePassword(u));
+    }
+    return {
+      ...result,
+      data: result.data.map((u) => this.excludePassword(u)),
+    };
   }
 
   private buildWhereClause(query: AdvancedQueryDto): Prisma.UserWhereInput {
