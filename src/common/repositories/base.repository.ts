@@ -1,22 +1,22 @@
-import { Prisma, PrismaService } from '../../prisma';
+import { BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../../prisma';
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { PaginationUtil } from '../utils/pagination.util';
+import { MediaService } from '../../media/media.service';
+import { MediaSlotConfig } from '../../media/media.types';
+import { MediaType } from '../../media/enums/media-type.enum';
 
 type WhereClause = Record<string, unknown>;
-
 type IncludeClause = Record<string, boolean | Record<string, unknown>>;
-
 type SelectClause = Record<string, boolean>;
+type OrderByClause = Record<string, 'asc' | 'desc'> | Record<string, 'asc' | 'desc'>[];
+type DataInput = Record<string, unknown>;
 
 type QueryOptions =
   | { select: SelectClause; include?: never }
   | { include: IncludeClause; select?: never }
   | { select?: never; include?: never };
-
-type OrderByClause = Record<string, 'asc' | 'desc'> | Record<string, 'asc' | 'desc'>[];
-
-type DataInput = Record<string, unknown>;
 
 interface QueryArgs {
   where?: WhereClause;
@@ -27,90 +27,37 @@ interface QueryArgs {
   take?: number;
 }
 
-import { MediaService } from '../../media/media.service';
-import { BadRequestException } from '@nestjs/common';
-
 export abstract class BaseRepository<T extends { id: number | bigint }> {
+  protected readonly mediaConfig: Record<string, MediaSlotConfig> = {};
+
   constructor(
     protected readonly prisma: PrismaService,
     protected readonly mediaService?: MediaService,
   ) {}
 
   /**
-   * The Prisma model name for this repository
-   */
-  protected abstract readonly modelName: Prisma.ModelName;
-
-  /**
-   * The key used for media in the request payload
-   */
-  protected readonly mediaKey: string = 'media';
-
-  /**
-   * Whether this model only supports a single media item
-   */
-  protected readonly isSingleMedia: boolean = false;
-
-  /**
-   * List of allowed media types (e.g., ['image', 'video', 'pdf']).
-   * If empty, all types are allowed.
-   */
-  protected readonly allowedMediaTypes: string[] = [];
-
-  /**
-   * Helper to convert Prisma Model Name to snake_case for media storage
-   */
-  protected get normalizedModelName(): string {
-    return this.modelName.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
-  }
-
-  /**
-   * Whether to automatically include the media relation in queries
-   */
-  protected readonly hasMedia: boolean = false;
-
-  /**
-   * Helper to merge default includes (like media) into user-provided options
-   */
-  protected applyDefaultIncludes(options?: QueryOptions): QueryOptions {
-    if (!this.hasMedia) return options || {};
-
-    const baseOptions = options || {};
-
-    // If user provided 'select', we can't use 'include'
-    if (baseOptions.select) return baseOptions;
-
-    return {
-      ...baseOptions,
-      include: {
-        ...((baseOptions.include as Record<string, unknown>) || {}),
-        media: {
-          select: {
-            uuid: true,
-            isMain: true,
-            path: true,
-            originalName: true,
-            mimeType: true,
-            type: true,
-            size: true,
-          },
-        },
-      },
-    } as QueryOptions;
-  }
-
-  /**
-   * Get the Prisma model delegate for this repository
-   * Must be implemented by child classes
-   *
-   * Using 'unknown' return type to allow any Prisma delegate
-   * Child classes will return their specific delegate type
+   * Get the Prisma model delegate for this repository.
    */
   protected abstract getModel(): unknown;
 
   /**
-   * Paginate results with filtering and sorting
-   * If paginate=false, returns all results without pagination
+   * Auto-derived Prisma model name (lowercase) used for media polymorphic lookup.
+   */
+  protected get modelName(): string {
+    const model = this.getModel();
+    const entry = Object.entries(this.prisma).find(([_key, value]) => value === model);
+
+    if (entry) return entry[0].toLowerCase();
+
+    return this.constructor.name.replace('Repository', '').toLowerCase().replace(/ies$/, 'y').replace(/s$/, '');
+  }
+
+  protected get hasMedia(): boolean {
+    return Object.keys(this.mediaConfig).length > 0;
+  }
+
+  /**
+   * Paginate results with filtering and sorting.
    */
   protected async paginate(
     query: AdvancedQueryDto,
@@ -124,16 +71,15 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     };
 
     const queryArgs: QueryArgs = { where, orderBy };
-    const mergedOptions = this.applyDefaultIncludes(options);
-
-    if (mergedOptions.select) {
-      queryArgs.select = mergedOptions.select;
-    } else if (mergedOptions.include) {
-      queryArgs.include = mergedOptions.include;
+    if (options?.select) {
+      queryArgs.select = options.select;
+    } else if (options?.include) {
+      queryArgs.include = options.include;
     }
 
     if (query.paginate === false) {
-      return model.findMany(queryArgs);
+      const data = await model.findMany(queryArgs);
+      return this.mergeMedia(data);
     }
 
     const { skip, take } = PaginationUtil.getPrismaParams(query);
@@ -142,7 +88,9 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
 
     const [data, total] = await Promise.all([model.findMany(queryArgs), model.count({ where })]);
 
-    return PaginationUtil.createResult<T>(data, query.page || 1, query.limit || 10, total);
+    const enrichedData = await this.mergeMedia(data);
+
+    return PaginationUtil.createResult<T>(enrichedData, query.page || 1, query.limit || 10, total);
   }
 
   async findById(id: number | bigint, options?: QueryOptions): Promise<T | null> {
@@ -154,18 +102,18 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       }) => Promise<T | null>;
     };
 
-    const mergedOptions = this.applyDefaultIncludes(options);
     const queryArgs: { where: { id: number | bigint }; select?: SelectClause; include?: IncludeClause } = {
       where: { id },
     };
 
-    if (mergedOptions.select) {
-      queryArgs.select = mergedOptions.select;
-    } else if (mergedOptions.include) {
-      queryArgs.include = mergedOptions.include;
+    if (options?.select) {
+      queryArgs.select = options.select;
+    } else if (options?.include) {
+      queryArgs.include = options.include;
     }
 
-    return model.findUnique(queryArgs);
+    const record = await model.findUnique(queryArgs);
+    return record ? this.mergeMedia(record) : null;
   }
 
   async findOne(where: WhereClause, options?: QueryOptions): Promise<T | null> {
@@ -173,16 +121,15 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       findFirst: (args?: QueryArgs) => Promise<T | null>;
     };
 
-    const mergedOptions = this.applyDefaultIncludes(options);
     const queryArgs: QueryArgs = { where };
-
-    if (mergedOptions.select) {
-      queryArgs.select = mergedOptions.select;
-    } else if (mergedOptions.include) {
-      queryArgs.include = mergedOptions.include;
+    if (options?.select) {
+      queryArgs.select = options.select;
+    } else if (options?.include) {
+      queryArgs.include = options.include;
     }
 
-    return model.findFirst(queryArgs);
+    const record = await model.findFirst(queryArgs);
+    return record ? this.mergeMedia(record) : null;
   }
 
   async findMany(where?: WhereClause, options?: QueryOptions): Promise<T[]> {
@@ -190,16 +137,15 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       findMany: (args?: QueryArgs) => Promise<T[]>;
     };
 
-    const mergedOptions = this.applyDefaultIncludes(options);
     const queryArgs: QueryArgs = { where };
-
-    if (mergedOptions.select) {
-      queryArgs.select = mergedOptions.select;
-    } else if (mergedOptions.include) {
-      queryArgs.include = mergedOptions.include;
+    if (options?.select) {
+      queryArgs.select = options.select;
+    } else if (options?.include) {
+      queryArgs.include = options.include;
     }
 
-    return model.findMany(queryArgs);
+    const data = await model.findMany(queryArgs);
+    return this.mergeMedia(data);
   }
 
   async create(data: DataInput, options?: QueryOptions): Promise<T> {
@@ -207,42 +153,41 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       create: (args: { data: DataInput; include?: IncludeClause; select?: SelectClause }) => Promise<T>;
     };
 
-    const media = data[this.mediaKey];
+    // Extract media fields based on mediaConfig keys
+    const mediaPayload: Record<string, string | string[]> = {};
+    const finalData: DataInput = { ...data };
 
-    // Safely exclude media and translation keys from the scalar data
-    const {
-      [this.mediaKey]: _media,
-      images: _images,
-      image: _image,
-      translations,
-      ...createData
-    }: Record<string, unknown> = data;
+    for (const key of Object.keys(this.mediaConfig)) {
+      if (data[key] !== undefined) {
+        mediaPayload[key] = data[key] as string | string[];
+        delete finalData[key];
+      }
+    }
 
-    const finalData: DataInput = { ...createData };
+    // Handle translations if present
+    const { translations, ...scalarData } = finalData;
+    const createData: DataInput = { ...scalarData };
 
     if (Array.isArray(translations) && translations.length > 0) {
-      finalData.translations = {
+      createData.translations = {
         create: translations,
       };
     }
 
-    const mergedOptions = this.applyDefaultIncludes(options);
-    const createArgs: { data: DataInput; include?: IncludeClause; select?: SelectClause } = { data: finalData };
-
-    if (mergedOptions.select) {
-      createArgs.select = mergedOptions.select;
-    } else if (mergedOptions.include) {
-      createArgs.include = mergedOptions.include;
+    const createArgs: { data: DataInput; include?: IncludeClause; select?: SelectClause } = { data: createData };
+    if (options?.select) {
+      createArgs.select = options.select;
+    } else if (options?.include) {
+      createArgs.include = options.include;
     }
 
     const record = await model.create(createArgs);
-    const recordId = record.id;
-    console.log('🚀 ~ BaseRepository ~ create ~ record:', recordId, media);
-    if (media && recordId) {
-      await this.handleMediaAttachment(recordId, media);
+
+    if (this.hasMedia && Object.keys(mediaPayload).length > 0) {
+      await this.handleMediaAttachment(record.id, mediaPayload);
     }
 
-    return record;
+    return this.mergeMedia(record);
   }
 
   async update(id: number | bigint, data: DataInput, options?: QueryOptions): Promise<T> {
@@ -255,21 +200,23 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       }) => Promise<T>;
     };
 
-    const media = data[this.mediaKey];
+    // Extract media fields
+    const mediaPayload: Record<string, string | string[]> = {};
+    const finalData: DataInput = { ...data };
 
-    // Safely exclude media and translation keys
-    const {
-      [this.mediaKey]: _media,
-      images: _images,
-      image: _image,
-      translations,
-      ...updateData
-    }: Record<string, unknown> = data;
+    for (const key of Object.keys(this.mediaConfig)) {
+      if (data[key] !== undefined) {
+        mediaPayload[key] = data[key] as string | string[];
+        delete finalData[key];
+      }
+    }
 
-    const finalData: DataInput = { ...updateData };
+    // Handle translations
+    const { translations, ...scalarData } = finalData;
+    const updateData: DataInput = { ...scalarData };
 
     if (Array.isArray(translations) && translations.length > 0) {
-      finalData.translations = {
+      updateData.translations = {
         upsert: translations.map((t: Record<string, unknown>) => ({
           where: { recordId_langId: { recordId: BigInt(id), langId: t.langId } },
           update: t,
@@ -278,7 +225,6 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       };
     }
 
-    const mergedOptions = this.applyDefaultIncludes(options);
     const updateArgs: {
       where: { id: number | bigint };
       data: DataInput;
@@ -286,28 +232,34 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       select?: SelectClause;
     } = {
       where: { id },
-      data: finalData,
+      data: updateData,
     };
 
-    if (mergedOptions.select) {
-      updateArgs.select = mergedOptions.select;
-    } else if (mergedOptions.include) {
-      updateArgs.include = mergedOptions.include;
+    if (options?.select) {
+      updateArgs.select = options.select;
+    } else if (options?.include) {
+      updateArgs.include = options.include;
     }
 
     const record = await model.update(updateArgs);
 
-    if (media) {
-      await this.handleMediaAttachment(id, media);
+    if (this.hasMedia && Object.keys(mediaPayload).length > 0) {
+      await this.handleMediaAttachment(id, mediaPayload);
     }
 
-    return record;
+    return this.mergeMedia(record);
   }
 
   async delete(id: number | bigint): Promise<T> {
     const model = this.getModel() as {
       delete: (args: { where: { id: number | bigint } }) => Promise<T>;
     };
+
+    // Delete associated media files and records first
+    if (this.hasMedia && this.mediaService) {
+      await this.mediaService.deleteByEntity(this.modelName, id);
+    }
+
     return model.delete({ where: { id } });
   }
 
@@ -323,70 +275,94 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     return count > 0;
   }
 
-  protected async handleMediaAttachment(id: number | bigint, media: unknown) {
-    if (!this.mediaService) {
-      console.warn(`MediaService not provided in ${this.constructor.name}. Skipping media attachment.`);
-      return;
-    }
+  /**
+   * Post-fetch helper to merge media into records based on config.
+   */
+  protected async mergeMedia<R extends T | T[]>(data: R): Promise<R> {
+    if (!this.hasMedia || !this.mediaService || !data) return data;
 
-    const hashes = Array.isArray(media) ? media : [media];
+    const isArray = Array.isArray(data);
+    const records = (isArray ? data : [data]) as T[];
+    if (records.length === 0) return data;
 
-    // If single media, delete old ones first
-    if (this.isSingleMedia) {
-      const oldMedia = await this.prisma.media.findMany({
-        where: {
-          model: this.normalizedModelName,
-          modelId: BigInt(id),
-        },
-      });
+    const ids = records.map((r) => BigInt(r.id));
+    const mediaMap = await this.mediaService.findByEntities(this.modelName, ids);
 
-      for (const m of oldMedia) {
-        await this.mediaService.deleteByUuid(m.uuid);
-      }
-    }
+    for (const record of records) {
+      const entityMedia = mediaMap.get(record.id.toString()) || [];
+      const enrichedRecord = record as unknown as Record<string, unknown>;
 
-    let isFirst = true;
+      for (const [key, config] of Object.entries(this.mediaConfig)) {
+        const collectionMedia = entityMedia.filter((m) => m.collection === config.collection);
 
-    for (let i = 0; i < hashes.length; i++) {
-      const hash = hashes[i];
-      if (typeof hash !== 'string') continue;
-
-      // Find media by hash (without model filter first to check for mismatches)
-      const mediaItems = await this.prisma.media.findMany({
-        where: {
-          attachHash: hash,
-          modelId: null,
-        },
-      });
-
-      if (mediaItems.length === 0) {
-        throw new BadRequestException('MEDIA_NOT_FOUND');
-      }
-
-      if (mediaItems[0].model !== this.normalizedModelName) {
-        throw new BadRequestException('MEDIA_MISMATCH');
-      }
-
-      for (const item of mediaItems) {
-        // Validate allowed types if specified
-        if (this.allowedMediaTypes.length > 0 && !this.allowedMediaTypes.includes(item.type)) {
-          console.warn(`Media type '${item.type}' is not allowed for ${this.normalizedModelName}. Skipping.`);
-          continue;
+        if (config.single) {
+          enrichedRecord[key] = collectionMedia.length > 0 ? collectionMedia[0] : null;
+        } else {
+          enrichedRecord[key] = collectionMedia;
         }
+      }
+    }
 
-        await this.mediaService.attachTempMedia({
-          model: this.normalizedModelName,
-          attachHash: hash,
-          modelId: id.toString(),
+    return data;
+  }
+
+  protected async handleMediaAttachment(id: number | bigint, mediaPayload: Record<string, string | string[]>) {
+    if (!this.mediaService) return;
+
+    for (const [key, payload] of Object.entries(mediaPayload)) {
+      const config = this.mediaConfig[key];
+      if (!config) continue;
+
+      const hashes = Array.isArray(payload) ? payload : [payload];
+      if (hashes.length === 0) continue;
+
+      // If single media, clean up existing for this collection
+      if (config.single) {
+        await this.mediaService.deleteByEntity(this.modelName, id, config.collection);
+      }
+
+      for (const [index, hash] of hashes.entries()) {
+        if (typeof hash !== 'string') continue;
+
+        // Check if media exists and belongs to this model (validation)
+        const mediaItems = await this.prisma.media.findMany({
+          where: {
+            attachHash: hash,
+            modelId: null,
+          },
         });
 
-        // Handle isMain for the first image
-        if (isFirst) {
+        if (mediaItems.length === 0) continue;
+
+        if (mediaItems[0].model.toLowerCase() !== this.modelName.toLowerCase()) {
+          throw new BadRequestException(`Media model mismatch. Expected ${this.modelName}, got ${mediaItems[0].model}`);
+        }
+
+        for (const item of mediaItems) {
+          if (
+            config.allowedTypes &&
+            config.allowedTypes.length > 0 &&
+            !config.allowedTypes.includes(item.type as MediaType)
+          ) {
+            throw new BadRequestException(
+              `Media type mismatch. Expected ${config.allowedTypes.join(', ')}, got ${item.type}`,
+            );
+          }
+
+          await this.mediaService.attachTempMedia({
+            model: this.modelName,
+            attachHash: hash,
+            modelId: id.toString(),
+          });
+
+          // Set collection and handle isMain (only for the first hash)
           await this.prisma.media.update({
             where: { id: item.id },
-            data: { isMain: true },
+            data: {
+              collection: config.collection,
+              isMain: index === 0,
+            },
           });
-          isFirst = false;
         }
       }
     }

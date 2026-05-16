@@ -6,6 +6,7 @@ import { AttachMediaDto } from './dto/attach-media.dto';
 import { MediaType } from './enums/media-type.enum';
 import { randomUUID } from 'crypto';
 import * as path from 'path';
+import { MediaRecord, MEDIA_SELECT } from './media.types';
 
 @Injectable()
 export class MediaService {
@@ -61,21 +62,13 @@ export class MediaService {
       const extension = path.extname(file.originalname).replace('.', '') || 'unknown';
       const logicalType = dto.type || this.getLogicalType(mimeType);
 
-      // Map model name to relation ID key (e.g., "static_page" -> "staticPageId")
-      const relationIdKey =
-        dto.model
-          .split('_')
-          .map((word, index) => (index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
-          .join('') + 'Id';
-
       // 3. Save to DB
       const result = await this.prisma.media.create({
         data: {
           model: dto.model,
           modelId: dto.modelId ? BigInt(dto.modelId) : null,
-          [relationIdKey]: dto.modelId ? BigInt(dto.modelId) : null,
           attachHash: dto.modelId ? null : attachHash,
-          collection: dto.collection || null,
+          collection: dto.collection || 'default',
           path: filePath,
           filename: filename,
           originalName: file.originalname,
@@ -118,15 +111,6 @@ export class MediaService {
     // 2. Update DB records
     const bigIntModelId = BigInt(dto.modelId);
 
-    // Map model name to relation ID key (e.g., "static_page" -> "staticPageId")
-    const relationIdKey =
-      dto.model
-        .split('_')
-        .map((word, index) => (index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
-        .join('') + 'Id';
-
-    let count = 0;
-
     for (const item of mediaItems) {
       const newPath = item.path.replace(`/uploads/${dto.model}/${dto.attachHash}`, newPathBase);
 
@@ -134,15 +118,13 @@ export class MediaService {
         where: { id: item.id },
         data: {
           modelId: bigIntModelId,
-          [relationIdKey]: bigIntModelId,
           attachHash: null,
           path: newPath,
         },
       });
-      count++;
     }
 
-    return { count };
+    return { count: mediaItems.length };
   }
 
   async findByUuid(uuid: string) {
@@ -151,17 +133,67 @@ export class MediaService {
     return { ...media, id: media.id.toString() };
   }
 
-  async findByEntity(model: string, modelId: string, collection?: string) {
+  async findByEntity(model: string, modelId: number | string | bigint, collection?: string): Promise<MediaRecord[]> {
     const where: Prisma.MediaWhereInput = {
-      model,
-      modelId: BigInt(modelId),
+      model: model.toLowerCase(),
+      modelId: typeof modelId === 'bigint' ? modelId : BigInt(modelId),
     };
 
     if (collection) where.collection = collection;
 
-    const items = await this.prisma.media.findMany({ where, orderBy: { createdAt: 'asc' } });
+    const items = await this.prisma.media.findMany({
+      where,
+      select: MEDIA_SELECT,
+      orderBy: { createdAt: 'asc' },
+    });
 
-    return items.map((i) => ({ ...i, id: i.id.toString() }));
+    return items as unknown as MediaRecord[];
+  }
+
+  /**
+   * Bulk fetch media for multiple entities
+   */
+  async findByEntities(model: string, modelIds: bigint[]): Promise<Map<string, MediaRecord[]>> {
+    const items = await this.prisma.media.findMany({
+      where: {
+        model: model.toLowerCase(),
+        modelId: { in: modelIds },
+      },
+      select: {
+        ...MEDIA_SELECT,
+        modelId: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const result = new Map<string, MediaRecord[]>();
+    for (const item of items) {
+      const key = item.modelId!.toString();
+      if (!result.has(key)) result.set(key, []);
+      const { modelId: _, ...mediaRecord } = item;
+      result.get(key)!.push(mediaRecord as unknown as MediaRecord);
+    }
+    return result;
+  }
+
+  /**
+   * Delete all media for an entity
+   */
+  async deleteByEntity(model: string, modelId: number | string | bigint, collection?: string) {
+    const where: Prisma.MediaWhereInput = {
+      model: model.toLowerCase(),
+      modelId: typeof modelId === 'bigint' ? modelId : BigInt(modelId),
+    };
+
+    if (collection) where.collection = collection;
+
+    const items = await this.prisma.media.findMany({ where });
+
+    for (const item of items) {
+      await this.storage.deleteFile(item.path);
+    }
+
+    await this.prisma.media.deleteMany({ where });
   }
 
   async deleteByUuid(uuid: string) {
