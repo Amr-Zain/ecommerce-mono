@@ -7,7 +7,7 @@ import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 
-@Controller('admin/sliders')
+@Controller('sliders')
 export class SlidersController {
   constructor(private readonly slidersService: SlidersService) {}
 
