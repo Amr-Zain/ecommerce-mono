@@ -21,9 +21,13 @@ async function main() {
     update: {},
     create: {
       id: BigInt(1),
-      nameEn: 'Super Admin',
-      nameAr: 'مدير خارق',
       isActive: true,
+      translations: {
+        create: [
+          { langId: 'en', name: 'Super Admin' },
+          { langId: 'ar', name: 'مدير خارق' },
+        ],
+      },
     },
   });
 
