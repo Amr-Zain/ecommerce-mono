@@ -12,6 +12,7 @@ export class CacheService {
   private cache = new Map<string, { value: unknown; expiry: number }>();
 
   async get<T>(key: string): Promise<T | null> {
+    await Promise.resolve();
     const cached = this.cache.get(key);
 
     if (!cached) {
@@ -28,22 +29,26 @@ export class CacheService {
   }
 
   async set(key: string, value: unknown, ttl = 3600): Promise<void> {
+    await Promise.resolve();
     const expiry = Date.now() + ttl * 1000;
     this.cache.set(key, { value, expiry });
     this.logger.debug(`Cache set: ${key} (TTL: ${ttl}s)`);
   }
 
   async del(key: string): Promise<void> {
+    await Promise.resolve();
     this.cache.delete(key);
     this.logger.debug(`Cache deleted: ${key}`);
   }
 
   async clear(): Promise<void> {
+    await Promise.resolve();
     this.cache.clear();
     this.logger.log('Cache cleared');
   }
 
   async has(key: string): Promise<boolean> {
+    await Promise.resolve();
     const cached = this.cache.get(key);
 
     if (!cached) {
