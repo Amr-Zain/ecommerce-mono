@@ -13,8 +13,8 @@ export class ClientsService {
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
-  async findAll(query: UserQueryDto): Promise<PaginatedResult<User> | User[]> {
-    return this.usersRepository.findAllClients(query);
+  async findAll(query: UserQueryDto, langId: string = 'en'): Promise<PaginatedResult<User> | User[]> {
+    return this.usersRepository.findAllClients(query, langId);
   }
 
   async findOne(id: bigint): Promise<User> {

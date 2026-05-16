@@ -28,41 +28,65 @@ export class UsersRepository extends BaseRepository<User> {
     return this.prisma.user;
   }
 
-  async findAll(query: AdvancedQueryDto): Promise<PaginatedResult<User> | User[]> {
+  async findAll(query: AdvancedQueryDto, langId: string = 'en'): Promise<PaginatedResult<User> | User[]> {
     const where = this.buildWhereClause(query);
 
     return this.paginate(query, where, {
       include: {
-        role: true,
+        role: {
+          select: {
+            id: true,
+            isActive: true,
+            translations: {
+              where: {
+                langId,
+              },
+            },
+          },
+        },
       },
     });
   }
 
-  async findAllAdmins(query: AdvancedQueryDto): Promise<PaginatedResult<User> | User[]> {
+  async findAllAdmins(query: AdvancedQueryDto, langId: string = 'en'): Promise<PaginatedResult<User> | User[]> {
     query.filters = { ...(query.filters || {}), userType: 'admin' };
-    const result = await this.findAll(query);
+    const result = await this.findAll(query, langId);
     return this.excludePasswords(result);
   }
 
-  async findAllClients(query: AdvancedQueryDto): Promise<PaginatedResult<User> | User[]> {
+  async findAllClients(query: AdvancedQueryDto, langId: string = 'en'): Promise<PaginatedResult<User> | User[]> {
     query.filters = { ...(query.filters || {}), userType: 'client' };
-    const result = await this.findAll(query);
+    const result = await this.findAll(query, langId);
     return this.excludePasswords(result);
   }
 
   async findByIdAndType(id: bigint, type: 'admin' | 'client'): Promise<User | null> {
     const user = await this.findById(id, {
       include: {
-        role: true,
+        role: {
+          select: {
+            id: true,
+            isActive: true,
+            translations: true,
+            permissions: {
+              select: {
+                id: true,
+                resource: true,
+                action: true,
+              },
+            },
+          },
+        },
         addresses: true,
         reviews: true,
       },
     });
 
-    if (user && user.userType === type) {
-      return this.excludePassword(user);
+    if (!user || user.userType !== type) {
+      return null;
     }
-    return null;
+
+    return this.excludePassword(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {

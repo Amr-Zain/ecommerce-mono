@@ -8,7 +8,7 @@ import { BodyOmitUndefined } from '../../common/decorators/omit-undefined.decora
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
 import type { PaginatedResult } from '../../common/dto/pagination.dto';
 import type { User } from './users.repository';
-import { I18nService } from 'nestjs-i18n';
+import { I18nLang, I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../../generated/i18n.generated';
 
 @Controller('supervisors')
@@ -26,8 +26,11 @@ export class SupervisorsController {
 
   @Get()
   @RequirePermissions({ resource: 'supervisors', action: 'list' })
-  async findAll(@ParsedQuery(UserQueryDto) query: UserQueryDto): Promise<PaginatedResult<User> | User[]> {
-    return this.supervisorsService.findAll(query);
+  async findAll(
+    @ParsedQuery(UserQueryDto) query: UserQueryDto,
+    @I18nLang() lang: string,
+  ): Promise<PaginatedResult<User> | User[]> {
+    return this.supervisorsService.findAll(query, lang);
   }
 
   @Get(':id')

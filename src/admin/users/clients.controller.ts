@@ -3,6 +3,7 @@ import { ClientsService } from './clients.service';
 import { UserQueryDto } from './dto/user-query.dto';
 import { ParsedQuery } from '../../common/decorators/parsed-query.decorator';
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
+import { I18nLang } from 'nestjs-i18n';
 import type { PaginatedResult } from '../../common/dto/pagination.dto';
 import type { User } from './users.repository';
 
@@ -12,8 +13,11 @@ export class ClientsController {
 
   @Get()
   @RequirePermissions({ resource: 'clients', action: 'list' })
-  async findAll(@ParsedQuery(UserQueryDto) query: UserQueryDto): Promise<PaginatedResult<User> | User[]> {
-    return this.clientsService.findAll(query);
+  async findAll(
+    @ParsedQuery(UserQueryDto) query: UserQueryDto,
+    @I18nLang() lang: string,
+  ): Promise<PaginatedResult<User> | User[]> {
+    return this.clientsService.findAll(query, lang);
   }
 
   @Get(':id')
