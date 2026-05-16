@@ -16,7 +16,12 @@ export class PermissionDiscoveryService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.discoverAndSyncPermissions();
+    try {
+      await this.discoverAndSyncPermissions();
+    } catch (error) {
+      this.logger.error('Failed to discover and sync permissions:', error);
+      // We don't throw here to avoid stopping the server
+    }
   }
 
   /**
@@ -111,16 +116,27 @@ export class PermissionDiscoveryService implements OnModuleInit {
 
     // Get or create a default "Super Admin" role
     let superAdminRole = await this.prisma.role.findFirst({
-      where: { nameEn: 'Super Admin' },
+      where: {
+        translations: {
+          some: {
+            langId: 'en',
+            name: 'Super Admin',
+          },
+        },
+      },
     });
 
     if (!superAdminRole) {
       this.logger.log('🔧 Creating Super Admin role...');
       superAdminRole = await this.prisma.role.create({
         data: {
-          nameEn: 'Super Admin',
-          nameAr: 'مدير عام',
           isActive: true,
+          translations: {
+            create: [
+              { langId: 'en', name: 'Super Admin' },
+              { langId: 'ar', name: 'مدير عام' },
+            ],
+          },
         },
       });
     }

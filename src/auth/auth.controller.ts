@@ -1,4 +1,5 @@
 import { Controller, Post, Body, UseGuards, Get, Req, Param, Delete, UnauthorizedException } from '@nestjs/common';
+import { I18nLang } from 'nestjs-i18n';
 import { AuthService, AuthUserPayload } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -12,13 +13,14 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Request } from 'express';
+import { PermissionUtil } from '../common/utils/permission.util';
 
 interface AuthUser {
   id: bigint;
   name: string;
   email: string;
   phone?: string;
-  role?: { id: bigint; nameEn: string; nameAr: string };
+  role?: { id: bigint; translations: { langId: string; name: string }[] };
   isEmailVerified: boolean;
   isPhoneVerified: boolean;
   isActive: boolean;
@@ -50,7 +52,7 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Req() req: Request, @Body() _loginDto: LoginDto) {
+  async login(@Req() req: Request, @Body() _loginDto: LoginDto, @I18nLang() lang: string) {
     const deviceInfo = req.headers['user-agent'];
     const ipAddress = req.ip;
 
@@ -59,7 +61,7 @@ export class AuthController {
       throw new UnauthorizedException('User not authenticated');
     }
 
-    return this.authService.login(req.user as AuthUserPayload, deviceInfo, ipAddress);
+    return this.authService.login(req.user as AuthUserPayload, deviceInfo, ipAddress, lang);
   }
 
   @Public()
@@ -104,7 +106,7 @@ export class AuthController {
   }
 
   @Get('me')
-  getProfile(@CurrentUser() user: AuthUserPayload) {
+  getProfile(@CurrentUser() user: AuthUserPayload, @I18nLang() lang: string) {
     return {
       id: user.id.toString(),
       name: user.name,
@@ -113,8 +115,11 @@ export class AuthController {
       role: user.role
         ? {
             id: user.role.id.toString(),
-            nameEn: user.role.nameEn,
-            nameAr: user.role.nameAr,
+            name:
+              user.role.translations.find((t) => t.langId === lang)?.name ||
+              user.role.translations.find((t) => t.langId === 'en')?.name ||
+              '',
+            permissions: PermissionUtil.groupPermissions(user.role.permissions),
           }
         : null,
       isEmailVerified: user.isEmailVerified,

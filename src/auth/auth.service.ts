@@ -14,12 +14,22 @@ import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { randomBytes } from 'crypto';
+import { PermissionUtil } from '../common/utils/permission.util';
 
 /** Same include as local/JWT validation — single source for “user + role + permissions”. */
 export type AuthUserPayload = Prisma.UserGetPayload<{
   include: {
     role: {
-      include: { permissions: true };
+      include: {
+        permissions: {
+          select: {
+            id: true;
+            resource: true;
+            action: true;
+          };
+        };
+        translations: true;
+      };
     };
   };
 }>;
@@ -42,6 +52,7 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
+
   /**
    * Validate user credentials
    */
@@ -51,7 +62,14 @@ export class AuthService {
       include: {
         role: {
           include: {
-            permissions: true,
+            permissions: {
+              select: {
+                id: true,
+                resource: true,
+                action: true,
+              },
+            },
+            translations: true,
           },
         },
       },
@@ -191,7 +209,12 @@ export class AuthService {
   /**
    * Login user
    */
-  async login(user: AuthUserPayload, deviceInfo?: string, ipAddress?: string): Promise<AuthResponseDto> {
+  async login(
+    user: AuthUserPayload,
+    deviceInfo?: string,
+    ipAddress?: string,
+    lang: string = 'en',
+  ): Promise<AuthResponseDto> {
     const emailAddr = user.email;
     if (emailAddr == null || emailAddr === '') {
       throw new UnauthorizedException('User email is missing');
@@ -210,13 +233,16 @@ export class AuthService {
       refreshToken,
       user: {
         id: user.id.toString(),
-        name: user.name,
+        name: user.name || '',
         email: emailAddr,
         role: user.role
           ? {
               id: user.role.id.toString(),
-              nameEn: user.role.nameEn,
-              nameAr: user.role.nameAr,
+              name:
+                user.role.translations.find((t) => t.langId === lang)?.name ||
+                user.role.translations.find((t) => t.langId === 'en')?.name ||
+                '',
+              permissions: PermissionUtil.groupPermissions(user.role.permissions),
             }
           : undefined,
         isEmailVerified: user.isEmailVerified,
@@ -245,8 +271,8 @@ export class AuthService {
     const accessPayload: JwtPayload = {
       sub: user.id.toString(),
       email: emailAddr,
-      role: user.role?.nameEn,
-      userType: user.userType,
+      role: user.role?.translations.find((t) => t.langId === 'en')?.name ?? undefined,
+      userType: user.userType ?? undefined,
       type: 'access',
     };
 
