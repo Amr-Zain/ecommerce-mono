@@ -8,6 +8,8 @@ import { SlidersModule } from './sliders/sliders.module';
 import { FaqsModule } from './faqs/faqs.module';
 import { StaticPagesModule } from './static-pages/static-pages.module';
 import { RolesModule } from './roles/roles.module';
+import { CollectionsModule } from './collections/collections.module';
+import { AttributesModule } from './attributes/attributes.module';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { RolesModule } from './roles/roles.module';
     SlidersModule,
     FaqsModule,
     StaticPagesModule,
+    AttributesModule,
     RouterModule.register([
       {
         path: 'admin',
@@ -31,9 +34,12 @@ import { RolesModule } from './roles/roles.module';
           { path: '', module: SlidersModule },
           { path: '', module: FaqsModule },
           { path: '', module: StaticPagesModule },
+          { path: '', module: CollectionsModule },
+          { path: '', module: AttributesModule },
         ],
       },
     ]),
+    CollectionsModule,
   ],
 })
 export class AdminModule {}
