@@ -33,12 +33,6 @@ model Product {
   collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   hasVariants  Boolean   @default(false) @map("has_variants")
 
-  price            Decimal              @default(0) @map("price") @db.Decimal(12, 2)
-  discountValue    Decimal              @default(0) @map("discount_value") @db.Decimal(12, 2)
-  discountType     String?              @map("discount_type")
-  stockQuantity    Int                  @default(0) @map("stock_quantity")
-  barcode          String?              @map("barcode")
-  sku              String?              @map("sku")
   isActive         Boolean              @default(true) @map("is_active")
   createdAt        DateTime             @default(now()) @map("created_at")
   updatedAt        DateTime             @default(now()) @updatedAt @map("updated_at")
@@ -46,12 +40,9 @@ model Product {
   variants         ProductVariant[]
   variantAttribute VariantAttribute[]
   reviews          Review[]
-  prices           ProductPrice[]
   orderItems       OrderItem[]
 
   @@index([collectionId])
-  @@index([sku])
-  @@index([barcode])
   @@map("products")
 }
 
@@ -115,16 +106,28 @@ model ProductVariant {
   id            BigInt             @id @default(autoincrement())
   productId     BigInt             @map("product_id")
   product       Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  price          Decimal  @db.Decimal(12, 2)
+  compareAtPrice Decimal? @map("compare_at_price") @db.Decimal(12, 2)
+  costPrice      Decimal? @map("cost_price") @db.Decimal(12, 2)
+  discountType   String?  @map("discount_type") // FIXED or PERCENTAGE
+  discountValue  Decimal? @map("discount_value") @db.Decimal(12, 2)
+  
   stockQuantity Int                @default(0) @map("stock_quantity")
   barcode       String?            @map("barcode")
   sku           String?            @map("sku")
   isActive      Boolean            @default(true) @map("is_active")
   createdAt     DateTime           @default(now()) @map("created_at")
   updatedAt     DateTime           @default(now()) @updatedAt @map("updated_at")
+  
   attributes    VariantAttribute[]
   orderItems    OrderItem[]
+  inventoryLogs InventoryLog[]
+  priceHistory  PriceHistory[]
 
   @@index([productId])
+  @@index([sku])
+  @@index([barcode])
   @@map("product_variants")
 }
 
@@ -144,17 +147,30 @@ model VariantAttribute {
   @@map("variant_attributes")
 }
 
-model ProductPrice {
-  id            BigInt   @id @default(autoincrement())
-  productId     BigInt   @map("product_id")
-  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  price         Decimal  @map("price") @db.Decimal(12, 2)
-  discountValue Decimal  @default(0) @map("discount_value") @db.Decimal(12, 2)
-  discountType  String?  @map("discount_type")
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
+model InventoryLog {
+  id            BigInt         @id @default(autoincrement())
+  variantId     BigInt         @map("variant_id")
+  variant       ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  changeAmount  Int            @map("change_amount")
+  previousStock Int            @map("previous_stock")
+  newStock      Int            @map("new_stock")
+  reason        String         @map("reason") // RESTOCK, SALE, ADJUSTMENT, RETURN
+  createdAt     DateTime       @default(now()) @map("created_at")
 
-  @@index([productId])
-  @@index([productId, isActive])
-  @@map("product_prices")
+  @@index([variantId])
+  @@map("inventory_logs")
+}
+
+model PriceHistory {
+  id                BigInt         @id @default(autoincrement())
+  variantId         BigInt         @map("variant_id")
+  variant           ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  oldPrice          Decimal        @map("old_price") @db.Decimal(12, 2)
+  newPrice          Decimal        @map("new_price") @db.Decimal(12, 2)
+  oldCompareAtPrice Decimal?       @map("old_compare_at_price") @db.Decimal(12, 2)
+  newCompareAtPrice Decimal?       @map("new_compare_at_price") @db.Decimal(12, 2)
+  createdAt         DateTime       @default(now()) @map("created_at")
+
+  @@index([variantId])
+  @@map("price_history")
 }
