@@ -25,7 +25,7 @@ async function main() {
       translations: {
         create: [
           { langId: 'en', name: 'Super Admin' },
-          { langId: 'ar', name: 'مدير خارق' },
+          { langId: 'ar', name: 'مدير العام' },
         ],
       },
     },

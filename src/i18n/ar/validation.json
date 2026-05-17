@@ -17,5 +17,7 @@
   "IS_NUMERIC": "{property} يجب أن يكون رقماً",
   "IS_LENGTH": "{property} يجب أن يكون على الأقل {constraints.0} حرفاً وأن يكون بحد أقصى {constraints.1} حرفاً",
   "DATE_MUST_BE_AFTER": "{property} يجب أن يكون بعد تاريخ {constraints.0}",
-  "PASSWORDS_MATCH": "يجب أن تتطابق كلمات المرور"
+  "PASSWORDS_MATCH": "يجب أن تتطابق كلمات المرور",
+  "IS_POSITIVE": "{property} يجب أن يكون رقماً موجباً",
+  "IS_ENUM": "{property} يجب أن يكون قيمة صالحة من القائمة"
 }

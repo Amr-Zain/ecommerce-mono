@@ -50,6 +50,8 @@ export type I18nTranslations = {
         "IS_LENGTH": string;
         "DATE_MUST_BE_AFTER": string;
         "PASSWORDS_MATCH": string;
+        "IS_POSITIVE": string;
+        "IS_ENUM": string;
     };
 };
 /* prettier-ignore */
