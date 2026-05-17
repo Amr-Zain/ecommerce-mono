@@ -59,6 +59,20 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
       return data;
     }
 
+    // Handle Prisma Decimal (Decimal.js objects)
+    if (data && typeof data === 'object' && 'd' in data && 's' in data) {
+      const decimalObj = data as { toString(): string };
+      const toStringVal = decimalObj.toString();
+      if (toStringVal !== '[object Object]') {
+        return Number(toStringVal);
+      }
+    }
+
+    // Handle BigInt
+    if (typeof data === 'bigint') {
+      return (data as bigint).toString();
+    }
+
     // Handle Arrays
     if (Array.isArray(data)) {
       return data.map((item: unknown) => this.deepTransform(item, langId));
@@ -70,7 +84,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
     // 1. Recurse into all child properties first
     for (const key in result) {
       const value = result[key];
-      if (key !== 'translations' && value && typeof value === 'object') {
+      if (key !== 'translations') {
         result[key] = this.deepTransform(value, langId);
       }
     }
