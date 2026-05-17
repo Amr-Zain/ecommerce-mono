@@ -1077,6 +1077,173 @@
 							}
 						}
 					]
+				},
+				{
+					"name": "Products",
+					"item": [
+						{
+							"name": "List Products",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/products?page=1&limit=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "products"]
+								}
+							}
+						},
+						{
+							"name": "Get Product by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/products/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "products", "1"]
+								}
+							}
+						},
+						{
+							"name": "Create Product",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"collectionId\": 1,\n  \"hasVariants\": true,\n  \"translations\": [\n    {\"langId\": \"en\", \"name\": \"Test Product\"}\n  ],\n  \"image\": \"mock-main-image-hash\",\n  \"gallery\": [\n    \"mock-gallery-image-hash-1\",\n    \"mock-gallery-image-hash-2\"\n  ],\n  \"variants\": [\n    {\n      \"price\": 150,\n      \"sku\": \"PROD-1-VAR-1\",\n      \"stockQuantity\": 5,\n      \"attributes\": [\n        {\"attributeId\": 1, \"valueId\": 1}\n      ],\n      \"gallery\": [\n        \"mock-variant-gallery-hash-1\"\n      ]\n    }\n  ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/products",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "products"]
+								}
+							}
+						},
+						{
+							"name": "Update Product",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"hasVariants\": false,\n  \"translations\": [\n    {\"langId\": \"en\", \"name\": \"Updated Product Name\"}\n  ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/products/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "products", "1"]
+								}
+							}
+						},
+						{
+							"name": "Delete Product",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/products/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "products", "1"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Variants",
+					"item": [
+						{
+							"name": "List Variants",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/variants?page=1&limit=10",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "variants"]
+								}
+							}
+						},
+						{
+							"name": "Get Variant by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/variants/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "variants", "1"]
+								}
+							}
+						},
+						{
+							"name": "Create Variant",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"price\": 150.00,\n  \"compareAtPrice\": 200.00,\n  \"stockQuantity\": 10,\n  \"sku\": \"TEST-RED-1\",\n  \"attributes\": [\n    {\"attributeId\": 1, \"valueId\": 1}\n  ],\n  \"gallery\": [\n    \"mock-variant-gallery-hash-1\"\n  ]\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/variants/product/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "variants", "product", "1"]
+								}
+							}
+						},
+						{
+							"name": "Update Variant",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"price\": 120.00\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/variants/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "variants", "1"]
+								}
+							}
+						},
+						{
+							"name": "Adjust Stock",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"variantId\": 1,\n  \"amount\": 5,\n  \"reason\": \"RESTOCK\"\n}",
+									"options": { "raw": { "language": "json" } }
+								},
+								"url": {
+									"raw": "{{baseUrl}}/admin/variants/adjust-stock",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "variants", "adjust-stock"]
+								}
+							}
+						},
+						{
+							"name": "Delete Variant",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/admin/variants/1",
+									"host": ["{{baseUrl}}"],
+									"path": ["admin", "variants", "1"]
+								}
+							}
+						}
+					]
 				}
 			]
 		}
