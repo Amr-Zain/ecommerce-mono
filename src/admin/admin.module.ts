@@ -10,6 +10,7 @@ import { StaticPagesModule } from './static-pages/static-pages.module';
 import { RolesModule } from './roles/roles.module';
 import { CollectionsModule } from './collections/collections.module';
 import { AttributesModule } from './attributes/attributes.module';
+import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AttributesModule } from './attributes/attributes.module';
     FaqsModule,
     StaticPagesModule,
     AttributesModule,
+    ProductsModule,
     RouterModule.register([
       {
         path: 'admin',
@@ -36,6 +38,7 @@ import { AttributesModule } from './attributes/attributes.module';
           { path: '', module: StaticPagesModule },
           { path: '', module: CollectionsModule },
           { path: '', module: AttributesModule },
+          { path: '', module: ProductsModule },
         ],
       },
     ]),
