@@ -6,7 +6,9 @@ export class AuthResponseDto {
   user!: {
     id: string;
     name?: string;
-    email: string;
+    email?: string;
+    phone?: string;
+    guestToken?: string;
     role?: {
       id: string;
       name: string;
