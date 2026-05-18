@@ -4,6 +4,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
@@ -17,7 +18,16 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     }
 
     super({
-      jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (request: Request) => {
+          let token: string | null = null;
+          if (request && request.cookies) {
+            token = (request.cookies as Record<string, string>)['refreshToken'] || null;
+          }
+          return token;
+        },
+        ExtractJwt.fromBodyField('refreshToken'),
+      ]),
       ignoreExpiration: false,
       secretOrKey: secret,
     });

@@ -1,19 +1,19 @@
-import { Controller, Post, Body, UseGuards, Get, Req, Param, Delete, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Req, Res, Param, Delete, UnauthorizedException } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import { AuthService, AuthUserPayload } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { VerifyEmailDto } from './dto/verify-email.dto';
-import { VerifyPhoneDto } from './dto/verify-phone.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { PermissionUtil } from '../common/utils/permission.util';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RegisterDto } from './dto/register.dto';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 interface AuthUser {
   id: bigint;
@@ -38,42 +38,85 @@ export class AuthController {
   }
 
   @Public()
-  @Post('verify-email')
-  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    return this.authService.verifyEmail(verifyEmailDto.email, verifyEmailDto.code);
+  @Post('send-otp')
+  async sendOtp(@Body() sendOtpDto: SendOtpDto) {
+    return this.authService.sendOtp(sendOtpDto);
   }
 
   @Public()
-  @Post('resend-email-verification')
-  async resendEmailVerification(@Body() body: { email: string }) {
-    return this.authService.resendEmailVerification(body.email);
+  @Post('login-otp')
+  async loginOtp(@Req() req: Request, @Res() res: Response, @Body() verifyOtpDto: VerifyOtpDto) {
+    const deviceInfo = req.headers['user-agent'];
+    const ipAddress = req.ip;
+    const platform = (req.headers['x-platform'] as string) || 'browser';
+
+    const authResult = await this.authService.verifyOtp(verifyOtpDto, deviceInfo, ipAddress);
+    return this.authService.handleAuthResponse(res, authResult, platform);
+  }
+
+  @Public()
+  @Post('create-guest')
+  async createGuest(@Req() req: Request, @Res() res: Response) {
+    const deviceInfo = req.headers['user-agent'];
+    const ipAddress = req.ip;
+    const platform = (req.headers['x-platform'] as string) || 'browser';
+
+    const authResult = await this.authService.createGuest(deviceInfo, ipAddress);
+    return this.authService.handleAuthResponse(res, authResult, platform);
   }
 
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Req() req: Request, @Body() _loginDto: LoginDto, @I18nLang() lang: string) {
+  async login(@Req() req: Request, @Res() res: Response, @Body() _loginDto: LoginDto, @I18nLang() lang: string) {
     const deviceInfo = req.headers['user-agent'];
     const ipAddress = req.ip;
+    const platform = (req.headers['x-platform'] as string) || 'browser';
 
     // req.user should exist because LocalAuthGuard ensures authentication
     if (!req.user) {
       throw new UnauthorizedException('User not authenticated');
     }
 
-    return this.authService.login(req.user as AuthUserPayload, deviceInfo, ipAddress, lang);
+    const authResult = await this.authService.login(req.user as AuthUserPayload, deviceInfo, ipAddress, lang);
+    return this.authService.handleAuthResponse(res, authResult, platform);
   }
 
   @Public()
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
-  async refresh(@CurrentUser() user: AuthUserPayload, @Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshAccessToken(user, refreshTokenDto.refreshToken);
+  async refresh(
+    @CurrentUser() user: AuthUserPayload,
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ) {
+    const cookies = req.cookies as Record<string, string> | undefined;
+    const token = cookies?.['refreshToken'] || refreshTokenDto.refreshToken;
+    if (!token) {
+      throw new UnauthorizedException('Refresh token is required');
+    }
+
+    const platform = (req.headers['x-platform'] as string) || 'browser';
+    const authResult = await this.authService.refreshAccessToken(user, token);
+    return this.authService.handleAuthResponse(res, authResult, platform);
   }
 
   @Post('logout')
-  async logout(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.logout(refreshTokenDto.refreshToken);
+  async logout(@Req() req: Request, @Res() res: Response, @Body() refreshTokenDto: RefreshTokenDto) {
+    const cookies = req.cookies as Record<string, string> | undefined;
+    const token = cookies?.['refreshToken'] || refreshTokenDto.refreshToken;
+    if (!token) {
+      throw new UnauthorizedException('Refresh token is required');
+    }
+
+    // Revoke token
+    const result = await this.authService.logout(token);
+
+    // Clear cookie if present
+    this.authService.clearRefreshTokenCookie(res);
+
+    return res.status(200).json(result);
   }
 
   @Post('logout-all')
@@ -91,18 +134,6 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto.email, resetPasswordDto.code, resetPasswordDto.newPassword);
-  }
-
-  @Public()
-  @Post('verify-phone')
-  async verifyPhone(@Body() verifyPhoneDto: VerifyPhoneDto) {
-    return this.authService.verifyPhone(verifyPhoneDto.phone, verifyPhoneDto.code);
-  }
-
-  @Public()
-  @Post('send-phone-verification')
-  async sendPhoneVerification(@Body() body: { phone: string }) {
-    return this.authService.sendPhoneVerification(body.phone);
   }
 
   @Get('me')

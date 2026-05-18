@@ -15,6 +15,10 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { randomBytes } from 'crypto';
 import { PermissionUtil } from '../common/utils/permission.util';
+import { UsersRepository, User } from '../admin/users/users.repository';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { Response } from 'express';
 
 /** Same include as local/JWT validation — single source for “user + role + permissions”. */
 export type AuthUserPayload = Prisma.UserGetPayload<{
@@ -50,6 +54,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private readonly usersRepository: UsersRepository,
   ) {}
 
   /**
@@ -78,6 +83,10 @@ export class AuthService {
       return null;
     }
 
+    if (user.userType !== 'admin') {
+      throw new UnauthorizedException('Access denied. Password-based login is restricted to admins.');
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
@@ -92,9 +101,7 @@ export class AuthService {
    */
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
     // Check if email already exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: registerDto.email },
-    });
+    const existingUser = await this.usersRepository.findByEmail(registerDto.email);
 
     if (existingUser) {
       throw new ConflictException('Email already exists');
@@ -108,18 +115,16 @@ export class AuthService {
     const verificationExpiry = new Date(Date.now() + 150 * 60 * 1000); // 150 minutes
 
     // Create user
-    await this.prisma.user.create({
-      data: {
-        name: registerDto.name,
-        email: registerDto.email,
-        password: hashedPassword,
-        phone: registerDto.phone,
-        phoneCode: registerDto.phoneCode,
-        emailVerificationCode: verificationCode,
-        emailVerificationExpiry: verificationExpiry,
-        isEmailVerified: false,
-        isActive: true,
-      },
+    await this.usersRepository.create({
+      name: registerDto.name,
+      email: registerDto.email,
+      password: hashedPassword,
+      phone: registerDto.phone,
+      phoneCode: registerDto.phoneCode,
+      emailVerificationCode: verificationCode,
+      emailVerificationExpiry: verificationExpiry,
+      isEmailVerified: false,
+      isActive: true,
     });
 
     // TODO: Send verification email with code
@@ -131,82 +136,7 @@ export class AuthService {
   }
 
   /**
-   * Verify email with code
-   */
-  async verifyEmail(email: string, code: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (user.isEmailVerified) {
-      throw new BadRequestException('Email already verified');
-    }
-
-    if (!user.emailVerificationCode || !user.emailVerificationExpiry) {
-      throw new BadRequestException('No verification code found');
-    }
-
-    if (user.emailVerificationExpiry < new Date()) {
-      throw new BadRequestException('Verification code expired');
-    }
-
-    if (user.emailVerificationCode !== code) {
-      throw new BadRequestException('Invalid verification code');
-    }
-
-    // Mark email as verified
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        isEmailVerified: true,
-        emailVerificationCode: null,
-        emailVerificationExpiry: null,
-      },
-    });
-
-    return { message: 'Email verified successfully' };
-  }
-
-  /**
-   * Resend email verification code
-   */
-  async resendEmailVerification(email: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (user.isEmailVerified) {
-      throw new BadRequestException('Email already verified');
-    }
-
-    // Generate new verification code
-    const verificationCode = '1111';
-    const verificationExpiry = new Date(Date.now() + 15 * 60 * 1000);
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        emailVerificationCode: verificationCode,
-        emailVerificationExpiry: verificationExpiry,
-      },
-    });
-
-    // TODO: Send verification email
-    console.log(`Email verification code for ${email}: ${verificationCode}`);
-
-    return { message: 'Verification code sent' };
-  }
-
-  /**
-   * Login user
+   * Login user (typically used for admin password login)
    */
   async login(
     user: AuthUserPayload,
@@ -214,13 +144,8 @@ export class AuthService {
     ipAddress?: string,
     lang: string = 'en',
   ): Promise<AuthResponseDto> {
-    const emailAddr = user.email;
-    if (emailAddr == null || emailAddr === '') {
-      throw new UnauthorizedException('User email is missing');
-    }
-
-    // Check if email is verified
-    if (!user.isEmailVerified) {
+    // For admins, verify email is verified
+    if (user.userType === 'admin' && !user.isEmailVerified) {
       throw new UnauthorizedException('Please verify your email before logging in');
     }
 
@@ -233,7 +158,7 @@ export class AuthService {
       user: {
         id: user.id.toString(),
         name: user.name || '',
-        email: emailAddr,
+        email: user.email || '',
         role: user.role
           ? {
               id: user.role.id.toString(),
@@ -261,15 +186,10 @@ export class AuthService {
     // Generate unique token ID for refresh token
     const tokenId = randomBytes(32).toString('hex');
 
-    // Access token payload
-    const emailAddr = user.email;
-    if (emailAddr == null || emailAddr === '') {
-      throw new UnauthorizedException('User email is missing');
-    }
-
     const accessPayload: JwtPayload = {
       sub: user.id.toString(),
-      email: emailAddr,
+      email: user.email ?? undefined,
+      phone: user.phone ?? undefined,
       role: user.role?.translations.find((t) => t.langId === 'en')?.name ?? undefined,
       userType: user.userType ?? undefined,
       type: 'access',
@@ -278,7 +198,8 @@ export class AuthService {
     // Refresh token payload
     const refreshPayload: JwtPayload = {
       sub: user.id.toString(),
-      email: emailAddr,
+      email: user.email ?? undefined,
+      phone: user.phone ?? undefined,
       type: 'refresh',
       jti: tokenId,
     };
@@ -309,6 +230,280 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  /**
+   * Send verification code (OTP) via Email or Phone
+   */
+  async sendOtp(dto: SendOtpDto): Promise<{ message: string }> {
+    const type = dto.type;
+    let user: User | null = null;
+
+    if (type === 'email') {
+      const email = dto.email;
+      if (!email) {
+        throw new BadRequestException('Email is required');
+      }
+      user = await this.usersRepository.findByEmail(email);
+
+      if (!user) {
+        // Auto-register new client
+        user = await this.usersRepository.create({
+          email,
+          userType: 'client',
+          isActive: true,
+          isEmailVerified: false,
+        });
+      }
+    } else {
+      const phone = dto.phone;
+      const phoneCode = dto.phoneCode ?? '+966';
+      if (!phone) {
+        throw new BadRequestException('Phone is required');
+      }
+      user = await this.usersRepository.findByPhone(phoneCode, phone);
+
+      if (!user) {
+        // Auto-register new client
+        user = await this.usersRepository.create({
+          phone,
+          phoneCode,
+          userType: 'client',
+          isActive: true,
+          isPhoneVerified: false,
+        });
+      }
+    }
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User account is inactive or not found');
+    }
+
+    // Generate verification code
+    const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const verificationExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    if (type === 'email') {
+      await this.usersRepository.update(user.id, {
+        emailVerificationCode: verificationCode,
+        emailVerificationExpiry: verificationExpiry,
+      });
+      console.log(`[OTP] Email verification code for ${dto.email}: ${verificationCode}`);
+    } else {
+      await this.usersRepository.update(user.id, {
+        phoneVerificationCode: verificationCode,
+        phoneVerificationExpiry: verificationExpiry,
+      });
+      console.log(`[OTP] Phone verification code for ${user.phoneCode ?? ''}${user.phone ?? ''}: ${verificationCode}`);
+    }
+
+    return { message: 'Verification code sent successfully' };
+  }
+
+  /**
+   * Verify verification code (OTP) and login/register client user
+   */
+  async verifyOtp(
+    dto: VerifyOtpDto,
+    deviceInfo?: string,
+    ipAddress?: string,
+    lang: string = 'en',
+  ): Promise<AuthResponseDto> {
+    const type = dto.type;
+    let user: AuthUserPayload | null = null;
+
+    if (type === 'email') {
+      const email = dto.email;
+      if (!email) {
+        throw new BadRequestException('Email is required');
+      }
+      user = (await this.usersRepository.findOne(
+        { email },
+        {
+          include: {
+            role: {
+              include: {
+                permissions: true,
+                translations: true,
+              },
+            },
+          },
+        },
+      )) as AuthUserPayload | null;
+
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      if (!user.emailVerificationCode || !user.emailVerificationExpiry) {
+        throw new BadRequestException('No verification code found');
+      }
+
+      if (user.emailVerificationExpiry < new Date()) {
+        throw new BadRequestException('Verification code expired');
+      }
+
+      if (user.emailVerificationCode !== dto.code) {
+        throw new BadRequestException('Invalid verification code');
+      }
+
+      // Mark as verified
+      await this.usersRepository.update(user.id, {
+        isEmailVerified: true,
+        emailVerificationCode: null,
+        emailVerificationExpiry: null,
+      });
+    } else {
+      const phone = dto.phone;
+      const phoneCode = dto.phoneCode ?? '+966';
+      if (!phone) {
+        throw new BadRequestException('Phone is required');
+      }
+      user = (await this.usersRepository.findOne(
+        { phone, phoneCode },
+        {
+          include: {
+            role: {
+              include: {
+                permissions: true,
+                translations: true,
+              },
+            },
+          },
+        },
+      )) as AuthUserPayload | null;
+
+      if (!user) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      if (!user.phoneVerificationCode || !user.phoneVerificationExpiry) {
+        throw new BadRequestException('No verification code found');
+      }
+
+      if (user.phoneVerificationExpiry < new Date()) {
+        throw new BadRequestException('Verification code expired');
+      }
+
+      if (user.phoneVerificationCode !== dto.code) {
+        throw new BadRequestException('Invalid verification code');
+      }
+
+      // Mark as verified
+      await this.usersRepository.update(user.id, {
+        isPhoneVerified: true,
+        phoneVerificationCode: null,
+        phoneVerificationExpiry: null,
+      });
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('User account is inactive');
+    }
+
+    // Guest User Session Migration
+    if (dto.guestToken) {
+      const guestUser = await this.usersRepository.findOne({ guestToken: dto.guestToken });
+
+      if (guestUser && guestUser.id !== user.id) {
+        // Perform structural migration inside database transaction
+        await this.prisma.$transaction(async (tx) => {
+          // Check relations like Address, Order, Review, etc.
+          await tx.address.updateMany({
+            where: { userId: guestUser.id },
+            data: { userId: user.id },
+          });
+
+          await tx.order.updateMany({
+            where: { userId: guestUser.id },
+            data: { userId: user.id },
+          });
+
+          await tx.review.updateMany({
+            where: { userId: guestUser.id },
+            data: { userId: user.id },
+          });
+
+          // Delete guest user
+          await tx.user.delete({
+            where: { id: guestUser.id },
+          });
+        });
+        console.log(`[GUEST MIGRATION] Migrated and deleted guest user ID: ${guestUser.id} to user ID: ${user.id}`);
+      }
+    }
+
+    // Generate access and refresh tokens
+    const { accessToken, refreshToken } = await this.generateTokens(user, deviceInfo, ipAddress);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id.toString(),
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || undefined,
+        role: user.role
+          ? {
+              id: user.role.id.toString(),
+              name:
+                user.role.translations.find((t: { langId: string; name: string }) => t.langId === lang)?.name ||
+                user.role.translations.find((t: { langId: string; name: string }) => t.langId === 'en')?.name ||
+                '',
+              permissions: PermissionUtil.groupPermissions(user.role.permissions),
+            }
+          : undefined,
+        isEmailVerified: user.isEmailVerified,
+        isPhoneVerified: user.isPhoneVerified,
+      },
+    };
+  }
+
+  /**
+   * Create a guest user profile and generate tokens
+   */
+  async createGuest(deviceInfo?: string, ipAddress?: string): Promise<AuthResponseDto> {
+    const guestToken = 'guest_' + randomBytes(16).toString('hex');
+
+    // Create new guest user record
+    const guestUser = (await this.usersRepository.create(
+      {
+        name: 'Guest User',
+        userType: 'client',
+        guestToken: guestToken,
+        isActive: true,
+        isEmailVerified: false,
+        isPhoneVerified: false,
+      },
+      {
+        include: {
+          role: {
+            include: {
+              permissions: true,
+              translations: true,
+            },
+          },
+        },
+      },
+    )) as AuthUserPayload;
+
+    // Generate access and refresh tokens for guest
+    const { accessToken, refreshToken } = await this.generateTokens(guestUser, deviceInfo, ipAddress);
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: guestUser.id.toString(),
+        name: guestUser.name || 'Guest User',
+        email: '',
+        guestToken: guestUser.guestToken ?? undefined,
+        role: undefined,
+        isEmailVerified: false,
+        isPhoneVerified: false,
+      },
+    };
   }
 
   /**
@@ -555,6 +750,36 @@ export class AuthService {
     });
 
     return { message: 'Session revoked successfully' };
+  }
+
+  /**
+   * Set secure HttpOnly cookies and format Auth response depending on platform
+   */
+  handleAuthResponse(
+    res: Response,
+    authResult: { accessToken: string; refreshToken: string; user?: Record<string, unknown> },
+    platform: string,
+  ): Response {
+    if (platform === 'browser') {
+      res.cookie('refreshToken', authResult.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      const { refreshToken: _r, ...resultWithoutRefresh } = authResult;
+      return res.status(201).json(resultWithoutRefresh);
+    }
+
+    return res.status(201).json(authResult);
+  }
+
+  /**
+   * Clear refresh token cookie from the client response
+   */
+  clearRefreshTokenCookie(res: Response) {
+    res.clearCookie('refreshToken');
   }
 
   private getJwtSigningSecretOrThrow(envKey: 'JWT_SECRET' | 'JWT_REFRESH_SECRET'): string {

@@ -102,6 +102,17 @@ export class UsersRepository extends BaseRepository<User> {
     );
   }
 
+  async findByPhone(phoneCode: string, phone: string): Promise<User | null> {
+    return this.findOne(
+      { phoneCode, phone },
+      {
+        include: {
+          role: true,
+        },
+      },
+    );
+  }
+
   /**
    * Find user by ID with relations
    */

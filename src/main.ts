@@ -4,6 +4,8 @@ import { I18nValidationPipe } from 'nestjs-i18n';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { Prisma } from '@prisma/client';
 
+import cookieParser from 'cookie-parser';
+
 (Prisma.Decimal.prototype as unknown as { toJSON: () => number }).toJSON = function (this: Prisma.Decimal) {
   return Number(this.toString());
 };
@@ -13,6 +15,7 @@ import { Prisma } from '@prisma/client';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser());
 
   const httpAdapterHost = app.get(HttpAdapterHost);
 

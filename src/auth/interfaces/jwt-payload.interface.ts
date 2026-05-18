@@ -1,6 +1,7 @@
 export interface JwtPayload {
   sub: string; // User ID
-  email: string;
+  email?: string;
+  phone?: string;
   role?: string;
   userType?: string;
   type: 'access' | 'refresh';

@@ -10,12 +10,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { PermissionDiscoveryService } from './services/permission-discovery.service';
 import { PrismaModule } from '../prisma/prisma.module';
+import { UsersModule } from '../admin/users/users.module';
 
 @Module({
   imports: [
     PrismaModule,
     PassportModule,
     DiscoveryModule,
+    UsersModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
