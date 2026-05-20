@@ -63,7 +63,7 @@ export class UsersRepository extends BaseRepository<User> {
   }
 
   async findByIdAndType(id: bigint, type: 'admin' | 'client'): Promise<User | null> {
-    const user = await this.findById(id, {
+    const options = {
       include: {
         role: {
           select: {
@@ -82,7 +82,8 @@ export class UsersRepository extends BaseRepository<User> {
         addresses: true,
         reviews: true,
       },
-    });
+    };
+    const user = await this.findById(id, options);
 
     if (!user || user.userType !== type) {
       return null;
@@ -180,6 +181,11 @@ export class UsersRepository extends BaseRepository<User> {
     if (query.search) {
       const searchCondition = this.queryBuilder.buildSearchCondition(query.search, ['name', 'email']);
       conditions.push(searchCondition as Prisma.UserWhereInput);
+    }
+
+    // Exclude super admin root (roleId = 1) for supervisors list
+    if (query.filters?.userType === 'admin') {
+      conditions.push({ roleId: { not: 1n } });
     }
 
     return this.queryBuilder.combineWhereConditions(...conditions);

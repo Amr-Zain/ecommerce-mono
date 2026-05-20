@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 import { CreateSupervisorDto } from './dto/create-supervisor.dto';
 import { UpdateSupervisorDto } from './dto/update-supervisor.dto';
@@ -61,6 +61,10 @@ export class SupervisorsService {
   async update(id: bigint, updateDto: UpdateSupervisorDto): Promise<User> {
     const existingUser = await this.findOne(id);
 
+    if (existingUser.roleId === 1n) {
+      throw new BadRequestException(this.i18n.t('errors.cannot_edit_super_admin_user'));
+    }
+
     if (updateDto.email && updateDto.email !== existingUser.email) {
       const emailExists = await this.usersRepository.emailExists(updateDto.email, id);
       if (emailExists) {
@@ -85,7 +89,11 @@ export class SupervisorsService {
   }
 
   async remove(id: bigint): Promise<User> {
-    await this.findOne(id); // Ensure it's an admin and exists
+    const existingUser = await this.findOne(id); // Ensure it's an admin and exists
+
+    if (existingUser.roleId === 1n) {
+      throw new BadRequestException(this.i18n.t('errors.cannot_delete_super_admin_user'));
+    }
     return this.usersRepository.deleteUser(id);
   }
 }
