@@ -6,6 +6,7 @@ import { AdvancedQueryDto } from '../../common/dto/advanced-query.dto';
 import { ParsedQuery } from '../../common/decorators/parsed-query.decorator';
 import { BodyOmitUndefined } from '../../common/decorators/omit-undefined.decorator';
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
+import { UseLanguageTransform } from '../../common/decorators/transform-language-keys.decorator';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../../generated/i18n.generated';
 import type { PaginatedResult } from '../../common/dto/pagination.dto';
@@ -19,6 +20,7 @@ export class RolesController {
 
   @Post()
   @RequirePermissions({ resource: 'roles', action: 'create' })
+  @UseLanguageTransform()
   async create(@Body() createRoleDto: CreateRoleDto): Promise<TransformedRole> {
     return this.rolesService.create(createRoleDto);
   }
@@ -39,6 +41,7 @@ export class RolesController {
 
   @Patch(':id')
   @RequirePermissions({ resource: 'roles', action: 'update' })
+  @UseLanguageTransform()
   async update(
     @Param('id', ParseIntPipe) id: number,
     @BodyOmitUndefined() updateRoleDto: UpdateRoleDto,

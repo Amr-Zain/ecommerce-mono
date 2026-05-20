@@ -20,12 +20,7 @@ export class CreateRoleDto {
   translations!: RoleTranslationDto[];
 
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
-  @IsOptional()
-  @IsString({
-    each: true,
-    message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING'),
-  })
-  permissions?: string[];
+  permissions?: number[];
 
   @IsBoolean({ message: i18nValidationMessage<I18nTranslations>('validation.IS_BOOLEAN') })
   @IsOptional()

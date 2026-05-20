@@ -59,20 +59,14 @@ export class RolesRepository extends BaseRepository<Role> {
     const finalData: Record<string, unknown> = { ...rest };
 
     if (Array.isArray(translations)) {
-      finalData.translations = {
-        create: translations,
-      };
+      finalData.translations = translations;
     }
 
     if (Array.isArray(permissions) && permissions.length > 0) {
       const permissionIds = permissions.map((id) => BigInt(id as string));
-      const definitions = await this.prisma.permission.findMany({
-        where: { id: { in: permissionIds } },
-        select: { resource: true, action: true },
-      });
 
       finalData.permissions = {
-        create: definitions,
+        connect: permissionIds.map((id) => ({ id })),
       };
     }
 
@@ -95,22 +89,14 @@ export class RolesRepository extends BaseRepository<Role> {
     const finalData: Record<string, unknown> = { ...rest };
 
     if (Array.isArray(translations)) {
-      finalData.translations = {
-        deleteMany: {},
-        create: translations,
-      };
+      finalData.translations = translations;
     }
 
     if (Array.isArray(permissions)) {
       const permissionIds = permissions.map((id) => BigInt(id as string));
-      const definitions = await this.prisma.permission.findMany({
-        where: { id: { in: permissionIds } },
-        select: { resource: true, action: true },
-      });
 
       finalData.permissions = {
-        deleteMany: {},
-        create: definitions,
+        set: permissionIds.map((id) => ({ id })),
       };
     }
 

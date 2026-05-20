@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { RolesRepository, Role } from './roles.repository';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -55,6 +55,9 @@ export class RolesService {
   }
 
   async update(id: bigint, updateDto: UpdateRoleDto): Promise<TransformedRole> {
+    if (id === 1n) {
+      throw new BadRequestException(this.i18n.t('errors.cannot_edit_super_admin_role'));
+    }
     await this.findOne(id);
 
     const data: Record<string, unknown> = {
@@ -68,6 +71,9 @@ export class RolesService {
   }
 
   async remove(id: bigint): Promise<TransformedRole> {
+    if (id === 1n) {
+      throw new BadRequestException(this.i18n.t('errors.cannot_delete_super_admin_role'));
+    }
     // Note: this.findOne already returns TransformedRole, but we need the database role for deletion
     const dbRole = await this.rolesRepository.findByIdWithRelations(id);
     if (!dbRole) {
