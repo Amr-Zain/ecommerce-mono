@@ -89,10 +89,10 @@ export class AuthController {
     @CurrentUser() user: AuthUserPayload,
     @Req() req: Request,
     @Res() res: Response,
-    @Body() refreshTokenDto: RefreshTokenDto,
+    @Body() body: Partial<RefreshTokenDto>,
   ) {
     const cookies = req.cookies as Record<string, string> | undefined;
-    const token = cookies?.['refreshToken'] || refreshTokenDto.refreshToken;
+    const token = cookies?.['refreshToken'] || body?.refreshToken;
     if (!token) {
       throw new UnauthorizedException('Refresh token is required');
     }

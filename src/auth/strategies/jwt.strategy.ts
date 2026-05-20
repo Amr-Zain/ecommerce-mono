@@ -3,13 +3,13 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
-import { PrismaService } from '../../prisma/prisma.service';
+import { UsersRepository } from '../../admin/users/users.repository';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     configService: ConfigService,
-    private prisma: PrismaService,
+    private usersRepository: UsersRepository,
   ) {
     const secret = configService.get<string>('JWT_SECRET');
     if (!secret) {
@@ -30,16 +30,18 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     // Fetch user with role and permissions
-    const user = await this.prisma.user.findUnique({
-      where: { id: BigInt(payload.sub) },
-      include: {
-        role: {
-          include: {
-            permissions: true,
+    const user = await this.usersRepository.findOne(
+      { id: BigInt(payload.sub) },
+      {
+        include: {
+          role: {
+            include: {
+              permissions: true,
+            },
           },
         },
       },
-    });
+    );
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');
