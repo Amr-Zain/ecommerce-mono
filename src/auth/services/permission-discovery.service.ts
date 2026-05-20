@@ -141,11 +141,10 @@ export class PermissionDiscoveryService implements OnModuleInit {
       });
     }
 
-    // Create missing permissions and assign to Super Admin
+    // Create missing permissions
     for (const perm of missingPermissions) {
       await this.prisma.permission.create({
         data: {
-          roleId: superAdminRole.id,
           resource: perm.resource,
           action: perm.action,
         },
@@ -153,6 +152,26 @@ export class PermissionDiscoveryService implements OnModuleInit {
 
       this.logger.log(`  ✓ Created: ${perm.resource}.${perm.action}`);
     }
+
+    // Attach all newly created permissions to Super Admin
+    const newPermissions = await this.prisma.permission.findMany({
+      where: {
+        OR: missingPermissions.map((p) => ({
+          resource: p.resource,
+          action: p.action,
+        })),
+      },
+      select: { id: true },
+    });
+
+    await this.prisma.role.update({
+      where: { id: superAdminRole.id },
+      data: {
+        permissions: {
+          connect: newPermissions,
+        },
+      },
+    });
 
     this.logger.log('✅ Permission sync complete');
   }

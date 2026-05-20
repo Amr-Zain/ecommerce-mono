@@ -1,5 +1,3 @@
-import { TransformedPermission } from '../../common/utils/permission.util';
-
 export class AuthResponseDto {
   accessToken!: string;
   refreshToken!: string;
@@ -12,7 +10,7 @@ export class AuthResponseDto {
     role?: {
       id: string;
       name: string;
-      permissions: Record<string, TransformedPermission[]>;
+      permissions: Record<string, string[]>;
     };
     isEmailVerified: boolean;
     isPhoneVerified: boolean;

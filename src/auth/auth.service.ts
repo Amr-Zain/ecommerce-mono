@@ -18,6 +18,7 @@ import { PermissionUtil } from '../common/utils/permission.util';
 import { UsersRepository, User } from '../admin/users/users.repository';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { CaseTransformer } from '../common/utils/case-transformer.util';
 import { Response } from 'express';
 
 /** Same include as local/JWT validation — single source for “user + role + permissions”. */
@@ -166,7 +167,7 @@ export class AuthService {
                 user.role.translations.find((t) => t.langId === lang)?.name ||
                 user.role.translations.find((t) => t.langId === 'en')?.name ||
                 '',
-              permissions: PermissionUtil.groupPermissions(user.role.permissions),
+              permissions: PermissionUtil.groupPermissionsAsStrings(user.role.permissions),
             }
           : undefined,
         isEmailVerified: user.isEmailVerified,
@@ -451,7 +452,7 @@ export class AuthService {
                 user.role.translations.find((t: { langId: string; name: string }) => t.langId === lang)?.name ||
                 user.role.translations.find((t: { langId: string; name: string }) => t.langId === 'en')?.name ||
                 '',
-              permissions: PermissionUtil.groupPermissions(user.role.permissions),
+              permissions: PermissionUtil.groupPermissionsAsStrings(user.role.permissions),
             }
           : undefined,
         isEmailVerified: user.isEmailVerified,
@@ -769,10 +770,12 @@ export class AuthService {
       });
 
       const { refreshToken: _r, ...resultWithoutRefresh } = authResult;
-      return res.status(201).json(resultWithoutRefresh);
+      const snakeCaseResult = CaseTransformer.transformToSnake(resultWithoutRefresh);
+      return res.status(201).json(snakeCaseResult);
     }
 
-    return res.status(201).json(authResult);
+    const snakeCaseResult = CaseTransformer.transformToSnake(authResult);
+    return res.status(201).json(snakeCaseResult);
   }
 
   /**
