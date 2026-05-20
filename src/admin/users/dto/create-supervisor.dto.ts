@@ -26,6 +26,10 @@ export class SupervisorSettingsDto {
 }
 
 export class CreateSupervisorDto {
+  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  avatar!: string;
+
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
   name!: string;
