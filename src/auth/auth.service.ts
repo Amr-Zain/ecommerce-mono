@@ -16,6 +16,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { randomBytes } from 'crypto';
 import { PermissionUtil } from '../common/utils/permission.util';
 import { UsersRepository, User } from '../admin/users/users.repository';
+import { RefreshTokensRepository } from './repositories/refresh-tokens.repository';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { CaseTransformer } from '../common/utils/case-transformer.util';
@@ -56,29 +57,32 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private readonly usersRepository: UsersRepository,
+    private readonly refreshTokensRepository: RefreshTokensRepository,
   ) {}
 
   /**
    * Validate user credentials
    */
   async validateUser(email: string, password: string): Promise<AuthUserPayload | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              select: {
-                id: true,
-                resource: true,
-                action: true,
+    const user = (await this.usersRepository.findOne(
+      { email },
+      {
+        include: {
+          role: {
+            include: {
+              permissions: {
+                select: {
+                  id: true,
+                  resource: true,
+                  action: true,
+                },
               },
+              translations: true,
             },
-            translations: true,
           },
         },
       },
-    });
+    )) as AuthUserPayload | null;
 
     if (!user || !user.password) {
       return null;
@@ -164,8 +168,8 @@ export class AuthService {
           ? {
               id: user.role.id.toString(),
               name:
-                user.role.translations.find((t) => t.langId === lang)?.name ||
-                user.role.translations.find((t) => t.langId === 'en')?.name ||
+                user.role.translations?.find((t) => t.langId === lang)?.name ||
+                user.role.translations?.find((t) => t.langId === 'en')?.name ||
                 '',
               permissions: PermissionUtil.groupPermissionsAsStrings(user.role.permissions),
             }
@@ -174,6 +178,29 @@ export class AuthService {
         isPhoneVerified: user.isPhoneVerified,
       },
     };
+  }
+
+  /**
+   * Generate access and refresh tokens
+   */
+  private parseExpirationToMs(expiration: string): number {
+    const unit = expiration.slice(-1);
+    const value = parseInt(expiration.slice(0, -1), 10);
+    if (isNaN(value)) {
+      return 7 * 24 * 60 * 60 * 1000; // default 7 days
+    }
+    switch (unit) {
+      case 'd':
+        return value * 24 * 60 * 60 * 1000;
+      case 'h':
+        return value * 60 * 60 * 1000;
+      case 'm':
+        return value * 60 * 1000;
+      case 's':
+        return value * 1000;
+      default:
+        return value; // assume ms
+    }
   }
 
   /**
@@ -191,7 +218,7 @@ export class AuthService {
       sub: user.id.toString(),
       email: user.email ?? undefined,
       phone: user.phone ?? undefined,
-      role: user.role?.translations.find((t) => t.langId === 'en')?.name ?? undefined,
+      role: user.role?.translations?.find((t) => t.langId === 'en')?.name ?? undefined,
       userType: user.userType ?? undefined,
       type: 'access',
     };
@@ -208,26 +235,26 @@ export class AuthService {
     // Sign tokens
     const accessSecret = this.getJwtSigningSecretOrThrow('JWT_SECRET');
     const refreshSecret = this.getJwtSigningSecretOrThrow('JWT_REFRESH_SECRET');
+    const accessExpiration = this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m');
+    const refreshExpiration = this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d');
 
     const accessToken = this.jwtService.sign(accessPayload, {
       secret: accessSecret,
-      expiresIn: '15m',
+      expiresIn: accessExpiration as unknown as '15m',
     });
 
     const refreshToken = this.jwtService.sign(refreshPayload, {
       secret: refreshSecret,
-      expiresIn: '7d',
+      expiresIn: refreshExpiration as unknown as '7d',
     });
 
     // Store refresh token in database
-    await this.prisma.refreshToken.create({
-      data: {
-        userId: user.id,
-        token: tokenId,
-        deviceInfo,
-        ipAddress,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
+    await this.refreshTokensRepository.create({
+      userId: user.id,
+      token: tokenId,
+      deviceInfo,
+      ipAddress,
+      expiresAt: new Date(Date.now() + this.parseExpirationToMs(refreshExpiration)),
     });
 
     return { accessToken, refreshToken };
@@ -522,10 +549,7 @@ export class AuthService {
     }
 
     // Revoke old refresh token
-    await this.prisma.refreshToken.update({
-      where: { token: decoded.jti },
-      data: { isRevoked: true },
-    });
+    await this.refreshTokensRepository.revokeByToken(decoded.jti);
 
     // Generate new tokens
     return this.generateTokens(user);
@@ -538,10 +562,7 @@ export class AuthService {
     const decoded = this.jwtService.decode<JwtPayload>(refreshToken);
 
     if (decoded?.jti) {
-      await this.prisma.refreshToken.updateMany({
-        where: { token: decoded.jti },
-        data: { isRevoked: true },
-      });
+      await this.refreshTokensRepository.revokeByToken(decoded.jti);
     }
 
     return { message: 'Logged out successfully' };
@@ -551,10 +572,7 @@ export class AuthService {
    * Logout from all devices
    */
   async logoutAll(userId: bigint): Promise<{ message: string }> {
-    await this.prisma.refreshToken.updateMany({
-      where: { userId },
-      data: { isRevoked: true },
-    });
+    await this.refreshTokensRepository.revokeAllUserTokens(userId);
 
     return { message: 'Logged out from all devices' };
   }
@@ -563,9 +581,7 @@ export class AuthService {
    * Forgot password - send reset code
    */
   async forgotPassword(email: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
+    const user = await this.usersRepository.findOne({ email });
 
     if (!user) {
       // Don't reveal if user exists
@@ -576,12 +592,9 @@ export class AuthService {
     const resetCode = '1111';
     const resetExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordResetCode: resetCode,
-        passwordResetExpiry: resetExpiry,
-      },
+    await this.usersRepository.update(user.id, {
+      passwordResetCode: resetCode,
+      passwordResetExpiry: resetExpiry,
     });
 
     // TODO: Send reset code via email
@@ -594,9 +607,7 @@ export class AuthService {
    * Reset password with code
    */
   async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
+    const user = await this.usersRepository.findOne({ email });
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -618,20 +629,14 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password and clear reset code
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        passwordResetCode: null,
-        passwordResetExpiry: null,
-      },
+    await this.usersRepository.update(user.id, {
+      password: hashedPassword,
+      passwordResetCode: null,
+      passwordResetExpiry: null,
     });
 
     // Revoke all refresh tokens
-    await this.prisma.refreshToken.updateMany({
-      where: { userId: user.id },
-      data: { isRevoked: true },
-    });
+    await this.refreshTokensRepository.revokeAllUserTokens(user.id);
 
     return { message: 'Password reset successfully' };
   }
@@ -640,9 +645,7 @@ export class AuthService {
    * Verify phone with code
    */
   async verifyPhone(phone: string, code: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findFirst({
-      where: { phone },
-    });
+    const user = await this.usersRepository.findOne({ phone });
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -665,13 +668,10 @@ export class AuthService {
     }
 
     // Mark phone as verified
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        isPhoneVerified: true,
-        phoneVerificationCode: null,
-        phoneVerificationExpiry: null,
-      },
+    await this.usersRepository.update(user.id, {
+      isPhoneVerified: true,
+      phoneVerificationCode: null,
+      phoneVerificationExpiry: null,
     });
 
     return { message: 'Phone verified successfully' };
@@ -681,9 +681,7 @@ export class AuthService {
    * Send phone verification code
    */
   async sendPhoneVerification(phone: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findFirst({
-      where: { phone },
-    });
+    const user = await this.usersRepository.findOne({ phone });
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -697,12 +695,9 @@ export class AuthService {
     const verificationCode = '1111';
     const verificationExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        phoneVerificationCode: verificationCode,
-        phoneVerificationExpiry: verificationExpiry,
-      },
+    await this.usersRepository.update(user.id, {
+      phoneVerificationCode: verificationCode,
+      phoneVerificationExpiry: verificationExpiry,
     });
 
     // TODO: Send SMS
@@ -715,41 +710,14 @@ export class AuthService {
    * Get user sessions
    */
   async getSessions(userId: bigint): Promise<AuthSessionSummary[]> {
-    return this.prisma.refreshToken.findMany({
-      where: {
-        userId,
-        isRevoked: false,
-        expiresAt: {
-          gt: new Date(),
-        },
-      },
-      select: {
-        id: true,
-        deviceInfo: true,
-        ipAddress: true,
-        createdAt: true,
-        expiresAt: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    return this.refreshTokensRepository.getUserSessions(userId);
   }
 
   /**
    * Revoke specific session
    */
   async revokeSession(userId: bigint, sessionId: bigint): Promise<{ message: string }> {
-    await this.prisma.refreshToken.updateMany({
-      where: {
-        id: sessionId,
-        userId,
-      },
-      data: {
-        isRevoked: true,
-      },
-    });
-
+    await this.refreshTokensRepository.revokeSession(userId, sessionId);
     return { message: 'Session revoked successfully' };
   }
 
