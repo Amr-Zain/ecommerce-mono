@@ -4,6 +4,7 @@ import { I18nValidationPipe } from 'nestjs-i18n';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { Prisma } from '@prisma/client';
 
+import { SnakeToCamelPipe } from './common/pipes/snake-to-camel.pipe';
 import cookieParser from 'cookie-parser';
 
 (Prisma.Decimal.prototype as unknown as { toJSON: () => number }).toJSON = function (this: Prisma.Decimal) {
@@ -15,11 +16,19 @@ import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: ['http://localhost:3000'],
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
+  });
+
   app.use(cookieParser());
 
   const httpAdapterHost = app.get(HttpAdapterHost);
 
-  app.useGlobalPipes(new I18nValidationPipe({ transform: true, whitelist: true }));
+  app.useGlobalPipes(new SnakeToCamelPipe(), new I18nValidationPipe({ transform: true, whitelist: true }));
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost));
 
   app.enableShutdownHooks();

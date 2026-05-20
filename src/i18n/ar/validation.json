@@ -19,5 +19,7 @@
   "DATE_MUST_BE_AFTER": "{property} يجب أن يكون بعد تاريخ {constraints.0}",
   "PASSWORDS_MATCH": "يجب أن تتطابق كلمات المرور",
   "IS_POSITIVE": "{property} يجب أن يكون رقماً موجباً",
-  "IS_ENUM": "{property} يجب أن يكون قيمة صالحة من القائمة"
+  "IS_ENUM": "{property} يجب أن يكون قيمة صالحة من القائمة",
+  "INVALID_DATE": "{property} يجب أن يكون تاريخاً صالحاً",
+  "DATE_NOT_PAST": "{property} يجب أن يكون اليوم أو تاريخاً مستقبلياً"
 }

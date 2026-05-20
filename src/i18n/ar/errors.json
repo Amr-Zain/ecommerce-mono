@@ -14,5 +14,9 @@
   "MEDIA_NOT_FOUND": "الملف المرفوع غير موجود أو انتهت صلاحيته",
   "email_exists": "البريد الإلكتروني موجود بالفعل",
   "supervisor_not_found": "المشرف بالرقم {id} غير موجود",
-  "client_not_found": "العميل بالرقم {id} غير موجود"
+  "client_not_found": "العميل بالرقم {id} غير موجود",
+  "cannot_edit_super_admin_role": "لا يمكن تعديل دور المدير العام",
+  "cannot_delete_super_admin_role": "لا يمكن حذف دور المدير العام",
+  "cannot_edit_super_admin_user": "لا يمكن تعديل حساب المدير العام",
+  "cannot_delete_super_admin_user": "لا يمكن حذف حساب المدير العام"
 }

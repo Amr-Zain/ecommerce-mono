@@ -29,6 +29,10 @@ export type I18nTranslations = {
         "email_exists": string;
         "supervisor_not_found": string;
         "client_not_found": string;
+        "cannot_edit_super_admin_role": string;
+        "cannot_delete_super_admin_role": string;
+        "cannot_edit_super_admin_user": string;
+        "cannot_delete_super_admin_user": string;
     };
     "validation": {
         "NOT_EMPTY": string;
@@ -52,6 +56,8 @@ export type I18nTranslations = {
         "PASSWORDS_MATCH": string;
         "IS_POSITIVE": string;
         "IS_ENUM": string;
+        "INVALID_DATE": string;
+        "DATE_NOT_PAST": string;
     };
 };
 /* prettier-ignore */

@@ -14,5 +14,9 @@
   "MEDIA_NOT_FOUND": "The uploaded file was not found or has expired",
   "email_exists": "Email already exists",
   "supervisor_not_found": "Supervisor with ID {id} not found",
-  "client_not_found": "Client with ID {id} not found"
+  "client_not_found": "Client with ID {id} not found",
+  "cannot_edit_super_admin_role": "Cannot edit super admin role",
+  "cannot_delete_super_admin_role": "Cannot delete super admin role",
+  "cannot_edit_super_admin_user": "Cannot edit super admin user",
+  "cannot_delete_super_admin_user": "Cannot delete super admin user"
 }

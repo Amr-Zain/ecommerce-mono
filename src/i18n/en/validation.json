@@ -19,5 +19,7 @@
   "DATE_MUST_BE_AFTER": "{property} must be after {constraints.0}",
   "PASSWORDS_MATCH": "Passwords must match",
   "IS_POSITIVE": "{property} must be a positive number",
-  "IS_ENUM": "{property} must be a valid value"
+  "IS_ENUM": "{property} must be a valid value",
+  "INVALID_DATE": "{property} must be a valid date",
+  "DATE_NOT_PAST": "{property} must be today or a future date"
 }
