@@ -61,7 +61,7 @@ export class CreateCountryDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
   @Min(0, { message: i18nValidationMessage<I18nTranslations>('validation.MIN', { min: 0 }) })
-  @Max(9, { message: i18nValidationMessage<I18nTranslations>('validation.MAX', { max: 9 }) })
+  @Max(10, { message: i18nValidationMessage<I18nTranslations>('validation.MAX', { max: 10 }) })
   phoneStartWith!: number;
 
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })

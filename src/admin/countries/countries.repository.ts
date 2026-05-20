@@ -47,13 +47,10 @@ export class CountriesRepository extends BaseRepository<CountryType> {
     return this.update(id, country);
   }
 
-  async findByIdWithRelations(id: number | bigint, langId: string = 'en'): Promise<CountryType | null> {
+  async findByIdWithRelations(id: number | bigint): Promise<CountryType | null> {
     return this.findById(id, {
       include: {
-        translations: {
-          where: { langId },
-          take: 1,
-        },
+        translations: true,
       },
     });
   }

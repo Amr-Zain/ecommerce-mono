@@ -27,12 +27,6 @@ export class FaqsController {
   @Get(':id')
   @RequirePermissions({ resource: 'faqs', action: 'read' })
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    return await this.faqsService.getFaqById(BigInt(id));
-  }
-
-  @Get(':id/all-translations')
-  @RequirePermissions({ resource: 'faqs', action: 'read' })
-  async findOneWithAllTranslations(@Param('id', ParseIntPipe) id: number) {
     return await this.faqsService.getFaqByIdWithAllTranslations(BigInt(id));
   }
 
