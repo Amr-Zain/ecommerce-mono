@@ -4,7 +4,7 @@ model Role {
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
   users       User[]
-  permissions Permission[]
+  permissions Permission[] @relation("RoleToPermission")
   translations RoleTranslation[] 
   @@map("roles")
 }
@@ -22,15 +22,13 @@ model RoleTranslation {
 
 model Permission {
   id        BigInt   @id @default(autoincrement())
-  roleId    BigInt   @map("role_id")
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
   resource  String   // e.g., "users", "orders", "products"
   action    String   // e.g., "create", "read", "update", "delete", "list"
+  roles     Role[]   @relation("RoleToPermission")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@unique([roleId, resource, action])
-  @@index([roleId])
+  @@unique([resource, action])
   @@map("permissions")
 }
 
@@ -54,6 +52,7 @@ model User {
   phoneVerificationExpiry DateTime?              @map("phone_verification_expiry")
   passwordResetCode       String?                @map("password_reset_code") // 4-digit code
   passwordResetExpiry     DateTime?              @map("password_reset_expiry")
+  settings                Json?                  @default("{}")
   createdAt               DateTime               @default(now()) @map("created_at")
   updatedAt               DateTime               @default(now()) @updatedAt @map("updated_at")
   addresses               Address[]
