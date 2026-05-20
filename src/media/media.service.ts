@@ -23,7 +23,7 @@ export class MediaService {
   formatPath(filePath: string): string {
     if (!filePath) return filePath;
     if (filePath.startsWith('http')) return filePath;
-    const baseUrl = process.env.APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.APP_URL || 'http://localhost:3030';
     return `${baseUrl}${filePath}`;
   }
 

@@ -2,6 +2,7 @@ import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nes
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { CaseTransformer } from '../utils/case-transformer.util';
 
 export interface Response<T> {
   success: boolean;
@@ -32,9 +33,12 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
           finalData = { items, ...rest };
         }
 
+        // 4. Transform keys of finalData to snake_case globally
+        const snakeCaseData = CaseTransformer.transformToSnake(finalData);
+
         return {
           success: true,
-          data: finalData as T,
+          data: snakeCaseData as T,
           // timestamp: new Date().toISOString(),
         };
       }),
@@ -103,7 +107,9 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
 
             // If this is the requested language, promote fields to root
             if (tLang === langId) {
-              Object.assign(result, fields);
+              // Exclude internal translation fields so they don't overwrite the main record
+              const { id: _id, recordId: _recordId, ...promotableFields } = fields;
+              Object.assign(result, promotableFields);
             }
           }
         }
@@ -136,7 +142,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
       result['path'].startsWith('/uploads') &&
       (result['filename'] || result['mimeType']) // Heuristic for Media record
     ) {
-      const baseUrl = process.env.APP_URL || 'http://localhost:3000';
+      const baseUrl = process.env.APP_URL || 'http://localhost:3030';
       result['path'] = `${baseUrl}${result['path']}`;
     }
 

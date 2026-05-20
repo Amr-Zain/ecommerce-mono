@@ -39,4 +39,26 @@ export class PermissionUtil {
 
     return grouped;
   }
+
+  /**
+   * Groups a flat array of permissions by their resource category
+   * returning an array of string actions for each resource.
+   */
+  static groupPermissionsAsStrings(permissions: RawPermission[]): Record<string, string[]> {
+    const grouped: Record<string, string[]> = {};
+
+    if (Array.isArray(permissions)) {
+      permissions.forEach((p) => {
+        if (!grouped[p.resource]) {
+          grouped[p.resource] = [];
+        }
+
+        if (!grouped[p.resource].includes(p.action)) {
+          grouped[p.resource].push(p.action);
+        }
+      });
+    }
+
+    return grouped;
+  }
 }

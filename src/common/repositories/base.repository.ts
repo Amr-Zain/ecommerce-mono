@@ -155,7 +155,7 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
 
     // Extract media fields based on mediaConfig keys
     const mediaPayload: Record<string, string | string[]> = {};
-    const finalData: DataInput = { ...data };
+    const finalData: DataInput = { ...this.normalizeDateStrings(data) };
 
     for (const key of Object.keys(this.mediaConfig)) {
       if (data[key] !== undefined) {
@@ -202,7 +202,7 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
 
     // Extract media fields
     const mediaPayload: Record<string, string | string[]> = {};
-    const finalData: DataInput = { ...data };
+    const finalData: DataInput = { ...this.normalizeDateStrings(data) };
 
     for (const key of Object.keys(this.mediaConfig)) {
       if (data[key] !== undefined) {
@@ -327,8 +327,12 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
         // Check if media exists and belongs to this model (validation)
         const mediaItems = await this.prisma.media.findMany({
           where: {
-            attachHash: hash,
-            modelId: null,
+            OR: [
+              { attachHash: hash, modelId: null },
+              { attachHash: hash, modelId: BigInt(id) },
+              { uuid: hash, modelId: null },
+              { uuid: hash, modelId: BigInt(id) },
+            ],
           },
         });
 
@@ -349,11 +353,13 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
             );
           }
 
-          await this.mediaService.attachTempMedia({
-            model: this.modelName,
-            attachHash: hash,
-            modelId: id.toString(),
-          });
+          if (item.modelId === null && item.attachHash) {
+            await this.mediaService.attachTempMedia({
+              model: this.modelName,
+              attachHash: item.attachHash,
+              modelId: id.toString(),
+            });
+          }
 
           // Set collection and handle isMain (only for the first hash)
           await this.prisma.media.update({
@@ -376,5 +382,33 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     return Object.entries(sort).map(([field, direction]) => ({
       [field]: direction,
     }));
+  }
+
+  /**
+   * Recursively converts ISO date-only strings (YYYY-MM-DD) to Date objects
+   * so Prisma DateTime fields receive proper values instead of bare strings.
+   */
+  private normalizeDateStrings(data: DataInput): DataInput {
+    const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(T[\d:.Z+-]*)?$/;
+
+    const process = (value: unknown): unknown => {
+      if (value === null || value === undefined) return value;
+      if (value instanceof Date) return value;
+      if (typeof value === 'string' && ISO_DATE_RE.test(value)) {
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? value : d;
+      }
+      if (Array.isArray(value)) return value.map(process);
+      if (typeof value === 'object') {
+        const result: DataInput = {};
+        for (const [k, v] of Object.entries(value as DataInput)) {
+          result[k] = process(v);
+        }
+        return result;
+      }
+      return value;
+    };
+
+    return process(data) as DataInput;
   }
 }
