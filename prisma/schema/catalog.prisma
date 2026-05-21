@@ -84,6 +84,7 @@ model AttributeValue {
   attributeId  BigInt                      @map("attribute_id")
   attribute    Attribute                   @relation(fields: [attributeId], references: [id], onDelete: Cascade)
   createdAt    DateTime                    @default(now()) @map("created_at")
+  isActive     Boolean                     @default(true) @map("is_active")
   translations AttributeValueTranslation[]
   variants     VariantAttribute[]
 
