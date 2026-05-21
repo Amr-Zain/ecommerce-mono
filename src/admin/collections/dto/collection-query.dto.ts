@@ -4,8 +4,8 @@ import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 export class CollectionQueryDto extends AdvancedQueryDto {
   @IsOptional()
   @IsString()
-  @IsIn(['collection', 'sub_collection', 'sub_sub_collections'], {
-    message: 'custom_filter must be one of: collection, sub_collection, sub_sub_collections',
+  @IsIn(['collection', 'sub_collection', 'sub_sub_collection'], {
+    message: 'customFilter must be one of: collection, sub_collection, sub_sub_collection',
   })
-  custom_filter?: string;
+  customFilter?: string;
 }
