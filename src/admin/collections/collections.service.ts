@@ -19,19 +19,7 @@ export class CollectionsService {
   }
 
   async findOne(id: number): Promise<Collection | null> {
-    const result = await this.repo.findById(id, {
-      include: {
-        translations: true,
-        _count: { select: { children: true } },
-      },
-    });
-
-    if (!result) return null;
-
-    return {
-      ...result,
-      hasChildren: (result._count?.children ?? 0) > 0,
-    };
+    return this.repo.findOneWithChildren(id);
   }
 
   async update(id: number, updateCollectionDto: UpdateCollectionDto): Promise<Collection> {
