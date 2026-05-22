@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { MediaService } from '@/media/media.service';
@@ -28,9 +28,11 @@ export class SlidersRepository extends BaseRepository<SliderType> implements ISl
     return this.prisma.slider;
   }
 
-  async findAll(query: AdvancedQueryDto, langId: string = 'en'): Promise<PaginatedResult<SliderType> | SliderType[]> {
+  async findAll(query: AdvancedQueryDto, langId: string = 'en', options?: QueryOptions): Promise<PaginatedResult<SliderType> | SliderType[]> {
     const where = this.buildWhereClause(query, langId);
-
+    if (options?.select) {
+      return this.paginate(query, where, { select: options.select });
+    }
     return this.paginate(query, where, {
       include: {
         translations: {

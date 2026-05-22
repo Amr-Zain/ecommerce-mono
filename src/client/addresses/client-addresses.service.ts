@@ -6,22 +6,36 @@ import { CreateAddressDto, UpdateAddressDto } from './dto/address.dto';
 export class ClientAddressesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(userId: bigint) {
+  async findAll(userId: bigint, langId: string = 'en') {
     return this.prisma.address.findMany({
       where: { userId },
-      include: {
+      select: {
+        id: true,
+        address: true,
+        cityId: true,
+        countryId: true,
+        streetName: true,
+        buildingNumber: true,
+        isDefault: true,
         city: {
-          include: { translations: true },
+          select: {
+            id: true,
+            translations: { where: { langId }, select: { name: true, langId: true }, take:1},
+          },
         },
         country: {
-          include: { translations: true },
+          select: {
+            id: true,
+            phoneCode: true,
+            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+          },
         },
       },
       orderBy: { isDefault: 'desc' },
     });
   }
 
-  async create(userId: bigint, dto: CreateAddressDto) {
+  async create(userId: bigint, dto: CreateAddressDto, langId: string = 'en') {
     if (dto.isDefault) {
       await this.prisma.address.updateMany({
         where: { userId },
@@ -38,14 +52,32 @@ export class ClientAddressesService {
         buildingNumber: dto.buildingNumber,
         isDefault: dto.isDefault ?? false,
       },
-      include: {
-        city: { include: { translations: true } },
-        country: { include: { translations: true } },
+      select: {
+        id: true,
+        address: true,
+        cityId: true,
+        countryId: true,
+        streetName: true,
+        buildingNumber: true,
+        isDefault: true,
+        city: {
+          select: {
+            id: true,
+            translations: { where: { langId }, select: { name: true, langId: true } },
+          },
+        },
+        country: {
+          select: {
+            id: true,
+            phoneCode: true,
+            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+          },
+        },
       },
     });
   }
 
-  async update(id: bigint, dto: UpdateAddressDto) {
+  async update(id: bigint, dto: UpdateAddressDto, langId: string = 'en') {
     const data: Record<string, unknown> = {};
     if (dto.address !== undefined) data.address = dto.address;
     if (dto.cityId !== undefined) data.cityId = dto.cityId ? BigInt(dto.cityId) : null;
@@ -57,9 +89,27 @@ export class ClientAddressesService {
     return this.prisma.address.update({
       where: { id },
       data,
-      include: {
-        city: { include: { translations: true } },
-        country: { include: { translations: true } },
+      select: {
+        id: true,
+        address: true,
+        cityId: true,
+        countryId: true,
+        streetName: true,
+        buildingNumber: true,
+        isDefault: true,
+        city: {
+          select: {
+            id: true,
+            translations: { where: { langId }, select: { name: true, langId: true } },
+          },
+        },
+        country: {
+          select: {
+            id: true,
+            phoneCode: true,
+            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+          },
+        },
       },
     });
   }
@@ -70,7 +120,7 @@ export class ClientAddressesService {
     });
   }
 
-  async setDefault(userId: bigint, id: bigint) {
+  async setDefault(userId: bigint, id: bigint, langId: string = 'en') {
     await this.prisma.address.updateMany({
       where: { userId },
       data: { isDefault: false },
@@ -78,9 +128,27 @@ export class ClientAddressesService {
     return this.prisma.address.update({
       where: { id },
       data: { isDefault: true },
-      include: {
-        city: { include: { translations: true } },
-        country: { include: { translations: true } },
+      select: {
+        id: true,
+        address: true,
+        cityId: true,
+        countryId: true,
+        streetName: true,
+        buildingNumber: true,
+        isDefault: true,
+        city: {
+          select: {
+            id: true,
+            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+          },
+        },
+        country: {
+          select: {
+            id: true,
+            phoneCode: true,
+            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+          },
+        },
       },
     });
   }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
 import { PrismaService, Prisma } from '@/prisma';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
@@ -22,8 +22,11 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
     return this.prisma.city;
   }
 
-  async findAll(query: AdvancedQueryDto, langId: string = 'en'): Promise<PaginatedResult<City> | City[]> {
+  async findAll(query: AdvancedQueryDto, langId: string = 'en', options?: QueryOptions): Promise<PaginatedResult<City> | City[]> {
     const where = this.buildWhereClause(query, langId);
+    if (options?.select) {
+      return this.paginate(query, where, { select: options.select });
+    }
     return this.paginate(query, where, {
       include: {
         country: {

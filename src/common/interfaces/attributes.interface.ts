@@ -1,4 +1,5 @@
 import { PaginatedResult } from '../dto/pagination.dto';
+import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface AttributeTranslation {
   id: bigint;
@@ -32,7 +33,7 @@ export interface Attribute {
 export const ATTRIBUTES_REPOSITORY = Symbol('IAttributesRepository');
 
 export interface IAttributesRepository {
-  findAll(query: unknown, langId?: string): Promise<PaginatedResult<Attribute> | Attribute[]>;
+  findAll(query: unknown, langId?: string, options?: QueryOptions): Promise<PaginatedResult<Attribute> | Attribute[]>;
   findByIdWithValues(id: number | bigint): Promise<Attribute | null>;
   createAttribute(data: unknown): Promise<Attribute>;
   updateAttribute(id: number, data: unknown): Promise<Attribute>;

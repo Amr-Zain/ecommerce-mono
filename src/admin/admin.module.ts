@@ -24,6 +24,7 @@ import { ProductsModule } from './products/products.module';
     StaticPagesModule,
     AttributesModule,
     ProductsModule,
+    CollectionsModule,
     RouterModule.register([
       {
         path: 'admin',
@@ -42,7 +43,6 @@ import { ProductsModule } from './products/products.module';
         ],
       },
     ]),
-    CollectionsModule,
   ],
 })
 export class AdminModule {}

@@ -1,4 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
+import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { ClientStaticPagesService } from './client-static-pages.service';
@@ -10,13 +11,13 @@ export class ClientStaticPagesController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.staticPagesService.findAll();
+  findAll(@I18nLang() lang: string) {
+    return this.staticPagesService.findAll(lang);
   }
 
   @Public()
   @Get(':slug')
-  findBySlug(@Param('slug') slug: string) {
-    return this.staticPagesService.findBySlug(slug);
+  findBySlug(@Param('slug') slug: string, @I18nLang() lang: string) {
+    return this.staticPagesService.findBySlug(slug, lang);
   }
 }

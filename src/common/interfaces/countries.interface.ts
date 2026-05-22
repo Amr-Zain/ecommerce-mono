@@ -1,6 +1,7 @@
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { IBaseRepository } from './base.repository.interface';
+import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface CountryTranslation {
   id: bigint;
@@ -28,7 +29,7 @@ export interface Country {
 export const COUNTRIES_REPOSITORY = Symbol('ICountriesRepository');
 
 export interface ICountriesRepository extends IBaseRepository<Country> {
-  findAll(query: AdvancedQueryDto, langId?: string): Promise<PaginatedResult<Country> | Country[]>;
+  findAll(query: AdvancedQueryDto, langId?: string, options?: QueryOptions): Promise<PaginatedResult<Country> | Country[]>;
   findByIdWithRelations(id: number | bigint): Promise<Country | null>;
   findByIdWithAllTranslations(id: number | bigint): Promise<Country | null>;
   createCountry(country: unknown): Promise<Country>;

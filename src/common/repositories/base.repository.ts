@@ -9,14 +9,16 @@ import { MediaType } from '../../media/enums/media-type.enum';
 
 type WhereClause = Record<string, unknown>;
 type IncludeClause = Record<string, boolean | Record<string, unknown>>;
-type SelectClause = Record<string, boolean>;
+type SelectClause = Record<string, boolean | Record<string, unknown>>;
 type OrderByClause = Record<string, 'asc' | 'desc'> | Record<string, 'asc' | 'desc'>[];
 type DataInput = Record<string, unknown>;
 
-type QueryOptions =
+export type QueryOptions =
   | { select: SelectClause; include?: never }
   | { include: IncludeClause; select?: never }
   | { select?: never; include?: never };
+
+export type { SelectClause, IncludeClause };
 
 interface QueryArgs {
   where?: WhereClause;

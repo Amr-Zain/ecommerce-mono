@@ -1,5 +1,6 @@
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
+import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface ProductTranslation {
   id: bigint;
@@ -53,9 +54,9 @@ export interface Product {
 export const PRODUCTS_REPOSITORY = Symbol('IProductsRepository');
 
 export interface IProductsRepository {
+  findAll(query: AdvancedQueryDto, langId?: string, options?: QueryOptions): Promise<PaginatedResult<Product> | Product[]>;
   createProductWithVariants(dto: unknown): Promise<Product | null>;
   findProductById(id: number | bigint): Promise<Product | null>;
-  findAll(query: AdvancedQueryDto): Promise<PaginatedResult<Product> | Product[]>;
   create(data: Record<string, unknown>, options?: Record<string, unknown>): Promise<Product>;
   update(id: number | bigint, data: Record<string, unknown>, options?: Record<string, unknown>): Promise<Product>;
   delete(id: number | bigint): Promise<Product>;

@@ -1,6 +1,6 @@
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { Prisma, PrismaService } from '@/prisma';
 import { Injectable } from '@nestjs/common';
@@ -42,8 +42,12 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
 
   async getAllStticPagesWithAllSections(
     query: AdvancedQueryDto = {},
+    options?: QueryOptions,
   ): Promise<StaticPage[] | PaginatedResult<StaticPage>> {
     const where = this.buildWhereClause(query);
+    if (options?.select) {
+      return this.paginate(query, where, { select: options.select });
+    }
     return this.paginate(query, where, {
       include: {
         translations: true,

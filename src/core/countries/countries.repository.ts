@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { MediaService } from '@/media/media.service';
@@ -26,9 +26,11 @@ export class CountriesRepository extends BaseRepository<CountryType> implements 
   getModel() {
     return this.prisma.country;
   }
-  async findAll(query: AdvancedQueryDto, langId: string = 'en'): Promise<PaginatedResult<CountryType> | CountryType[]> {
+  async findAll(query: AdvancedQueryDto, langId: string = 'en', options?: QueryOptions): Promise<PaginatedResult<CountryType> | CountryType[]> {
     const where = this.buildWhereClause(query, langId);
-
+    if (options?.select) {
+      return this.paginate(query, where, { select: options.select });
+    }
     return this.paginate(query, where, {
       include: {
         translations: {

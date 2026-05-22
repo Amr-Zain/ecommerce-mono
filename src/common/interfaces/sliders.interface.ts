@@ -1,6 +1,7 @@
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { IBaseRepository } from './base.repository.interface';
+import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface SliderTranslation {
   id: bigint;
@@ -24,6 +25,6 @@ export interface Slider {
 export const SLIDERS_REPOSITORY = Symbol('ISlidersRepository');
 
 export interface ISlidersRepository extends IBaseRepository<Slider> {
-  findAll(query: AdvancedQueryDto, langId?: string): Promise<PaginatedResult<Slider> | Slider[]>;
+  findAll(query: AdvancedQueryDto, langId?: string, options?: QueryOptions): Promise<PaginatedResult<Slider> | Slider[]>;
   findByIdWithAllTranslations(id: number | bigint): Promise<Slider | null>;
 }

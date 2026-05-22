@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { ClientFaqsService } from './client-faqs.service';
@@ -10,7 +11,7 @@ export class ClientFaqsController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.faqsService.findAll();
+  findAll(@I18nLang() lang: string) {
+    return this.faqsService.findAll(lang);
   }
 }

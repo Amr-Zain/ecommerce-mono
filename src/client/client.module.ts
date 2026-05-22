@@ -12,6 +12,7 @@ import { ClientStaticPagesModule } from './static-pages/client-static-pages.modu
 import { ClientAddressesModule } from './addresses/client-addresses.module';
 import { ClientReviewsModule } from './reviews/client-reviews.module';
 import { ClientOrdersModule } from './orders/client-orders.module';
+import { RouterModule } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -28,6 +29,27 @@ import { ClientOrdersModule } from './orders/client-orders.module';
     ClientReviewsModule,
     ClientOrdersModule,
     ProfileModule,
+    
+    RouterModule.register([
+      {
+        path: 'client',
+        children: [
+          { path: '', module: ClientHomeModule },
+          { path: '', module: ClientCountriesModule },
+          { path: '', module: ClientCitiesModule },
+          { path: '', module: ClientSlidersModule },
+          { path: '', module: ClientFaqsModule },
+          { path: '', module: ClientCollectionsModule },
+          { path: '', module: ClientProductsModule },
+          { path: '', module: ClientAttributesModule },
+          { path: '', module: ClientStaticPagesModule },
+          { path: '', module: ClientAddressesModule },
+          { path: '', module: ClientReviewsModule },
+          { path: '', module: ClientOrdersModule },
+          { path: '', module: ProfileModule },
+        ],
+      },
+    ]),
   ],
 })
 export class ClientModule {}

@@ -1,4 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
+import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { ClientCountriesService } from './client-countries.service';
@@ -10,13 +11,13 @@ export class ClientCountriesController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.countriesService.findAll();
+  findAll(@I18nLang() lang: string) {
+    return this.countriesService.findAll(lang);
   }
 
   @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.countriesService.findOne(BigInt(id));
+  findOne(@Param('id') id: string, @I18nLang() lang: string) {
+    return this.countriesService.findOne(BigInt(id), lang);
   }
 }

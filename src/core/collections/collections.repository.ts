@@ -4,7 +4,7 @@ import { MediaType } from '@/media/enums/media-type.enum';
 import { MediaService } from '@/media/media.service';
 import { Prisma, PrismaService } from '@/prisma';
 import { Injectable } from '@nestjs/common';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
 import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
 import { COLLECTIONS_REPOSITORY, ICollectionsRepository } from '@/common/interfaces';
 
@@ -33,9 +33,11 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
     return this.prisma.collection;
   }
 
-  async findAll(query: CollectionQueryDto, langId: string = 'en'): Promise<PaginatedResult<Collection> | Collection[]> {
+  async findAll(query: CollectionQueryDto, langId: string = 'en', options?: QueryOptions): Promise<PaginatedResult<Collection> | Collection[]> {
     const where = this.buildWhereClause(query, langId);
-
+    if (options?.select) {
+      return this.paginate(query, where, { select: options.select });
+    }
     const result = await this.paginate(query, where, {
       include: {
         translations: {

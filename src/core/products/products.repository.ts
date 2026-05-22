@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MediaService } from '@/media/media.service';
 import { Prisma } from '@prisma/client';
@@ -131,7 +131,10 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
     });
   }
 
-  async findAll(query: AdvancedQueryDto) {
+  async findAll(query: AdvancedQueryDto, _langId?: string, options?: QueryOptions) {
+    if (options?.select) {
+      return this.paginate(query, undefined, { select: options.select });
+    }
     return this.paginate(query);
   }
 }

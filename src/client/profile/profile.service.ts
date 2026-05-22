@@ -1,13 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { USERS_REPOSITORY } from '@/common/interfaces';
-import { UsersRepository } from '@/core/users/users.repository';
+import { USERS_REPOSITORY, IUsersRepository } from '@/common/interfaces';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UpdateProfileDto, UpdateProfileImageDto } from './dto/profile.dto';
 
 @Injectable()
 export class ProfileService {
   constructor(
-    @Inject(USERS_REPOSITORY) private readonly usersRepo: UsersRepository,
+    @Inject(USERS_REPOSITORY) private readonly usersRepo: IUsersRepository,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -28,7 +27,7 @@ export class ProfileService {
     });
     const userWithMedia = user ? await this.usersRepo.findById(userId) : null;
     if (!userWithMedia) return null;
-    const { password: _, ...result } = userWithMedia as Record<string, unknown>;
+    const { password: _, ...result } = userWithMedia as unknown as Record<string, unknown>;
     return { ...result, ...user };
   }
 

@@ -1,4 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
+import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { ClientAttributesService } from './client-attributes.service';
@@ -10,8 +11,8 @@ export class ClientAttributesController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.attributesService.findAll();
+  findAll(@I18nLang() lang: string) {
+    return this.attributesService.findAll(lang);
   }
 
   @Public()

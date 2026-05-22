@@ -6,6 +6,40 @@ import { map } from 'rxjs/operators';
 import { CaseTransformer } from '../utils/case-transformer.util';
 import { API_CONTEXT_KEY, ApiContextType } from '../decorators/api-context.decorator';
 
+const CLIENT_WHITELIST: Record<string, Set<string>> = {
+  country: new Set(['id', 'name', 'phoneCode', 'phoneLength', 'phoneStartWith', 'flag']),
+  city: new Set(['id', 'name', 'countryId', 'country']),
+  slider: new Set(['id', 'title', 'slide', 'sortOrder', 'startDate', 'endDate']),
+  faq: new Set(['id', 'question', 'answer', 'sortOrder']),
+  collection: new Set(['id', 'name', 'parentId', 'children', 'sortOrder', 'image']),
+  product: new Set(['id', 'name', 'description', 'hasVariants', 'collectionId', 'image', 'gallery', 'variants']),
+  productVariant: new Set(['id', 'price', 'compareAtPrice', 'costPrice', 'discountType', 'discountValue', 'stockQuantity', 'barcode', 'sku', 'attributes', 'gallery']),
+  attribute: new Set(['id', 'name', 'values']),
+  attributeValue: new Set(['id', 'name']),
+  staticPage: new Set(['id', 'slug', 'title', 'content', 'sections', 'image']),
+  pageSection: new Set(['id', 'title', 'content', 'sortOrder']),
+  review: new Set(['id', 'rating', 'comment', 'isVerified', 'createdAt', 'user']),
+  address: new Set(['id', 'address', 'cityId', 'countryId', 'streetName', 'buildingNumber', 'isDefault', 'city', 'country']),
+};
+
+function detectEntityType(obj: Record<string, unknown>): string | null {
+  const keys = new Set(Object.keys(obj));
+  if (keys.has('phoneStartWith')) return 'country';
+  if (keys.has('slug') && keys.has('sections')) return 'staticPage';
+  if (keys.has('hasVariants')) return 'product';
+  if (keys.has('price') && keys.has('stockQuantity')) return 'productVariant';
+  if (keys.has('parentId') && keys.has('sortOrder') && !keys.has('price')) return 'collection';
+  if (keys.has('startDate')) return 'slider';
+  if (keys.has('rating') && keys.has('productId')) return 'review';
+  if (keys.has('attributeId')) return 'attributeValue';
+  if (keys.has('staticPageId')) return 'pageSection';
+  if (keys.has('countryId') && !keys.has('userId')) return 'city';
+  if (keys.has('streetName')) return 'address';
+  if (keys.has('question') && keys.has('answer')) return 'faq';
+  if (keys.has('values') && !keys.has('price')) return 'attribute';
+  return null;
+}
+
 export interface Response<T> {
   success: boolean;
   data: T;
@@ -123,6 +157,23 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
       });
 
       delete result['translations'];
+    }
+
+    // 3. Apply whitelist for client context
+    if (apiContext === 'client') {
+      const entityType = detectEntityType(result);
+      if (entityType && CLIENT_WHITELIST[entityType]) {
+        const allowed = CLIENT_WHITELIST[entityType];
+        for (const key of Object.keys(result)) {
+          if (!allowed.has(key)) {
+            delete result[key];
+          }
+        }
+      } else {
+        for (const field of new Set(['isActive', 'createdAt', 'updatedAt', 'deletedAt', 'shippingPrice'])) {
+          delete result[field];
+        }
+      }
     }
 
     return result;

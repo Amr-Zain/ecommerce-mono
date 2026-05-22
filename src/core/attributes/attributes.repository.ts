@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService } from '@/prisma';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
 import { MediaService } from '@/media/media.service';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { AttributeQueryDto } from '@/common/dto/attribute-query.dto';
@@ -28,6 +28,7 @@ export class AttributesRepository extends BaseRepository<AttributeType> implemen
   async findAll(
     query: AttributeQueryDto,
     langId: string = 'en',
+    options?: QueryOptions,
   ): Promise<PaginatedResult<AttributeType> | AttributeType[]> {
     const conditions: Prisma.AttributeWhereInput[] = [];
 
@@ -43,6 +44,10 @@ export class AttributesRepository extends BaseRepository<AttributeType> implemen
     }
 
     const where = this.queryBuilder.combineWhereConditions(...conditions);
+
+    if (options?.select) {
+      return this.paginate(query, where, { select: options.select });
+    }
 
     return this.paginate(query, where, {
       include: {

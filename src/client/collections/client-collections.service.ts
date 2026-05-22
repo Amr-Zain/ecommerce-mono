@@ -1,13 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { COLLECTIONS_REPOSITORY } from '@/common/interfaces';
-import { CollectionsRepository } from '@/core/collections/collections.repository';
-import { CollectionQueryDto } from '@/admin/collections/dto/collection-query.dto';
+import { COLLECTIONS_REPOSITORY, ICollectionsRepository } from '@/common/interfaces';
+import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
 
 @Injectable()
 export class ClientCollectionsService {
-  constructor(@Inject(COLLECTIONS_REPOSITORY) private readonly collectionsRepo: CollectionsRepository) {}
+  constructor(@Inject(COLLECTIONS_REPOSITORY) private readonly collectionsRepo: ICollectionsRepository) {}
 
-  async findAll(parentId?: string) {
+  async findAll(langId: string = 'en', parentId?: string) {
     const query: CollectionQueryDto = {
       paginate: false,
       filters: { isActive: true },
@@ -18,7 +17,33 @@ export class ClientCollectionsService {
     } else if (parentId) {
       query.filters = { ...query.filters, parentId };
     }
-    return this.collectionsRepo.findAll(query, 'en');
+    return this.collectionsRepo.findAll(query, langId, {
+      select: {
+        id: true,
+        parentId: true,
+        sortOrder: true,
+        translations: {
+          where: { langId },
+          select: { name: true, langId: true },
+          take: 1,
+        },
+        children: {
+          select: {
+            id: true,
+            parentId: true,
+            sortOrder: true,
+            translations: {
+              where: { langId },
+              select: { name: true, langId: true },
+              take: 1,
+            },
+          },
+          orderBy: { sortOrder: 'asc' as const },
+        },
+        image: true,
+        _count: { select: { children: true } },
+      },
+    });
   }
 
   async findOne(id: number) {

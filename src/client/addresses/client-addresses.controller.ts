@@ -5,7 +5,7 @@ import { ClientAddressesService } from './client-addresses.service';
 import { CreateAddressDto, UpdateAddressDto } from './dto/address.dto';
 
 @ApiContext('client')
-@Controller('addresses')
+@Controller('profile/addresses')
 export class ClientAddressesController {
   constructor(private readonly addressesService: ClientAddressesService) {}
 

@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
@@ -12,8 +13,8 @@ export class ClientReviewsController {
 
   @Public()
   @Get('products/:productId')
-  findByProduct(@Param('productId') productId: string) {
-    return this.reviewsService.findByProduct(BigInt(productId));
+  findByProduct(@Param('productId') productId: string, @I18nLang() lang?: string) {
+    return this.reviewsService.findByProduct(BigInt(productId), lang || 'en');
   }
 
   @Post()

@@ -6,13 +6,16 @@ import { CreateReviewDto, UpdateReviewDto } from './dto/review.dto';
 export class ClientReviewsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByProduct(productId: bigint) {
+  async findByProduct(productId: bigint, langId: string = 'en') {
     return this.prisma.review.findMany({
       where: { productId, isActive: true },
-      include: {
-        user: {
-          select: { id: true, name: true },
-        },
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        isVerified: true,
+        createdAt: true,
+        user: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -26,7 +29,12 @@ export class ClientReviewsService {
         rating: dto.rating,
         comment: dto.comment,
       },
-      include: {
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        isVerified: true,
+        createdAt: true,
         user: { select: { id: true, name: true } },
       },
     });
@@ -43,7 +51,12 @@ export class ClientReviewsService {
         rating: dto.rating,
         comment: dto.comment,
       },
-      include: {
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
+        isVerified: true,
+        createdAt: true,
         user: { select: { id: true, name: true } },
       },
     });

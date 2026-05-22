@@ -1,34 +1,64 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { STATIC_PAGES_REPOSITORY } from '@/common/interfaces';
-import { StaticPagesRepository } from '@/core/static-pages/static-pages.repository';
+import { STATIC_PAGES_REPOSITORY, IStaticPagesRepository } from '@/common/interfaces';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class ClientStaticPagesService {
   constructor(
-    @Inject(STATIC_PAGES_REPOSITORY) private readonly staticPagesRepo: StaticPagesRepository,
+    @Inject(STATIC_PAGES_REPOSITORY) private readonly staticPagesRepo: IStaticPagesRepository,
     private readonly prisma: PrismaService,
   ) {}
 
-  async findAll() {
+  async findAll(langId: string = 'en') {
     const query: AdvancedQueryDto = {
       paginate: false,
       filters: { isActive: true },
     };
-    return this.staticPagesRepo.getAllStticPagesWithAllSections(query);
+    return this.staticPagesRepo.getAllStticPagesWithAllSections(query, {
+      select: {
+        id: true,
+        slug: true,
+        translations: {
+          where: { langId },
+          select: { title: true, content: true, langId: true },
+        },
+        sections: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' as const },
+          select: {
+            id: true,
+            sortOrder: true,
+            translations: {
+              where: { langId },
+              select: { title: true, content: true, langId: true },
+            },
+          },
+        },
+      },
+    });
   }
 
-  async findBySlug(slug: string) {
+  async findBySlug(slug: string, langId: string = 'en') {
     return this.prisma.staticPage.findUnique({
       where: { slug, isActive: true },
-      include: {
-        translations: true,
+      select: {
+        id: true,
+        slug: true,
+        translations: {
+          where: { langId },
+          select: { title: true, content: true, langId: true },
+        },
         sections: {
           where: { isActive: true },
           orderBy: { sortOrder: 'asc' },
-          include: {
-            translations: true,
+          select: {
+            id: true,
+            sortOrder: true,
+            translations: {
+              where: { langId },
+              select: { title: true, content: true, langId: true },
+            },
           },
         },
       },

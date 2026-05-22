@@ -1,6 +1,7 @@
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { IBaseRepository } from './base.repository.interface';
+import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface StaticPageTranslation {
   id: bigint;
@@ -43,7 +44,7 @@ export const STATIC_PAGES_REPOSITORY = Symbol('IStaticPagesRepository');
 
 export interface IStaticPagesRepository extends IBaseRepository<StaticPage> {
   getAllStaticPages(query: AdvancedQueryDto): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
-  getAllStticPagesWithAllSections(query?: AdvancedQueryDto): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
+  getAllStticPagesWithAllSections(query?: AdvancedQueryDto, options?: QueryOptions): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
   getStaticPageByIdWithAllSections(id: number): Promise<StaticPage | null>;
   createStaticPage(data: unknown): Promise<StaticPage>;
   updateStaticPage(data: unknown, id: number): Promise<StaticPage>;
