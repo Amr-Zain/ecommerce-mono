@@ -1851,6 +1851,517 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Client",
+      "description": "Client API endpoints with thin response format (@ApiContext=client). Catalog endpoints are public (no auth). Write endpoints require client JWT.",
+      "item": [
+        {
+          "name": "Home",
+          "item": [
+            {
+              "name": "Get Home Page",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/home",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "home"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Countries",
+          "item": [
+            {
+              "name": "List Countries (active)",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/countries?page=1&limit=50",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "countries"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "50" },
+                    { "key": "filters[isActive]", "value": "1" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Country by ID",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/countries/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "countries", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cities",
+          "item": [
+            {
+              "name": "List Cities (active)",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/cities?page=1&limit=50",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "cities"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "50" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get City by ID",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/cities/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "cities", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sliders",
+          "item": [
+            {
+              "name": "List Active Sliders",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/sliders",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "sliders"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "FAQs",
+          "item": [
+            {
+              "name": "List Active FAQs",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/faqs",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "faqs"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Collections",
+          "item": [
+            {
+              "name": "List Active Collectionss",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/collections?page=1&limit=50",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "collections"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "50" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Collection by ID",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/collections/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "collections", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Products",
+          "item": [
+            {
+              "name": "List Active Products",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/products?page=1&limit=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "products"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Product by ID",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/products/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "products", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Attributes",
+          "item": [
+            {
+              "name": "List Active Attributes",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/attributes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "attributes"]
+                }
+              }
+            },
+            {
+              "name": "Get Attribute with Values",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/attributes/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "attributes", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Static Pages",
+          "item": [
+            {
+              "name": "List Active Pages",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/static-pages",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "static-pages"]
+                }
+              }
+            },
+            {
+              "name": "Get Page by Slug",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "url": {
+                  "raw": "{{baseUrl}}/client/static-pages/about-us",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "static-pages", "about-us"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get My Profile",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Accept-Language", "value": "en", "type": "text" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "profile"]
+                }
+              }
+            },
+            {
+              "name": "Update Profile",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  { "key": "Accept-Language", "value": "en", "type": "text" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"+966512345678\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "profile"]
+                }
+              }
+            },
+            {
+              "name": "Update Profile Image",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"image\": \"MEDIA_HASH_HERE\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/profile/image",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "profile", "image"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Addresses",
+          "item": [
+            {
+              "name": "List My Addresses",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/addresses",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "addresses"]
+                }
+              }
+            },
+            {
+              "name": "Create Address",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"address\": \"123 Main Street\",\n  \"cityId\": 1,\n  \"countryId\": 1,\n  \"streetName\": \"Main St\",\n  \"buildingNumber\": \"123\",\n  \"isDefault\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/addresses",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "addresses"]
+                }
+              }
+            },
+            {
+              "name": "Update Address",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"address\": \"456 Updated Street\",\n  \"isDefault\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/addresses/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "addresses", "1"]
+                }
+              }
+            },
+            {
+              "name": "Set Default Address",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/addresses/1/default",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "addresses", "1", "default"]
+                }
+              }
+            },
+            {
+              "name": "Delete Address",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/addresses/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "addresses", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reviews",
+          "item": [
+            {
+              "name": "List Reviews for Product (Public)",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/reviews/products/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "reviews", "products", "1"]
+                }
+              }
+            },
+            {
+              "name": "Create Review",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"productId\": 1,\n  \"rating\": 5,\n  \"comment\": \"Great product!\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/reviews",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "reviews"]
+                }
+              }
+            },
+            {
+              "name": "Update My Review",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated review\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/reviews/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "reviews", "1"]
+                }
+              }
+            },
+            {
+              "name": "Delete My Review",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/reviews/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "reviews", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Orders",
+          "item": [
+            {
+              "name": "List My Orders",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/orders",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "orders"]
+                }
+              }
+            },
+            {
+              "name": "Get Order by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/orders/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "orders", "1"]
+                }
+              }
+            },
+            {
+              "name": "Create Order",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"addressId\": 1,\n  \"paymentMethod\": \"cash\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"variantId\": 1,\n      \"quantity\": 2\n    }\n  ]\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/orders",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "orders"]
+                }
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [

@@ -325,9 +325,101 @@ GET /users?paginate=0&filters[isActive]=1&sort[name]=asc
 ### 409 Conflict
 - Email already exists - use a different email address
 
+## Client API Endpoints
+
+Client endpoints use `@ApiContext('client')` which returns thin responses: only the requested language fields at root level, no `en`/`ar` language keys, no `translations` array.
+
+### Authentication
+- **Public endpoints** (no auth required): Home, Countries, Cities, Sliders, FAQs, Collections, Products, Attributes, Static Pages, Product Reviews
+- **Authenticated endpoints** (client JWT required): Profile, Addresses, Reviews (create/update/delete), Orders
+
+### Home
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/home` | Public | Aggregated home page data |
+
+### Countries
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/countries` | Public | List active countries |
+| GET | `/client/countries/:id` | Public | Get country by ID |
+
+### Cities
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/cities` | Public | List active cities |
+| GET | `/client/cities/:id` | Public | Get city by ID |
+
+### Sliders
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/sliders` | Public | List active sliders |
+
+### FAQs
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/faqs` | Public | List active FAQs |
+
+### Collections
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/collections` | Public | List active collections |
+| GET | `/client/collections/:id` | Public | Get collection with children |
+
+### Products
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/products` | Public | List active products with variants |
+| GET | `/client/products/:id` | Public | Get product by ID with variants |
+
+### Attributes
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/attributes` | Public | List active attributes with values |
+| GET | `/client/attributes/:id` | Public | Get attribute with values |
+
+### Static Pages
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/static-pages` | Public | List active pages |
+| GET | `/client/static-pages/:slug` | Public | Get page by slug with sections |
+
+### Profile (requires client JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/client/profile` | Get profile with avatar and addresses |
+| PUT | `/client/profile` | Update name, phone |
+| PUT | `/client/profile/image` | Update avatar |
+
+### Addresses (requires client JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/client/addresses` | List user's addresses |
+| POST | `/client/addresses` | Create address |
+| PUT | `/client/addresses/:id` | Update address |
+| DELETE | `/client/addresses/:id` | Delete address |
+| PUT | `/client/addresses/:id/default` | Set default address |
+
+### Reviews
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/reviews/products/:productId` | Public | List reviews for product |
+| POST | `/client/reviews` | Client JWT | Create review |
+| PUT | `/client/reviews/:id` | Client JWT | Update own review |
+| DELETE | `/client/reviews/:id` | Client JWT | Delete own review |
+
+### Orders (requires client JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/client/orders` | List user's orders |
+| GET | `/client/orders/:id` | Get order detail |
+| POST | `/client/orders` | Create order |
+
 ## Notes
 
 - All timestamps are in ISO 8601 format
 - BigInt IDs are returned as strings in JSON responses
 - Passwords are automatically hashed using bcrypt
 - Default user type is "client" if not specified
+- Admin endpoints return all language keys (`en`, `ar`, etc.) plus promoted fields
+- Client endpoints return only the requested language (via `Accept-Language` header), no language keys or translation arrays
