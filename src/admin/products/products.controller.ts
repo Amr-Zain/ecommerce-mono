@@ -1,10 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/product.dto';
+import { CreateProductDto } from '@/common/dto/product.dto';
 import { UpdateProductDto } from './dto/update-dtos';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 
+@ApiContext('admin')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}

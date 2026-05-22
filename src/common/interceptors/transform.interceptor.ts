@@ -1,31 +1,36 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CaseTransformer } from '../utils/case-transformer.util';
+import { API_CONTEXT_KEY, ApiContextType } from '../decorators/api-context.decorator';
 
 export interface Response<T> {
   success: boolean;
   data: T;
-  // timestamp: string;
 }
 
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
+  constructor(private readonly reflector: Reflector) {}
+
   intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
     const request = context.switchToHttp().getRequest<Request>();
     const acceptLanguage = (request.headers['accept-language'] as string) || 'en';
     const requestedLangId = acceptLanguage.split(',')[0].split('-')[0].trim();
 
+    const apiContext =
+      this.reflector.get<ApiContextType>(API_CONTEXT_KEY, context.getHandler()) ||
+      this.reflector.get<ApiContextType>(API_CONTEXT_KEY, context.getClass()) ||
+      'admin';
+
     return next.handle().pipe(
       map((data: unknown) => {
-        // 1. Recursively transform translations throughout the object
-        const transformedData = this.deepTransform(data, requestedLangId);
+        const transformedData = this.deepTransform(data, requestedLangId, apiContext);
 
-        // 2. Transform media paths to full URLs
         const dataWithFullPaths = this.transformMediaPaths(transformedData);
 
-        // 3. Format paginated results (flatten 'data' to 'items')
         let finalData = dataWithFullPaths;
         if (this.isPaginated(dataWithFullPaths)) {
           const paginated = dataWithFullPaths as Record<string, unknown>;
@@ -33,13 +38,11 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
           finalData = { items, ...rest };
         }
 
-        // 4. Transform keys of finalData to snake_case globally
         const snakeCaseData = CaseTransformer.transformToSnake(finalData);
 
         return {
           success: true,
           data: snakeCaseData as T,
-          // timestamp: new Date().toISOString(),
         };
       }),
     );
@@ -58,7 +61,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
   /**
    * Recursively traverses an object/array to flatten 'translations' everywhere.
    */
-  private deepTransform(data: unknown, langId: string): unknown {
+  private deepTransform(data: unknown, langId: string, apiContext: ApiContextType = 'admin'): unknown {
     if (!data || typeof data !== 'object' || data instanceof Date || data instanceof Buffer) {
       return data;
     }
@@ -79,7 +82,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
 
     // Handle Arrays
     if (Array.isArray(data)) {
-      return data.map((item: unknown) => this.deepTransform(item, langId));
+      return data.map((item: unknown) => this.deepTransform(item, langId, apiContext));
     }
 
     // Handle Objects
@@ -89,7 +92,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
     for (const key in result) {
       const value = result[key];
       if (key !== 'translations') {
-        result[key] = this.deepTransform(value, langId);
+        result[key] = this.deepTransform(value, langId, apiContext);
       }
     }
 
@@ -102,20 +105,23 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
           const { langId: tLang, ...fields } = translation;
 
           if (typeof tLang === 'string') {
-            // Add language-specific key (e.g., result.en = { name: '...' })
-            result[tLang] = fields;
+            if (apiContext === 'client') {
+              if (tLang === langId) {
+                const { id: _id, recordId: _recordId, ...promotableFields } = fields;
+                Object.assign(result, promotableFields);
+              }
+            } else {
+              result[tLang] = fields;
 
-            // If this is the requested language, promote fields to root
-            if (tLang === langId) {
-              // Exclude internal translation fields so they don't overwrite the main record
-              const { id: _id, recordId: _recordId, ...promotableFields } = fields;
-              Object.assign(result, promotableFields);
+              if (tLang === langId) {
+                const { id: _id, recordId: _recordId, ...promotableFields } = fields;
+                Object.assign(result, promotableFields);
+              }
             }
           }
         }
       });
 
-      // Remove the original translations array
       delete result['translations'];
     }
 

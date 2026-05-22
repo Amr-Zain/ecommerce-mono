@@ -1,11 +1,15 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { AttributeValuesService } from './attribute-values.service';
-import { AttributeValueQueryDto, CreateAttributeValueDto } from './dto/attribute-value.dto';
+import { AttributeValueQueryDto } from '@/common/dto/attribute-value-query.dto';
+import { CreateAttributeValueDto } from './dto/attribute-value.dto';
 import { UpdateAttributeValueDto } from './dto/update-dtos';
 import { I18nLang } from 'nestjs-i18n';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 
+import { ApiContext } from '@/common/decorators/api-context.decorator';
+
+@ApiContext('admin')
 @Controller('attribute-values')
 export class AttributeValuesController {
   constructor(private readonly service: AttributeValuesService) {}

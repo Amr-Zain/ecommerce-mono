@@ -10,7 +10,9 @@ import { UseLanguageTransform } from '../../common/decorators/transform-language
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../../generated/i18n.generated';
 import type { PaginatedResult } from '../../common/dto/pagination.dto';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 
+@ApiContext('admin')
 @Controller('roles')
 export class RolesController {
   constructor(

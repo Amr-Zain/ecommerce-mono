@@ -1,32 +1,26 @@
 import { Controller, Get, Put, Body } from '@nestjs/common';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
+import { CurrentUser } from '@/auth/decorators/current-user.decorator';
+import { ProfileService } from './profile.service';
+import { UpdateProfileDto, UpdateProfileImageDto } from './dto/profile.dto';
 
-interface ProfileUser {
-  id: bigint;
-  name: string;
-  email: string;
-  phone?: string;
-  isEmailVerified: boolean;
-  isPhoneVerified: boolean;
-}
-
+@ApiContext('client')
 @Controller('profile')
 export class ProfileController {
+  constructor(private readonly profileService: ProfileService) {}
+
   @Get()
-  getProfile(@CurrentUser() user: ProfileUser) {
-    return {
-      id: user.id.toString(),
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      isEmailVerified: user.isEmailVerified,
-      isPhoneVerified: user.isPhoneVerified,
-    };
+  getProfile(@CurrentUser() user: { id: bigint }) {
+    return this.profileService.getProfile(user.id);
   }
 
   @Put()
-  updateProfile(@CurrentUser() _user: ProfileUser, @Body() _updateDto: Record<string, unknown>) {
-    // TODO: Implement profile update logic
-    return { message: 'Profile updated successfully' };
+  updateProfile(@CurrentUser() user: { id: bigint }, @Body() dto: UpdateProfileDto) {
+    return this.profileService.updateProfile(user.id, dto);
+  }
+
+  @Put('image')
+  updateImage(@CurrentUser() user: { id: bigint }, @Body() dto: UpdateProfileImageDto) {
+    return this.profileService.updateImage(user.id, dto);
   }
 }

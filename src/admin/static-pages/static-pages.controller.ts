@@ -1,14 +1,16 @@
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, ParseIntPipe } from '@nestjs/common';
 import { StaticPageService } from './static-pages.service';
-import { StaticPage } from './static-pages.repository';
+import { StaticPage as StaticPageInterface } from '@/common/interfaces';
 import { CreateStaticPageDto } from './dto/create-static-page.dto';
 import { UpdateStaticPageDto } from './dto/update-static-page.dto';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { Prisma } from '@/prisma';
 
+@ApiContext('admin')
 @Controller('/static-pages')
 export class StaticPagesController {
   constructor(private readonly staticPageService: StaticPageService) {}
@@ -16,13 +18,13 @@ export class StaticPagesController {
   @Get()
   async getAllStaticPagesWithAllSections(
     @ParsedQuery() query: AdvancedQueryDto = {},
-  ): Promise<StaticPage[] | PaginatedResult<StaticPage>> {
+  ): Promise<StaticPageInterface[] | PaginatedResult<StaticPageInterface>> {
     return this.staticPageService.getAllStticPagesWithAllSections(query);
   }
 
   @Post()
   @UseLanguageTransform({ recursive: true })
-  async createStaticPage(@Body() staticPage: CreateStaticPageDto): Promise<StaticPage> {
+  async createStaticPage(@Body() staticPage: CreateStaticPageDto): Promise<StaticPageInterface> {
     return this.staticPageService.createStaticPage(staticPage as unknown as Prisma.StaticPageCreateInput);
   }
 
@@ -31,12 +33,12 @@ export class StaticPagesController {
   async updateStaticPage(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateStaticPageDto: UpdateStaticPageDto,
-  ): Promise<StaticPage> {
+  ): Promise<StaticPageInterface> {
     return this.staticPageService.updateStaticPage(updateStaticPageDto as unknown as Prisma.StaticPageUpdateInput, id);
   }
 
   @Delete(':id')
-  async deleteStaticPage(@Param('id', ParseIntPipe) id: number): Promise<StaticPage> {
+  async deleteStaticPage(@Param('id', ParseIntPipe) id: number): Promise<StaticPageInterface> {
     return this.staticPageService.deleteStaticPage(id);
   }
 

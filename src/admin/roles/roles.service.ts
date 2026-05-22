@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { RolesRepository, Role } from './roles.repository';
+import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { ROLES_REPOSITORY, Role } from '@/common/interfaces';
+import { RolesRepository } from '@/core/roles/roles.repository';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { AdvancedQueryDto } from '../../common/dto/advanced-query.dto';
@@ -11,7 +12,7 @@ import { PermissionUtil, TransformedPermission } from '../../common/utils/permis
 export interface TransformedRole {
   id: string;
   isActive: boolean;
-  translations: Role['translations'];
+  translations?: Role['translations'];
   permissions: Record<string, TransformedPermission[]>;
   createdAt: Date;
   updatedAt: Date;
@@ -20,7 +21,7 @@ export interface TransformedRole {
 @Injectable()
 export class RolesService {
   constructor(
-    private readonly rolesRepository: RolesRepository,
+    @Inject(ROLES_REPOSITORY) private readonly rolesRepository: RolesRepository,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
@@ -89,7 +90,7 @@ export class RolesService {
     return {
       ...rest,
       id: rest.id.toString(),
-      permissions: PermissionUtil.groupPermissions(permissions),
+      permissions: PermissionUtil.groupPermissions(permissions ?? []),
     };
   }
 }

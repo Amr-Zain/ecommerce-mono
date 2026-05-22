@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { CitiesController } from './cities.controller';
 import { CitiesService } from './cities.service';
-import { CitiesRepository } from './cities.repository';
+import { CitiesModule as CoreCitiesModule } from '@/core/cities/cities.module';
 
 @Module({
+  imports: [CoreCitiesModule],
   controllers: [CitiesController],
-  providers: [CitiesService, CitiesRepository],
+  providers: [CitiesService],
 })
 export class CitiesModule {}

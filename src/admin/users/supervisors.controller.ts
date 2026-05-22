@@ -3,14 +3,16 @@ import { SupervisorsService } from './supervisors.service';
 import { CreateSupervisorDto } from './dto/create-supervisor.dto';
 import { UpdateSupervisorDto } from './dto/update-supervisor.dto';
 import { UserQueryDto } from './dto/user-query.dto';
-import { ParsedQuery } from '../../common/decorators/parsed-query.decorator';
-import { BodyOmitUndefined } from '../../common/decorators/omit-undefined.decorator';
-import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
-import type { PaginatedResult } from '../../common/dto/pagination.dto';
-import type { User } from './users.repository';
+import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
+import { BodyOmitUndefined } from '@/common/decorators/omit-undefined.decorator';
+import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
+import type { PaginatedResult } from '@/common/dto/pagination.dto';
+import type { User as UserInterface } from '@/common/interfaces';
 import { I18nLang, I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '../../generated/i18n.generated';
+import { I18nTranslations } from '@/generated/i18n.generated';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 
+@ApiContext('admin')
 @Controller('supervisors')
 export class SupervisorsController {
   constructor(
@@ -20,7 +22,7 @@ export class SupervisorsController {
 
   @Post()
   @RequirePermissions({ resource: 'supervisors', action: 'create' })
-  async create(@Body() createDto: CreateSupervisorDto): Promise<User> {
+  async create(@Body() createDto: CreateSupervisorDto): Promise<UserInterface> {
     return this.supervisorsService.create(createDto);
   }
 
@@ -29,13 +31,13 @@ export class SupervisorsController {
   async findAll(
     @ParsedQuery(UserQueryDto) query: UserQueryDto,
     @I18nLang() lang: string,
-  ): Promise<PaginatedResult<User> | User[]> {
+  ): Promise<PaginatedResult<UserInterface> | UserInterface[]> {
     return this.supervisorsService.findAll(query, lang);
   }
 
   @Get(':id')
   @RequirePermissions({ resource: 'supervisors', action: 'read' })
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserInterface> {
     return this.supervisorsService.findOne(BigInt(id));
   }
 
@@ -44,13 +46,13 @@ export class SupervisorsController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @BodyOmitUndefined() updateDto: UpdateSupervisorDto,
-  ): Promise<User> {
+  ): Promise<UserInterface> {
     return this.supervisorsService.update(BigInt(id), updateDto);
   }
 
   @Delete(':id')
   @RequirePermissions({ resource: 'supervisors', action: 'delete' })
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<{ data: User; message: string }> {
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<{ data: UserInterface; message: string }> {
     const user = await this.supervisorsService.remove(BigInt(id));
     return {
       data: user,

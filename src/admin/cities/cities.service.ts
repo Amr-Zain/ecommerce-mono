@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { Prisma } from '../../prisma';
-import { CitiesRepository } from './cities.repository';
+import { CITIES_REPOSITORY } from '@/common/interfaces';
+import { CitiesRepository } from '@/core/cities/cities.repository';
 import { CityQueryDto } from './dto/city-query';
 import { createCityDto } from './dto/create-city.dto';
 import { PaginatedResult } from 'src/common/dto/pagination.dto';
@@ -9,7 +10,7 @@ import { UpdateCityDto } from './dto/update-city.dto';
 
 @Injectable()
 export class CitiesService {
-  constructor(private readonly CitiesRepo: CitiesRepository) {}
+  constructor(@Inject(CITIES_REPOSITORY) private readonly CitiesRepo: CitiesRepository) {}
 
   createCity(city: createCityDto) {
     return this.CitiesRepo.createCity(city as unknown as Prisma.CityCreateInput);

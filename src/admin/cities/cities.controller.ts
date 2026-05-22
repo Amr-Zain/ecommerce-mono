@@ -2,11 +2,13 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/
 import { CitiesService } from './cities.service';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { createCityDto } from './dto/create-city.dto';
 import { UpdateCityDto } from './dto/update-city.dto';
 import { CityQueryDto } from './dto/city-query';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 
+@ApiContext('admin')
 @Controller('cities')
 export class CitiesController {
   constructor(private readonly cityService: CitiesService) {}

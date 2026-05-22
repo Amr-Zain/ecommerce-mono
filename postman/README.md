@@ -102,7 +102,38 @@ This directory contains Postman collections and environments for testing the Fay
 
 ### Auth Module
 
-#### 1. Register
+#### 1. Send OTP
+- **Method:** POST
+- **URL:** `{{baseUrl}}/auth/send-otp`
+- **Body:**
+```json
+{
+  "type": "email",
+  "email": "john.doe@example.com"
+}
+```
+*Note:* Also supports `type: "phone"` with `"phone"` and required `"phoneCode"`.
+
+#### 2. Login OTP (Verify OTP)
+- **Method:** POST
+- **URL:** `{{baseUrl}}/auth/login-otp`
+- **Headers:** `x-platform: browser` or `x-platform: mobile` (default: `browser`)
+- **Body:**
+```json
+{
+  "type": "email",
+  "email": "john.doe@example.com",
+  "code": "1111",
+  "guestToken": "guest_token_uuid_if_any"
+}
+```
+
+#### 3. Create Guest
+- **Method:** POST
+- **URL:** `{{baseUrl}}/auth/create-guest`
+- **Headers:** `x-platform: browser` or `x-platform: mobile` (default: `browser`)
+
+#### 4. Register (First-time custom profile creation)
 - **Method:** POST
 - **URL:** `{{baseUrl}}/auth/register`
 - **Body:**
@@ -116,49 +147,31 @@ This directory contains Postman collections and environments for testing the Fay
 }
 ```
 
-#### 2. Verify Email
-- **Method:** POST
-- **URL:** `{{baseUrl}}/auth/verify-email`
-- **Body:**
-```json
-{
-  "email": "john.doe@example.com",
-  "code": "123456"
-}
-```
-
-#### 3. Resend Email Verification
-- **Method:** POST
-- **URL:** `{{baseUrl}}/auth/resend-email-verification`
-- **Body:**
-```json
-{
-  "email": "john.doe@example.com"
-}
-```
-
-#### 4. Login
+#### 5. Login (Admins only, password login)
 - **Method:** POST
 - **URL:** `{{baseUrl}}/auth/login`
+- **Headers:** `x-platform: browser`
 - **Body:**
 ```json
 {
-  "email": "john.doe@example.com",
+  "email": "admin@fayendra.com",
   "password": "password123"
 }
 ```
 
-#### 4. Refresh Token
+#### 6. Refresh Token
 - **Method:** POST
 - **URL:** `{{baseUrl}}/auth/refresh`
+- **Headers:** `x-platform: browser` or `x-platform: mobile`
 - **Body:**
 ```json
 {
   "refreshToken": "{{refreshToken}}"
 }
 ```
+*Note:* Read from cookie first if browser platform.
 
-#### 5. Get Profile (Me)
+#### 7. Get Profile (Me)
 - **Method:** GET
 - **URL:** `{{baseUrl}}/auth/me`
 

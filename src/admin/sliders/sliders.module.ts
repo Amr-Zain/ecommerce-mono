@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { SlidersService } from './sliders.service';
 import { SlidersController } from './sliders.controller';
-import { SlidersRepository } from './sliders.repository';
+import { SlidersModule as CoreSlidersModule } from '@/core/sliders/sliders.module';
 
 @Module({
+  imports: [CoreSlidersModule],
   controllers: [SlidersController],
-  providers: [SlidersService, SlidersRepository],
-  exports: [SlidersService, SlidersRepository],
+  providers: [SlidersService],
+  exports: [SlidersService],
 })
 export class SlidersModule {}

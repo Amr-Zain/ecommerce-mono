@@ -1,10 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { VariantsService } from './variants.service';
-import { CreateVariantDto, AdjustStockDto } from './dto/product.dto';
+import { CreateVariantDto, AdjustStockDto } from '@/common/dto/product.dto';
 import { UpdateVariantDto } from './dto/update-dtos';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 
+@ApiContext('admin')
 @Controller('variants')
 export class VariantsController {
   constructor(private readonly variantsService: VariantsService) {}

@@ -1,14 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { CollectionsRepository, Collection } from './collections.repository';
+import { Injectable, Inject } from '@nestjs/common';
+import { COLLECTIONS_REPOSITORY, Collection } from '@/common/interfaces';
+import { CollectionsRepository } from '@/core/collections/collections.repository';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
-import { CollectionQueryDto } from './dto/collection-query.dto';
+import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { Prisma } from '@/prisma';
 
 @Injectable()
 export class CollectionsService {
-  constructor(private readonly repo: CollectionsRepository) {}
+  constructor(@Inject(COLLECTIONS_REPOSITORY) private readonly repo: CollectionsRepository) {}
 
   async create(createCollectionDto: CreateCollectionDto): Promise<Collection> {
     return this.repo.createCollection(createCollectionDto as unknown as Prisma.CollectionCreateInput);

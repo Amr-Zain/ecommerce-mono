@@ -2,11 +2,13 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { CollectionsService } from './collections.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
-import { CollectionQueryDto } from './dto/collection-query.dto';
+import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
 import { I18nLang } from 'nestjs-i18n';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 
+@ApiContext('admin')
 @Controller('collections')
 export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}

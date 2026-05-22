@@ -6,7 +6,9 @@ import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 
+@ApiContext('admin')
 @Controller('faqs')
 export class FaqsController {
   constructor(private readonly faqsService: FaqsService) {}

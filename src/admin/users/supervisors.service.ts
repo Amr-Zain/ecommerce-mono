@@ -1,28 +1,28 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { UsersRepository } from './users.repository';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, Inject } from '@nestjs/common';
+import { USERS_REPOSITORY, User as UserInterface } from '@/common/interfaces';
+import { UsersRepository } from '@/core/users/users.repository';
 import { CreateSupervisorDto } from './dto/create-supervisor.dto';
 import { UpdateSupervisorDto } from './dto/update-supervisor.dto';
 import { UserQueryDto } from './dto/user-query.dto';
-import { PaginatedResult } from '../../common/dto/pagination.dto';
-import { User } from './users.repository';
+import { PaginatedResult } from '@/common/dto/pagination.dto';
 import * as bcrypt from 'bcrypt';
-import { Prisma } from '../../prisma';
-import { omitUndefined } from '../../common/utils/omit-undefined.util';
+import { Prisma } from '@/prisma';
+import { omitUndefined } from '@/common/utils/omit-undefined.util';
 import { I18nService } from 'nestjs-i18n';
-import { I18nTranslations } from '../../generated/i18n.generated';
+import { I18nTranslations } from '@/generated/i18n.generated';
 
 @Injectable()
 export class SupervisorsService {
   constructor(
-    private readonly usersRepository: UsersRepository,
+    @Inject(USERS_REPOSITORY) private readonly usersRepository: UsersRepository,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
-  async findAll(query: UserQueryDto, langId: string = 'en'): Promise<PaginatedResult<User> | User[]> {
+  async findAll(query: UserQueryDto, langId: string = 'en'): Promise<PaginatedResult<UserInterface> | UserInterface[]> {
     return this.usersRepository.findAllAdmins(query, langId);
   }
 
-  async findOne(id: bigint): Promise<User> {
+  async findOne(id: bigint): Promise<UserInterface> {
     const user = await this.usersRepository.findByIdAndType(id, 'admin');
 
     if (!user) {
@@ -32,7 +32,7 @@ export class SupervisorsService {
     return user;
   }
 
-  async create(createDto: CreateSupervisorDto): Promise<User> {
+  async create(createDto: CreateSupervisorDto): Promise<UserInterface> {
     // Check if email already exists
     const emailExists = await this.usersRepository.emailExists(createDto.email);
     if (emailExists) {
@@ -58,7 +58,7 @@ export class SupervisorsService {
     return this.usersRepository.createUser(data);
   }
 
-  async update(id: bigint, updateDto: UpdateSupervisorDto): Promise<User> {
+  async update(id: bigint, updateDto: UpdateSupervisorDto): Promise<UserInterface> {
     const existingUser = await this.findOne(id);
 
     if (existingUser.roleId === 1n) {
@@ -88,7 +88,7 @@ export class SupervisorsService {
     return this.usersRepository.updateUser(id, data);
   }
 
-  async remove(id: bigint): Promise<User> {
+  async remove(id: bigint): Promise<UserInterface> {
     const existingUser = await this.findOne(id); // Ensure it's an admin and exists
 
     if (existingUser.roleId === 1n) {

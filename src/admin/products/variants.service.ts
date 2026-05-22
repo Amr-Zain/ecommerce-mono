@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { VariantsRepository } from './variants.repository';
-import { CreateVariantDto, AdjustStockDto } from './dto/product.dto';
+import { Injectable, Inject } from '@nestjs/common';
+import { VARIANTS_REPOSITORY } from '@/common/interfaces';
+import { VariantsRepository } from '@/core/products/variants.repository';
+import { CreateVariantDto, AdjustStockDto } from '@/common/dto/product.dto';
 import { UpdateVariantDto } from './dto/update-dtos';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class VariantsService {
-  constructor(private readonly variantsRepository: VariantsRepository) {}
+  constructor(@Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: VariantsRepository) {}
 
   async create(productId: number, createVariantDto: CreateVariantDto) {
     // Basic uniqueness check could be added here based on attributes if required.

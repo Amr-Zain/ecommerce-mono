@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { CountriesController } from './countries.controller';
 import { CountriesService } from './countries.service';
-import { CountriesRepository } from './countries.repository';
+import { CountriesModule as CoreCountriesModule } from '@/core/countries/countries.module';
 
 @Module({
+  imports: [CoreCountriesModule],
   controllers: [CountriesController],
-  providers: [CountriesService, CountriesRepository],
+  providers: [CountriesService],
 })
 export class CountriesModule {}

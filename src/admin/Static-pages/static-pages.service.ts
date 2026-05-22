@@ -1,28 +1,28 @@
-import { Injectable } from '@nestjs/common';
-import { StaticPagesRepository } from './static-pages.repository';
+import { Injectable, Inject } from '@nestjs/common';
+import { STATIC_PAGES_REPOSITORY, StaticPage as StaticPageInterface } from '@/common/interfaces';
+import { StaticPagesRepository } from '@/core/static-pages/static-pages.repository';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { Prisma } from '@/prisma';
-import { StaticPage } from './static-pages.repository';
 
 @Injectable()
 export class StaticPageService {
-  constructor(private readonly staticPagesRepository: StaticPagesRepository) {}
+  constructor(@Inject(STATIC_PAGES_REPOSITORY) private readonly staticPagesRepository: StaticPagesRepository) {}
   async getAllStticPagesWithAllSections(
     query: AdvancedQueryDto = {},
-  ): Promise<StaticPage[] | PaginatedResult<StaticPage>> {
+  ): Promise<StaticPageInterface[] | PaginatedResult<StaticPageInterface>> {
     return this.staticPagesRepository.getAllStticPagesWithAllSections(query);
   }
-  async getStaticPageByIdWithAllSections(id: number): Promise<StaticPage | null> {
+  async getStaticPageByIdWithAllSections(id: number): Promise<StaticPageInterface | null> {
     return this.staticPagesRepository.getStaticPageByIdWithAllSections(id);
   }
-  async createStaticPage(staticPage: Prisma.StaticPageCreateInput): Promise<StaticPage> {
+  async createStaticPage(staticPage: Prisma.StaticPageCreateInput): Promise<StaticPageInterface> {
     return this.staticPagesRepository.createStaticPage(staticPage);
   }
-  async updateStaticPage(staticPage: Prisma.StaticPageUpdateInput, id: number): Promise<StaticPage> {
+  async updateStaticPage(staticPage: Prisma.StaticPageUpdateInput, id: number): Promise<StaticPageInterface> {
     return this.staticPagesRepository.updateStaticPage(staticPage, id);
   }
-  async deleteStaticPage(id: number): Promise<StaticPage> {
+  async deleteStaticPage(id: number): Promise<StaticPageInterface> {
     return this.staticPagesRepository.deleteStaticPage(id);
   }
   async createSection(

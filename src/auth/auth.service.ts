@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -15,7 +16,8 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { randomBytes } from 'crypto';
 import { PermissionUtil } from '../common/utils/permission.util';
-import { UsersRepository, User } from '../admin/users/users.repository';
+import { USERS_REPOSITORY, User as UserInterface } from '@/common/interfaces';
+import { UsersRepository } from '@/core/users/users.repository';
 import { RefreshTokensRepository } from './repositories/refresh-tokens.repository';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -56,7 +58,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private readonly usersRepository: UsersRepository,
+    @Inject(USERS_REPOSITORY) private readonly usersRepository: UsersRepository,
     private readonly refreshTokensRepository: RefreshTokensRepository,
   ) {}
 
@@ -265,7 +267,7 @@ export class AuthService {
    */
   async sendOtp(dto: SendOtpDto): Promise<{ message: string }> {
     const type = dto.type;
-    let user: User | null = null;
+    let user: UserInterface | null = null;
 
     if (type === 'email') {
       const email = dto.email;

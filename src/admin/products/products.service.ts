@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { ProductsRepository } from './products.repository';
-import { CreateProductDto } from './dto/product.dto';
+import { Injectable, Inject } from '@nestjs/common';
+import { PRODUCTS_REPOSITORY } from '@/common/interfaces';
+import { ProductsRepository } from '@/core/products/products.repository';
+import { CreateProductDto } from '@/common/dto/product.dto';
 import { UpdateProductDto } from './dto/update-dtos';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly productsRepository: ProductsRepository) {}
+  constructor(@Inject(PRODUCTS_REPOSITORY) private readonly productsRepository: ProductsRepository) {}
 
   async create(createProductDto: CreateProductDto) {
     return this.productsRepository.createProductWithVariants(createProductDto);

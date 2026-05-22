@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 
 import { PrismaService } from '../../prisma';
 import { RawPermission } from '../../common/utils/permission.util';
 
+@ApiContext('admin')
 @Controller('permissions')
 export class PermissionsController {
   constructor(private readonly prisma: PrismaService) {}

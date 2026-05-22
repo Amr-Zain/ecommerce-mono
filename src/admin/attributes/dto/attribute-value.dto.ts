@@ -2,7 +2,8 @@ import { IsNotEmpty, IsString, IsArray, ValidateNested, IsInt, IsBoolean, IsOpti
 import { Type } from 'class-transformer';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
+
+export { AttributeValueQueryDto } from '@/common/dto/attribute-value-query.dto';
 
 export class AttributeValueTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
@@ -29,5 +30,3 @@ export class CreateAttributeValueDto {
   @Type(() => AttributeValueTranslationDto)
   translations!: AttributeValueTranslationDto[];
 }
-
-export class AttributeValueQueryDto extends AdvancedQueryDto {}

@@ -5,8 +5,10 @@ import { ParsedQuery } from '../../common/decorators/parsed-query.decorator';
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
 import { I18nLang } from 'nestjs-i18n';
 import type { PaginatedResult } from '../../common/dto/pagination.dto';
-import type { User } from './users.repository';
+import type { User as UserInterface } from '@/common/interfaces';
+import { ApiContext } from '@/common/decorators/api-context.decorator';
 
+@ApiContext('admin')
 @Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
@@ -16,13 +18,13 @@ export class ClientsController {
   async findAll(
     @ParsedQuery(UserQueryDto) query: UserQueryDto,
     @I18nLang() lang: string,
-  ): Promise<PaginatedResult<User> | User[]> {
+  ): Promise<PaginatedResult<UserInterface> | UserInterface[]> {
     return this.clientsService.findAll(query, lang);
   }
 
   @Get(':id')
   @RequirePermissions({ resource: 'clients', action: 'read' })
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserInterface> {
     return this.clientsService.findOne(BigInt(id));
   }
 }
