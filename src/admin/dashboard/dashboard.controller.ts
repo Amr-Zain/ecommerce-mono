@@ -3,7 +3,7 @@ import { RequirePermissions } from '../../auth/decorators/permissions.decorator'
 
 @Controller('dashboard')
 export class DashboardController {
-  @Get('stats')
+  @Get('home')
   @RequirePermissions({ resource: 'dashboard', action: 'read' })
   getStats() {
     return {
