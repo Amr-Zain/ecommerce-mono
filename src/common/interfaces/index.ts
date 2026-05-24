@@ -9,7 +9,7 @@ export type { FaqTranslation, Faq, IFaqsRepository } from './faqs.interface';
 export { FAQS_REPOSITORY } from './faqs.interface';
 export type { CollectionTranslation, Collection, ICollectionsRepository } from './collections.interface';
 export { COLLECTIONS_REPOSITORY } from './collections.interface';
-export type { ProductTranslation, ProductVariant, VariantAttribute, Product, IProductsRepository, IVariantsRepository } from './products.interface';
+export type { ProductTranslation, ProductVariant, VariantAttribute, Product, IProductsRepository, IVariantsRepository, SimpleVariantSyncData, VariantPriceUpdate, ProductUpdatePlan } from './products.interface';
 export { PRODUCTS_REPOSITORY, VARIANTS_REPOSITORY } from './products.interface';
 export type { AttributeTranslation, AttributeValueTranslation, AttributeValue, Attribute, IAttributesRepository, IAttributeValuesRepository } from './attributes.interface';
 export { ATTRIBUTES_REPOSITORY, ATTRIBUTE_VALUES_REPOSITORY } from './attributes.interface';

@@ -38,8 +38,8 @@ export class PaginationUtil {
    * Get Prisma pagination params
    */
   static getPrismaParams(dto: PaginationDto) {
-    const page = dto.page || 1;
-    const limit = dto.limit || 10;
+    const page = Number(dto.page) || 1;
+    const limit = Number(dto.limit) || 10;
 
     return {
       skip: this.getSkip(page, limit),

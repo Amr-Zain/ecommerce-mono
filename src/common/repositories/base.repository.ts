@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma';
+import { PrismaService, Prisma } from '../../prisma';
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { PaginationUtil } from '../utils/pagination.util';
@@ -308,8 +308,16 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     return data;
   }
 
-  protected async handleMediaAttachment(id: number | bigint, mediaPayload: Record<string, string | string[]>) {
+  protected async handleMediaAttachment(
+    id: number | bigint,
+    mediaPayload: Record<string, string | string[]>,
+    tx?: Prisma.TransactionClient,
+    modelOverride?: string,
+  ) {
     if (!this.mediaService) return;
+
+    const prisma = tx || this.prisma;
+    const model = (modelOverride || this.modelName).toLowerCase();
 
     for (const [key, payload] of Object.entries(mediaPayload)) {
       const config = this.mediaConfig[key];
@@ -320,14 +328,14 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
 
       // If single media, clean up existing for this collection
       if (config.single) {
-        await this.mediaService.deleteByEntity(this.modelName, id, config.collection);
+        await this.mediaService.deleteByEntity(model, id, config.collection, tx);
       }
 
       for (const [index, hash] of hashes.entries()) {
         if (typeof hash !== 'string') continue;
 
         // Check if media exists and belongs to this model (validation)
-        const mediaItems = await this.prisma.media.findMany({
+        const mediaItems = await prisma.media.findMany({
           where: {
             OR: [
               { attachHash: hash, modelId: null },
@@ -340,8 +348,8 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
 
         if (mediaItems.length === 0) continue;
 
-        if (mediaItems[0].model.toLowerCase() !== this.modelName.toLowerCase()) {
-          throw new BadRequestException(`Media model mismatch. Expected ${this.modelName}, got ${mediaItems[0].model}`);
+        if (mediaItems[0].model.toLowerCase() !== model) {
+          throw new BadRequestException(`Media model mismatch. Expected ${model}, got ${mediaItems[0].model}`);
         }
 
         for (const item of mediaItems) {
@@ -357,14 +365,14 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
 
           if (item.modelId === null && item.attachHash) {
             await this.mediaService.attachTempMedia({
-              model: this.modelName,
+              model,
               attachHash: item.attachHash,
               modelId: id.toString(),
-            });
+            }, tx);
           }
 
           // Set collection and handle isMain (only for the first hash)
-          await this.prisma.media.update({
+          await prisma.media.update({
             where: { id: item.id },
             data: {
               collection: config.collection,

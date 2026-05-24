@@ -46,9 +46,41 @@ export interface Product {
   updatedAt: Date;
   translations: ProductTranslation[];
   variants: ProductVariant[];
+  discountType?: string | null;
+  discountValue?: number | null;
   collection?: unknown;
   image?: unknown;
   gallery?: unknown[];
+}
+
+/* ── Update plan ────────────────────────────────────────────── */
+
+export interface SimpleVariantSyncData {
+  price: number;
+  compareAtPrice: number | null;
+  stockQuantity: number;
+  sku: string | null;
+  barcode: string | null;
+  costPrice: number | null;
+  discountType: string | null;
+  discountValue: number | null;
+  oldPrice: number;
+  oldStock: number;
+}
+
+export interface VariantPriceUpdate {
+  variantId: bigint;
+  newPrice: number;
+  newCompareAtPrice: number | null;
+  oldPrice: number;
+  oldCompareAtPrice: number | null;
+}
+
+export interface ProductUpdatePlan {
+  productData: Record<string, unknown>;
+  mediaPayload?: Record<string, string | string[]>;
+  simpleVariantSync?: SimpleVariantSyncData;
+  variantPriceUpdates?: VariantPriceUpdate[];
 }
 
 export const PRODUCTS_REPOSITORY = Symbol('IProductsRepository');
@@ -58,7 +90,7 @@ export interface IProductsRepository {
   createProductWithVariants(dto: unknown): Promise<Product | null>;
   findProductById(id: number | bigint): Promise<Product | null>;
   create(data: Record<string, unknown>, options?: Record<string, unknown>): Promise<Product>;
-  update(id: number | bigint, data: Record<string, unknown>, options?: Record<string, unknown>): Promise<Product>;
+  executeUpdatePlan(id: number | bigint, plan: ProductUpdatePlan): Promise<Product>;
   delete(id: number | bigint): Promise<Product>;
 }
 
@@ -66,7 +98,7 @@ export const VARIANTS_REPOSITORY = Symbol('IVariantsRepository');
 
 export interface IVariantsRepository {
   findVariantById(id: number | bigint): Promise<ProductVariant | null>;
-  createVariant(data: unknown): Promise<ProductVariant>;
+  createVariant(data: unknown, gallery?: string[]): Promise<ProductVariant>;
   updateVariant(id: number | bigint, data: unknown): Promise<ProductVariant>;
   adjustStock(variantId: number | bigint, amount: number, reason: string): Promise<ProductVariant>;
   findAll(query: AdvancedQueryDto): Promise<PaginatedResult<ProductVariant> | ProductVariant[]>;

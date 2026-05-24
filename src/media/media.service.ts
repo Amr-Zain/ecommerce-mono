@@ -94,8 +94,10 @@ export class MediaService {
   /**
    * Links temporarily uploaded media to a model once it has been created
    */
-  async attachTempMedia(dto: AttachMediaDto) {
-    const mediaItems = await this.prisma.media.findMany({
+  async attachTempMedia(dto: AttachMediaDto, tx?: Prisma.TransactionClient) {
+    const prisma = tx || this.prisma;
+
+    const mediaItems = await prisma.media.findMany({
       where: {
         model: dto.model,
         attachHash: dto.attachHash,
@@ -114,7 +116,7 @@ export class MediaService {
     for (const item of mediaItems) {
       const newPath = item.path.replace(`/uploads/${dto.model}/${dto.attachHash}`, newPathBase);
 
-      await this.prisma.media.update({
+      await prisma.media.update({
         where: { id: item.id },
         data: {
           modelId: bigIntModelId,
@@ -179,7 +181,9 @@ export class MediaService {
   /**
    * Delete all media for an entity
    */
-  async deleteByEntity(model: string, modelId: number | string | bigint, collection?: string) {
+  async deleteByEntity(model: string, modelId: number | string | bigint, collection?: string, tx?: Prisma.TransactionClient) {
+    const prisma = tx || this.prisma;
+
     const where: Prisma.MediaWhereInput = {
       model: model.toLowerCase(),
       modelId: typeof modelId === 'bigint' ? modelId : BigInt(modelId),
@@ -187,13 +191,13 @@ export class MediaService {
 
     if (collection) where.collection = collection;
 
-    const items = await this.prisma.media.findMany({ where });
+    const items = await prisma.media.findMany({ where });
 
     for (const item of items) {
       await this.storage.deleteFile(item.path);
     }
 
-    await this.prisma.media.deleteMany({ where });
+    await prisma.media.deleteMany({ where });
   }
 
   async deleteByUuid(uuid: string) {
