@@ -32,6 +32,9 @@ model Product {
   collectionId BigInt?   @map("collection_id")
   collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   hasVariants  Boolean   @default(false) @map("has_variants")
+  tags         Json?     @map("tags")
+  discountType     String?              @map("discount_type")
+  discountValue    Decimal?             @map("discount_value") @db.Decimal(12, 2)
 
   isActive         Boolean              @default(true) @map("is_active")
   createdAt        DateTime             @default(now()) @map("created_at")
@@ -115,8 +118,8 @@ model ProductVariant {
   discountValue  Decimal? @map("discount_value") @db.Decimal(12, 2)
   
   stockQuantity Int                @default(0) @map("stock_quantity")
-  barcode       String?            @map("barcode")
-  sku           String?            @map("sku")
+  barcode       String?            @unique @map("barcode")
+  sku           String?            @unique @map("sku")
   isActive      Boolean            @default(true) @map("is_active")
   createdAt     DateTime           @default(now()) @map("created_at")
   updatedAt     DateTime           @default(now()) @updatedAt @map("updated_at")
@@ -127,8 +130,6 @@ model ProductVariant {
   priceHistory  PriceHistory[]
 
   @@index([productId])
-  @@index([sku])
-  @@index([barcode])
   @@map("product_variants")
 }
 
