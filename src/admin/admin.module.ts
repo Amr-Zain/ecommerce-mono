@@ -11,6 +11,7 @@ import { RolesModule } from './roles/roles.module';
 import { CollectionsModule } from './collections/collections.module';
 import { AttributesModule } from './attributes/attributes.module';
 import { ProductsModule } from './products/products.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ProductsModule } from './products/products.module';
     AttributesModule,
     ProductsModule,
     CollectionsModule,
+    ReviewsModule,
     RouterModule.register([
       {
         path: 'admin',
@@ -40,6 +42,7 @@ import { ProductsModule } from './products/products.module';
           { path: '', module: CollectionsModule },
           { path: '', module: AttributesModule },
           { path: '', module: ProductsModule },
+          { path: '', module: ReviewsModule },
         ],
       },
     ]),

@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { ClassConstructor } from 'class-transformer/types/interfaces';
+import { CaseTransformer } from '../utils/case-transformer.util';
 
 /**
  * Custom decorator to parse nested query parameters
@@ -24,9 +25,9 @@ export const ParsedQuery = createParamDecorator(async (dtoClass: ClassConstructo
         parsed[parentKey] = {};
       }
 
-      (parsed[parentKey] as Record<string, unknown>)[childKey] = query[key];
+      (parsed[parentKey] as Record<string, unknown>)[CaseTransformer.toCamelCase(childKey)] = query[key];
     } else {
-      parsed[key] = query[key];
+      parsed[CaseTransformer.toCamelCase(key)] = query[key];
     }
   }
 

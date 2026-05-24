@@ -9,6 +9,7 @@ import { AttributesModule } from './attributes/attributes.module';
 import { StaticPagesModule } from './static-pages/static-pages.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RolesModule } from './roles/roles.module';
     StaticPagesModule,
     UsersModule,
     RolesModule,
+    ReviewsModule,
   ],
   exports: [
     CountriesModule,
@@ -34,6 +36,7 @@ import { RolesModule } from './roles/roles.module';
     StaticPagesModule,
     UsersModule,
     RolesModule,
+    ReviewsModule,
   ],
 })
 export class CoreModule {}

@@ -10,6 +10,12 @@ export interface RawPermission {
 }
 
 export class PermissionUtil {
+  private static readonly actionAliases: Record<string, string[]> = {
+    list: ['index'],
+    read: ['show'],
+    create: ['store'],
+    delete: ['destroy'],
+  };
   /**
    * Groups a flat array of permissions by their resource category
    * and formats them with human-readable titles.
@@ -53,8 +59,19 @@ export class PermissionUtil {
           grouped[p.resource] = [];
         }
 
-        if (!grouped[p.resource].includes(p.action)) {
-          grouped[p.resource].push(p.action);
+        const actions = [p.action, ...(this.actionAliases[p.action] || [])];
+
+        for (const action of actions) {
+          if (!grouped[p.resource].includes(action)) {
+            grouped[p.resource].push(action);
+          }
+        }
+
+        if (p.resource === 'dashboard' && p.action === 'read') {
+          grouped['dashboard-home'] = grouped['dashboard-home'] || [];
+          if (!grouped['dashboard-home'].includes('index')) {
+            grouped['dashboard-home'].push('index');
+          }
         }
       });
     }
