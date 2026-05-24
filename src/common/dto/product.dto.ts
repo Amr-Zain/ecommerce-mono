@@ -53,6 +53,18 @@ export class CreateProductDto {
   @IsOptional()
   hasVariants?: boolean = false;
 
+  @IsOptional()
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  discountType?: 'FIXED' | 'PERCENTAGE';
+
+  @IsOptional()
+  @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
+  @Min(0, { message: i18nValidationMessage<I18nTranslations>('validation.MIN', { min: 0 }) })
+  @Validate(MaxPercentageConstraint, {
+    message: i18nValidationMessage<I18nTranslations>('validation.MAX', { max: 100 }),
+  })
+  discountValue?: number;
+
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
   @Type(() => ProductTranslationDto)
@@ -72,6 +84,11 @@ export class CreateProductDto {
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @IsString({ each: true, message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   gallery!: string[];
+
+  @IsOptional()
+  @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
+  @IsString({ each: true, message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  tags?: string[];
 }
 
 export class VariantAttributeDto {
@@ -126,6 +143,10 @@ export class CreateVariantDto {
   @IsOptional()
   @Min(0, { message: i18nValidationMessage<I18nTranslations>('validation.MIN', { min: 0 }) })
   stockQuantity?: number = 0;
+
+  @IsBoolean({ message: i18nValidationMessage<I18nTranslations>('validation.IS_BOOLEAN') })
+  @IsOptional()
+  isActive?: boolean = true;
 
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
