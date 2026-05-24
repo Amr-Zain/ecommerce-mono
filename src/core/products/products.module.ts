@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { PRODUCTS_REPOSITORY, VARIANTS_REPOSITORY } from '@/common/interfaces';
 import { ProductsRepository } from './products.repository';
 import { VariantsRepository } from './variants.repository';
+import { PricingService } from './pricing.service';
 import { MediaModule } from '@/media/media.module';
 
 @Module({
   imports: [MediaModule],
   providers: [
+    PricingService,
     {
       provide: PRODUCTS_REPOSITORY,
       useClass: ProductsRepository,
@@ -16,6 +18,6 @@ import { MediaModule } from '@/media/media.module';
       useClass: VariantsRepository,
     },
   ],
-  exports: [PRODUCTS_REPOSITORY, VARIANTS_REPOSITORY],
+  exports: [PricingService, PRODUCTS_REPOSITORY, VARIANTS_REPOSITORY],
 })
 export class ProductsModule {}
