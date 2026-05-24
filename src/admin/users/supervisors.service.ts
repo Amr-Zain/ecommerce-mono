@@ -46,6 +46,7 @@ export class SupervisorsService {
       name: createDto.name,
       email: createDto.email,
       password: hashedPassword,
+      gender: createDto.gender,
       phone: createDto.phone,
       phoneCode: createDto.phoneCode,
       userType: 'admin',

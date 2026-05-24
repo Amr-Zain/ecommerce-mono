@@ -25,6 +25,7 @@ export interface User {
   userType: string | null;
   guestToken: string | null;
   phone: string | null;
+  gender?: string | null;
   phoneCode: string | null;
   isPhoneVerified: boolean;
   isEmailVerified: boolean;

@@ -61,6 +61,11 @@ export class CreateSupervisorDto {
   phoneCode?: string;
 
   @IsOptional()
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  @IsIn(['male', 'female'])
+  gender?: string;
+
+  @IsOptional()
   @IsBoolean({ message: i18nValidationMessage<I18nTranslations>('validation.IS_BOOLEAN') })
   isActive?: boolean;
 

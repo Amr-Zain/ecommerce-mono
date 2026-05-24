@@ -41,6 +41,7 @@ model User {
   userType                String?                @default("client") @map("user_type")
   guestToken              String?                @unique @map("guest_token")
   password                String?
+  gender                  String?
   phone                   String?
   phoneCode               String?                @map("phone_code")
   isPhoneVerified         Boolean                @default(false) @map("is_phone_verified")
