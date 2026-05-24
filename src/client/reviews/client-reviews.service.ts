@@ -1,72 +1,45 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { IReviewsRepository, REVIEWS_REPOSITORY } from '@/common/interfaces';
 import { CreateReviewDto, UpdateReviewDto } from './dto/review.dto';
 
 @Injectable()
 export class ClientReviewsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(REVIEWS_REPOSITORY) private readonly reviewsRepository: IReviewsRepository,
+  ) {}
 
   async findByProduct(productId: bigint, langId: string = 'en') {
-    return this.prisma.review.findMany({
-      where: { productId, isActive: true },
-      select: {
-        id: true,
-        rating: true,
-        comment: true,
-        isVerified: true,
-        createdAt: true,
-        user: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    return this.reviewsRepository.findActiveVerifiedByProduct(productId);
   }
 
   async create(userId: bigint, dto: CreateReviewDto) {
-    return this.prisma.review.create({
-      data: {
-        userId,
-        productId: BigInt(dto.productId),
-        rating: dto.rating,
-        comment: dto.comment,
-      },
-      select: {
-        id: true,
-        rating: true,
-        comment: true,
-        isVerified: true,
-        createdAt: true,
-        user: { select: { id: true, name: true } },
-      },
+    return this.reviewsRepository.createForUser({
+      userId,
+      productId: BigInt(dto.productId),
+      rating: dto.rating,
+      comment: dto.comment,
+      images: dto.images,
     });
   }
 
   async update(userId: bigint, id: bigint, dto: UpdateReviewDto) {
-    const review = await this.prisma.review.findUnique({ where: { id } });
+    const review = await this.reviewsRepository.findOwnerById(id);
     if (!review || review.userId !== userId) {
       throw new ForbiddenException('You can only update your own reviews');
     }
-    return this.prisma.review.update({
-      where: { id },
-      data: {
-        rating: dto.rating,
-        comment: dto.comment,
-      },
-      select: {
-        id: true,
-        rating: true,
-        comment: true,
-        isVerified: true,
-        createdAt: true,
-        user: { select: { id: true, name: true } },
-      },
+
+    return this.reviewsRepository.updateClientReview(id, {
+      rating: dto.rating,
+      comment: dto.comment,
+      images: dto.images,
     });
   }
 
   async remove(userId: bigint, id: bigint) {
-    const review = await this.prisma.review.findUnique({ where: { id } });
+    const review = await this.reviewsRepository.findOwnerById(id);
     if (!review || review.userId !== userId) {
       throw new ForbiddenException('You can only delete your own reviews');
     }
-    return this.prisma.review.delete({ where: { id } });
+    return this.reviewsRepository.deleteById(id);
   }
 }
