@@ -60,21 +60,44 @@ export class LocalStorageService implements StorageInterface {
     return filePath; // Since it's local, we might serve it via a static controller
   }
 
+  /**
+   * Recursively move files from src directory into dest directory.
+   * Creates subdirectories in dest as needed. Removes src when done.
+   */
+  private async mergeDirContents(src: string, dest: string): Promise<void> {
+    const entries = await fs.promises.readdir(src, { withFileTypes: true });
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+      if (entry.isDirectory()) {
+        if (!fs.existsSync(destPath)) {
+          await fs.promises.mkdir(destPath, { recursive: true });
+        }
+        await this.mergeDirContents(srcPath, destPath);
+      } else {
+        if (!fs.existsSync(path.dirname(destPath))) {
+          await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
+        }
+        await fs.promises.rename(srcPath, destPath);
+      }
+    }
+  }
+
   async moveDir(model: string, oldIdOrHash: string, newIdOrHash: string): Promise<string> {
     const oldDir = path.join(this.baseUploadsPath, model, oldIdOrHash);
     const newDir = path.join(this.baseUploadsPath, model, newIdOrHash);
 
     if (fs.existsSync(oldDir)) {
-      if (!fs.existsSync(path.dirname(newDir))) {
-        await fs.promises.mkdir(path.dirname(newDir), { recursive: true });
-      }
-
-      // If the destination directory already exists, remove it first to allow rename
       if (fs.existsSync(newDir)) {
-        await fs.promises.rm(newDir, { recursive: true, force: true });
+        // Destination exists (multiple hashes → same entity) — merge contents
+        await this.mergeDirContents(oldDir, newDir);
+        await fs.promises.rm(oldDir, { recursive: true, force: true });
+      } else {
+        if (!fs.existsSync(path.dirname(newDir))) {
+          await fs.promises.mkdir(path.dirname(newDir), { recursive: true });
+        }
+        await fs.promises.rename(oldDir, newDir);
       }
-
-      await fs.promises.rename(oldDir, newDir);
     }
 
     return `/uploads/${model}/${newIdOrHash}`;
