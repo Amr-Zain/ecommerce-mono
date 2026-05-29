@@ -2,9 +2,10 @@
 
 import * as React from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { PlusSignIcon } from "@hugeicons/core-free-icons"
+import { PlusSignIcon, Location01Icon } from "@hugeicons/core-free-icons"
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia, EmptyContent } from "@ecommerce/ui/components/empty"
 import { Input } from "@ecommerce/ui/components/input"
 import { Textarea } from "@ecommerce/ui/components/textarea"
 import {
@@ -61,7 +62,7 @@ const INITIAL_ADDRESSES: Address[] = [
 ]
 
 export default function AddressesPage() {
-  const [addresses, setAddresses] = React.useState<Address[]>(INITIAL_ADDRESSES)
+  const [addresses, setAddresses] = React.useState<Address[]>([]) // Empty to demonstrate empty state
   
   // Dialog States
   const [isAddOpen, setIsAddOpen] = React.useState(false)
@@ -110,75 +111,95 @@ export default function AddressesPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold tracking-tight">My Addresses</h1>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {addresses.map((addr) => (
-          <div key={addr.id} className="flex flex-col justify-between rounded-xl border bg-card p-5 shadow-sm">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-foreground">{addr.title}</h3>
-                {addr.isDefault && (
-                  <Badge variant="outline" className="border-destructive text-destructive bg-destructive/10 font-semibold rounded-full px-2.5 py-0.5 text-[10px]">
-                    Default
-                  </Badge>
-                )}
+      
+      {addresses.length === 0 ? (
+        <Empty className="py-24">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className="size-16 rounded-2xl bg-muted/50 mb-4 text-muted-foreground">
+              <HugeiconsIcon icon={Location01Icon} className="size-8" strokeWidth={1.5} />
+            </EmptyMedia>
+            <EmptyTitle className="text-xl">No addresses saved</EmptyTitle>
+            <EmptyDescription>
+              Add a delivery address to make your checkout experience faster and easier.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button onClick={() => setIsAddOpen(true)} className="mt-4 rounded-xl px-8 h-11 bg-primary hover:bg-primary/90 gap-2">
+              <HugeiconsIcon icon={PlusSignIcon} className="size-4" strokeWidth={2} />
+              Add New Address
+            </Button>
+          </EmptyContent>
+        </Empty>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {addresses.map((addr) => (
+            <div key={addr.id} className="flex flex-col justify-between rounded-xl border bg-card p-5 shadow-sm">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground">{addr.title}</h3>
+                  {addr.isDefault && (
+                    <Badge variant="outline" className="border-destructive text-destructive bg-destructive/10 font-semibold rounded-full px-2.5 py-0.5 text-[10px]">
+                      Default
+                    </Badge>
+                  )}
+                </div>
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">{addr.name}</p>
+                  <p className="whitespace-pre-line leading-relaxed">{addr.address}</p>
+                </div>
               </div>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">{addr.name}</p>
-                <p className="whitespace-pre-line leading-relaxed">{addr.address}</p>
-              </div>
-            </div>
-            <div className="mt-6 flex items-center gap-4 text-xs font-semibold">
-              <button 
-                onClick={() => handleOpenEdit(addr)}
-                className="text-foreground hover:underline"
-              >
-                Edit
-              </button>
-
-              <AlertDialog>
-                <AlertDialogTrigger>
-                  <button className="text-foreground hover:underline">Remove</button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your address 
-                      "{addr.title}".
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDelete(addr.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              {!addr.isDefault && (
+              <div className="mt-6 flex items-center gap-4 text-xs font-semibold">
                 <button 
-                  onClick={() => handleSetDefault(addr.id)}
+                  onClick={() => handleOpenEdit(addr)}
                   className="text-foreground hover:underline"
                 >
-                  Set as Default
+                  Edit
                 </button>
-              )}
-            </div>
-          </div>
-        ))}
-        
-        {/* Add Address Card */}
-        <button 
-          onClick={handleOpenAdd}
-          className="flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-muted-foreground/30 bg-muted/30 p-5 text-muted-foreground hover:border-foreground hover:bg-muted/50 hover:text-foreground transition-all"
-        >
-          <HugeiconsIcon icon={PlusSignIcon} className="size-6" strokeWidth={2} />
-          <span className="font-bold">Add Address</span>
-        </button>
-      </div>
 
-      {/* Add Address Dialog */}
+                <AlertDialog>
+                  <AlertDialogTrigger>
+                    <button className="text-foreground hover:underline">Remove</button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete this address. You cannot undo this action.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(addr.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                {!addr.isDefault && (
+                  <button 
+                    onClick={() => handleSetDefault(addr.id)}
+                    className="text-foreground hover:underline ml-auto"
+                  >
+                    Set as default
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Add New Button Card */}
+          <button 
+            onClick={() => setIsAddOpen(true)}
+            className="flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed bg-muted/20 p-5 text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground hover:border-muted-foreground/30"
+          >
+            <div className="flex size-10 items-center justify-center rounded-full bg-background border shadow-sm">
+              <HugeiconsIcon icon={PlusSignIcon} className="size-5" strokeWidth={2} />
+            </div>
+            <span className="font-bold text-sm">Add New Address</span>
+          </button>
+        </div>
+      )}
+
+      {/* Add Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
