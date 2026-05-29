@@ -1,23 +1,23 @@
 {
-    "name":  "ecommerce-monorepo",
-    "version":  "0.0.1",
-    "private":  true,
-    "packageManager":  "pnpm@11.0.8",
-    "scripts":  {
-                    "dev":  "turbo dev",
-                    "dev:web":  "pnpm --filter @ecommerce/web dev",
-                    "dev:dashboard":  "pnpm --filter @ecommerce/dashboard dev",
-                    "dev:api":  "pnpm --filter @ecommerce/api dev",
-                    "build":  "turbo build",
-                    "build:web":  "pnpm --filter @ecommerce/web build",
-                    "build:dashboard":  "pnpm --filter @ecommerce/dashboard build",
-                    "build:api":  "pnpm --filter @ecommerce/api build",
-                    "lint":  "turbo lint",
-                    "typecheck":  "turbo typecheck",
-                    "format":  "turbo format",
-                    "imports:ui":  "node ./scripts/update-ui-imports.mjs"
-                },
-    "devDependencies":  {
-                            "turbo":  "^2.9.14"
-                        }
+    "name": "ecommerce-monorepo",
+    "version": "0.0.1",
+    "private": true,
+    "packageManager": "pnpm@11.0.8",
+    "scripts": {
+        "dev": "turbo dev",
+        "dev:web": "pnpm --filter @ecommerce/web dev",
+        "dev:dashboard": "pnpm --filter @ecommerce/dashboard dev",
+        "dev:api": "pnpm --filter @ecommerce/api dev",
+        "build": "turbo build",
+        "build:web": "pnpm --filter @ecommerce/web build",
+        "build:dashboard": "pnpm --filter @ecommerce/dashboard build",
+        "build:api": "pnpm --filter @ecommerce/api build",
+        "lint": "turbo lint",
+        "typecheck": "turbo typecheck",
+        "format": "turbo format",
+        "imports:ui": "node ./scripts/update-ui-imports.mjs"
+    },
+    "devDependencies": {
+        "turbo": "^2.9.14"
+    }
 }

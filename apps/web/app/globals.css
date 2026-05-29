@@ -131,3 +131,24 @@
     @apply font-mono;
   }
 }
+
+@keyframes storefront-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-storefront-marquee {
+  animation: storefront-marquee 55s linear infinite;
+}
+
+.storefront-marquee:hover .animate-storefront-marquee {
+  animation-play-state: paused;
+}
+
+[dir="rtl"] .animate-storefront-marquee {
+  animation-direction: reverse;
+}

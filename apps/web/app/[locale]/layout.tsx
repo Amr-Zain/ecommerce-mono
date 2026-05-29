@@ -5,6 +5,8 @@ import { notFound } from "next/navigation"
 
 import "../globals.css"
 import { SessionProvider } from "@/components/auth/session-provider"
+import { Footer } from "@/components/home/footer"
+import { StorefrontHeader } from "@/components/home/storefront-header"
 import { TanstackQueryProvider } from "@/components/providers/tanstack-query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { DirectionProvider } from "@ecommerce/ui/components/direction"
@@ -67,7 +69,15 @@ export default async function LocaleLayout({
             <TanstackQueryProvider>
               <DirectionProvider direction={direction}>
                 <ThemeProvider>
-                  <TooltipProvider>{children}</TooltipProvider>
+                  <TooltipProvider>
+                    <div className="min-h-screen bg-muted font-sans text-foreground">
+                      <StorefrontHeader />
+                      <main className="mx-auto max-w-7xl bg-background px-4 py-8 sm:px-6">
+                        {children}
+                        <Footer />
+                      </main>
+                    </div>
+                  </TooltipProvider>
                   <Toaster position="top-center" />
                 </ThemeProvider>
               </DirectionProvider>
