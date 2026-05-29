@@ -36,9 +36,10 @@ export interface Product {
 interface ProductCardProps {
   product: Product
   view: "grid" | "list"
+  hideActions?: boolean
 }
 
-export function ProductCard({ product, view }: ProductCardProps) {
+export function ProductCard({ product, view, hideActions = false }: ProductCardProps) {
   const [liked, setLiked] = React.useState(false)
 
   const handleLike = (e: React.MouseEvent) => {
@@ -49,7 +50,7 @@ export function ProductCard({ product, view }: ProductCardProps) {
 
   if (view === "list") {
     return (
-      <div className="group flex gap-4 rounded-xl border bg-white p-4 transition-all hover:shadow-md">
+      <div className="group flex gap-4 rounded-xl border bg-card p-4 transition-all hover:shadow-md">
         {/* Image — clickable */}
         <Link
           href={`/products/${product.id}`}
@@ -61,7 +62,7 @@ export function ProductCard({ product, view }: ProductCardProps) {
               className={cn(
                 "absolute top-2 start-2 z-10 font-bold px-2 py-0.5 rounded-full border-0 text-[10px]",
                 product.badge.toLowerCase().includes("off")
-                  ? "bg-rose-500 text-white animate-pulse"
+                  ? "bg-destructive text-destructive-foreground animate-pulse"
                   : "bg-emerald-500 text-white"
               )}
             >
@@ -95,7 +96,7 @@ export function ProductCard({ product, view }: ProductCardProps) {
               onClick={handleLike}
               className={cn(
                 "shrink-0 flex size-8 items-center justify-center rounded-full bg-muted/60 text-muted-foreground transition-all hover:scale-110",
-                liked && "text-rose-500"
+                liked && "text-destructive"
               )}
               aria-label="Add to favorites"
             >
@@ -108,18 +109,20 @@ export function ProductCard({ product, view }: ProductCardProps) {
           </div>
 
           {/* Price + Cart */}
-          <div className="mt-3 flex items-center gap-3">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-base font-bold text-foreground">${product.price.toFixed(2)}</span>
-              {product.oldPrice && (
-                <span className="text-xs text-muted-foreground line-through">${product.oldPrice.toFixed(2)}</span>
-              )}
+          {!hideActions && (
+            <div className="mt-3 flex items-center gap-3">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-base font-bold text-foreground">${product.price.toFixed(2)}</span>
+                {product.oldPrice && (
+                  <span className="text-xs text-muted-foreground line-through">${product.oldPrice.toFixed(2)}</span>
+                )}
+              </div>
+              <Button className="h-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 text-xs font-semibold px-3">
+                Add to Cart
+                <HugeiconsIcon icon={ShoppingCart01Icon} className="size-3.5" strokeWidth={2} />
+              </Button>
             </div>
-            <Button className="h-8 rounded-lg bg-black hover:bg-black/90 text-white gap-1.5 text-xs font-semibold px-3">
-              Add to Cart
-              <HugeiconsIcon icon={ShoppingCart01Icon} className="size-3.5" strokeWidth={2} />
-            </Button>
-          </div>
+          )}
         </div>
       </div>
     )
@@ -127,7 +130,7 @@ export function ProductCard({ product, view }: ProductCardProps) {
 
   // Grid View (Default)
   return (
-    <div className="group flex flex-col justify-between rounded-xl border bg-white overflow-hidden transition-all hover:shadow-md">
+    <div className="group flex flex-col justify-between rounded-xl border bg-card overflow-hidden transition-all hover:shadow-md">
       {/* Image container — fully clickable */}
       <Link href={`/products/${product.id}`} className="relative block aspect-square w-full bg-muted/60 p-4">
         {/* Badge */}
@@ -136,7 +139,7 @@ export function ProductCard({ product, view }: ProductCardProps) {
             className={cn(
               "absolute top-3.5 start-3.5 z-10 font-bold px-2.5 py-0.5 rounded-full border-0 text-[10px]",
               product.badge.toLowerCase().includes("off")
-                ? "bg-rose-500 text-white"
+                ? "bg-destructive text-destructive-foreground"
                 : "bg-emerald-500 text-white"
             )}
           >
@@ -149,8 +152,8 @@ export function ProductCard({ product, view }: ProductCardProps) {
           type="button"
           onClick={handleLike}
           className={cn(
-            "absolute top-3.5 end-3.5 z-10 flex size-8 items-center justify-center rounded-full bg-white/95 text-muted-foreground shadow-xs transition-all hover:scale-110",
-            liked && "text-rose-500 fill-rose-500"
+            "absolute top-3.5 end-3.5 z-10 flex size-8 items-center justify-center rounded-full bg-background/95 text-muted-foreground shadow-xs transition-all hover:scale-110",
+            liked && "text-destructive fill-destructive"
           )}
           aria-label="Add to favorites"
         >
@@ -184,19 +187,23 @@ export function ProductCard({ product, view }: ProductCardProps) {
         </div>
 
         {/* Pricing & Add to Cart */}
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-sm font-bold text-foreground">${product.price.toFixed(2)}</span>
-          {product.oldPrice && (
-            <span className="text-[10px] text-muted-foreground line-through">
-              ${product.oldPrice.toFixed(2)}
-            </span>
-          )}
-        </div>
+        {!hideActions && (
+          <>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-sm font-bold text-foreground">${product.price.toFixed(2)}</span>
+              {product.oldPrice && (
+                <span className="text-[10px] text-muted-foreground line-through">
+                  ${product.oldPrice.toFixed(2)}
+                </span>
+              )}
+            </div>
 
-        <Button className="mt-4 w-full h-9 rounded-lg bg-black hover:bg-black/90 text-white gap-2 text-xs font-semibold">
-          Add to Cart
-          <HugeiconsIcon icon={ShoppingCart01Icon} className="size-3.5" strokeWidth={2} />
-        </Button>
+            <Button className="mt-4 w-full h-9 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-2 text-xs font-semibold">
+              Add to Cart
+              <HugeiconsIcon icon={ShoppingCart01Icon} className="size-3.5" strokeWidth={2} />
+            </Button>
+          </>
+        )}
       </div>
     </div>
   )

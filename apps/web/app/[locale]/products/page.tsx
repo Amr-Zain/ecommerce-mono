@@ -276,7 +276,7 @@ const MOCK_PRODUCTS: Product[] = [
   },
 ]
 
-const ITEMS_PER_PAGE = 6
+const ITEMS_PER_PAGE = 9
 
 export default async function ProductsPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -412,7 +412,7 @@ export default async function ProductsPage(props: {
             <div
               className={cn(
                 view === "grid"
-                  ? "grid grid-cols-1 gap-6 sm:grid-cols-2"
+                  ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
                   : "flex flex-col gap-4"
               )}
             >
