@@ -2,6 +2,10 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { CustomerService01Icon } from "@hugeicons/core-free-icons"
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia, EmptyContent } from "@ecommerce/ui/components/empty"
+import { Button } from "@ecommerce/ui/components/button"
 
 const MOCK_TICKETS = [
   {
@@ -37,25 +41,47 @@ const MOCK_TICKETS = [
 ]
 
 export default function SupportTicketsPage() {
+  const items: typeof MOCK_TICKETS = [] // MOCK_TICKETS
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold tracking-tight text-foreground">Support Tickets</h1>
-      <div className="flex flex-col gap-4">
-        {MOCK_TICKETS.map((ticket) => (
-          <Link
-            key={ticket.id}
-            href={`/profile/support/${ticket.id}`}
-            className="group flex flex-col justify-center rounded-xl border bg-card px-5 py-4 transition-all hover:shadow-sm"
-          >
-            <h3 className="text-base font-bold text-foreground group-hover:underline">
-              {ticket.title}
-            </h3>
-            <p className="mt-1 text-sm font-medium text-muted-foreground">
-              {ticket.date} — {ticket.category}
-            </p>
-          </Link>
-        ))}
-      </div>
+      
+      {items.length === 0 ? (
+        <Empty className="py-24">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className="size-16 rounded-2xl bg-muted/50 mb-4 text-muted-foreground">
+              <HugeiconsIcon icon={CustomerService01Icon} className="size-8" strokeWidth={1.5} />
+            </EmptyMedia>
+            <EmptyTitle className="text-xl">No support tickets</EmptyTitle>
+            <EmptyDescription>
+              You haven't opened any support tickets yet. Need help with an order?
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button className="mt-4 rounded-xl px-8 h-11 bg-primary hover:bg-primary/90">
+              Contact Support
+            </Button>
+          </EmptyContent>
+        </Empty>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {items.map((ticket) => (
+            <Link
+              key={ticket.id}
+              href={`/profile/support/${ticket.id}`}
+              className="group flex flex-col justify-center rounded-xl border bg-card px-5 py-4 transition-all hover:shadow-sm"
+            >
+              <h3 className="text-base font-bold text-foreground group-hover:underline">
+                {ticket.title}
+              </h3>
+              <p className="mt-1 text-sm font-medium text-muted-foreground">
+                {ticket.date} — {ticket.category}
+              </p>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

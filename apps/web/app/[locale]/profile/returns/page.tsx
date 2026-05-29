@@ -3,16 +3,41 @@
 import * as React from "react"
 import Image from "next/image"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { FavouriteIcon, StarIcon, InformationCircleIcon, Copy01Icon } from "@hugeicons/core-free-icons"
+import { FavouriteIcon, StarIcon, InformationCircleIcon, Copy01Icon, Exchange01Icon } from "@hugeicons/core-free-icons"
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia, EmptyContent } from "@ecommerce/ui/components/empty"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 export default function ReturnsPage() {
+  const items: any[] = [] // Empty to demonstrate empty state
+
   return (
     <div className="space-y-6">
-      {/* Product Box */}
-      <div className="flex flex-col gap-6 rounded-xl border bg-card p-5 sm:flex-row">
+      <h1 className="text-2xl font-bold tracking-tight text-foreground mb-6">Returns & Refunds</h1>
+      
+      {items.length === 0 ? (
+        <Empty className="py-24">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className="size-16 rounded-2xl bg-muted/50 mb-4 text-muted-foreground">
+              <HugeiconsIcon icon={Exchange01Icon} className="size-8" strokeWidth={1.5} />
+            </EmptyMedia>
+            <EmptyTitle className="text-xl">No returns or refunds</EmptyTitle>
+            <EmptyDescription>
+              You don't have any returned items or active refund requests at the moment.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button className="mt-4 rounded-xl px-8 h-11 bg-primary hover:bg-primary/90">
+              <Link href="/profile/orders">View My Orders</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
+      ) : (
+        <>
+          {/* Product Box */}
+          <div className="flex flex-col gap-6 rounded-xl border bg-card p-5 sm:flex-row">
         {/* Image */}
         <div className="relative aspect-[3/4] w-36 shrink-0 overflow-hidden rounded-lg bg-muted/60 flex items-center justify-center p-0">
           <button className="absolute top-2.5 end-2.5 z-10 text-muted-foreground hover:text-foreground transition-all">
@@ -144,9 +169,11 @@ export default function ReturnsPage() {
           <span className="text-sm font-semibold">Need any help?</span>
         </div>
         <Button className="h-8 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs px-4">
-          Contact Support
-        </Button>
-      </div>
+            Contact Support
+          </Button>
+        </div>
+        </>
+      )}
     </div>
   )
 }

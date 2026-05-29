@@ -1,6 +1,8 @@
 import * as React from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Invoice01Icon, UserCircleIcon, Wallet01Icon } from "@hugeicons/core-free-icons"
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@ecommerce/ui/components/empty"
+import { History } from "@hugeicons/core-free-icons"
 
 export default function WalletPage() {
   return (
@@ -80,6 +82,22 @@ export default function WalletPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Transaction History */}
+      <div className="space-y-4 pt-4 border-t">
+        <h3 className="text-sm font-bold">Transaction History</h3>
+        <Empty className="py-12 bg-muted/20 border-0">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className="size-16 rounded-2xl bg-muted/50 mb-2 text-muted-foreground">
+              <HugeiconsIcon icon={History} className="size-8" strokeWidth={1.5} />
+            </EmptyMedia>
+            <EmptyTitle>No transactions yet</EmptyTitle>
+            <EmptyDescription>
+              Your wallet transaction history will appear here.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </div>
     </div>
   )
