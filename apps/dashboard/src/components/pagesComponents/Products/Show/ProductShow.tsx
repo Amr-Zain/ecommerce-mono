@@ -1,0 +1,513 @@
+import * as React from 'react'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from '@ecommerce/ui/components/card'
+import { Button } from '@ecommerce/ui/components/button'
+import { Badge } from '@ecommerce/ui/components/badge'
+import { useTranslation } from 'react-i18next'
+import { formatDate } from '@/util/helpers'
+
+import { ProductHeaderCard } from './ProductHeaderCard'
+import { ProductVariationsCard } from './ProductVariationsCard'
+import { LocalizedContentCard } from '../../StaticPages/show/LocalizedContentCard'
+import { Product, ProductVariation, ProductStatistics } from '@/types/api/product'
+import ProductVariationFormDialog from '../VariationsForm'
+import { ProductReviewsCard } from './ProductReviewsCard'
+import { SARIcon } from '@/components/common/Icons'
+import { Link, useNavigate, useSearch } from '@tanstack/react-router'
+
+import { StatsCard } from '@/components/common/charts/StatsCard'
+import { HasPermission } from '@/components/common/HasPermission'
+import {
+  ShoppingCart,
+  TrendingUp,
+  Eye,
+  Heart,
+  Package,
+  Star as StarIcon,
+  LayoutDashboard,
+  History,
+  ArrowRight,
+  Plus,
+  Edit,
+} from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@ecommerce/ui/components/tabs'
+import { motion, AnimatePresence } from 'motion/react'
+import { Avatar, AvatarImage, AvatarFallback } from '@ecommerce/ui/components/avatar'
+import { Progress } from '@ecommerce/ui/components/progress'
+
+type Props = {
+  product: Product
+}
+
+function getDiscountBadge(discount: Product['discount']) {
+  if (!discount) return ''
+  return discount.type === 'percentage'
+    ? `-${discount.value}%`
+    : `-${discount.value}`
+}
+
+export function ProductShow({ product }: Props) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const search: any = useSearch({ strict: false })
+  const activeTab = search.tab || 'details'
+
+  const setActiveTab = (tab: string) => {
+    navigate({
+      to: '.',
+      search: (prev: any) => ({ ...prev, tab }),
+      replace: true,
+    })
+  }
+
+  const discountBadge = getDiscountBadge(product.discount)
+
+  // Dialog state for create/edit variation
+  const [variationFormOpen, setVariationFormOpen] = React.useState(false)
+  const [selectedVariation, setSelectedVariation] =
+    React.useState<ProductVariation | null>(null)
+
+  const openCreateVariation = React.useCallback(() => {
+    setSelectedVariation(null)
+    setVariationFormOpen(true)
+  }, [])
+
+  const openEditVariation = React.useCallback((v: ProductVariation) => {
+    setSelectedVariation(v)
+    setVariationFormOpen(true)
+  }, [])
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-8 pb-4">
+      {/* Header */}
+      <ProductHeaderCard product={product} />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex items-center justify-between mb-4">
+          <TabsList className="bg-muted/50 border relative h-12 p-1 gap-1">
+            <TabsTrigger value="details" className="relative px-6 h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none group">
+              <LayoutDashboard className="h-4 w-4 relative z-10" />
+              <span className="relative z-10 font-bold">{t('productShow.tabs.details')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="statistics" className="relative px-6 h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none group">
+              <TrendingUp className="h-4 w-4 relative z-10" />
+              <span className="relative z-10 font-bold">{t('productShow.tabs.statistics')}</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <TabsContent value="details" className="space-y-8 outline-none mt-4">
+            <motion.div
+              key="details"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              {/* Pricing + Meta */}
+              <Card className="shadow-none border-muted/60">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center justify-between">
+                    <span>{t('productShow.pricing.title')}</span>
+                    <Badge variant="outline" className="font-mono text-[10px]">{product.barcode}</Badge>
+                  </CardTitle>
+                  <CardDescription>{t('productShow.pricing.subtitle')}</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-6 md:grid-cols-4">
+                  {/* PRICE with Discount */}
+                  <div className="bg-muted/30 p-4 rounded-xl border border-muted/50">
+                    <div className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
+                      <TrendingUp className="h-3 w-3" />
+                      {t('table.price', 'Price')}
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <div className="text-3xl font-black flex items-center gap-1 text-primary">
+                        {(product.price - (product.discount?.amount || 0)).toFixed(2)}
+                        <SARIcon className="h-6 w-6 opacity-70" />
+                      </div>
+                      {product.discount && product.discount.value > 0 && (
+                        <div className="flex flex-col gap-1 mt-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground line-through decoration-destructive/50">
+                              {product.price.toFixed(2)}
+                            </span>
+                            <Badge variant="destructive" className="text-[10px] h-5 px-1.5 font-bold animate-in fade-in zoom-in duration-300">
+                              {discountBadge}
+                            </Badge>
+                          </div>
+                          <p className="text-[10px] text-destructive font-bold uppercase tracking-wider">
+                            {t('productShow.youSave')}: {(product.discount?.amount || 0).toFixed(2)} <SARIcon className="inline size-2.5" />
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SKU & Barcode */}
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">
+                      {t('table.columns.sku')} / {t('table.columns.barcode')}
+                    </div>
+                    <div className="text-sm font-medium">{product.sku}</div>
+                    <div className="text-[11px] text-muted-foreground">{product.barcode}</div>
+                  </div>
+
+                  {/* STOCK STATUS */}
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">
+                      {t('table.columns.stock')}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold">{product.stock}</span>
+                      <Badge variant={product.stock > 0 ? "outline" : "destructive"} className="text-[9px] h-4">
+                        {product.stock > 0 ? t('productShow.inStock') : t('status.inactive')}
+                      </Badge>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {t('productShow.reserved')}: {product.reserved} • {t('productShow.sold')}: {product.sold}
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">
+                      {t('Form.labels.tags')}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {product.tags && product.tags.length > 0 ? (
+                        product.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-[9px] px-1.5 h-4">
+                            {tag}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Localized content */}
+              <LocalizedContentCard
+                titleI18nKey="productShow.localized.title"
+                subtitleI18nKey="productShow.localized.subtitle"
+                en={{
+                  title: product.en?.name ?? product.name,
+                  content: product.en?.description ?? product.description,
+                }}
+                ar={{ title: product.ar?.name, content: product.ar?.description }}
+              />
+
+              {/* Gallery */}
+              <Card className="shadow-none border-muted/60">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center justify-between">
+                    <span>{t('productShow.gallery.title')}</span>
+                  </CardTitle>
+                  <CardDescription>{t('productShow.gallery.subtitle')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {product.image ? (
+                      <a
+                        href={product.image.path}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="md:col-span-1 border rounded-xl overflow-hidden group relative"
+                      >
+                        <img
+                          src={product.image.path}
+                          alt={product.en?.name ?? product.name}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/10 transition-opacity opacity-0 group-hover:opacity-100 flex items-center justify-center">
+                          <Eye className="text-white h-8 w-8" />
+                        </div>
+                      </a>
+                    ) : null}
+                    <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                      {product?.gallery?.map((img, i) => (
+                        <a key={i} href={img.path} target="_blank" rel="noreferrer" className='border rounded-xl overflow-hidden group relative h-48'>
+                          <img
+                            src={img.path}
+                            alt={`Gallery ${i + 1}`}
+                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/10 transition-opacity opacity-0 group-hover:opacity-100 flex items-center justify-center">
+                            <Eye className="text-white h-6 w-6" />
+                          </div>
+                        </a>
+                      ))}
+                      {(product.gallery?.length || []) === 0 && (
+                        <div className="text-sm text-muted-foreground col-span-2 py-8 text-center bg-muted/20 rounded-xl border border-dashed">
+                          {t('Text.noResults')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Variations list */}
+              <ProductVariationsCard
+                variations={product.variants ?? []}
+                onCreate={openCreateVariation}
+                onEdit={openEditVariation}
+              />
+
+              {/* Product Reviews */}
+              <ProductReviewsCard
+                productId={product.id}
+              />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="statistics" className="space-y-8 outline-none mt-4">
+            <motion.div
+              key="statistics"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              {/* STATISTICS SECTION */}
+              {product.statistics && (
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatsCard
+                      title={t('productShow.stats.totalSold')}
+                      value={product.statistics.sales.total_sold}
+                      subItems={[
+                        { label: t('productShow.stats.totalRevenue'), value: product.statistics.sales.total_revenue },
+                        { label: t('productShow.stats.avgOrderQty'), value: product.statistics.sales.average_order_qty },
+                        { label: t('productShow.stats.conversion'), value: `${product.statistics.engagement.conversion_rate}%` },
+                      ]}
+                      change={`${product.statistics.sales.sales_trend}%`}
+                      changeType={product.statistics.sales.sales_trend >= 0 ? 'increase' : 'decrease'}
+                      icon={ShoppingCart}
+                      iconColor="text-blue-600 bg-blue-500/10"
+                    />
+                    <StatsCard
+                      title={t('productShow.stats.views')}
+                      value={product.statistics.engagement.views_count}
+                      subItems={[
+                        { label: t('productShow.stats.wishlist'), value: product.statistics.engagement.wishlist_count },
+                        { label: t('productShow.stats.cartAdditions'), value: product.statistics.engagement.cart_additions },
+                      ]}
+                      icon={Eye}
+                      iconColor="text-indigo-600 bg-indigo-500/10"
+                    />
+                    <StatsCard
+                      title={t('productShow.stats.available')}
+                      value={product.statistics.inventory.available_stock}
+                      subItems={[
+                        { label: t('productShow.stats.stockValue'), value: product.statistics.inventory.stock_value },
+                        { label: t('productShow.variations.title'), value: product.statistics.variations.total_count },
+                      ]}
+                      icon={Package}
+                      iconColor="text-emerald-600 bg-emerald-500/10"
+                    />
+                    <StatsCard
+                      title={t('productShow.reviews')}
+                      value={`${product.statistics.reviews.average_rating} / 5`}
+                      subItems={[
+                        { label: t('productShow.totalReviews'), value: product.statistics.reviews.total_count },
+                        { label: t('dashboard.pendingApproval'), value: product.statistics.reviews.pending_count },
+                      ]}
+                      icon={StarIcon}
+                      iconColor="text-yellow-500 bg-yellow-500/10"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Activity Section */}
+              {product.recent_activity && (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Recent Orders */}
+                  <Card className="shadow-none border-muted/60">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <History className="h-4 w-4 text-primary" />
+                        {t('productShow.activity.orders')}
+                      </CardTitle>
+                      <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs">
+                        <Link to={"/orders" as any}>
+                          {t('actions.viewAll')}
+                          <ArrowRight className="h-3 w-3 rtl:rotate-180" />
+                        </Link>
+                      </Button>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {product.recent_activity?.orders?.map((order) => (
+                          <Link
+                            key={order.id}
+                            to={`/orders/show/${order.id}` as any}
+                            className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-transparent hover:border-border hover:bg-muted/50 transition-all cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-1.5 rounded bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                                <ShoppingCart className="h-3.5 w-3.5" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold">#{order.order_number}</p>
+                                <p className="text-[10px] text-muted-foreground">{order.created_at}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <p className="text-sm font-bold">{order.total} <SARIcon className="inline size-3 mb-0.5 opacity-60" /></p>
+                              <Badge
+                                variant={order.status === 'open' ? 'default' : 'secondary'}
+                                className="capitalize text-[10px] px-2 h-5"
+                              >
+                                {order.status}
+                              </Badge>
+                            </div>
+                          </Link>
+                        ))}
+                        {!product.recent_activity.orders?.length && (
+                          <p className="text-sm text-muted-foreground py-4 text-center">{t('Text.noResults')}</p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Recent Reviews or Wishlists */}
+                  <div className="space-y-6">
+                    <Card className="shadow-none border-muted/60">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <StarIcon className="h-4 w-4 text-warning fill-warning" />
+                          {t('productShow.activity.reviews')}
+                        </CardTitle>
+                        <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs">
+                          <Link to={"/reviews" as any} search={{ 'filters[product_id]': product.id } as any}>
+                            {t('actions.viewAll')}
+                            <ArrowRight className="h-3 w-3 rtl:rotate-180" />
+                          </Link>
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Rating Distribution Summary */}
+                          {product.statistics?.reviews?.rating_distribution && (
+                            <div className="py-2 space-y-2.5 mb-2 border-b border-muted/30">
+                              {[5, 4, 3, 2, 1].map((star) => {
+                                const starKey = `${star}_star` as keyof ProductStatistics['reviews']['rating_distribution']
+                                const distribution = product.statistics!.reviews.rating_distribution
+                                const count = distribution[starKey] || 0
+                                // Calculate total from the distribution itself to ensure sum-to-100% logic
+                                const distValues = Object.values(distribution) as number[]
+                                const totalInDistribution = distValues.reduce((acc, curr) => acc + curr, 0) || 1
+                                const percentage = (count / totalInDistribution) * 100
+
+                                return (
+                                  <div key={star} className="grid grid-cols-[30px_1fr_40px] items-center gap-4">
+                                    <span className="text-[10px] font-black text-muted-foreground/70 text-right">{star}★</span>
+                                    <Progress
+                                      value={percentage}
+                                      className="h-2 bg-muted/40 [&_[data-slot=progress-indicator]]:bg-yellow-400"
+                                    />
+                                    <span className="text-[10px] font-bold tabular-nums text-muted-foreground text-start">
+                                      {count} ({Math.round(percentage)}%)
+                                    </span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+
+                          {product.recent_activity?.reviews?.map((review) => (
+                            <Link
+                              key={review.id}
+                              to={`/reviews/show/${review.id}` as any}
+                              className="flex gap-3 p-3 rounded-xl hover:bg-muted/50 transition-all group border border-transparent hover:border-muted"
+                            >
+                              <div className="relative shrink-0">
+                                <Avatar className="h-10 w-10 border-2 border-background shadow-sm group-hover:border-warning/30 transition-colors">
+                                  <AvatarFallback className="bg-warning/10 text-warning font-black text-xs">
+                                    {review.rating}★
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-background border flex items-center justify-center shadow-sm">
+                                  <StarIcon className="h-2 w-2 fill-warning text-warning" />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs font-bold truncate">{review.user_name}</p>
+                                  <span className="text-[9px] text-muted-foreground">{review.created_at?.split(' ')[0]}</span>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+                                  {review.comment || (<i>{t('productShow.noReviews')}</i>)}
+                                </p>
+                              </div>
+                            </Link>
+                          ))}
+                          {!product.recent_activity.reviews?.length && (
+                            <p className="text-sm text-muted-foreground py-2 text-center">{t('Text.noResults')}</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="shadow-none border-muted/60">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Heart className="h-4 w-4 text-pink-500 fill-pink-500" />
+                          {t('productShow.activity.wishlists')}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap gap-2">
+                          {product.recent_activity?.wishlists?.map((w) => (
+                            <Badge
+                              key={w.id}
+                              variant="secondary"
+                              className="px-3 py-1 bg-pink-50 text-pink-700 border-pink-100 hover:bg-pink-100 cursor-pointer"
+                            >
+                              <Link to={`/users/show/$id`} params={{ id: w.id?.toString() }}>
+                                {w.user_name}
+                              </Link>
+                            </Badge>
+                          ))}
+                          {!product.recent_activity.wishlists?.length && (
+                            <p className="text-sm text-muted-foreground w-full text-center">{t('Text.noResults')}</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </TabsContent>
+        </AnimatePresence>
+      </Tabs>
+
+      <CardFooter className="flex items-center justify-end text-sm text-muted-foreground">
+        {t('table.updatedAt')}: &nbsp; {formatDate(product.created_at)}
+      </CardFooter>
+
+      {/* Variations Dialog */}
+      <ProductVariationFormDialog
+        productId={product.id}
+        isOpen={variationFormOpen}
+        onClose={() => setVariationFormOpen(false)}
+        variation={selectedVariation ?? undefined}
+      />
+    </div>
+  )
+}
+
+export default ProductShow

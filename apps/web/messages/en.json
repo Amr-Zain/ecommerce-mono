@@ -1,0 +1,22 @@
+{
+  "Home": {
+    "title": "Project ready!",
+    "description": "You may now add components and start building.",
+    "buttonNote": "We've already added the button component for you.",
+    "button": "Button",
+    "themeHint": "Press d to toggle dark mode",
+    "language": "Language",
+    "english": "English",
+    "arabic": "Arabic"
+  },
+  "Auth": {
+    "loginTitle": "Sign in",
+    "loginDescription": "Use the mock credentials while the real API is not connected.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "adminHint": "Admin: admin@example.com",
+    "customerHint": "Customer: customer@example.com",
+    "passwordHint": "Password: password"
+  }
+}

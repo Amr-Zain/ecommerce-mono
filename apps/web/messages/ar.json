@@ -1,0 +1,22 @@
+{
+  "Home": {
+    "title": "المشروع جاهز!",
+    "description": "يمكنك الآن إضافة المكونات والبدء في البناء.",
+    "buttonNote": "أضفنا مكون الزر بالفعل.",
+    "button": "زر",
+    "themeHint": "اضغط d لتبديل الوضع الداكن",
+    "language": "اللغة",
+    "english": "الإنجليزية",
+    "arabic": "العربية"
+  },
+  "Auth": {
+    "loginTitle": "تسجيل الدخول",
+    "loginDescription": "استخدم بيانات الدخول التجريبية إلى أن يتم ربط الواجهة البرمجية.",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "تسجيل الدخول",
+    "adminHint": "المدير: admin@example.com",
+    "customerHint": "العميل: customer@example.com",
+    "passwordHint": "كلمة المرور: password"
+  }
+}
