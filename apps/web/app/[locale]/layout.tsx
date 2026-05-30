@@ -70,9 +70,9 @@ export default async function LocaleLayout({
               <DirectionProvider direction={direction}>
                 <ThemeProvider>
                   <TooltipProvider>
-                    <div className="min-h-screen bg-muted font-sans text-foreground">
+                    <div className="min-h-screen bg-background text-foreground">
                       <StorefrontHeader />
-                      <main className="mx-auto max-w-7xl bg-background px-4 py-8 sm:px-6">
+                      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
                         {children}
                         <Footer />
                       </main>

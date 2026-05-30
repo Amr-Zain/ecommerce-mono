@@ -49,6 +49,16 @@ export function ListingSidebar() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [expandedSections, setExpandedSections] = React.useState<Set<string>>(new Set())
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(section)) next.delete(section)
+      else next.add(section)
+      return next
+    })
+  }
 
   // Get active filters from URL
   const selectedGenders = searchParams.getAll("gender")
@@ -145,7 +155,7 @@ export function ListingSidebar() {
         {hasFilters && (
           <button
             onClick={clearAll}
-            className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+            className="text-xs font-semibold text-destructive hover:text-destructive/80 transition-colors"
           >
             Clear All
           </button>
@@ -154,7 +164,7 @@ export function ListingSidebar() {
 
       {/* Gender Filter */}
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-3">
           {["Men", "Women", "Girls", "Boys"].map((gender) => {
             const val = gender.toLowerCase()
             const isChecked = selectedGenders.includes(val)
@@ -174,13 +184,13 @@ export function ListingSidebar() {
       <hr className="border-border/60" />
 
       {/* Brand Filter */}
-      <div className="space-y-3">
+      {/* <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold tracking-tight">Brand</h3>
           <HugeiconsIcon icon={Search01Icon} className="size-4 text-muted-foreground" />
         </div>
         <div className="space-y-2">
-          {BRANDS.map((brand) => {
+          {(expandedSections.has("brand") ? BRANDS : BRANDS.slice(0, 3)).map((brand) => {
             const isChecked = selectedBrands.includes(brand.value)
             return (
               <label key={brand.value} className="flex items-center gap-2.5 cursor-pointer text-sm hover:text-foreground/80">
@@ -192,13 +202,16 @@ export function ListingSidebar() {
               </label>
             )
           })}
-          <button className="text-xs font-semibold text-primary hover:underline">
-            6+ more
-          </button>
+          {BRANDS.length > 3 && (
+            <button onClick={() => toggleSection("brand")} className="text-xs font-semibold text-primary hover:underline">
+              {expandedSections.has("brand") ? "Show less" : `${BRANDS.length - 3}+ more`}
+            </button>
+          )}
         </div>
-      </div>
+      </div> 
 
       <hr className="border-border/60" />
+      */}
 
       {/* Display type Filter */}
       <div className="space-y-3">
@@ -207,7 +220,7 @@ export function ListingSidebar() {
           <HugeiconsIcon icon={Search01Icon} className="size-4 text-muted-foreground" />
         </div>
         <div className="space-y-2">
-          {DISPLAY_TYPES.map((display) => {
+          {(expandedSections.has("display") ? DISPLAY_TYPES : DISPLAY_TYPES.slice(0, 3)).map((display) => {
             const isChecked = selectedDisplays.includes(display.value)
             return (
               <label key={display.value} className="flex items-center gap-2.5 cursor-pointer text-sm hover:text-foreground/80">
@@ -219,9 +232,11 @@ export function ListingSidebar() {
               </label>
             )
           })}
-          <button className="text-xs font-semibold text-primary hover:underline">
-            6+ more
-          </button>
+          {DISPLAY_TYPES.length > 3 && (
+            <button onClick={() => toggleSection("display")} className="text-xs font-semibold text-primary hover:underline">
+              {expandedSections.has("display") ? "Show less" : `${DISPLAY_TYPES.length - 3}+ more`}
+            </button>
+          )}
         </div>
       </div>
 
@@ -234,7 +249,7 @@ export function ListingSidebar() {
           <HugeiconsIcon icon={Search01Icon} className="size-4 text-muted-foreground" />
         </div>
         <div className="space-y-2">
-          {SCREEN_SIZES.map((screen) => {
+          {(expandedSections.has("screen") ? SCREEN_SIZES : SCREEN_SIZES.slice(0, 3)).map((screen) => {
             const isChecked = selectedScreens.includes(screen.value)
             return (
               <label key={screen.value} className="flex items-center gap-2.5 cursor-pointer text-sm hover:text-foreground/80">
@@ -246,9 +261,11 @@ export function ListingSidebar() {
               </label>
             )
           })}
-          <button className="text-xs font-semibold text-primary hover:underline">
-            6+ more
-          </button>
+          {SCREEN_SIZES.length > 3 && (
+            <button onClick={() => toggleSection("screen")} className="text-xs font-semibold text-primary hover:underline">
+              {expandedSections.has("screen") ? "Show less" : `${SCREEN_SIZES.length - 3}+ more`}
+            </button>
+          )}
         </div>
       </div>
 
@@ -261,7 +278,7 @@ export function ListingSidebar() {
           <HugeiconsIcon icon={Search01Icon} className="size-4 text-muted-foreground" />
         </div>
         <div className="space-y-2">
-          {SHAPES.map((shape) => {
+          {(expandedSections.has("shape") ? SHAPES : SHAPES.slice(0, 3)).map((shape) => {
             const isChecked = selectedShapes.includes(shape.value)
             return (
               <label key={shape.value} className="flex items-center gap-2.5 cursor-pointer text-sm hover:text-foreground/80">
@@ -273,9 +290,11 @@ export function ListingSidebar() {
               </label>
             )
           })}
-          <button className="text-xs font-semibold text-primary hover:underline">
-            6+ more
-          </button>
+          {SHAPES.length > 3 && (
+            <button onClick={() => toggleSection("shape")} className="text-xs font-semibold text-primary hover:underline">
+              {expandedSections.has("shape") ? "Show less" : `${SHAPES.length - 3}+ more`}
+            </button>
+          )}
         </div>
       </div>
 
@@ -313,7 +332,7 @@ export function ListingSidebar() {
           <HugeiconsIcon icon={Search01Icon} className="size-4 text-muted-foreground" />
         </div>
         <div className="flex flex-wrap gap-2.5">
-          {COLORS.map((color) => {
+          {(expandedSections.has("color") ? COLORS : COLORS.slice(0, 6)).map((color) => {
             const isSelected = selectedColors.includes(color.value)
             return (
               <button
@@ -330,9 +349,11 @@ export function ListingSidebar() {
             )
           })}
         </div>
-        <button className="text-xs font-semibold text-primary hover:underline block mt-1">
-          6+ more
-        </button>
+        {COLORS.length > 6 && (
+          <button onClick={() => toggleSection("color")} className="text-xs font-semibold text-primary hover:underline block mt-1">
+            {expandedSections.has("color") ? "Show less" : `${COLORS.length - 6}+ more`}
+          </button>
+        )}
       </div>
 
       <hr className="border-border/60" />
@@ -364,7 +385,7 @@ export function ListingSidebar() {
           {discountFilter && (
             <button
               onClick={() => handleDiscountChange("")}
-              className="text-xs font-semibold text-rose-500 hover:underline block mt-1"
+              className="text-xs font-semibold text-destructive hover:underline block mt-1"
             >
               Clear Discount Filter
             </button>
