@@ -13,19 +13,19 @@ export default function ProfilePage() {
         <h2 className="text-xl font-bold tracking-tight text-foreground">Personal Information</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-bold">First Name<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">First Name<span className="text-destructive ps-1">*</span></label>
             <Input defaultValue="John" className="h-11" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold">Last Name<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">Last Name<span className="text-destructive ps-1">*</span></label>
             <Input defaultValue="Doe" className="h-11" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold">Email Address<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">Email Address<span className="text-destructive ps-1">*</span></label>
             <Input defaultValue="john@gmail.com" type="email" className="h-11" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold">Phone<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">Phone<span className="text-destructive ps-1">*</span></label>
             <Input defaultValue="123-456-0789" type="tel" className="h-11" />
           </div>
           <div className="space-y-2">
@@ -35,7 +35,7 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <label className="text-sm font-bold">Gender</label>
             <Select defaultValue="male">
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="data-[size=default]:h-11 w-full">
                 <SelectValue placeholder="Select Gender" />
               </SelectTrigger>
               <SelectContent>
@@ -58,9 +58,9 @@ export default function ProfilePage() {
         <h2 className="text-xl font-bold tracking-tight text-foreground">Address Information</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-bold">Country<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">Country<span className="text-destructive ps-1">*</span></label>
             <Select defaultValue="usa">
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="data-[size=default]:h-11 w-full">
                 <SelectValue placeholder="Select Country" />
               </SelectTrigger>
               <SelectContent>
@@ -71,9 +71,9 @@ export default function ProfilePage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold">Region/State<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">Region/State<span className="text-destructive ps-1">*</span></label>
             <Select defaultValue="california">
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="data-[size=default]:h-11 w-full">
                 <SelectValue placeholder="Select State" />
               </SelectTrigger>
               <SelectContent>
@@ -84,9 +84,9 @@ export default function ProfilePage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold">City<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">City<span className="text-destructive ps-1">*</span></label>
             <Select defaultValue="losangeles">
-              <SelectTrigger className="h-11">
+              <SelectTrigger className="data-[size=default]:h-11 w-full">
                 <SelectValue placeholder="Select City" />
               </SelectTrigger>
               <SelectContent>
@@ -97,7 +97,7 @@ export default function ProfilePage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold">Post Code<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">Post Code<span className="text-destructive ps-1">*</span></label>
             <Input defaultValue="90001" className="h-11" />
           </div>
         </div>
@@ -116,15 +116,15 @@ export default function ProfilePage() {
         <h2 className="text-xl font-bold tracking-tight text-foreground">Change Password</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-bold">Old Password<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">Old Password<span className="text-destructive ps-1">*</span></label>
             <Input type="password" defaultValue="password123" className="h-11" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold">New Password<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">New Password<span className="text-destructive ps-1">*</span></label>
             <Input type="password" defaultValue="password123" className="h-11" />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <label className="text-sm font-bold">Confirm Password<span className="text-destructive">*</span></label>
+            <label className="text-sm font-bold">Confirm Password<span className="text-destructive ps-1">*</span></label>
             <Input type="password" defaultValue="password123" className="h-11" />
           </div>
         </div>

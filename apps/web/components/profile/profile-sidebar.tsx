@@ -40,7 +40,7 @@ export function ProfileSidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-full sm:w-[280px] shrink-0 space-y-6 rounded-xl border bg-card p-6 pb-8">
+    <aside className="flex w-full flex-col gap-6 sm:w-[280px] shrink-0 rounded-xl border bg-card p-6">
       {/* Profile Header */}
       <div className="flex flex-col gap-4 pb-6 border-b">
         <div className="flex flex-col gap-2">
@@ -64,9 +64,9 @@ export function ProfileSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-1">
+      <nav className="flex flex-1 flex-col gap-1">
         {SIDEBAR_LINKS.map((link) => {
-          const isActive = pathname?.includes(link.href)
+          const isActive = pathname === link.href
           return (
             <Link
               key={link.href}
@@ -88,7 +88,7 @@ export function ProfileSidebar() {
           )
         })}
 
-        <div className="pt-4 mt-2 border-t ">
+        <div className="mt-auto pt-4 border-t">
           <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground">
             <HugeiconsIcon icon={Logout01Icon} className="size-4.5" strokeWidth={2} />
             Logout

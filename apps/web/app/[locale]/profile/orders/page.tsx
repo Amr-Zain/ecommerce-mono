@@ -176,7 +176,7 @@ export default function OrdersPage() {
                   </div>
                   {order.status === "In Progress" && (
                     <Button className="h-9 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-2 text-xs font-semibold px-4">
-                      <Link href={`/profile/orders/${order.id}`}>
+                      <Link href={`/profile/orders/${order.id}`} className="flex items-center gap-2">
                         Track Order
                         <HugeiconsIcon icon={DeliveryTruck01Icon} className="size-4" strokeWidth={2} />
                       </Link>
