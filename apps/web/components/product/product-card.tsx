@@ -7,6 +7,12 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { FavouriteIcon, ShoppingCart01Icon } from "@hugeicons/core-free-icons"
 import { Button } from "@ecommerce/ui/components/button"
 import { Badge } from "@ecommerce/ui/components/badge"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@ecommerce/ui/components/carousel"
 import { cn } from "@/lib/utils"
 
 export interface Product {
@@ -17,6 +23,7 @@ export interface Product {
   price: number
   oldPrice?: number
   image: string
+  images?: string[]
   rating: number
   gender: string
   display: string
@@ -31,6 +38,7 @@ export interface Product {
   strap?: string
   water?: string
   compatibility?: string[]
+  collection?: string
 }
 
 interface ProductCardProps {
@@ -39,8 +47,88 @@ interface ProductCardProps {
   hideActions?: boolean
 }
 
+function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
+  const [api, setApi] = React.useState<CarouselApi>()
+  const [current, setCurrent] = React.useState(0)
+
+  React.useEffect(() => {
+    if (!api) return
+    const onSelect = () => setCurrent(api.selectedScrollSnap())
+    api.on("select", onSelect)
+    setCurrent(api.selectedScrollSnap())
+    return () => { api.off("select", onSelect) }
+  }, [api])
+
+  if (images.length <= 1) {
+    return (
+      <Image
+        src={images[0]}
+        alt={alt}
+        fill
+        sizes="(max-width: 768px) 50vw, 33vw"
+        className="object-cover"
+      />
+    )
+  }
+
+  return (
+    <Carousel
+      setApi={setApi}
+      opts={{
+        loop: true,
+        align: "start",
+        watchDrag: (_api, event) => {
+          event.stopPropagation()
+          return true
+        },
+      }}
+      className="absolute inset-0 h-full w-full"
+    >
+      <CarouselContent className="-ms-0 h-full">
+        {images.map((src, idx) => (
+          <CarouselItem key={idx} className="ps-0 basis-full">
+            <div className="relative aspect-square w-full">
+              <Image
+                src={src}
+                alt={`${alt} - ${idx + 1}`}
+                fill
+                sizes="(max-width: 768px) 50vw, 33vw"
+                className="object-cover"
+                priority={idx === 0}
+              />
+            </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+
+      {/* Circular dot indicators — no arrows */}
+      <div className="absolute bottom-2 left-0 right-0 z-20 flex items-center justify-center gap-2">
+        {images.map((_, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); api?.scrollTo(idx) }}
+            className={cn(
+              "size-2.5 rounded-full transition-all ring-1 ring-transparent",
+              idx === current
+                ? "bg-foreground ring-foreground/20 scale-125"
+                : "bg-foreground/30 hover:bg-foreground/60"
+            )}
+            aria-label={`Go to image ${idx + 1}`}
+          />
+        ))}
+      </div>
+    </Carousel>
+  )
+}
+
 export function ProductCard({ product, view, hideActions = false }: ProductCardProps) {
   const [liked, setLiked] = React.useState(false)
+
+  const allImages = React.useMemo(() => {
+    if (product.images && product.images.length > 0) return product.images
+    return [product.image, product.image]
+  }, [product.images, product.image])
 
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -51,11 +139,8 @@ export function ProductCard({ product, view, hideActions = false }: ProductCardP
   if (view === "list") {
     return (
       <div className="group flex gap-4 rounded-xl border bg-card p-4 transition-all hover:shadow-md">
-        {/* Image — clickable */}
-        <Link
-          href={`/products/${product.id}`}
-          className="relative aspect-square h-36 w-36 shrink-0 overflow-hidden rounded-lg bg-muted/60"
-        >
+        {/* Image */}
+        <div className="relative aspect-square h-36 w-36 shrink-0 overflow-hidden rounded-lg bg-muted/60">
           {/* Badge */}
           {product.badge && (
             <Badge
@@ -69,24 +154,18 @@ export function ProductCard({ product, view, hideActions = false }: ProductCardP
               {product.badge}
             </Badge>
           )}
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            sizes="144px"
-            className="object-contain p-3 transition-transform duration-300 group-hover:scale-105"
-          />
-        </Link>
+          <ImageSlider images={allImages} alt={product.name} />
+        </div>
 
         {/* Right: all content stacked */}
         <div className="flex flex-1 flex-col justify-between">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <span className="text-xs font-bold text-foreground">{product.brand}</span>
-              <h3 className="mt-0.5 text-sm font-medium text-foreground line-clamp-1">
+              {/* <span className="text-xs font-bold text-foreground">{product.brand}</span> */}
+              <h3 className="mt-0.5 text-lg font-medium text-foreground line-clamp-1">
                 <Link href={`/products/${product.id}`}>{product.name}</Link>
               </h3>
-              <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed line-clamp-2">
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
                 {product.description}
               </p>
             </div>
@@ -131,8 +210,8 @@ export function ProductCard({ product, view, hideActions = false }: ProductCardP
   // Grid View (Default)
   return (
     <div className="group flex flex-col justify-between rounded-xl border bg-card overflow-hidden transition-all hover:shadow-md">
-      {/* Image container — fully clickable */}
-      <Link href={`/products/${product.id}`} className="relative block aspect-square w-full bg-muted/60 p-4">
+      {/* Image container */}
+      <div className="relative aspect-square w-full bg-muted/60">
         {/* Badge */}
         {product.badge && (
           <Badge
@@ -164,14 +243,8 @@ export function ProductCard({ product, view, hideActions = false }: ProductCardP
           />
         </button>
 
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          sizes="(max-width: 768px) 50vw, 33vw"
-          className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
-        />
-      </Link>
+        <ImageSlider images={allImages} alt={product.name} />
+      </div>
 
       {/* Details */}
       <div className="flex flex-1 flex-col p-4">
