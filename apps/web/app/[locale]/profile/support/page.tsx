@@ -41,13 +41,12 @@ const MOCK_TICKETS = [
 ]
 
 export default function SupportTicketsPage() {
-  const items: typeof MOCK_TICKETS = [] // MOCK_TICKETS
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold tracking-tight text-foreground">Support Tickets</h1>
       
-      {items.length === 0 ? (
+      {MOCK_TICKETS.length === 0 ? (
         <Empty className="py-24">
           <EmptyHeader>
             <EmptyMedia variant="icon" className="size-16 rounded-2xl bg-muted/50 mb-4 text-muted-foreground">
@@ -66,7 +65,7 @@ export default function SupportTicketsPage() {
         </Empty>
       ) : (
         <div className="flex flex-col gap-4">
-          {items.map((ticket) => (
+          {MOCK_TICKETS.map((ticket) => (
             <Link
               key={ticket.id}
               href={`/profile/support/${ticket.id}`}
