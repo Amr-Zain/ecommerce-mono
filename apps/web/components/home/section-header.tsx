@@ -1,14 +1,17 @@
 import type { ReactNode } from "react"
+import Link from "next/link"
 
 import { Button } from "@ecommerce/ui/components/button"
 
 export function SectionHeader({
   title,
   viewAll,
+  viewAllHref,
   actions,
 }: {
   title: string
   viewAll?: boolean
+  viewAllHref?: string
   actions?: ReactNode
 }) {
   return (
@@ -18,9 +21,11 @@ export function SectionHeader({
       </h2>
       <div className="flex items-center gap-2">
         {viewAll ? (
-          <Button variant="ghost" size="sm" className="text-xs">
-            View All
-          </Button>
+          <Link href={viewAllHref ?? "/collections"}>
+            <Button variant="ghost" size="sm" className="text-xs">
+              View All
+            </Button>
+          </Link>
         ) : null}
         {actions}
       </div>

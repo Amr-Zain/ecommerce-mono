@@ -15,7 +15,7 @@ export function StorefrontHome() {
       <ProductSection title="New Arrival Products" products={newArrivals} auto />
       <PhoneBanner />
       <ProductSection title="Popular Products" products={popularProducts} />
-      <CommunitySection />
+      {/* <CommunitySection /> */}
       <Benefits />
     </>
   )
