@@ -6,19 +6,35 @@ import { ProductCard } from "@/components/product/product-card"
 import { MOCK_PRODUCTS } from "@/components/product/mock-data"
 import { cn } from "@/lib/utils"
 
-const PRODUCT_BREADCRUMBS: Breadcrumb[] = [
-  { label: "Home", href: "/" },
-  { label: "All Products" },
-]
+const COLLECTIONS: Record<string, { name: string; description: string }> = {
+  electronics: {
+    name: "Electronics",
+    description: "Discover the latest in smart technology, from smartwatches to audio gear.",
+  },
+  beauty: {
+    name: "Beauty & Skincare",
+    description: "Premium skincare, makeup, and beauty essentials for your daily routine.",
+  },
+  clothing: {
+    name: "Clothing",
+    description: "Trendy apparel and fashion essentials for every season and style.",
+  },
+}
 
 const ITEMS_PER_PAGE = 9
 
-export default async function ProductsPage(props: {
+export default async function CollectionProductsPage(props: {
+  params: Promise<{ slug: string }>
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const { slug } = await props.params
   const resolvedSearchParams = await props.searchParams
 
-  // Parse helper
+  const collection = COLLECTIONS[slug] ?? {
+    name: slug.charAt(0).toUpperCase() + slug.slice(1),
+    description: "",
+  }
+
   const getArrayParam = (param: string | string[] | undefined): string[] => {
     if (!param) return []
     return Array.isArray(param) ? param : [param]
@@ -35,21 +51,18 @@ export default async function ProductsPage(props: {
   const selectedShapes = getArrayParam(resolvedSearchParams.shape)
   const selectedColors = getArrayParam(resolvedSearchParams.color)
   const discountFilter = resolvedSearchParams.discount as string || ""
-  const priceMin = Number(resolvedSearchParams.priceMin as string || "500")
+  const priceMin = Number(resolvedSearchParams.priceMin as string || "0")
   const priceMax = Number(resolvedSearchParams.priceMax as string || "2000")
 
-  // Pill dropdown active options
   const selectedTracking = getArrayParam(resolvedSearchParams.tracking)
   const selectedBattery = getArrayParam(resolvedSearchParams.battery)
   const selectedBluetooth = getArrayParam(resolvedSearchParams.bluetooth)
 
-  // Advanced modal options
   const selectedStrap = getArrayParam(resolvedSearchParams.strap)
   const selectedWater = getArrayParam(resolvedSearchParams.water)
   const selectedCompatibility = getArrayParam(resolvedSearchParams.compatibility)
 
-  // Filter logic
-  let filtered = [...MOCK_PRODUCTS]
+  let filtered = MOCK_PRODUCTS.filter((p) => p.collection === slug)
 
   if (selectedGenders.length > 0) {
     filtered = filtered.filter((p) => selectedGenders.includes(p.gender))
@@ -73,11 +86,9 @@ export default async function ProductsPage(props: {
     const minDiscount = Number(discountFilter)
     filtered = filtered.filter((p) => p.discount !== undefined && p.discount >= minDiscount)
   }
-  
-  // Price range filtering
+
   filtered = filtered.filter((p) => p.price >= priceMin && p.price <= priceMax)
 
-  // Pill dropdown filtering
   if (selectedTracking.length > 0) {
     filtered = filtered.filter((p) => p.tracking && p.tracking.some((t) => selectedTracking.includes(t)))
   }
@@ -88,7 +99,6 @@ export default async function ProductsPage(props: {
     filtered = filtered.filter((p) => p.bluetooth && selectedBluetooth.includes(p.bluetooth))
   }
 
-  // Advanced modal filtering
   if (selectedStrap.length > 0) {
     filtered = filtered.filter((p) => p.strap && selectedStrap.includes(p.strap))
   }
@@ -99,7 +109,6 @@ export default async function ProductsPage(props: {
     filtered = filtered.filter((p) => p.compatibility && p.compatibility.some((c) => selectedCompatibility.includes(c)))
   }
 
-  // Sort logic
   if (sort === "price-asc") {
     filtered.sort((a, b) => a.price - b.price)
   } else if (sort === "price-desc") {
@@ -108,16 +117,13 @@ export default async function ProductsPage(props: {
     filtered.sort((a, b) => b.rating - a.rating)
   }
 
-  // Pagination logic
   const totalItems = filtered.length
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE))
   const currentPage = Math.min(Math.max(1, page), totalPages)
   const paginatedProducts = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
-  // Page URL generator
   const getPageUrl = (pageNum: number) => {
     const params = new URLSearchParams()
-    // Copy all current params
     Object.entries(resolvedSearchParams).forEach(([key, val]) => {
       if (val !== undefined && key !== "page") {
         if (Array.isArray(val)) {
@@ -128,20 +134,31 @@ export default async function ProductsPage(props: {
       }
     })
     params.set("page", pageNum.toString())
-    return `/products?${params.toString()}`
+    return `/collections/${slug}?${params.toString()}`
   }
+
+  const breadcrumbs: Breadcrumb[] = [
+    { label: "Home", href: "/" },
+    { label: "Collections", href: "/collections" },
+    { label: collection.name },
+  ]
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-      <ListingTopbar breadcrumbs={PRODUCT_BREADCRUMBS} />
+      <ListingTopbar breadcrumbs={breadcrumbs} />
+
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">{collection.name}</h1>
+        {collection.description && (
+          <p className="text-sm text-muted-foreground">{collection.description}</p>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
-        {/* Sidebar */}
         <div className="lg:col-span-1">
           <ListingSidebar />
         </div>
 
-        {/* Product grid / list area */}
         <div className="lg:col-span-3 space-y-8 flex flex-col justify-between min-h-[500px]">
           {paginatedProducts.length > 0 ? (
             <div
@@ -159,15 +176,13 @@ export default async function ProductsPage(props: {
             <div className="flex flex-col items-center justify-center border border-dashed rounded-xl p-12 text-center bg-card/40 backdrop-blur-md">
               <h3 className="text-lg font-semibold tracking-tight">No products found</h3>
               <p className="text-sm text-muted-foreground mt-1.5 max-w-xs">
-                We couldn&apos;t find any smartwatches matching your current filter selection. Try clearing filters.
+                We couldn&apos;t find any products in {collection.name} matching your current filter selection. Try clearing filters.
               </p>
             </div>
           )}
 
-          {/* Pagination controls */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-6 mt-auto">
-              {/* Previous button */}
               <Link
                 href={getPageUrl(currentPage - 1)}
                 aria-label="Previous page"
@@ -181,12 +196,10 @@ export default async function ProductsPage(props: {
                 </svg>
               </Link>
 
-              {/* Page number pills */}
               <div className="flex items-center gap-1">
                 {Array.from({ length: totalPages }).map((_, idx) => {
                   const pageNum = idx + 1
                   const isCurrent = pageNum === currentPage
-                  // Windowed: show first, last, current ±1, and ellipsis
                   const isVisible =
                     pageNum === 1 ||
                     pageNum === totalPages ||
@@ -220,7 +233,6 @@ export default async function ProductsPage(props: {
                 })}
               </div>
 
-              {/* Next button */}
               <Link
                 href={getPageUrl(currentPage + 1)}
                 aria-label="Next page"

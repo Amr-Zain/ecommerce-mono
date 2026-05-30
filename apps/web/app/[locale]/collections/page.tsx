@@ -55,15 +55,15 @@ export default function CollectionsPage() {
     <div className="container mx-auto px-4 py-8 space-y-12">
       
       {/* 1. Hero Banner */}
-      <div className="relative w-full rounded-2xl overflow-hidden bg-[#e0f1d1] flex flex-col md:flex-row items-center justify-between p-8 md:p-12 border border-black/5">
+      <div className="relative w-full rounded-2xl overflow-hidden bg-muted flex flex-col md:flex-row items-center justify-between p-8 md:p-12 border border-foreground/5">
         <div className="flex-1 space-y-4 max-w-lg z-10">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-black leading-tight tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-foreground leading-tight tracking-tight">
             Samsung Galaxy M06 5G Mobile
           </h1>
-          <p className="text-sm font-semibold text-black/70 max-w-sm">
+          <p className="text-sm font-semibold text-foreground/70 max-w-sm">
             Monster processor - Segment Leading MediaTek Dimensity 8300, AnTuTu Score 422K+, Latest Android 15 Operating System.
           </p>
-          <Link href="/products" className="inline-flex items-center gap-2 bg-white text-black font-bold text-xs px-5 py-2.5 rounded-full hover:bg-white/90 transition-all shadow-sm">
+          <Link href="/products" className="inline-flex items-center gap-2 bg-background text-foreground font-bold text-xs px-5 py-2.5 rounded-full hover:bg-background/90 transition-all shadow-sm">
             See What's New <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" strokeWidth={2.5} />
           </Link>
         </div>
@@ -84,7 +84,7 @@ export default function CollectionsPage() {
           {ELECTRONICS.map((item, idx) => (
             <Link key={idx} href={`/collections/electronics`} className="group flex flex-col gap-3">
               <div className="aspect-square relative rounded-xl bg-muted/30 overflow-hidden p-6 border border-transparent transition-all group-hover:border-foreground/20 group-hover:shadow-sm">
-                <Image src={item.image} alt={item.name} fill className="object-contain p-6 mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                <Image src={item.image} alt={item.name} fill className="object-contain p-6 dark:mix-blend-normal mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
               </div>
               <span className="text-xs font-bold text-foreground text-center">{item.name}</span>
             </Link>
@@ -109,28 +109,28 @@ export default function CollectionsPage() {
       </section>
 
       {/* 4. Promotional Banner */}
-      <div className="relative w-full rounded-2xl overflow-hidden bg-[#ffcdcc] p-8 flex flex-col md:flex-row items-center border border-black/5">
+      <div className="relative w-full rounded-2xl overflow-hidden bg-secondary p-8 flex flex-col md:flex-row items-center border border-foreground/5">
         <div className="flex-1 space-y-4 max-w-md z-10">
-          <h2 className="text-3xl font-extrabold text-black">Hurry Up! 40% Off on Everything</h2>
-          <p className="text-xs font-bold text-black/70">
+          <h2 className="text-3xl font-extrabold text-foreground">Hurry Up! 40% Off on Everything</h2>
+          <p className="text-xs font-bold text-foreground/70">
             Limited-time sale on trending products. Don't wait since it's gone, it's gone.
           </p>
           
           <div className="pt-2">
-            <p className="text-[10px] font-bold text-black/60 uppercase mb-2">Offer expires in:</p>
+            <p className="text-[10px] font-bold text-foreground/60 uppercase mb-2">Offer expires in:</p>
             <div className="flex gap-2">
               {['1', '14', '43', '06'].map((num, i) => (
                 <div key={i} className="flex flex-col items-center gap-1">
-                  <div className="bg-white rounded border border-black/10 px-2.5 py-1.5 text-sm font-bold text-black min-w-[32px] text-center">
+                  <div className="bg-background rounded border border-foreground/10 px-2.5 py-1.5 text-sm font-bold text-foreground min-w-[32px] text-center">
                     {num}
                   </div>
-                  <span className="text-[9px] font-bold text-black/50 uppercase">{['Day', 'Hours', 'Min', 'Sec'][i]}</span>
+                  <span className="text-[9px] font-bold text-foreground/50 uppercase">{['Day', 'Hours', 'Min', 'Sec'][i]}</span>
                 </div>
               ))}
             </div>
           </div>
           
-          <Link href="/products" className="inline-flex items-center gap-2 bg-black text-white font-bold text-xs px-5 py-2.5 rounded-full hover:bg-black/90 transition-all shadow-sm mt-2">
+          <Link href="/products" className="inline-flex items-center gap-2 bg-foreground text-background font-bold text-xs px-5 py-2.5 rounded-full hover:bg-foreground/90 transition-all shadow-sm mt-2">
             Shop now <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" strokeWidth={2.5} />
           </Link>
         </div>

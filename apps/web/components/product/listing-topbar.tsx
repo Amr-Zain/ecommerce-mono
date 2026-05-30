@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ecommerce/ui/components/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@ecommerce/ui/components/popover"
@@ -10,6 +11,17 @@ import { Button } from "@ecommerce/ui/components/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
+
+export type Breadcrumb = {
+  label: string
+  href?: string
+}
+
+const DEFAULT_BREADCRUMBS: Breadcrumb[] = [
+  { label: "Home", href: "/" },
+  { label: "Accessories" },
+  { label: "Watches" },
+]
 
 const TRACKING_OPTIONS = [
   { label: "GPS Tracking", value: "gps" },
@@ -47,7 +59,7 @@ const COMPATIBILITY_OPTIONS = [
   { label: "Android Compatible", value: "android" },
 ]
 
-export function ListingTopbar() {
+export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -230,11 +242,26 @@ export function ListingTopbar() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Breadcrumbs */}
         <nav className="text-xs text-muted-foreground/80 font-medium">
-          <span className="hover:text-foreground cursor-pointer transition-colors">Home</span>
-          <span className="mx-1.5">&gt;</span>
-          <span className="hover:text-foreground cursor-pointer transition-colors">Accessories</span>
-          <span className="mx-1.5">&gt;</span>
-          <span className="text-foreground font-semibold">Watches</span>
+          {(breadcrumbs ?? DEFAULT_BREADCRUMBS).map((crumb, idx) => (
+            <React.Fragment key={idx}>
+              {idx > 0 && <span className="mx-1.5">&gt;</span>}
+              {crumb.href ? (
+                <Link href={crumb.href} className="hover:text-foreground transition-colors">
+                  {crumb.label}
+                </Link>
+              ) : (
+                <span
+                  className={cn(
+                    idx === (breadcrumbs ?? DEFAULT_BREADCRUMBS).length - 1
+                      ? "text-foreground font-semibold"
+                      : "hover:text-foreground transition-colors"
+                  )}
+                >
+                  {crumb.label}
+                </span>
+              )}
+            </React.Fragment>
+          ))}
         </nav>
 
         {/* View Switcher and Sort Dropdown */}
@@ -393,7 +420,7 @@ export function ListingTopbar() {
             {activeFilters.map((filter) => (
               <span
                 key={`${filter.key}-${filter.val}`}
-                className="inline-flex items-center gap-1 rounded-full bg-[#f3f4f6] px-3 py-0.5 text-xs font-bold text-foreground border shadow-2xs"
+                className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-0.5 text-xs font-bold text-foreground border shadow-2xs"
               >
                 <span>{filter.label}</span>
                 <button
