@@ -7,7 +7,8 @@ import {
 } from '@ecommerce/ui/components/card'
 import { Badge } from '@ecommerce/ui/components/badge'
 import { Table, TableBody, TableCell, TableRow } from '@ecommerce/ui/components/table'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@ecommerce/ui/components/tabs'
+import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
+import type { TabItem } from '@/components/ui/AnimatedTabs'
 import { Separator } from '@ecommerce/ui/components/separator'
 import { Switch } from '@ecommerce/ui/components/switch'
 import { Button } from '@ecommerce/ui/components/button'
@@ -249,36 +250,68 @@ export function CategoryShow({ category }: { category: CategoryShowData }) {
                             </div>
                         </CardHeader>
                         <CardContent className="pt-4">
-                            <Tabs defaultValue="en" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="en">{t('english')}</TabsTrigger>
-                                    <TabsTrigger value="ar">{t('arabic')}</TabsTrigger>
-                                </TabsList>
-                                {(['en', 'ar'] as const).map((lang) => (
-                                    <TabsContent key={lang} value={lang} className="mt-4 space-y-4">
-                                        <div className="space-y-1">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                                {t('Form.labels.name')}
-                                            </p>
-                                            <p className="font-semibold text-sm">{category[lang]?.name || '—'}</p>
-                                        </div>
-                                        {category[lang]?.description && (
-                                            <>
-                                                <Separator />
+                            <AnimatedTabs
+                                defaultValue="en"
+                                items={[
+                                    {
+                                        value: 'en',
+                                        label: t('english'),
+                                        content: (
+                                            <div className="mt-4 space-y-4">
                                                 <div className="space-y-1">
                                                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                                        {t('Form.labels.description')}
+                                                        {t('Form.labels.name')}
                                                     </p>
-                                                    <div
-                                                        className="prose prose-sm dark:prose-invert max-w-none text-sm"
-                                                        dangerouslySetInnerHTML={{ __html: category[lang]?.description || '' }}
-                                                    />
+                                                    <p className="font-semibold text-sm">{category.en?.name || '—'}</p>
                                                 </div>
-                                            </>
-                                        )}
-                                    </TabsContent>
-                                ))}
-                            </Tabs>
+                                                {category.en?.description && (
+                                                    <>
+                                                        <Separator />
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                                                {t('Form.labels.description')}
+                                                            </p>
+                                                            <div
+                                                                className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                                                                dangerouslySetInnerHTML={{ __html: category.en?.description || '' }}
+                                                            />
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        ),
+                                    },
+                                    {
+                                        value: 'ar',
+                                        label: t('arabic'),
+                                        content: (
+                                            <div className="mt-4 space-y-4">
+                                                <div className="space-y-1">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                                        {t('Form.labels.name')}
+                                                    </p>
+                                                    <p className="font-semibold text-sm">{category.ar?.name || '—'}</p>
+                                                </div>
+                                                {category.ar?.description && (
+                                                    <>
+                                                        <Separator />
+                                                        <div className="space-y-1">
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                                                {t('Form.labels.description')}
+                                                            </p>
+                                                            <div
+                                                                className="prose prose-sm dark:prose-invert max-w-none text-sm"
+                                                                dangerouslySetInnerHTML={{ __html: category.ar?.description || '' }}
+                                                            />
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        ),
+                                    },
+                                ]}
+                                tabsListClassName="grid w-full grid-cols-2"
+                            />
                         </CardContent>
                     </Card>
 

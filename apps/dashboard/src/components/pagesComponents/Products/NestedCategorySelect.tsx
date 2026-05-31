@@ -1,12 +1,11 @@
-
 import { useState, useEffect } from "react"
 import { ChevronRight, ChevronDown, LoaderCircleIcon } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ecommerce/ui/components/select"
 import { categoriesQueryKeys } from "@/util/queryKeysFactory"
 import useFetch from "@/hooks/UseFetch"
 import type { ApiResponseBase } from "@/types/api/http"
-import { Avatar, AvatarFallback, AvatarImage } from "./avatar"
-import { cn } from "../../lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@ecommerce/ui/components/avatar"
+import { cn } from "@/lib/utils"
 
 export interface Category {
     id: number
@@ -25,7 +24,7 @@ export interface Category {
     has_children: boolean
 }
 
-interface NestedSelectProps {
+interface NestedCategorySelectProps {
     onSelect?: (item: Category) => void
     placeholder?: string
     value?: string | number
@@ -103,7 +102,7 @@ function NestedItem({ item, level, onSelect }: NestedItemProps) {
     )
 }
 
-export function NestedSelect({ onSelect, placeholder = "Select a category...", value }: NestedSelectProps) {
+export function NestedCategorySelect({ onSelect, placeholder = "Select a category...", value }: NestedCategorySelectProps) {
     const [selectedValue, setSelectedValue] = useState(value?.toString() || "")
     const [items, setItems] = useState<Category[]>([])
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
@@ -189,7 +188,7 @@ export function NestedSelect({ onSelect, placeholder = "Select a category...", v
 
     return (
         <Select value={selectedValue} onValueChange={handleValueChange}>
-            <SelectTrigger className="w-full relative">
+            <SelectTrigger className="no-spinner !h-12 file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-background border-input w-full min-w-0 rounded-md border bg-background px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
                 <SelectValue placeholder={placeholder}>
                     {
                         selectedCategory?.name ? <div className="flex items-center gap-2">
