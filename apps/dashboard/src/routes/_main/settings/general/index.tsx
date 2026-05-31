@@ -13,7 +13,10 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod/v4'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@ecommerce/ui/components/tabs'
+import { TabsList, TabsTrigger, TabsContent } from '@ecommerce/ui/components/tabs'
+import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
+import type { TabItem } from '@/components/ui/AnimatedTabs'
+import { motion, AnimatePresence } from 'motion/react'
 import { SettingsGeneralSkeleton } from '@/components/pagesComponents/Settings/General/Skeleton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@ecommerce/ui/components/card'
 
@@ -198,70 +201,86 @@ function RouteComponent() {
       <SmartBreadcrumbs entityKey="settings.general" />
 
       {groups.length > 0 ? (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1">
-          <div className="flex flex-col lg:flex-row gap-6">
-            <aside className="lg:w-58 shrink-0">
-              <div className="sticky top-20 w-full">
-                <TabsList className="flex flex-col h-auto w-full items-stretch justify-start p-0 bg-transparent border-none shadow-none">
-                  {groups.map((group) => {
-                    const Icon = groupIcons[group] ?? DefaultGroupIcon
-                    return (
-                      <TabsTrigger
-                        key={group}
-                        value={group}
-                        className="w-full flex items-center justify-start gap-3 px-4 py-3 h-auto data-[state=active]:text-primary transition-all hover:bg-muted/50 text-left border border-transparent whitespace-nowrap"
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <span className="font-semibold capitalize">
-                          {groupedSettings[group].label}
-                        </span>
-                        {fieldsByGroup[group]?.some((field) => field.name && errors[field.name as string]) && (
-                          <span className="ms-auto flex h-2 w-2 shrink-0 rounded-full bg-destructive animate-pulse" />
-                        )}
-                      </TabsTrigger>
-                    )
-                  })}
-                </TabsList>
-              </div>
-            </aside>
+        <AnimatedTabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          items={groups.map((group) => ({ value: group, label: groupedSettings[group].label }))}
+          renderTabsList={(itemsList, activeValue) => (
+            <div className="flex flex-col lg:flex-row gap-6">
+              <aside className="lg:w-58 shrink-0">
+                <div className="sticky top-20 w-full">
+                  <TabsList className="flex flex-col h-auto w-full items-stretch justify-start p-0 bg-transparent border-none shadow-none">
+                    {itemsList.map((item) => {
+                      const Icon = groupIcons[item.value] ?? DefaultGroupIcon
+                      return (
+                        <TabsTrigger
+                          key={item.value}
+                          value={item.value}
+                          className="w-full flex items-center justify-start gap-3 px-4 py-3 h-auto data-[state=active]:text-primary transition-all hover:bg-muted/50 text-left border border-transparent whitespace-nowrap"
+                        >
+                          <Icon className="h-4 w-4 shrink-0" />
+                          <span className="font-semibold capitalize">
+                            {item.label}
+                          </span>
+                          {fieldsByGroup[item.value]?.some((field) => field.name && errors[field.name as string]) && (
+                            <span className="ms-auto flex h-2 w-2 shrink-0 rounded-full bg-destructive animate-pulse" />
+                          )}
+                        </TabsTrigger>
+                      )
+                    })}
+                  </TabsList>
+                </div>
+              </aside>
 
-            <div className="flex-1">
-              {groups.map((group) => (
-                <TabsContent key={group} value={group} className="m-0 focus-visible:outline-none">
-                  <Card className="shadow-sm border-muted/60 overflow-hidden">
-                    <CardHeader className="bg-muted/10 border-b border-muted/40 pb-2!">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                          {(() => {
-                            const Icon = groupIcons[group] ?? DefaultGroupIcon
-                            return <Icon className="h-5 w-5" />
-                          })()}
-                        </div>
-                        <CardTitle className="text-xl capitalize">
-                          {groupedSettings[group].label}
-                        </CardTitle>
-                      </div>
-                      
-                    </CardHeader>
-                    <CardContent className="p-8">
-                      <AppForm
-                        schema={schema}
-                        fields={fieldsByGroup[group]}
-                        providedForm={form}
-                        onSubmit={onSubmit}
-                        isLoading={isPending}
-                        gridColumns={2}
-                        submitButtonText={t('buttons.save')}
-                        showSubmitButton={true}
-                        spacing="lg"
-                      />
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              ))}
+              <div className="flex-1">
+                <AnimatePresence mode="wait">
+                  {groups.map((group) =>
+                    group === activeValue ? (
+                      <motion.div
+                        key={group}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <TabsContent key={group} value={group} className="m-0 focus-visible:outline-none">
+                          <Card className="shadow-sm border-muted/60 overflow-hidden">
+                            <CardHeader className="bg-muted/10 border-b border-muted/40 pb-2!">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                                  {(() => {
+                                    const Icon = groupIcons[group] ?? DefaultGroupIcon
+                                    return <Icon className="h-5 w-5" />
+                                  })()}
+                                </div>
+                                <CardTitle className="text-xl capitalize">
+                                  {groupedSettings[group].label}
+                                </CardTitle>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="p-8">
+                              <AppForm
+                                schema={schema}
+                                fields={fieldsByGroup[group]}
+                                providedForm={form}
+                                onSubmit={onSubmit}
+                                isLoading={isPending}
+                                gridColumns={2}
+                                submitButtonText={t('buttons.save')}
+                                showSubmitButton={true}
+                                spacing="lg"
+                              />
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+                      </motion.div>
+                    ) : null
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
-          </div>
-        </Tabs>
+          )}
+        />
       ) : (
         <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground border-2 border-dashed rounded-xl">
           <Settings className="h-10 w-10 mb-4 opacity-20" />
