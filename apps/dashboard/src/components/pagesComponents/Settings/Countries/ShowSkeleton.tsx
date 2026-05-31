@@ -7,7 +7,8 @@ import {
   CardFooter,
 } from '@ecommerce/ui/components/card'
 import { Separator } from '@ecommerce/ui/components/separator'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@ecommerce/ui/components/tabs'
+import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
+import type { TabItem } from '@/components/ui/AnimatedTabs'
 import { Skeleton } from '@ecommerce/ui/components/skeleton'
 
 export function CountryShowSkeleton() {
@@ -71,40 +72,44 @@ export function CountryShowSkeleton() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="my-4">
-                <Tabs defaultValue="en" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <Skeleton className="h-9 w-full" />
-                    <Skeleton className="h-9 w-full" />
-                  </TabsList>
-
-                  <TabsContent value="en" className="mt-4 space-y-6">
-                    <div className="space-y-4">
-                      {[...Array(4)].map((_, i) => (
-                        <div
-                          key={`en-${i}`}
-                          className="flex items-center gap-6"
-                        >
-                          <Skeleton className="h-5 w-40" />
-                          <Skeleton className="h-5 w-32" />
+                <AnimatedTabs
+                  defaultValue="en"
+                  items={[
+                    {
+                      value: 'en',
+                      label: 'English',
+                      content: (
+                        <div className="mt-4 space-y-6">
+                          <div className="space-y-4">
+                            {[...Array(4)].map((_, i) => (
+                              <div key={`en-${i}`} className="flex items-center gap-6">
+                                <Skeleton className="h-5 w-40" />
+                                <Skeleton className="h-5 w-32" />
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="ar" className="mt-4">
-                    <div className="space-y-4">
-                      {[...Array(4)].map((_, i) => (
-                        <div
-                          key={`ar-${i}`}
-                          className="flex items-center gap-6"
-                        >
-                          <Skeleton className="h-5 w-40" />
-                          <Skeleton className="h-5 w-32" />
+                      ),
+                    },
+                    {
+                      value: 'ar',
+                      label: 'Arabic',
+                      content: (
+                        <div className="mt-4">
+                          <div className="space-y-4">
+                            {[...Array(4)].map((_, i) => (
+                              <div key={`ar-${i}`} className="flex items-center gap-6">
+                                <Skeleton className="h-5 w-40" />
+                                <Skeleton className="h-5 w-32" />
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                      ),
+                    },
+                  ]}
+                  tabsListClassName="grid w-full grid-cols-2"
+                />
               </CardContent>
             </Card>
           </div>

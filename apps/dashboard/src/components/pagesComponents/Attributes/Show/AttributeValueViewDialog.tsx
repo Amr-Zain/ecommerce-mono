@@ -7,7 +7,7 @@ import {
 import { Badge } from '@ecommerce/ui/components/badge'
 import { useTranslation } from 'react-i18next'
 import { formatDate } from '@/util/helpers'
-import { LocalizedTabs } from '@/components/common/uiComponents/LocalizedTab'
+import { LocalizedTabs } from '@/components/ui/LocalizedTab'
 
 type ValueItem = {
   id: number

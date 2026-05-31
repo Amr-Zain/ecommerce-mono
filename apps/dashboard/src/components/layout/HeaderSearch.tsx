@@ -13,7 +13,8 @@ import {
     PopoverContent,
     PopoverAnchor,
 } from '@ecommerce/ui/components/popover'
-import { Search } from 'lucide-react'
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Search01Icon } from "@hugeicons/core-free-icons"
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import {
@@ -97,7 +98,7 @@ export function HeaderSearch() {
             <Popover open={open} onOpenChange={setOpen}>
                 <PopoverAnchor >
                     <div className="relative" ref={containerRef}>
-                        <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+                        <HugeiconsIcon icon={Search01Icon} className="absolute start-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
                         <CommandPrimitive.Input
                             placeholder={t('Text.search')}
                             className={cn(
@@ -125,7 +126,7 @@ export function HeaderSearch() {
                                         navigate({ to: item.url })
                                     }}
                                 >
-                                    {item.icon ? <item.icon className="mr-2 h-4 w-4" /> : <Search className="mr-2 h-4 w-4" />}
+                                    {item.icon ? <item.icon className="mr-2 h-4 w-4" /> : <HugeiconsIcon icon={Search01Icon} className="mr-2 h-4 w-4" />}
                                     <span>{t(item.title)}</span>
                                 </CommandItem>
                             ))}

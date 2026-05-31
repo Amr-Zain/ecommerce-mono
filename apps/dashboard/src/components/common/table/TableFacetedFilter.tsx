@@ -107,11 +107,11 @@ export function DataTableFacetedFilter<TData>({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger >
+      <PopoverTrigger className="flex h-8 items-center">
         <Button
           variant="outline"
           size="sm"
-          className="h-8 border-dashed mb-2"
+          className="h-8 border-dashed"
           disabled={isPending && !!endpoint}
         >
           {isPending && endpoint ? (
@@ -173,7 +173,7 @@ export function DataTableFacetedFilter<TData>({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-[220px] p-0" align="start">
+      <PopoverContent className="w-[220px] p-0 overflow-hidden" align="start">
         <Command shouldFilter={!hasSearch}>
           <CommandInput
             placeholder={title}
@@ -188,7 +188,7 @@ export function DataTableFacetedFilter<TData>({
             ) : (
               <>
                 <CommandEmpty>{t('Text.noResults')}</CommandEmpty>
-                <CommandGroup>
+                <CommandGroup className="p-0">
                   {dataOptions.map((option) => {
                     const isSelected = selectedValues.has(
                       option.value.toString(),
@@ -196,6 +196,8 @@ export function DataTableFacetedFilter<TData>({
                     return (
                       <CommandItem
                         key={option.value}
+                        value={option.value.toString()}
+                        className="data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[selected=false]:bg-transparent hover:bg-accent hover:text-accent-foreground"
                         onSelect={() =>
                           handleSelectionChange(option.value.toString())
                         }
@@ -226,10 +228,10 @@ export function DataTableFacetedFilter<TData>({
                 {selectedValues.size > 0 && (
                   <>
                     <CommandSeparator />
-                    <CommandGroup>
+                    <CommandGroup className="p-0">
                       <CommandItem
                         onSelect={clearFilter}
-                        className="justify-center text-center"
+                        className="justify-center text-center data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[selected=false]:bg-transparent hover:bg-accent hover:text-accent-foreground"
                       >
                         {t('Text.clearFilter')}
                       </CommandItem>

@@ -9,9 +9,9 @@ import {
   FormControl,
   FormLabel,
 } from '@ecommerce/ui/components/form'
-import { Input } from '@ecommerce/ui/components/input'
+import { Input } from '@/components/ui/Input'
 import { Checkbox } from '@ecommerce/ui/components/checkbox'
-import { Textarea } from '@ecommerce/ui/components/textarea'
+import { Textarea } from '@/components/ui/Textarea'
 import { RadioGroup, RadioGroupItem } from '@ecommerce/ui/components/radio-group'
 import { FieldProp } from '@/types/components/form'
 import OTPField from '@/components/common/form/OTPField'

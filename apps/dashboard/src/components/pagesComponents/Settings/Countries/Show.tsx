@@ -9,7 +9,8 @@ import {
 } from '@ecommerce/ui/components/card'
 import { Badge } from '@ecommerce/ui/components/badge'
 import { Table, TableBody, TableCell, TableRow } from '@ecommerce/ui/components/table'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@ecommerce/ui/components/tabs'
+import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
+import type { TabItem } from '@/components/ui/AnimatedTabs'
 import { Separator } from '@ecommerce/ui/components/separator'
 import { CountryDetails } from '@/types/api/country'
 import ImageWithPreview from '@/components/common/uiComponents/image/ImagePreview'
@@ -173,102 +174,96 @@ export function CountryShow({ country }: { country: CountryDetails }) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="en" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="en">
-                      {t('english', { defaultValue: 'English' })}
-                    </TabsTrigger>
-                    <TabsTrigger value="ar">
-                      {t('arabic', { defaultValue: 'Arabic' })}
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="en" className="mt-4">
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="w-56 text-muted-foreground">
-                            {t('Form.labels.name', { defaultValue: 'Name' })}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {en?.name ?? '—'}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="w-56 text-muted-foreground">
-                            {t('Form.labels.shortName', { defaultValue: 'Short Name' })}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {en?.short_name ?? '—'}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="text-muted-foreground">
-                            {t('Form.labels.currency', {
-                              defaultValue: 'Currency',
-                            })}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {en?.currency_code ?? '—'}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="text-muted-foreground">
-                            {t('Form.labels.nationality', {
-                              defaultValue: 'Nationality',
-                            })}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {en?.nationality ?? '—'}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TabsContent>
-
-                  <TabsContent value="ar" className="mt-4">
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="w-56 text-muted-foreground">
-                            {t('Form.labels.name', { defaultValue: 'Name' })}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {ar?.name ?? '—'}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="w-56 text-muted-foreground">
-                            {t('Form.labels.shortName', { defaultValue: 'Short Name' })}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {ar?.short_name ?? '—'}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="text-muted-foreground">
-                            {t('Form.labels.currency', {
-                              defaultValue: 'Currency',
-                            })}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {ar?.currency_code ?? '—'}
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="text-muted-foreground">
-                            {t('Form.labels.nationality', {
-                              defaultValue: 'Nationality',
-                            })}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {ar?.nationality ?? '—'}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TabsContent>
-                </Tabs>
+                <AnimatedTabs
+                  defaultValue="en"
+                  items={[
+                    {
+                      value: 'en',
+                      label: t('english', { defaultValue: 'English' }),
+                      content: (
+                        <Table>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell className="w-56 text-muted-foreground">
+                                {t('Form.labels.name', { defaultValue: 'Name' })}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {en?.name ?? '—'}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="w-56 text-muted-foreground">
+                                {t('Form.labels.shortName', { defaultValue: 'Short Name' })}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {en?.short_name ?? '—'}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="text-muted-foreground">
+                                {t('Form.labels.currency', { defaultValue: 'Currency' })}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {en?.currency_code ?? '—'}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="text-muted-foreground">
+                                {t('Form.labels.nationality', { defaultValue: 'Nationality' })}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {en?.nationality ?? '—'}
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      ),
+                    },
+                    {
+                      value: 'ar',
+                      label: t('arabic', { defaultValue: 'Arabic' }),
+                      content: (
+                        <Table>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell className="w-56 text-muted-foreground">
+                                {t('Form.labels.name', { defaultValue: 'Name' })}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {ar?.name ?? '—'}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="w-56 text-muted-foreground">
+                                {t('Form.labels.shortName', { defaultValue: 'Short Name' })}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {ar?.short_name ?? '—'}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="text-muted-foreground">
+                                {t('Form.labels.currency', { defaultValue: 'Currency' })}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {ar?.currency_code ?? '—'}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="text-muted-foreground">
+                                {t('Form.labels.nationality', { defaultValue: 'Nationality' })}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {ar?.nationality ?? '—'}
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      ),
+                    },
+                  ]}
+                  tabsListClassName="grid w-full grid-cols-2"
+                />
               </CardContent>
             </Card>
           </div>

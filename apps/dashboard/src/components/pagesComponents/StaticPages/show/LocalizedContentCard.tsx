@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardContent,
 } from '@ecommerce/ui/components/card'
-import { LocalizedTabs } from '@/components/common/uiComponents/LocalizedTab'
+import { LocalizedTabs } from '@/components/ui/LocalizedTab'
 import { useTranslation } from 'react-i18next'
 
 type LocalizedBlock = { title?: string | null; content?: string | null }

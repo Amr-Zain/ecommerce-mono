@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFormState, useWatch } from 'react-hook-form'
 import { Check } from 'lucide-react'
 import EditorField from './Editor/EditorField'
 import type { Control, FieldPath, FieldValues } from 'react-hook-form'
-import { Input } from '@ecommerce/ui/components/input'
-import { Textarea } from '@ecommerce/ui/components/textarea'
+import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@ecommerce/ui/components/button'
 import {
   FormControl,
@@ -63,8 +63,11 @@ function MultiLangField<T extends FieldValues>({
     [languages, name],
   )
 
-  // Refs for focusing each field (Input or Editor)
-  const focusRefs = useRef<Record<string, HTMLElement | null>>({})
+  // Stable map for Editor focus APIs
+  const editorFocusApis = useRef<Record<string, { focus: () => void }>>({})
+
+  // Refs for Input / Textarea fields (passed through FormControl → Slot)
+  const inputRefs = useRef<(HTMLInputElement | HTMLTextAreaElement | null)[]>([])
 
   // Default language selection
   useEffect(() => {
@@ -86,13 +89,17 @@ function MultiLangField<T extends FieldValues>({
     return val && String(val).trim().length > 0
   }
 
-  const focusField = (fieldName: string) => {
-    const el = focusRefs.current[fieldName]
-    // Try focusing the actual control
-    if (el && typeof el.focus === 'function') {
-      el.focus()
+  const focusField = (langIndex: number) => {
+    const fieldName = fieldNames[langIndex] as string
+    // Editor case — use the stored focus API (handles visibility polling + cursor position)
+    const editorApi = editorFocusApis.current[fieldName]
+    if (editorApi) {
+      editorApi.focus()
       return
     }
+
+    // Input / Textarea — direct ref passed through FormControl → Slot
+    inputRefs.current[langIndex]?.focus()
   }
 
   // When submitCount changes (a submit happened), if there are errors,
@@ -104,20 +111,26 @@ function MultiLangField<T extends FieldValues>({
     )
     if (firstInvalidIdx !== -1) {
       setCurrentLang(firstInvalidIdx)
-      // Slight delay to ensure the tab content is mounted/visible
-      setTimeout(() => focusField(fieldNames[firstInvalidIdx] as string), 0)
     }
   }, [submitCount, fieldNames.join('|')])
 
+  // Focus the active field when the tab changes.
+  // useLayoutEffect  fires synchronously after DOM commit, before paint.
+  // requestAnimationFrame defers the actual focus call so EditorField's
+  // useEffect (which populates editorFocusApis) has finished first.
+  useLayoutEffect(() => {
+    const id = requestAnimationFrame(() => focusField(currentLang))
+    return () => cancelAnimationFrame(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLang])
+
   const onTabClick = (idx: number) => {
     setCurrentLang(idx)
-    // Focus the field in that tab
-    const fieldName = fieldNames[idx] as string
-    setTimeout(() => focusField(fieldName), 0)
   }
 
   const renderField = (langKey: string, langIndex: number) => {
     const fieldName = `${name}_${langKey}` as FieldPath<T>
+    const fieldId = `mlf_${fieldName as string}`
     const isActive = currentLang === langIndex
 
     return (
@@ -127,35 +140,34 @@ function MultiLangField<T extends FieldValues>({
         name={fieldName}
         render={({ field }) => (
           <FormItem className={isActive ? '' : 'hidden'}>
-            <FormControl>
-              {type === 'editor' ? (
-                // If EditorField forwards ref, this will focus correctly.
-                // Otherwise we provide a hidden focus anchor as a fallback.
+            {type === 'editor' ? (
+              <FormControl>
                 <div className="contents">
-                  <span
-                    id={`mlf_${fieldName as string}_anchor`}
-                    tabIndex={-1}
-                    ref={(el) => {
-                      // Fallback anchor to move screen reader / keyboard focus
-                      focusRefs.current[fieldName as string] = el
-                    }}
-                  />
                   <EditorField
                     field={field}
-                    id={`mlf_${fieldName as string}`}
+                    id={fieldId}
                     ariaInvalid={fieldHasError(fieldName as string)}
                     placeholder={'...'}
                     disabled={disabled}
                     focusApiRef={(api) => {
-                      //@ts-ignore
-                      focusRefs.current[fieldName] = api
+                      if (api) {
+                        editorFocusApis.current[fieldName as string] = api
+                      } else {
+                        delete editorFocusApis.current[fieldName as string]
+                      }
                     }}
-                   
                   />
                 </div>
-              ) : type === 'textarea' ? (
+              </FormControl>
+            ) : type === 'textarea' ? (
+              <FormControl
+                ref={(el) => {
+                  inputRefs.current[langIndex] =
+                    el as HTMLTextAreaElement | null
+                }}
+              >
                 <Textarea
-                  id={`mlf_${fieldName as string}`}
+                  id={fieldId}
                   {...field}
                   placeholder={
                     placeholder ||
@@ -164,13 +176,17 @@ function MultiLangField<T extends FieldValues>({
                   disabled={disabled}
                   value={field.value ?? ''}
                   aria-invalid={fieldHasError(fieldName) || undefined}
-                  ref={(el) => {
-                    focusRefs.current[fieldName] = el
-                  }}
                 />
-              ) : (
+              </FormControl>
+            ) : (
+              <FormControl
+                ref={(el) => {
+                  inputRefs.current[langIndex] =
+                    el as HTMLInputElement | null
+                }}
+              >
                 <Input
-                  id={`mlf_${fieldName as string}`}
+                  id={fieldId}
                   {...field}
                   placeholder={
                     placeholder ||
@@ -179,12 +195,9 @@ function MultiLangField<T extends FieldValues>({
                   disabled={disabled}
                   value={field.value ?? ''}
                   aria-invalid={fieldHasError(fieldName) || undefined}
-                  ref={(el) => {
-                    focusRefs.current[fieldName] = el
-                  }}
                 />
-              )}
-            </FormControl>
+              </FormControl>
+            )}
             <FormMessage />
           </FormItem>
         )}

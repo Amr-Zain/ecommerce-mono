@@ -2,7 +2,8 @@ import { SidebarTrigger } from '@ecommerce/ui/components/sidebar'
 import { HeaderSearch } from './HeaderSearch'
 import { Button } from '@ecommerce/ui/components/button'
 
-import { Bell, LogOut, Menu, User } from 'lucide-react'
+import { HugeiconsIcon } from "@hugeicons/react"
+import { UserIcon, Logout01Icon } from "@hugeicons/core-free-icons"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -126,7 +127,7 @@ export function DashboardHeader() {
               <DropdownMenuSeparator />
               <Link to={'/profile'}>
                 <DropdownMenuItem>
-                  <User className="me-2 h-4 w-4" />
+                  <HugeiconsIcon icon={UserIcon} className="me-2 h-4 w-4" />
                   {t('Text.profile')}
                 </DropdownMenuItem>
               </Link>
@@ -137,7 +138,7 @@ export function DashboardHeader() {
                   setConfirmOpen(true)
                 }}
               >
-                <LogOut className="me-2 h-4 w-4" />
+                <HugeiconsIcon icon={Logout01Icon} className="me-2 h-4 w-4" />
                 {t('Text.logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>

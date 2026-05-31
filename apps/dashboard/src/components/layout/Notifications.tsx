@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { BellIcon } from 'lucide-react'
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Notification01Icon } from "@hugeicons/core-free-icons"
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Avatar, AvatarFallback } from '@ecommerce/ui/components/avatar'

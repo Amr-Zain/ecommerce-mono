@@ -1,6 +1,7 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Badge } from '@ecommerce/ui/components/badge'
-import { Tabs, TabsList, TabsTrigger } from '@ecommerce/ui/components/tabs'
+import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
+import type { TabItem } from '@/components/ui/AnimatedTabs'
 import useFetch from '@/hooks/UseFetch'
 import { paymentGatewaysQueryKeys, paymentSessionsQueryKeys } from '@/util/queryKeysFactory'
 import { Loader2 } from 'lucide-react'
@@ -11,7 +12,6 @@ const PaymentGatewaysTabs = () => {
     const { t } = useTranslation()
     const navigate = useNavigate()
 
-    // @ts-ignore
     const searchParams = useSearch({ from: '/_main/payment-gateways/' })
     const currentTab = (searchParams as any).tab || 'gateways'
 
@@ -26,23 +26,35 @@ const PaymentGatewaysTabs = () => {
         params: { paginate: '1' },
     })
 
-    const tabs = [
+    const items: TabItem[] = [
         {
-            name: t('menu.paymentGateways'),
             value: 'gateways',
-            count: gatewaysPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-                gatewaysData?.data?.length || 0
+            trigger: (
+                <span className="flex items-center gap-2">
+                    {t('menu.paymentGateways')}
+                    <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
+                        {gatewaysPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            gatewaysData?.data?.length || 0
+                        )}
+                    </Badge>
+                </span>
             ),
         },
         {
-            name: t('menu.paymentSessions'),
             value: 'sessions',
-            count: sessionsPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-                sessionsData?.data?.meta?.total || 0
+            trigger: (
+                <span className="flex items-center gap-2">
+                    {t('menu.paymentSessions')}
+                    <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
+                        {sessionsPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            sessionsData?.data?.meta?.total || 0
+                        )}
+                    </Badge>
+                </span>
             ),
         },
     ]
@@ -59,22 +71,7 @@ const PaymentGatewaysTabs = () => {
 
     return (
         <div className="w-full max-w-md mb-4">
-            <Tabs value={currentTab} onValueChange={handleTabChange} className="gap-4">
-                <TabsList>
-                    {tabs.map((tab) => (
-                        <TabsTrigger
-                            key={tab.value}
-                            value={tab.value}
-                            className="flex items-center gap-2 px-3"
-                        >
-                            {tab.name}
-                            <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
-                                {tab.count}
-                            </Badge>
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-            </Tabs>
+            <AnimatedTabs items={items} value={currentTab} onValueChange={handleTabChange} />
         </div>
     )
 }

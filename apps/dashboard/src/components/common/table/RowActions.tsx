@@ -3,6 +3,7 @@ import { Button } from '@ecommerce/ui/components/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -38,7 +39,8 @@ export function RowActions<RowData>({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="center">
-          <DropdownMenuLabel className='text-semibold border-b text-center dark:text-white text-black'>{menuLabel}</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className='text-semibold border-b text-center dark:text-white text-black'>{menuLabel}</DropdownMenuLabel>
 
           {actions
             .filter((a) => !(a.hidden?.(r) ?? false))
@@ -110,6 +112,7 @@ export function RowActions<RowData>({
                 </React.Fragment>
               )
             })}
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
     )

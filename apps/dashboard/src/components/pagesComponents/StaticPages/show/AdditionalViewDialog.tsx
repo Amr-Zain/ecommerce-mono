@@ -8,7 +8,7 @@ import {
 import { Badge } from '@ecommerce/ui/components/badge'
 import { Eye } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { LocalizedTabs } from '@/components/common/uiComponents/LocalizedTab'
+import { LocalizedTabs } from '@/components/ui/LocalizedTab'
 import { formatDate } from '@/util/helpers'
 import { AdditionalPage } from '@/types/api/staticPages'
 

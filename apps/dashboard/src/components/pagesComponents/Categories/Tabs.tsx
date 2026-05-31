@@ -4,7 +4,8 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import type { ApiResponse } from '@/types/api/http'
 import type { Category } from '@/types/api/faq'
 import { Badge } from '@ecommerce/ui/components/badge'
-import { Tabs, TabsList, TabsTrigger } from '@ecommerce/ui/components/tabs'
+import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
+import type { TabItem } from '@/components/ui/AnimatedTabs'
 import useFetch from '@/hooks/UseFetch'
 import { categoriesQueryKeys } from '@/util/queryKeysFactory'
 
@@ -14,11 +15,9 @@ const TabsBadgeCategories = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  // Get current search params
   const searchParams = useSearch({ from: '/_main/categories/' })
   const currentFilter = searchParams.custom_filter || 'collection'
 
-  // Fetch collection data
   const { data: collection, isPending: collectionPending } = useFetch<
     ApiResponse<Category[]>
   >({
@@ -28,7 +27,6 @@ const TabsBadgeCategories = () => {
     select: (data) => data.data.meta?.total as any,
   })
 
-  // Fetch sub_collection data
   const { data: subCollection, isPending: subCollectionPending } = useFetch<
     ApiResponse<number>
   >({
@@ -38,7 +36,6 @@ const TabsBadgeCategories = () => {
     select: (data) => data.data.meta?.total as any,
   })
 
-  // Fetch sub_sub_collection data
   const { data: subSubCollection, isPending: subSubCollectionPending } =
     useFetch<ApiResponse<number>>({
       queryKey: categoriesQueryKeys.filterd({
@@ -49,37 +46,45 @@ const TabsBadgeCategories = () => {
       select: (data) => data.data.meta?.total as any,
     })
 
-  const tabs = [
+  const items: TabItem[] = [
     {
-      name: t('Text.collection'),
       value: 'collection',
-      count: collectionPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        collection
+      className: 'flex items-center gap-1 px-2.5 sm:px-3',
+      trigger: (
+        <span className="flex items-center gap-1">
+          {t('Text.collection')}
+          <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
+            {(collectionPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (collection || 0)) as any}
+          </Badge>
+        </span>
       ),
     },
     {
-      name: t('Text.sub_collection'),
       value: 'sub_collection',
-      count: subCollectionPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        subCollection
+      className: 'flex items-center gap-1 px-2.5 sm:px-3',
+      trigger: (
+        <span className="flex items-center gap-1">
+          {t('Text.sub_collection')}
+          <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
+            {(subCollectionPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (subCollection || 0)) as any}
+          </Badge>
+        </span>
       ),
     },
     {
-      name: t('Text.sub_sub_collection'),
       value: 'sub_sub_collection',
-      count: subSubCollectionPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        subSubCollection
+      className: 'flex items-center gap-1 px-2.5 sm:px-3',
+      trigger: (
+        <span className="flex items-center gap-1">
+          {t('Text.sub_sub_collection')}
+          <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
+            {(subSubCollectionPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (subSubCollection || 0)) as any}
+          </Badge>
+        </span>
       ),
     },
   ]
 
-  // Handle tab change
   const handleTabChange = (value: string) => {
     navigate({
       to:'.',
@@ -91,42 +96,11 @@ const TabsBadgeCategories = () => {
   }
 
   return (
-    <div className="w-full max-w-md  mb-2">
-      <Tabs
-        value={currentFilter}
-        onValueChange={handleTabChange}
-        className="gap-4"
-      >
-        <TabsList>
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="flex items-center gap-1 px-2.5 sm:px-3"
-            >
-              {tab.name}
-              <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
-                {(tab.count as any) || 0}
-              </Badge>
-            </TabsTrigger>
-          ))}
-          {/* tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="flex flex-col items-center gap-1 px-2.5 sm:px-3"
-            >
-              <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums  place-content-center">
-                {tab.count}
-              </Badge>
-              {tab.name}
-            </TabsTrigger>
-          )) */}
-        </TabsList>
-      </Tabs>
+    <div className="w-full max-w-md mb-2">
+      <AnimatedTabs items={items} value={currentFilter} onValueChange={handleTabChange} />
     </div>
   )
 }
 
-export default       TabsBadgeCategories 
+export default TabsBadgeCategories 
 

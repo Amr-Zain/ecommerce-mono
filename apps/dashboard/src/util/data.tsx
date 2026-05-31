@@ -1,5 +1,31 @@
-import { Award, BarChart3, Bell, Book, Building2, ChartColumnStacked, ClipboardList, CreditCard, Database, Flag, HelpCircle, Home, MessageSquare, Percent, Scale, Settings, Shield, ShoppingCart, Sliders, Store, Users2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react"
+import type { IconSvgElement, HugeiconsIconProps } from "@hugeicons/react"
+import { Award01Icon, BarChartIcon, Notification01Icon, Book01Icon, Building03Icon, ChartColumnStackedIcon, ClipboardIcon, CreditCardIcon, DatabaseIcon, Flag01Icon, HelpCircleIcon, Home01Icon, Message01Icon, PercentIcon, BalanceScaleIcon, Settings01Icon, Shield01Icon, ShoppingCart01Icon, SlidersHorizontalIcon, Store01Icon, UserMultipleIcon } from "@hugeicons/core-free-icons";
 import { MenuItem } from "@/types/components/sidebar";
+
+const H = (icon: IconSvgElement) => {
+  const Comp = (props: Omit<HugeiconsIconProps, 'icon'>) => <HugeiconsIcon icon={icon} {...props} />
+  return Comp
+}
+const Award = H(Award01Icon)
+const BarChart3 = H(BarChartIcon)
+const Bell = H(Notification01Icon)
+const Book = H(Book01Icon)
+const Building2 = H(Building03Icon)
+const CreditCard = H(CreditCardIcon)
+const Database = H(DatabaseIcon)
+const Flag = H(Flag01Icon)
+const HelpCircle = H(HelpCircleIcon)
+const Home = H(Home01Icon)
+const MessageSquare = H(Message01Icon)
+const Percent = H(PercentIcon)
+const Scale = H(BalanceScaleIcon)
+const Settings = H(Settings01Icon)
+const Shield = H(Shield01Icon)
+const ShoppingCart = H(ShoppingCart01Icon)
+const Sliders = H(SlidersHorizontalIcon)
+const Store = H(Store01Icon)
+const Users2 = H(UserMultipleIcon)
 
 export const getDashboardMenuItems: MenuItem[] = [
   // {
@@ -27,7 +53,6 @@ export const getDashboardMenuItems: MenuItem[] = [
     url: '/sliders',
     icon: Sliders,
     checkPermission: true,
-
   },
   // {
   //   title: 'menu.offers',
@@ -41,12 +66,8 @@ export const getDashboardMenuItems: MenuItem[] = [
     icon: HelpCircle,
     checkPermission: true,
   },
-
-
 ]
 export const getProductsAndShowRoomsMenuItems: MenuItem[] = [
-
-
   {
     title: 'menu.products',
     url: '/products',
@@ -236,6 +257,4 @@ export const usersMenuItems: MenuItem[] = [
     checkPermission: true,
     permissionEntity: 'clients',
   },
- 
-
 ]

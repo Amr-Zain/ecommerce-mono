@@ -13,7 +13,7 @@ import { FieldProp } from '@/types/components/form'
 import { CategoryFormData } from '@/lib/schema'
 import { Category } from '@/types/api/faq'
 import TabsBadgeCategories from './Tabs'
-import { NestedSelect } from '@ecommerce/ui/components/nested-select'
+import { NestedCategorySelect } from '@/components/pagesComponents/Products/NestedCategorySelect'
 import { FormLabel } from '@ecommerce/ui/components/form'
 export const categoryColumns = (
   open: (type: PickedAction, row: Category) => void,
@@ -161,7 +161,7 @@ export function buildCategoryFields(
       customItem:
         <>
           <FormLabel>{t('Form.labels.parentCategory')}</FormLabel>
-          <NestedSelect placeholder={t('Form.placeholders.parentCategory')} onSelect={(item) => form.setValue('parent_id', item.id.toString())} value={currentParentId?.toString()!} />
+          <NestedCategorySelect placeholder={t('Form.placeholders.parentCategory')} onSelect={(item) => form.setValue('parent_id', item.id.toString())} value={currentParentId?.toString()!} />
         </>
     },
     {

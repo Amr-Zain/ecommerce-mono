@@ -1,29 +1,34 @@
 import * as React from 'react'
+import { HugeiconsIcon } from "@hugeicons/react"
 import {
-  ChevronsRight,
-  Home as HomeIcon,
-  Edit,
-  Plus,
-  Eye,
-  HelpCircle,
-  Shield,
-  Building2,
-  Flag,
-  Book,
-  UsersRound,
+  ArrowRight01Icon,
+  Home01Icon,
+  Edit01Icon,
+  Add01Icon,
+  EyeIcon,
+  HelpCircleIcon,
+  Shield01Icon,
+  Building03Icon,
+  Flag01Icon,
+  Book01Icon,
+  UserMultipleIcon,
   ChartAreaIcon,
-  ChartColumnStacked,
-  ClipboardList,
-  ContactRound,
-  Award,
-  Scale,
-  Percent,
-  MessageSquare,
-  Settings,
-  Store,
-  Sliders,
-  ShoppingCart,
-} from 'lucide-react'
+  ChartColumnStackedIcon,
+  ClipboardIcon,
+  Award01Icon,
+  BalanceScaleIcon,
+  PercentIcon,
+  Message01Icon,
+  Settings01Icon,
+  Store01Icon,
+  SlidersHorizontalIcon,
+  ShoppingCart01Icon,
+  DatabaseIcon,
+  CreditCardIcon,
+  Notification01Icon,
+  BarChartIcon,
+  StarIcon,
+} from "@hugeicons/core-free-icons"
 import { useTranslation } from 'react-i18next'
 import {
   Breadcrumb,
@@ -43,35 +48,45 @@ type RouterTo = LinkProps<RegisteredRouter>['to']
 type CrudAction = 'add' | 'edit' | 'show' | 'none'
 
 const entityIconMap: Record<string, React.ReactNode> = {
-  'menu.categories': <ChartColumnStacked />,
-  'menu.home': <HomeIcon />,
-  'menu.faqs': <HelpCircle />,
-  'menu.roles': <Shield />,
-  'menu.cities': <Building2 />,
-  'menu.countries': <Flag />,
-  'menu.showRooms': <Building2 />,
-  'menu.static-pages': <Book />,
-  'menu.supervisors': <UsersRound />,
-  'menu.sliders': <Sliders />,
-  'menu.analytics': <ChartAreaIcon />,
-  'menu.attributes': <ClipboardList />,
-  'menu.values': <ClipboardList />,
-  'menu.orders': <ShoppingCart />,
-  'menu.profile': <ShoppingCart />,
-  'menu.earning_rules': <Scale />,
-  'menu.offers': <Percent />,
-  'menu.sms-providers': <MessageSquare />,
-  'settings.general': <Settings />,
-  'menu.shopify-stores': <Store />,
+  'menu.home': <HugeiconsIcon icon={Home01Icon} />,
+  'menu.products': <HugeiconsIcon icon={DatabaseIcon} />,
+  'menu.categories': <HugeiconsIcon icon={ChartColumnStackedIcon} />,
+  'menu.attributes': <HugeiconsIcon icon={ClipboardIcon} />,
+  'menu.values': <HugeiconsIcon icon={ClipboardIcon} />,
+  'menu.orders': <HugeiconsIcon icon={ShoppingCart01Icon} />,
+  'menu.reviews': <HugeiconsIcon icon={StarIcon} />,
+  'menu.showRooms': <HugeiconsIcon icon={Building03Icon} />,
+  'menu.earning_rules': <HugeiconsIcon icon={BalanceScaleIcon} />,
+  'menu.rewards': <HugeiconsIcon icon={Award01Icon} />,
+  'menu.tiers': <HugeiconsIcon icon={BarChartIcon} />,
+  'menu.offers': <HugeiconsIcon icon={PercentIcon} />,
+  'menu.faqs': <HugeiconsIcon icon={HelpCircleIcon} />,
+  'menu.sliders': <HugeiconsIcon icon={SlidersHorizontalIcon} />,
+  'menu.static-pages': <HugeiconsIcon icon={Book01Icon} />,
+  'menu.roles': <HugeiconsIcon icon={Shield01Icon} />,
+  'menu.supervisors': <HugeiconsIcon icon={UserMultipleIcon} />,
+  'menu.users': <HugeiconsIcon icon={UserMultipleIcon} />,
+  'menu.cities': <HugeiconsIcon icon={Building03Icon} />,
+  'menu.countries': <HugeiconsIcon icon={Flag01Icon} />,
+  'menu.smsProviders': <HugeiconsIcon icon={Message01Icon} />,
+  'menu.smsSessions': <HugeiconsIcon icon={Message01Icon} />,
+  'menu.paymentGateways': <HugeiconsIcon icon={CreditCardIcon} />,
+  'menu.paymentSessions': <HugeiconsIcon icon={CreditCardIcon} />,
+  'menu.admin_notifications': <HugeiconsIcon icon={Notification01Icon} />,
+  'menu.notifications': <HugeiconsIcon icon={Notification01Icon} />,
+  'menu.shopifyStores': <HugeiconsIcon icon={Store01Icon} />,
+  'menu.profile': <HugeiconsIcon icon={UserMultipleIcon} />,
+  'menu.analytics': <HugeiconsIcon icon={ChartAreaIcon} />,
+  'settings.general': <HugeiconsIcon icon={Settings01Icon} />,
 }
 
 const actionPresets: Record<
   Exclude<CrudAction, 'none'>,
   { key: string; icon: React.ReactNode }
 > = {
-  add: { key: 'buttons.add', icon: <Plus /> },
-  edit: { key: 'buttons.edit', icon: <Edit /> },
-  show: { key: 'buttons.show', icon: <Eye /> },
+  add: { key: 'buttons.add', icon: <HugeiconsIcon icon={Add01Icon} /> },
+  edit: { key: 'buttons.edit', icon: <HugeiconsIcon icon={Edit01Icon} /> },
+  show: { key: 'buttons.show', icon: <HugeiconsIcon icon={EyeIcon} /> },
 }
 
 type BuiltCrumb = {
@@ -106,7 +121,7 @@ export function SmartBreadcrumbs(props: {
         {
           label: t('menu.home'),
           to: '/' as const,
-          icon: entityIconMap['menu.home'] ?? <HomeIcon />,
+          icon: entityIconMap['menu.home'] ?? <HugeiconsIcon icon={Home01Icon} />,
         },
       ]
       : []),
@@ -144,20 +159,17 @@ export function SmartBreadcrumbs(props: {
             <React.Fragment key={to ?? key}>
               <BreadcrumbItem className="flex items-center">
                 {to ? (
-                  <BreadcrumbLink
-
-                    className="page-title inline-flex items-center gap-1"
-                  >
-                    <Link to={to}>
+                  <BreadcrumbLink className="page-title inline-flex items-center gap-1">
+                    <Link to={to} className="inline-flex items-center gap-1 text-nowrap">
                       {icon} {label}
                     </Link>
                   </BreadcrumbLink>
                 ) : isLast ? (
-                  <BreadcrumbPage className="page-title text-muted-foreground inline-flex items-center gap-1">
+                  <BreadcrumbPage className="page-title text-muted-foreground inline-flex items-center gap-1 text-nowrap">
                     {icon} {label}
                   </BreadcrumbPage>
                 ) : (
-                  <span className="page-title inline-flex items-center gap-1">
+                  <span className="page-title inline-flex items-center gap-1 text-nowrap">
                     {icon} {label}
                   </span>
                 )}
@@ -165,7 +177,7 @@ export function SmartBreadcrumbs(props: {
 
               {!isLast && (
                 <BreadcrumbSeparator aria-hidden="true" className="mx-2">
-                  <ChevronsRight className="size-5 rtl:rotate-180" />
+                  <HugeiconsIcon icon={ArrowRight01Icon} className="size-5 rtl:rotate-180" />
                 </BreadcrumbSeparator>
               )}
             </React.Fragment>

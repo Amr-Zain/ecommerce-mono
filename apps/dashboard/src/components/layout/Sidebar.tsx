@@ -1,9 +1,5 @@
-import {
-  ChevronDown,
-  User2,
-  LogOut,
-  User,
-} from 'lucide-react'
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ArrowDown01Icon, UserCircleIcon, Logout01Icon, UserIcon } from "@hugeicons/core-free-icons"
 import { useMemo, useState } from 'react'
 
 import {
@@ -25,6 +21,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -196,7 +193,7 @@ export function AppSidebar() {
             <SidebarGroup>
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className='gap-2'>
                   {group.items.map((item) => (
                     <MenuItemComponent key={item.title} item={item} />
                   ))}
@@ -212,49 +209,45 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
-              <DropdownMenuTrigger >
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <div className="flex aspect-square bg-gradient-primary size-8 items-center justify-center rounded-lg  text-sidebar-primary-foreground">
-                    <User2 className="size-4" />
-                  </div>
-                  <div className="grid flex-1 text-start text-sm leading-tight">
-                    <span className="truncate font-semibold">
-                      {user?.name || 'Admin User'}
-                    </span>
-                    <span className="truncate text-xs">
-                      {user?.email || 'admin@company.com'}
-                    </span>
-                  </div>
-                  <ChevronDown className="ms-auto" />
-                </SidebarMenuButton>
+              <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="w-full data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground" />}>
+                <div className="flex aspect-square bg-gradient-primary size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+                  <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
+                </div>
+                <div className="grid flex-1 text-start text-sm leading-tight">
+                  <span className="truncate font-semibold">
+                    {user?.name || 'Admin User'}
+                  </span>
+                  <span className="truncate text-xs">
+                    {user?.email || 'admin@company.com'}
+                  </span>
+                </div>
+                <HugeiconsIcon icon={ArrowDown01Icon} className="ms-auto transition-transform duration-200 group-data-popup-open/menu-button:rotate-180" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" dir={isRTL ? 'rtl' : 'ltr'}>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm font-medium leading-none">{user?.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user?.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-medium leading-none">{user?.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <Link to={'/profile'} preload="intent">
-                  <DropdownMenuItem>
-                    <User className="me-2 h-4 w-4" />
-                    {t('Text.profile')}
-                  </DropdownMenuItem>
-                </Link>
+                <DropdownMenuItem render={<Link to={'/profile'} preload="intent" />}>
+                  <HugeiconsIcon icon={UserIcon} className="me-2 h-4 w-4" />
+                  {t('Text.profile')}
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault()
                     setConfirmOpen(true)
                   }}
+                  className='flex gap-2 cursor-pointer'
                 >
-                  <LogOut className="me-2 h-4 w-4" />
+                  <HugeiconsIcon icon={Logout01Icon} className="me-2 h-4 w-4" />
                   {t('Text.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>

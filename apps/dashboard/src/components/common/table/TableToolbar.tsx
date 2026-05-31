@@ -128,7 +128,7 @@ export function DataTableToolbar<TData>({
 
   return (
     <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center space-x-2 space-y-2 flex-wrap">
+      <div className="flex flex-1 items-center flex-wrap gap-2">
         {searchKeyId && (
           <Input
             type="search"
@@ -165,7 +165,7 @@ export function DataTableToolbar<TData>({
           <Button
             variant="ghost"
             onClick={resetAllFilters}
-            className="h-8 px-2 lg:px-3 mb-2"
+            className="h-8 px-2 lg:px-3"
           >
             {t('Text.reset')}
             <X className="ms-2 h-4 w-4" />

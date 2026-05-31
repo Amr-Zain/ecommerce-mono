@@ -1,5 +1,6 @@
 import { isPathActive } from '@/util/helpers'
-import { ChevronRight } from 'lucide-react'
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { Link, useLocation } from '@tanstack/react-router'
 import { Badge } from '@ecommerce/ui/components/badge'
 import { useMemo } from 'react'
@@ -22,6 +23,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -29,6 +31,7 @@ import {
 } from '@ecommerce/ui/components/dropdown-menu'
 
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 import { MenuItem as IMenuItem } from '@/types/components/sidebar'
 
 export const MenuItem = ({ item }: { item: IMenuItem }) => {
@@ -55,11 +58,9 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
       return (
         <SidebarMenuItem>
           <DropdownMenu>
-            <DropdownMenuTrigger >
-              <SidebarMenuButton isActive={isActive} tooltip={translatedTitle}>
-                {Icon && <Icon />}
-                <span>{translatedTitle}</span>
-              </SidebarMenuButton>
+            <DropdownMenuTrigger render={<SidebarMenuButton isActive={isActive} tooltip={translatedTitle} className="cursor-pointer" />}>
+              {Icon && <Icon />}
+              <span className="truncate">{translatedTitle}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               side={isRTL ? 'left' : 'right'}
@@ -67,20 +68,16 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
               dir={isRTL ? 'rtl' : 'ltr'}
               className="text-start"
             >
-              <DropdownMenuLabel className="text-start">{translatedTitle}</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="text-start">{translatedTitle}</DropdownMenuLabel>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               {item?.subItems?.map((subItem: IMenuItem) => {
                 const subIsActive = isPathActive(subItem.url, pathname)
                 const translatedSubTitle = t(subItem.title)
                 return (
-                  <DropdownMenuItem key={subItem.title} className="justify-start text-start">
-                    <Link
-                      to={subItem.url}
-                      preload="intent"
-                      className={subIsActive ? 'bg-accent font-medium' : ''}
-                    >
-                      {translatedSubTitle}
-                    </Link>
+                  <DropdownMenuItem key={subItem.title} render={<Link to={subItem.url} preload="intent" className="w-full" />} className={cn("justify-start text-start", subIsActive && 'bg-accent font-medium')}>
+                    {translatedSubTitle}
                   </DropdownMenuItem>
                 )
               })}
@@ -98,20 +95,22 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
         className="group/collapsible"
       >
         <SidebarMenuItem data-expanded={state === 'expanded'}>
-          <CollapsibleTrigger >
-            <SidebarMenuButton isActive={isActive} tooltip={translatedTitle}>
+          <CollapsibleTrigger render={<SidebarMenuButton isActive={isActive} tooltip={translatedTitle} className="cursor-pointer justify-between" />}>
+            <span className="flex items-center gap-2 min-w-0">
               {Icon && <Icon />}
-              <span>{translatedTitle}</span>
+              <span className="truncate">{translatedTitle}</span>
+            </span>
+            <span className="flex items-center gap-1 shrink-0">
               {item.badge && (
                 <Badge
                   variant="outline"
-                  className="ms-auto h-5 w-fit px-1 text-xs"
+                  className="h-5 w-fit px-1 text-xs"
                 >
                   {item.badge}
                 </Badge>
               )}
-              <ChevronRight className="rtl:rotate-180 ms-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-            </SidebarMenuButton>
+              <HugeiconsIcon icon={ArrowRight01Icon} className="rtl:rotate-180 transition-transform duration-200 group-data-open/collapsible:rotate-90" />
+            </span>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <SidebarMenuSub>
@@ -120,10 +119,7 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
                 const translatedSubTitle = t(subItem.title)
                 return (
                   <SidebarMenuSubItem key={subItem.title}>
-                    <SidebarMenuSubButton
-
-                      isActive={subIsActive}
-                    >
+                    <SidebarMenuSubButton asChild isActive={subIsActive}>
                       <Link to={subItem.url} preload="intent">
                         <span>{translatedSubTitle}</span>
                       </Link>
@@ -140,10 +136,10 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
 
   return (
     <SidebarMenuItem key={item.title}>
-      <SidebarMenuButton isActive={isActive} tooltip={translatedTitle}>
-        <Link to={item.url} preload="intent">
+      <SidebarMenuButton asChild isActive={isActive} tooltip={translatedTitle}>
+        <Link to={item.url} preload="intent" className="cursor-pointer">
           {Icon && <Icon />}
-          <span>{translatedTitle}</span>
+          <span className="truncate">{translatedTitle}</span>
           {item.badge && (
             <Badge variant="outline" className="ms-auto h-5 w-fit px-1 text-xs">
               {item.badge}

@@ -215,7 +215,7 @@ function AppSelect<T extends FieldValues, TData>({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="p-0 w-[--radix-popover-trigger-width] min-w-56">
+      <PopoverContent className="p-0 overflow-hidden w-[--radix-popover-trigger-width] min-w-56">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={t('Text.search')}
@@ -240,7 +240,7 @@ function AppSelect<T extends FieldValues, TData>({
                 padding: 0,
               }}
             >
-              <CommandGroup>
+              <CommandGroup className="p-0">
                 {filteredOptions.map((option) => {
                   const valueStr = String(option.value)
 
@@ -259,7 +259,7 @@ function AppSelect<T extends FieldValues, TData>({
                           handleSelectSingle(valueStr)
                         }
                       }}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[selected=false]:bg-transparent hover:bg-accent hover:text-accent-foreground"
                     >
                       <Check
                         className={cn(

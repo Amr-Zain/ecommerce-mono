@@ -1,6 +1,7 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Badge } from '@ecommerce/ui/components/badge'
-import { Tabs, TabsList, TabsTrigger } from '@ecommerce/ui/components/tabs'
+import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
+import type { TabItem } from '@/components/ui/AnimatedTabs'
 import useFetch from '@/hooks/UseFetch'
 import { smsProvidersQueryKeys, smsSessionsQueryKeys } from '@/util/queryKeysFactory'
 import { Loader2 } from 'lucide-react'
@@ -25,23 +26,35 @@ const SmsProvidersTabs = () => {
         params: { paginate: '1' },
     })
 
-    const tabs = [
+    const items: TabItem[] = [
         {
-            name: t('menu.smsProviders'),
             value: 'providers',
-            count: providersPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-                providersData?.data?.length || 0
+            trigger: (
+                <span className="flex items-center gap-2">
+                    {t('menu.smsProviders')}
+                    <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
+                        {providersPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            providersData?.data?.length || 0
+                        )}
+                    </Badge>
+                </span>
             ),
         },
         {
-            name: t('menu.smsSessions'),
             value: 'sessions',
-            count: sessionsPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-                sessionsData?.data?.meta?.total || 0
+            trigger: (
+                <span className="flex items-center gap-2">
+                    {t('menu.smsSessions')}
+                    <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
+                        {sessionsPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            sessionsData?.data?.meta?.total || 0
+                        )}
+                    </Badge>
+                </span>
             ),
         },
     ]
@@ -58,22 +71,7 @@ const SmsProvidersTabs = () => {
 
     return (
         <div className="w-full max-w-md mb-4">
-            <Tabs value={currentTab} onValueChange={handleTabChange} className="gap-4">
-                <TabsList>
-                    {tabs.map((tab) => (
-                        <TabsTrigger
-                            key={tab.value}
-                            value={tab.value}
-                            className="flex items-center gap-2 px-3"
-                        >
-                            {tab.name}
-                            <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums place-content-center">
-                                {tab.count}
-                            </Badge>
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-            </Tabs>
+            <AnimatedTabs items={items} value={currentTab} onValueChange={handleTabChange} />
         </div>
     )
 }

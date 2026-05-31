@@ -8,7 +8,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@ecommerce/ui/components/alert-dialog'
-import { Button, buttonVariants } from '@ecommerce/ui/components/button'
 import { Loader2 } from 'lucide-react'
 
 function ConfirmModal({
@@ -36,43 +35,26 @@ function ConfirmModal({
   }
 
   return (
-    <AlertDialog open={open}>
-      <AlertDialogContent className="data-[state=open]:!zoom-in-100 data-[state=open]:slide-in-from-bottom-20 data-[state=open]:duration-600 sm:max-w-[425px] rounded-2xl border-0 px-4 shadow-xl [&>button:last-child]:hidden">
-        <AlertDialogHeader className="pb-4">
-          <AlertDialogTitle className="text-text text-center text-xl font-semibold">
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogContent className="data-open:!zoom-in-100 data-open:slide-in-from-bottom-20 data-open:duration-600 sm:max-w-[425px] rounded-2xl border-0 px-4 shadow-xl [&>button:last-child]:hidden">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-text text-center font-medium">
             {title}
           </AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogDescription className="text-sub">
           {desc}
         </AlertDialogDescription>
-        <div className="flex w-full justify-end gap-4 px-4">
-          <AlertDialogCancel >
-            <Button
-              variant="ghost"
-              className="!h-10 cursor-pointer"
-              disabled={Pending}
-              onClick={() => setOpen(false)}
-            >
-              {t('buttons.cancel')}
-            </Button>
+        <div className="flex w-full justify-end gap-2">
+          <AlertDialogCancel className={'px-4'} disabled={Pending}>
+            {t('buttons.cancel')}
           </AlertDialogCancel>
-          <AlertDialogAction className={buttonVariants({ variant })} >
-            <Button
-              onClick={handleConfirm}
-              className="!h-10 cursor-pointer rounded-xl px-6"
-              disabled={Pending}
-              variant={variant}
-            >
-              {Pending ? (
-                <>
-                  <Loader2 className="mx-1 h-4 w-4 animate-spin" />
-                  {/* {t('buttons.loading')} */}
-                </>
-              ) : (
-                t('buttons.confirm')
-              )}
-            </Button>
+          <AlertDialogAction className={'px-4'} variant={variant} disabled={Pending} onClick={handleConfirm}>
+            {Pending ? (
+              <Loader2 className="mx-1 h-4 w-4 animate-spin" />
+            ) : (
+              t('buttons.confirm')
+            )}
           </AlertDialogAction>
         </div>
       </AlertDialogContent>

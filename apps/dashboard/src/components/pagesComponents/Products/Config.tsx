@@ -12,11 +12,8 @@ import { FieldProp } from '@/types/components/form'
 import { ProductFormData } from '@/lib/schema'
 import { Product, ProductVariation } from '@/types/api/product'
 import ButtonCopy from '@ecommerce/ui/components/copy-button'
-import { Popover, PopoverContent } from '@ecommerce/ui/components/popover'
-import { PopoverTrigger } from '@radix-ui/react-popover'
-import { cn } from '@/lib/utils'
 import { FormLabel } from '@ecommerce/ui/components/form'
-import { NestedSelect } from '@ecommerce/ui/components/nested-select'
+import { NestedCategorySelect } from './NestedCategorySelect'
 
 export const productColumns = (
   open: (type: PickedAction, row: Product) => void,
@@ -231,10 +228,10 @@ export const buildProductFields = (
       type: 'custom' as const, label: t('Form.labels.parentCategory'),
       name: 'collection_id',
       customItem:
-        <>
-          <FormLabel>{t('Form.labels.category')}</FormLabel>
-          <NestedSelect placeholder={t('Form.placeholders.category')} onSelect={(item) => form.setValue('collection_id', item.id.toString())} value={collection_id?.toString()!} />
-        </>
+        <div className="w-full flex flex-col gap-4!">
+          <FormLabel >{t('Form.labels.category')}</FormLabel>
+          <NestedCategorySelect placeholder={t('Form.placeholders.category')} onSelect={(item) => form.setValue('collection_id', item.id.toString())} value={collection_id?.toString()!} />
+        </div>
     },
     {
       type: 'number',

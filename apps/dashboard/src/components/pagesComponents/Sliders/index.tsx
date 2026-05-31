@@ -97,7 +97,7 @@ const Sliders = ({
   const toolbar = (
     <HasPermission entity="sliders" action="store">
       <Link to="/sliders/add">
-        <Button size="sm">{t('buttons.add')}</Button>
+        <Button>{t('buttons.add')}</Button>
       </Link>
     </HasPermission>
   )
