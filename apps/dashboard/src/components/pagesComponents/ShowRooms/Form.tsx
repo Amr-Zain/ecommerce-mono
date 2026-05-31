@@ -75,7 +75,7 @@ export default function ShowRoomForm({ showRoom }: { showRoom?: ShowRoomDetail }
       navigate({ to: '/show-rooms' } as any)
     },
     onError: (_e, normalized) => toast.error(normalized.message),
-    formData: true,
+    // formData: true,
   })
 
   const handleSubmit = (v: ShowRoomFormData) => {

@@ -20,7 +20,7 @@ import { HasPermission } from '@/components/common/HasPermission'
 const ShowRooms = ({
   data,
 }: {
-  data: ApiResponse<ShowRoom[], 'show_rooms'>
+  data: ApiResponse<ShowRoom>
 }) => {
   const { t } = useTranslation()
   const alert = useAlertModal()
@@ -83,7 +83,7 @@ const ShowRooms = ({
 
   return (
     <DataTable
-      data={data.data.show_rooms ?? []}
+      data={data.data.items ?? []}
       columns={showRoomColumns(openAlert)}
       searchKey="search"
       filters={getShowRoomFilters(t)}

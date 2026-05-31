@@ -26,9 +26,8 @@ export const buildShowRoomFields = (
       inputProps: {
         maxFiles: 1,
         acceptedFileTypes: ['image/*'],
-        apiEndpoint: '/media/upload',
-        model: 'image',
-        baseUrl: import.meta.env.VITE_BASE_URL_API,
+        collection: 'show-rooms',
+        model: 'showroom',
       },
     },
     {
@@ -50,7 +49,7 @@ export const buildShowRoomFields = (
         //         return false
         //     })
         //   },
-          placeholder: t('Form.placeholders.city'),
+        placeholder: t('Form.placeholders.city'),
         // optionally add a filter param bound to selected country
         // dependentOn: 'country_id',
       },
@@ -60,15 +59,14 @@ export const buildShowRoomFields = (
       name: 'country_id',
       label: t('Form.labels.country'),
       inputProps: {
-        endpoint: 'countries?filters[is_active]=1',
+        endpoint: 'countries?paginate=false',
         select: (data: any) =>
-          (data.data?.countries ?? data.data ?? []).map((c: any) => ({
+          (data.data ?? []).map((c: any) => ({
             label: c.name,
             value: String(c.id),
           })),
-        // params: {'filters[is_active]': 1},
-        
-        queryKey: countriesQueryKeys.filterd({ 'filters[is_active]': 1 }),
+
+        queryKey: countriesQueryKeys.filterd({ paginate: false }),
         placeholder: t('Form.placeholders.country'),
       },
     },
@@ -119,7 +117,14 @@ export const buildShowRoomFields = (
 export const showRoomColumns = (
   open: (type: PickedAction, row: ShowRoom) => void,
 ): ColumnDef<ShowRoom>[] => [
-    textColumn<ShowRoom>('name', 'table.columns.name'),
+    textColumn<ShowRoom>('name', 'table.columns.name', {
+      render: (ctx) => (
+        <div className='flex flex-col'>
+          <span>{ctx.getValue()}</span>
+          <span className='text-muted-foreground text-xs'>{ctx.row.original.country?.name}</span>
+        </div>
+      ),
+    }),
     textColumn<ShowRoom>('address', 'table.columns.address'),
     textColumn<ShowRoom>(
       'country',
