@@ -10,6 +10,7 @@ model Country {
   translations   CountryTranslation[]
   cities         City[]
   addresses      Address[]
+  showRooms      ShowRoom[]
 
   @@map("countries")
 }

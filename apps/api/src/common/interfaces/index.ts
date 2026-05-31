@@ -21,3 +21,5 @@ export type { Address, User, IUsersRepository } from './users.interface';
 export { USERS_REPOSITORY } from './users.interface';
 export type { AdminReview, AdminReviewProduct, AdminReviewUser, ClientReview, ClientReviewUser, IReviewsRepository, ReviewOwner } from './reviews.interface';
 export { REVIEWS_REPOSITORY } from './reviews.interface';
+export type { ShowRoomTranslation, ShowRoom, IShowRoomsRepository } from './show-rooms.interface';
+export { SHOW_ROOMS_REPOSITORY } from './show-rooms.interface';

@@ -1,0 +1,31 @@
+model ShowRoom {
+  id           BigInt                @id @default(autoincrement())
+  countryId    BigInt                @map("country_id")
+  country      Country               @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  phoneCode    String                @map("phone_code")
+  phone        String
+  email        String?
+  url          String?
+  lat          Float?
+  lng          Float?
+  isActive     Boolean               @default(true) @map("is_active")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @default(now()) @updatedAt @map("updated_at")
+  translations ShowRoomTranslation[]
+
+  @@index([countryId])
+  @@map("show_rooms")
+}
+
+model ShowRoomTranslation {
+  id       BigInt   @id @default(autoincrement())
+  recordId BigInt   @map("record_id")
+  showRoom ShowRoom @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  langId   String   @map("lang_id")
+  name     String
+  address  String
+  city     String
+
+  @@unique([recordId, langId])
+  @@map("show_rooms_translations")
+}

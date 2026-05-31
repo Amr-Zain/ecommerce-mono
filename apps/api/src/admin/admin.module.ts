@@ -12,6 +12,7 @@ import { CollectionsModule } from './collections/collections.module';
 import { AttributesModule } from './attributes/attributes.module';
 import { ProductsModule } from './products/products.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { ShowRoomsModule } from './show-rooms/show-rooms.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     ProductsModule,
     CollectionsModule,
     ReviewsModule,
+    ShowRoomsModule,
     RouterModule.register([
       {
         path: 'admin',
@@ -43,6 +45,7 @@ import { ReviewsModule } from './reviews/reviews.module';
           { path: '', module: AttributesModule },
           { path: '', module: ProductsModule },
           { path: '', module: ReviewsModule },
+          { path: '', module: ShowRoomsModule },
         ],
       },
     ]),

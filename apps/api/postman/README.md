@@ -204,6 +204,64 @@ This directory contains Postman collections and environments for testing the Eco
 - **Method:** GET
 - **URL:** `{{baseUrl}}/media/:uuid`
 
+### Show Rooms Module (Admin CRUD)
+
+#### 1. List Show Rooms
+- **Method:** GET
+- **URL:** `{{baseUrl}}/admin/show-rooms?page=1&limit=10`
+
+#### 2. Get Show Room by ID
+- **Method:** GET
+- **URL:** `{{baseUrl}}/admin/show-rooms/1`
+
+#### 3. Create Show Room
+- **Method:** POST
+- **URL:** `{{baseUrl}}/admin/show-rooms`
+- **Body:**
+```json
+{
+  "countryId": 1,
+  "phoneCode": "+966",
+  "phone": "512345678",
+  "email": "riyadh@example.com",
+  "url": "https://maps.google.com/?q=24.7136,46.6753",
+  "lat": 24.7136,
+  "lng": 46.6753,
+  "isActive": true,
+  "translations": [
+    {
+      "langId": "en",
+      "name": "Riyadh Showroom",
+      "address": "King Fahd Road, Olaya District",
+      "city": "Riyadh"
+    },
+    {
+      "langId": "ar",
+      "name": "معرض الرياض",
+      "address": "طريق الملك فهد، حي العليا",
+      "city": "الرياض"
+    }
+  ]
+}
+```
+
+#### 4. Update Show Room
+- **Method:** PATCH
+- **URL:** `{{baseUrl}}/admin/show-rooms/1`
+- **Body:**
+```json
+{
+  "phone": "512345679",
+  "translations": [
+    { "langId": "en", "name": "Riyadh Showroom Updated" }
+  ]
+}
+```
+
+#### 5. Delete Show Room
+- **Method:** DELETE
+- **URL:** `{{baseUrl}}/admin/show-rooms/1`
+
 ## Query Parameters Guide
 
 ### Pagination
@@ -330,7 +388,7 @@ GET /users?paginate=0&filters[isActive]=1&sort[name]=asc
 Client endpoints use `@ApiContext('client')` which returns thin responses: only the requested language fields at root level, no `en`/`ar` language keys, no `translations` array.
 
 ### Authentication
-- **Public endpoints** (no auth required): Home, Countries, Cities, Sliders, FAQs, Collections, Products, Attributes, Static Pages, Product Reviews
+- **Public endpoints** (no auth required): Home, Countries, Cities, Sliders, FAQs, Collections, Products, Attributes, Static Pages, Show Rooms, Product Reviews
 - **Authenticated endpoints** (client JWT required): Profile, Addresses, Reviews (create/update/delete), Orders
 
 ### Home
@@ -383,6 +441,11 @@ Client endpoints use `@ApiContext('client')` which returns thin responses: only 
 |--------|-----|------|-------------|
 | GET | `/client/static-pages` | Public | List active pages |
 | GET | `/client/static-pages/:slug` | Public | Get page by slug with sections |
+
+### Show Rooms
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| GET | `/client/show-rooms` | Public | List active show rooms |
 
 ### Profile (requires client JWT)
 | Method | URL | Description |

@@ -12,6 +12,7 @@ import { ClientStaticPagesModule } from './static-pages/client-static-pages.modu
 import { ClientAddressesModule } from './addresses/client-addresses.module';
 import { ClientReviewsModule } from './reviews/client-reviews.module';
 import { ClientOrdersModule } from './orders/client-orders.module';
+import { ClientShowRoomsModule } from './show-rooms/client-show-rooms.module';
 import { RouterModule } from '@nestjs/core';
 
 @Module({
@@ -28,8 +29,9 @@ import { RouterModule } from '@nestjs/core';
     ClientAddressesModule,
     ClientReviewsModule,
     ClientOrdersModule,
+    ClientShowRoomsModule,
     ProfileModule,
-    
+
     RouterModule.register([
       {
         path: 'client',
@@ -46,6 +48,7 @@ import { RouterModule } from '@nestjs/core';
           { path: '', module: ClientAddressesModule },
           { path: '', module: ClientReviewsModule },
           { path: '', module: ClientOrdersModule },
+          { path: '', module: ClientShowRoomsModule },
           { path: '', module: ProfileModule },
         ],
       },
