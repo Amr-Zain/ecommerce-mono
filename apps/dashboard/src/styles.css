@@ -1,3 +1,7 @@
+@import '@fontsource/inter';
+@import '@fontsource/noto-sans-arabic';
+@import '@fontsource/jetbrains-mono';
+
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
@@ -73,14 +77,14 @@
   --color-warning: hsl(var(--warning));
   --color-warning-foreground: hsl(var(--warning-foreground));
 
-  --color-sidebar: hsl(147 10% 10.85%);
-  --color-sidebar-foreground: hsl(146 7.36% 80.02%);
-  --color-sidebar-primary: hsl(159 100% 19.4%);
-  --color-sidebar-primary-foreground: hsl(146 7.36% 80.02%);
-  --color-sidebar-accent: hsl(148 11.29% 15.25%);
-  --color-sidebar-accent-foreground: hsl(146 7.36% 80.02%);
-  --color-sidebar-border: hsl(147 6.46% 13.72%);
-  --color-sidebar-ring: hsl(149 15.37% 35.27%);
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
 
   --background-image-gradient-primary: var(--gradient-primary);
   --background-image-gradient-secondary: var(--gradient-secondary);
@@ -91,6 +95,9 @@
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
   --shadow-glow: var(--shadow-glow);
+
+  --font-sans: 'Inter', 'Noto Sans Arabic', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
   --transition-property-all: var(--transition-all);
   --transition-property-colors: var(--transition-colors);
@@ -317,8 +324,26 @@
     border-color: theme(color.border);
   }
 
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html:lang(ar) {
+    font-family: 'Noto Sans Arabic', 'Inter', system-ui, sans-serif;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  [data-sidebar="menu-button"] {
+    font-weight: 500;
   }
 
   .sidebar-transition {
@@ -371,6 +396,7 @@
   [data-collapsible="icon"] [data-sidebar="content"] {
     scrollbar-width: none;
   }
+
   [data-collapsible="icon"] [data-sidebar="content"]::-webkit-scrollbar {
     display: none;
   }
