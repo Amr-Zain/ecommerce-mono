@@ -1,613 +1,545 @@
-Welcome to your new TanStack app! 
+# E-Commerce Admin Dashboard
 
-# Getting Started
+Admin dashboard for managing the e-commerce platform, built with React, TanStack Router, and TanStack Query.
 
-To run this application:
+## Tech Stack
+
+- **Framework:** React 19 + TypeScript
+- **Routing:** TanStack Router (file-based)
+- **Data Fetching:** TanStack Query + Axios
+- **State Management:** Zustand
+- **Forms:** React Hook Form + Zod
+- **Styling:** Tailwind CSS 4
+- **UI Components:** shadcn/ui + custom `@ecommerce/ui` package
+- **Rich Text Editor:** TipTap
+- **Charts:** Recharts
+- **i18n:** i18next
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 18
+- pnpm
+
+### Installation
 
 ```bash
 pnpm install
-pnpm start
 ```
-# tasks 
- 1- reusable form (done still some fix to the types)
- 2- hooks and axios (done)
- 4- toaster, layout fixs (done)
- 3-helper options for tanstack querys (in progress)
- 5- login (zustand) (done)
- 6- reusable table ( filters,resize )(in progress) still need to fix the filter as list not input add them to the url and fix teh sort to be assiated with the field and the export
- 7- preview fullback images and reuable components
 
-# Building For Production
+### Environment Variables
 
-To build this application for production:
+Create a `.env` file in the dashboard root:
 
 ```bash
-pnpm build
+# Base URL for the backend API (used by axios interceptors)
+VITE_BASE_URL=http://localhost:3000
+
+# API base URL (used for file uploads, auth refresh, notifications)
+VITE_BASE_URL_API=http://localhost:3000
+
+# General base URL (optional, for general endpoints)
+VITE_BASE_GENERAL_URL=http://localhost:3000
+
+# Google Maps API key (for map fields)
+VITE_GOOGLE_MAPS_API_KEY=
 ```
 
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+### Running
 
 ```bash
-pnpm test
+pnpm dev
 ```
 
-## Styling
+Starts the dev server on port 3001.
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+## Scripts
 
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start dev server (port 3001) |
+| `pnpm build` | Build for production |
+| `pnpm test` | Run tests (Vitest) |
+| `pnpm lint` | Lint with ESLint |
+| `pnpm format` | Format with Prettier |
+| `pnpm check` | Format + lint fix |
+| `pnpm typecheck` | Type-check with TypeScript |
 
-## Linting & Formatting
+## Project Structure
 
-
-This project uses [eslint](https://eslint.org/) and [prettier](https://prettier.io/) for linting and formatting. Eslint is configured using [tanstack/eslint-config](https://tanstack.com/config/latest/docs/eslint). The following scripts are available:
-
-```bash
-pnpm lint
-pnpm format
-pnpm check
+```
+src/
+├── components/
+│   ├── common/
+│   │   └── form/          # Reusable form fields (Field component)
+│   ├── layout/            # Sidebar, Header, Notifications
+│   └── pagesComponents/   # Per-page components (Config, Form, etc.)
+├── hooks/                 # Custom hooks (UseFetch, UseMutate)
+├── i18n/                  # i18next configuration
+├── routes/
+│   ├── __root.tsx         # Root layout
+│   └── _main/             # Authenticated routes
+│       ├── route.tsx      # Main layout (auth guard)
+│       └── [module]/      # CRUD modules
+├── services/              # Axios instance, API helpers
+├── stores/                # Zustand stores (auth, alerts)
+├── styles/                # Global styles
+├── types/                 # TypeScript types
+└── util/                  # Helpers, query key factories
 ```
 
+## CRUD Modules
 
+Each module follows a consistent pattern with two parts: **Routes** (page components) and a **Config** (shared definitions).
+
+### File Structure
+
+```
+src/
+├── routes/_main/[module]/
+│   ├── index.tsx              # List page
+│   ├── add.tsx                # Create page
+│   ├── edit/$id.tsx           # Edit page
+│   └── show/$id.tsx           # Detail page (optional)
+│
+└── components/pagesComponents/[Module]/
+    ├── Config.tsx             # Columns, actions, filters, form fields
+    ├── index.tsx              # Table component (list view)
+    ├── Form.tsx               # Form component (add/edit)
+    └── show/                  # Detail view (optional)
+```
+
+### Route Files
+
+**List (`index.tsx`)** - Fetches paginated data with search/filter params:
+
+```tsx
+// src/routes/_main/roles/index.tsx
+const endpoint = `roles?paginate=0`
+
+export const Route = createFileRoute('/_main/roles/')({
+  beforeLoad: ({ context }) => {
+    routePermission('roles', 'index')  // Permission guard
+    return context
+  },
+  validateSearch: (search) => searchParamsValidate(search),
+  loaderDeps: ({ search }) => ({ search: searchParamsValidate(search) }),
+  pendingComponent: () => <TableLoader breadcrumbs={{ entityKey: 'menu.roles' }} />,
+  loader: ({ context, deps: { search } }) => {
+    const { queryClient } = context as RouterContext
+    queryClient.ensureQueryData(
+      prefetchOptions({
+        queryKey: rolesQueryKeys.filterd(search),
+        endpoint,
+        params: search,
+      }),
+    )
+  },
+})
+
+function Index() {
+  const search = Route.useLoaderDeps().search
+  const { data } = useFetch<ApiResponseBase<Role[]>>({
+    queryKey: rolesQueryKeys.filterd(search),
+    endpoint,
+    suspense: true,
+    params: search,
+  })
+  return (
+    <>
+      <SmartBreadcrumbs entityKey="menu.roles" />
+      <RolesTable data={data!} />
+    </>
+  )
+}
+```
+
+**Add (`add.tsx`)** - Renders form without initial data:
+
+```tsx
+export const Route = createFileRoute('/_main/roles/add')({
+  beforeLoad: ({ context }) => {
+    routePermission('roles', 'store')
+    return context
+  },
+  component: RouteComponent,
+  pendingComponent: () => <RoleFormSkeleton />,
+})
+
+function RouteComponent() {
+  return (
+    <>
+      <SmartBreadcrumbs entityKey="menu.roles" entityTo="/roles" action="add" />
+      <RoleForm />
+    </>
+  )
+}
+```
+
+**Edit (`edit/$id.tsx`)** - Prefetches existing record, passes to form:
+
+```tsx
+export const Route = createFileRoute('/_main/roles/edit/$id')({
+  beforeLoad: ({ context }) => {
+    routePermission('roles', 'update')
+    return context
+  },
+  loader: ({ context, params }) => {
+    const { queryClient } = context as RouterContext
+    queryClient.ensureQueryData(
+      prefetchOptions({
+        queryKey: rolesQueryKeys.get(params.id),
+        endpoint: `roles/${params.id}`,
+      }),
+    )
+  },
+})
+
+function RouteComponent() {
+  const { id } = Route.useParams()
+  const { data } = useFetch<ApiResponseBase<Role>, Role>({
+    queryKey: rolesQueryKeys.get(id),
+    endpoint: `roles/${id}`,
+    suspense: true,
+    select: (data) => data.data as unknown as Role,
+  })
+  return (
+    <>
+      <SmartBreadcrumbs entityKey="menu.roles" entityTo="/roles" action="edit" />
+      <RoleForm role={data} />
+    </>
+  )
+}
+```
+
+**Show (`show/$id.tsx`)** - Detail/read-only view:
+
+```tsx
+export const Route = createFileRoute('/_main/roles/show/$id')({
+  beforeLoad: ({ context }) => {
+    routePermission('roles', 'show')
+    return context
+  },
+  loader: ({ context, params }) => {
+    const { queryClient } = context as RouterContext
+    queryClient.ensureQueryData(
+      prefetchOptions({
+        queryKey: rolesQueryKeys.get(params.id),
+        endpoint: `roles/${params.id}`,
+      }),
+    )
+  },
+})
+
+function RouteComponent() {
+  return (
+    <>
+      <SmartBreadcrumbs entityKey="menu.roles" entityTo="/roles" action="show" />
+      <RoleShow />
+    </>
+  )
+}
+```
+
+### Config.tsx
+
+Each module has a `Config.tsx` that exports 4 things: **Type**, **Columns**, **Actions**, **Filters**, and **Form Fields**.
+
+```tsx
+// src/components/pagesComponents/Roles/Config.tsx
+
+import { ColumnDef } from '@tanstack/react-table'
+import { textColumn, booleanControlColumn, createdAtColumn } from '@/components/features/sharedColumns'
+import { Filter, RowAction } from '@/types/components/table'
+import { PickedAction } from '@/hooks/useStatusMutations'
+import { FieldProp } from '@/types/components/form'
+
+/* ---------- TYPE ---------- */
+export type Role = {
+  id: number
+  name: string
+  is_active: boolean
+  created_at: string
+}
+
+/* ---------- TABLE COLUMNS ---------- */
+export const roleColumns = (
+  open: (type: PickedAction, row: Role) => void,
+): ColumnDef<Role>[] => [
+  textColumn<Role>('name', 'table.columns.name'),
+  booleanControlColumn<Role>(
+    'is_active',
+    'table.columns.status',
+    open,          // Opens activate/deactivate modal
+    'active',
+    true,          // Default value
+    'roles',       // Query key prefix for invalidation
+  ),
+  createdAtColumn<Role>(),
+]
+
+/* ---------- ROW ACTIONS ---------- */
+export const actions = (
+  t: (key: string) => string,
+  open: (type: PickedAction, row: Role) => void,
+) => [
+  {
+    label: t('actions.show'),
+    to: '/roles/show/$id',
+    params: (r: Role) => ({ id: String(r.id) }),
+    permission: 'roles',
+    action: 'show',
+  },
+  {
+    label: t('actions.edit'),
+    to: '/roles/edit/$id',
+    params: (r: Role) => ({ id: String(r.id) }),
+    permission: 'roles',
+    action: 'update',
+  },
+  {
+    label: (r: Role) => t(`actions.${r.is_active ? 'deactivate' : 'activate'}`),
+    onClick: (r: Role) => open('active', r),
+    permission: 'roles',
+    action: 'update',
+  },
+] as RowAction<Role>[]
+
+/* ---------- FILTERS ---------- */
+export const filters = (t: (key: string) => string): Filter[] => [
+  {
+    id: 'filters[is_active]',
+    title: t('status.title'),
+    options: [
+      { label: t('status.active'), value: '1' },
+      { label: t('status.inactive'), value: '0' },
+    ],
+    multiple: false,
+  },
+  {
+    id: 'sort[created_at]',
+    title: t('table.createdAt'),
+    options: [
+      { label: t('sort.asc'), value: 'asc' },
+      { label: t('sort.desc'), value: 'desc' },
+    ],
+    multiple: false,
+  },
+]
+
+/* ---------- FORM FIELDS ---------- */
+export const buildRoleFields = (
+  t: (k: string) => string,
+): FieldProp<RoleFormData>[] => [
+  {
+    type: 'text',
+    name: 'name_ar',
+    label: t('Form.labels.nameAr'),
+    placeholder: t('Form.placeholders.name'),
+  },
+  {
+    type: 'text',
+    name: 'name_en',
+    label: t('Form.labels.nameEn'),
+    placeholder: t('Form.placeholders.name'),
+  },
+]
+```
+
+### Config Exports Reference
+
+| Export | Type | Description |
+|---|---|---|
+| `Type` | `type Role = { ... }` | TypeScript type for the entity |
+| `[entity]Columns` | `ColumnDef<T>[]` | Table column definitions using shared helpers |
+| `[entity]Actions` | `RowAction<T>[]` | Row dropdown menu items (links + onClick handlers) |
+| `[entity]Filters` / `get[Entity]Filters` | `Filter[]` | Table filter definitions |
+| `build[Entity]Fields` | `FieldProp<T>[]` | Form field definitions |
+
+### Shared Column Helpers
+
+From `@/components/features/sharedColumns`:
+
+| Helper | Usage |
+|---|---|
+| `textColumn<T>(field, header, options?)` | Text/string column |
+| `imageColumn<T>(field, header)` | Image thumbnail column |
+| `imageNameColumn<T>(getter, header, options?)` | Image + name combo column |
+| `booleanControlColumn<T>(field, header, open, action, default, entity)` | Toggle with activate/deactivate modal |
+| `createdAtColumn<T>()` | Formatted created_at column |
+| `DateColumn<T>(field, header)` | Generic date column |
+
+### Form Field Types
+
+The `FieldProp` type supports these field types:
+
+| Type | Description |
+|---|---|
+| `text` | Text input |
+| `number` | Number input |
+| `email` | Email input |
+| `password` | Password input with toggle |
+| `textarea` | Multi-line text |
+| `checkbox` | Checkbox |
+| `select` | Dropdown select (async or static options) |
+| `radio` | Radio group |
+| `otp` | OTP verification input |
+| `phone` | Phone with country code |
+| `date` | Date picker (single/range/multiple) |
+| `map` | Google Maps picker |
+| `editor` | TipTap rich text editor |
+| `multiLangField` | Multi-language input (ar/en tabs) |
+| `fileUpload` | Generic file upload |
+| `mediaUploader` | Media upload |
+| `imgUploader` | Image upload with preview |
+| `color` | Color picker |
+| `switch` | Toggle switch |
+| `custom` | Custom React element |
+
+### RowAction Shape
+
+```tsx
+type RowAction<RowData> = {
+  label: string | ((row: RowData) => string)    // Display text
+  to?: string | ((row: RowData) => string)       // Router link (for navigation)
+  params?: Record<string, any>                   // Route params
+  onClick?: (row: RowData) => void               // Custom click handler
+  permission?: string                            // Permission key
+  action?: 'show' | 'update' | 'store' | 'destroy' | 'delete'
+  queryKey?: (id: string) => QueryKey            // For cache invalidation
+  danger?: boolean                               // Red styling
+  hidden?: (row: RowData) => boolean             // Conditional visibility
+  disabled?: boolean | ((row: RowData) => boolean)
+}
+```
+
+### Filter Shape
+
+```tsx
+type Filter = SelectFilter | CustomFilter
+
+// Static options
+{
+  id: 'filters[is_active]',
+  title: 'Status',
+  options: [
+    { label: 'Active', value: '1' },
+    { label: 'Inactive', value: '0' },
+  ],
+  multiple: false,
+}
+
+// Async options from API
+{
+  id: 'filters[parent_id]',
+  title: 'Parent Category',
+  endpoint: 'collections',
+  select: (data) => data.data.map(c => ({ label: c.name, value: c.id })),
+  multiple: false,
+}
+
+// Custom JSX filter
+{
+  type: 'custom',
+  id: 'custom-filter',
+  jsx: <MyCustomFilterComponent />,
+}
+```
+
+### Available Modules
+
+| Module | List | Add | Edit | Show |
+|---|---|---|---|---|
+| Attributes | `/attributes` | `/attributes/add` | `/attributes/edit/:id` | `/attributes/show/:id` |
+| Attribute Values | `/attributes/values` | `/attributes/values/add` | `/attributes/values/edit/:id` | - |
+| Categories | `/categories` | `/categories/add` | `/categories/edit/:id` | `/categories/show/:id` |
+| Earning Rules | `/earning-rules` | `/earning-rules/add` | `/earning-rules/edit/:id` | - |
+| FAQs | `/faqs` | `/faqs/add` | `/faqs/edit/:id` | - |
+| Offers | `/offers` | `/offers/add` | `/offers/edit/:id` | - |
+| Orders | `/orders` | - | - | `/orders/show/:id` |
+| Payment Gateways | `/payment-gateways` | - | - | - |
+| Products | `/products` | - | - | `/products/show/:id` |
+| Reviews | `/reviews` | - | - | `/reviews/show/:id` |
+| Rewards | `/rewards` | `/rewards/add` | `/rewards/edit/:id` | - |
+| Roles | `/roles` | `/roles/add` | `/roles/edit/:id` | `/roles/show/:id` |
+| Show Rooms | `/show-rooms` | `/show-rooms/add` | `/show-rooms/edit/:id` | - |
+| Sliders | `/sliders` | `/sliders/add` | `/sliders/edit/:id` | - |
+| SMS Providers | `/sms-providers` | - | - | - |
+| Static Pages | `/static-pages` | `/static-pages/add` | `/static-pages/edit/:id` | `/static-pages/show/:id` |
+| Supervisors | `/supervisors` | `/supervisors/add` | `/supervisors/edit/:id` | - |
+| Tiers | `/tiers` | `/tiers/add` | `/tiers/edit/:id` | - |
+| Users | `/users` | - | - | `/users/show/:id` |
+| Admin Notifications | `/admin-notifications` | - | - | `/admin-notifications/show/:id` |
+
+### Settings Modules
+
+| Module | Path |
+|---|---|
+| General | `/settings/general` |
+| Countries | `/settings/countries` |
+| Cities | `/settings/cities` |
+| Shopify Stores | `/settings/shopify-stores` |
+| Notifications | `/settings/notifications` |
+
+### Adding a New CRUD Module
+
+1. **Create routes** under `src/routes/_main/[module]/`:
+
+   ```
+   src/routes/_main/my-module/
+   ├── index.tsx          # List page
+   ├── add.tsx            # Create page
+   ├── edit/$id.tsx       # Edit page
+   └── show/$id.tsx       # Detail page (optional)
+   ```
+
+2. **Create Config** at `src/components/pagesComponents/MyModule/Config.tsx`:
+   - Define TypeScript type for the entity
+   - Export column definitions using shared column helpers
+   - Export row actions (show, edit, delete, activate/deactivate)
+   - Export filter definitions
+   - Export form field builder function
+
+3. **Create components** in the same directory:
+   - `index.tsx` - Table component using `<DataTable>` with columns, filters, actions
+   - `Form.tsx` - Form using React Hook Form + the `Field` component
+   - `show/index.tsx` - Detail view (optional)
+
+4. **Add query keys** to `src/util/queryKeysFactory.ts`:
+   ```tsx
+   export const myModuleQueryKeys = {
+     all: () => ['my-module'] as const,
+     filterd: (params: unknown) => [...myModuleQueryKeys.all(), 'filtered', params] as const,
+     get: (id: string | number) => [...myModuleQueryKeys.all(), 'one', String(id)] as const,
+   }
+   ```
+
+5. **Register in sidebar** (`src/components/layout/Sidebar.tsx`)
 
 ## Routing
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
 
-### Adding A Route
+Uses [TanStack Router](https://tanstack.com/router) with file-based routing.
 
-To add a new route to your application just add another a new file in the `./src/routes` directory.
+- **Root layout:** `src/routes/__root.tsx`
+- **Auth layout:** `src/routes/_main/route.tsx` (wraps all authenticated pages)
+- Routes are auto-generated via `@tanstack/router-plugin`
 
-TanStack will automatically generate the content of the route file for you.
+### Adding a Route
 
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import { Link } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
-```
-
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
+Create a new file in `src/routes/` and TanStack Router will auto-generate the route tree.
 
 ## Data Fetching
 
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
+- **`UseFetch` hook** wraps `@tanstack/react-query` `useQuery` with the project's axios instance
+- **`UseMutate` hook** wraps `useMutation` for create/update/delete operations
+- **Query keys** are managed via `src/util/queryKeysFactory.ts`
+- Token refresh is handled automatically via axios response interceptors
 
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/people",
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
-});
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
+## Linting & Formatting
 
 ```bash
-pnpm add @tanstack/react-query @tanstack/react-query-devtools
+pnpm lint        # ESLint
+pnpm format      # Prettier
+pnpm check       # Prettier --write + ESLint --fix
 ```
-
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
-
-```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// ...
-
-const queryClient = new QueryClient();
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from "@tanstack/react-query";
-
-import "./App.css";
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ["people"],
-    queryFn: () =>
-      fetch("https://swapi.dev/api/people")
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
-```bash
-pnpm add @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store, Derived } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-'use client'
-
-import React from 'react'
-import { FieldPath, FieldValues, Path } from 'react-hook-form'
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@ecommerce/ui/components/form'
-import { Input } from '@ecommerce/ui/components/input'
-import { Checkbox } from '@ecommerce/ui/components/checkbox'
-import { Textarea } from '@ecommerce/ui/components/textarea'
-import { RadioGroup, RadioGroupItem } from '@ecommerce/ui/components/radio-group'
-import { FieldProp } from '@/types/components/form'
-import OTPField from './OTPField'
-import PhoneField from './PhoneField'
-import PasswordField from './PasswordField'
-import DateFields from './DatePicker'
-import MapField from './MapField'
-import MultiLangField from './MultiLangField'
-import EditorField from './Editor/EditorField'
-import FileUploadField from './Uploader/FileUploadField'
-import AppSelect from './Select'
-
-function Field<T extends FieldValues>(props: FieldProp<T>) {
-  if (props.type === 'custom') {
-    return props.customItem as React.ReactElement
-  }
-
-  return (
-    <FormField
-      control={props.control}
-      name={props.name as FieldPath<T>}
-      render={({ field }) => {
-        const renderField = () => {
-          switch (props.type) {
-            case 'text':
-            case 'number':
-            case 'email':
-            case 'url': {
-              const { placeholder } = props
-              const inputProps = props.inputProps ?? {}
-              return (
-                <Input
-                  type={props.type}
-                  placeholder={placeholder}
-                  {...field}
-                  {...inputProps}
-                />
-              )
-            }
-
-            case 'password': {
-              const { placeholder } = props
-              const inputProps = props.inputProps ?? {}
-              return (
-                <PasswordField
-                  placeholder={placeholder || ''}
-                  {...field}
-                  {...inputProps}
-                />
-              )
-            }
-
-            case 'textarea': {
-              const { placeholder } = props
-              const inputProps = props.inputProps ?? {}
-              return (
-                <Textarea
-                  placeholder={placeholder}
-                  rows={inputProps.rows ?? 4}
-                  {...field}
-                  {...inputProps}
-                />
-              )
-            }
-
-            case 'checkbox': {
-              const inputProps = props.inputProps ?? {}
-              return (
-                <div className="flex flex-row items-center space-x-3">
-                  <FormControl>
-                    <Checkbox
-                      checked={!!field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={inputProps.disabled}
-                      {...inputProps}
-                    />
-                  </FormControl>
-                  {props.label && (
-                    <FormLabel
-                      className="font-normal cursor-pointer"
-                      onClick={() => field.onChange(!field.value)}
-                    >
-                      {props.label}
-                    </FormLabel>
-                  )}
-                </div>
-              )
-            }
-
-            case 'select': {
-              // inputProps is Omit<SelectInputProps<T, any>, 'field'>
-              const inputProps = props!.inputProps! 
-              return (
-                <AppSelect
-                  field={field}
-                  {...inputProps}
-                />
-              )
-            }
-
-            case 'radio': {
-              const inputProps = props.inputProps ?? {}
-              const radioOptions = props.options ?? []
-              return (
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  className="flex flex-col space-y-1"
-                  disabled={inputProps.disabled}
-                  {...inputProps}
-                >
-                  {radioOptions.map((option) => (
-                    <div
-                      key={String(option.value)}
-                      className="flex items-center space-x-3"
-                    >
-                      <FormControl>
-                        <RadioGroupItem value={String(option.value)} />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        {option.label}
-                      </FormLabel>
-                    </div>
-                  ))}
-                </RadioGroup>
-              )
-            }
-
-            case 'otp': {
-              const inputProps = props.inputProps ?? {}
-              return (
-                <OTPField
-                  value={field.value || ''}
-                  onChange={(value) => {
-                    inputProps.handleOTPChange?.(value)
-                    field.onChange(value)
-                  }}
-                  length={inputProps.length ?? 6}
-                  disabled={inputProps.disabled}
-                  type={inputProps.type}
-                  {...inputProps}
-                />
-              )
-            }
-
-            case 'phone': {
-              const inputProps = props.inputProps ?? {}
-              return (
-                <PhoneField
-                  control={props.control}
-                  phoneCodeName={
-                    (inputProps.phoneCodeName ??
-                      `${String(props.name)}_code`) as Path<T>
-                  }
-                  phoneNumberName={
-                    (inputProps.phoneNumberName ??
-                      `${String(props.name)}_number`) as Path<T>
-                  }
-                  countries={inputProps.countries ?? []}
-                  currentPhoneLimit={inputProps.currentPhoneLimit}
-                  isLoading={inputProps.disabled}
-                  disabled={inputProps.disabled}
-                  codeClass={inputProps.codeClass}
-                  phoneClass={inputProps.phoneClass}
-                />
-              )
-            }
-
-            case 'date': {
-              const inputProps = (props.inputProps ?? {})
-              return (
-                <DateFields
-                  control={props.control}
-                  name={props.name}
-                  label={props.label as string}
-                  placeholder={props.placeholder}
-                  mode={inputProps.mode}
-                  disabledDates={inputProps.disabledDates}
-                  className={inputProps.className}
-                />
-              )
-            }
-
-            case 'map': {
-              const inputProps = (props.inputProps ?? {}) 
-              return (
-                <MapField
-                  field={field}
-                  onMarkerPositionChange={inputProps.onMarkerPositionChange}
-                  defaultMarkerPosition={inputProps.defaultMarkerPosition}
-                  locations={inputProps.locations}
-                  zoom={inputProps.zoom}
-                  height={inputProps.height}
-                  mapContainerStyle={inputProps.mapContainerStyle}
-                  disabled={inputProps.disabled}
-                  className={inputProps.className}
-                />
-              )
-            }
-
-            case 'editor': {
-              const inputProps = (props.inputProps ?? {})
-              return (
-                <EditorField
-                  field={field}
-                  placeholder={props.placeholder}
-                  height={inputProps.height}
-                  toolbar={inputProps.toolbar}
-                  disabled={inputProps.disabled}
-                  className={inputProps.className}
-                />
-              )
-            }
-
-            case 'multiLangField': {
-              const inputProps = (props.inputProps ??
-                {})
-              return (
-                <MultiLangField
-                  control={props.control}
-                  name={String(props.name)}
-                  type={inputProps.type ?? 'input'}
-                  label={props.label as string}
-                  placeholder={props.placeholder}
-                  languages={inputProps.languages}
-                  defaultLanguage={inputProps.defaultLanguage}
-                  disabled={inputProps.disabled}
-                  className={inputProps.className}
-                />
-              )
-            }
-
-            case 'fileUpload':
-            case 'mediaUploader':
-            case 'imgUploader': {
-              const inputProps = (props.inputProps ??{}) 
-              const accept =
-                props.type === 'imgUploader'
-                  ? ['image/*']
-                  : inputProps.acceptedFileTypes
-
-              const type_file =
-                props.type === 'imgUploader' ? 'image' : inputProps.type_file
-
-              return (
-                <FileUploadField
-                  field={field}
-                  maxFiles={inputProps.maxFiles}
-                  maxSize={inputProps.maxSize}
-                  acceptedFileTypes={accept}
-                  multiple={inputProps.multiple}
-                  disabled={inputProps.disabled}
-                  className={inputProps.className}
-                  showPreview={inputProps.showPreview ?? true}
-                  shapeType={inputProps.shapeType ?? 'picture-card'}
-                  draggable={inputProps.draggable ?? true}
-                  type_file={type_file}
-                  model={inputProps.model}
-                  apiEndpoint={inputProps.apiEndpoint}
-                  baseUrl={inputProps.baseUrl}
-                />
-              )
-            }
-          }
-        }
-
-        const spanClass = props.span ? `col-span-${props.span}` : ''
-
-        return (
-          <FormItem
-            className={`${props.type === 'checkbox' ? '' : 'space-y-2'} ${spanClass}`}
-          >
-            {props.type !== 'checkbox' && props.label && (
-              <FormLabel>{props.label}</FormLabel>
-            )}
-            <FormControl>{renderField()}</FormControl>
-            <FormMessage />
-          </FormItem>
-        )
-      }}
-    />
-  )
-}
-
-export default Field
-
-conver this switch to object mapped by type
-
-#   e c o m m e r c e - d a s h b o a r d  
- 
