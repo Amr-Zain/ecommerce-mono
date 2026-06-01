@@ -1,4 +1,5 @@
 import { EyeOff, ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
+import type { Column } from '@tanstack/react-table'
 
 import { Button } from '@ecommerce/ui/components/button'
 import {
@@ -15,7 +16,7 @@ export function ColumnHeader<TData, TValue>({
   title,
   className,
 }: {
-  column: any
+  column: Column<TData, TValue>
   title: string
   className?: string
 }) {
@@ -24,9 +25,9 @@ export function ColumnHeader<TData, TValue>({
   }
 
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
+    <div className={cn('flex items-center space-x-2', className)}>
       <DropdownMenu>
-        <DropdownMenuTrigger >
+        <DropdownMenuTrigger>
           <Button
             variant="ghost"
             size="sm"

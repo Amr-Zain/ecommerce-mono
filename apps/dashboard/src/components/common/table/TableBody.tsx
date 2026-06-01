@@ -1,5 +1,5 @@
 import React from 'react'
-import { flexRender, Row, Table } from '@tanstack/react-table'
+import { flexRender, Row } from '@tanstack/react-table'
 import { TableBody, TableRow, TableCell } from '@ecommerce/ui/components/table'
 import { SearchX } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
@@ -16,13 +16,14 @@ export function DataTableBody<TData>({
   rowUrl,
 }: DataTableBodyProps<TData>) {
   const navigate = useNavigate()
+
   if (!rows?.length) {
     return (
       <TableBody>
         <TableRow>
           <TableCell colSpan={columnCount} className="h-24 text-center">
             <div className="my-10 mx-auto flex-col flex items-center justify-center h-44 px-10 w-fit rounded-3xl shadow-sm border-primary/20">
-              <SearchX className='size-20' />
+              <SearchX className="size-20" />
             </div>
           </TableCell>
         </TableRow>

@@ -14,8 +14,9 @@ export function useDataTableColumns<TData, TValue>({
   selectable,
   actions,
 }: UseDataTableColumnsProps<TData, TValue>) {
-  const { t } = useTranslation();
-  return () => {
+  const { t } = useTranslation()
+
+  return React.useCallback(() => {
     const cols: ColumnDef<TData, TValue>[] = [...columns]
 
     if (selectable) {
@@ -50,7 +51,7 @@ export function useDataTableColumns<TData, TValue>({
     if (actions) {
       const actionsColumn: ColumnDef<TData, TValue> = {
         id: 'actions',
-        header: () => <div className='text-foreground font-semibold text-start'>{t("actions.entity")}</div>,
+        header: () => <div className='text-foreground font-semibold text-start'>{t('actions.entity')}</div>,
         cell: ({ row }) => actions(row),
         enableSorting: false,
         enableHiding: false,
@@ -60,5 +61,5 @@ export function useDataTableColumns<TData, TValue>({
     }
 
     return cols
-  }
+  }, [columns, selectable, actions, t])
 }

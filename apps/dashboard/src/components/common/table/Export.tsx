@@ -1,4 +1,4 @@
-import  { useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type Table } from '@tanstack/react-table'
 import { toast } from 'sonner'
@@ -12,7 +12,7 @@ interface ExtractFileProps<T> {
   filename?: string
 }
 
-export default function ExtractFile<T>({
+export function ExtractFile<T>({
   table,
   endpoint,
   filename = 'exported_data.xlsx',
@@ -27,7 +27,7 @@ export default function ExtractFile<T>({
 
     try {
       const dataToExport = prepareDataForExport(table, endpoint)
-      
+
       if (dataToExport.length === 0) {
         toast.warning(t('Text.no_records_to_export'), { id: 'exporting' })
         return
@@ -35,8 +35,7 @@ export default function ExtractFile<T>({
 
       const workbook = createWorkbook(table, dataToExport)
       const buffer = await workbook.xlsx.writeBuffer()
-      
-      // Download the file
+
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       })
@@ -46,8 +45,7 @@ export default function ExtractFile<T>({
       a.download = filename
       document.body.appendChild(a)
       a.click()
-      
-      // Clean up
+
       setTimeout(() => {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
@@ -65,8 +63,8 @@ export default function ExtractFile<T>({
   const selectedCount = table.getSelectedRowModel().rows.length
 
   return (
-    <Button 
-      variant="outline" 
+    <Button
+      variant="outline"
       size="sm"
       className="app-btn"
       onClick={handleExport}

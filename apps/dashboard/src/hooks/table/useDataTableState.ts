@@ -1,4 +1,3 @@
-
 import React from 'react'
 import {
   SortingState,
@@ -21,6 +20,8 @@ interface UseDataTableStateProps {
   }
 }
 
+const EMPTY_PARAMS = {} as DataTableSearchParams
+
 export function useDataTableState({
   enableUrlState,
   pageSizeOptions,
@@ -29,17 +30,17 @@ export function useDataTableState({
 }: UseDataTableStateProps) {
   const navigate = useNavigate()
   const router = useRouter()
-  const searchParams = enableUrlState
+  const urlParams = enableUrlState
     ? (useSearch({} as any) as DataTableSearchParams)
-    : {}
+    : EMPTY_PARAMS
 
   const isServerPaginated = !!meta
 
   const computeInitialPagination = React.useCallback((): PaginationState => {
     if (enableUrlState) {
       return {
-        pageIndex: ((searchParams.page as number) || 1) - 1,
-        pageSize: (searchParams.limit as number) || pageSizeOptions[0],
+        pageIndex: ((urlParams.page as number) || 1) - 1,
+        pageSize: (urlParams.limit as number) || pageSizeOptions[0],
       }
     }
     if (isServerPaginated && meta) {
@@ -53,8 +54,8 @@ export function useDataTableState({
     )
   }, [
     enableUrlState,
-    searchParams.page,
-    searchParams.limit,
+    urlParams.page,
+    urlParams.limit,
     pageSizeOptions,
     isServerPaginated,
     meta?.current_page,
@@ -69,7 +70,7 @@ export function useDataTableState({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({})
   const [globalFilter, setGlobalFilter] = React.useState<string>(
-    (searchParams as any).search || ''
+    (urlParams.search as string) || ''
   )
   const [paginationState, setPaginationState] = React.useState<PaginationState>(
     computeInitialPagination
@@ -81,7 +82,6 @@ export function useDataTableState({
       const curr = router.state.location.search as DataTableSearchParams
       const next = { ...curr, ...ns }
 
-      // Clean undefined values
       Object.keys(next).forEach((k) => {
         if (next[k as keyof DataTableSearchParams] === undefined) {
           delete next[k as keyof DataTableSearchParams]
@@ -96,7 +96,6 @@ export function useDataTableState({
     [enableUrlState, navigate, router.state.location.search]
   )
 
-  // Update pagination when server meta changes
   React.useEffect(() => {
     if (!isServerPaginated || !meta) return
     const desired: PaginationState = {
@@ -110,16 +109,15 @@ export function useDataTableState({
     )
   }, [isServerPaginated, meta?.current_page, meta?.per_page])
 
-  // Sync state with URL search parameters
   React.useEffect(() => {
     if (enableUrlState) {
-      const searchVal = (searchParams as any).search || ''
+      const searchVal = (urlParams.search as string) || ''
       if (searchVal !== globalFilter) {
         setGlobalFilter(searchVal)
       }
 
-      const page = ((searchParams as any).page as number) || 1
-      const limit = ((searchParams as any).limit as number) || pageSizeOptions[0]
+      const page = (urlParams.page as number) || 1
+      const limit = (urlParams.limit as number) || pageSizeOptions[0]
       const desiredPagination = {
         pageIndex: page - 1,
         pageSize: limit,
@@ -134,11 +132,13 @@ export function useDataTableState({
     }
   }, [
     enableUrlState,
-    (searchParams as any).search,
-    (searchParams as any).page,
-    (searchParams as any).limit,
+    urlParams.search,
+    urlParams.page,
+    urlParams.limit,
     pageSizeOptions,
   ])
+
+  const searchParams = urlParams as Record<string, unknown>
 
   return {
     sorting,
@@ -159,4 +159,3 @@ export function useDataTableState({
     isServerPaginated,
   }
 }
-

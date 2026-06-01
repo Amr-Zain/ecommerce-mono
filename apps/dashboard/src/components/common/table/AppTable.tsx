@@ -7,8 +7,10 @@ import {
   getFacetedRowModel,
   getFacetedUniqueValues,
   flexRender,
+  type VisibilityState,
 } from '@tanstack/react-table'
 import { Table, TableHead, TableHeader, TableRow } from '@ecommerce/ui/components/table'
+import { Card } from '@ecommerce/ui/components/card'
 import { DataTablePagination } from './TablePagination'
 import { DataTableToolbar } from './TableToolbar'
 import { DataTableBody } from './TableBody'
@@ -17,10 +19,8 @@ import { useDataTableColumns } from '@/hooks/table/useDataTableColumns'
 import { serializeFilters } from '@/util/helpers'
 import type { DataTableProps } from '@/types/components/table'
 import type { Meta } from '@/types/api/http'
-import { Card } from '@ecommerce/ui/components/card'
 
-
-const serializeColumnVisibility = (visibility: any): string[] =>
+const serializeColumnVisibility = (visibility: VisibilityState): string[] =>
   Object.entries(visibility)
     .filter(([_, v]) => v)
     .map(([c]) => c)
@@ -68,7 +68,7 @@ export function DataTable<TData, TValue>({
     meta,
     initialState,
   })
-  //add the actions and selectable columns
+
   const finalColumns = useDataTableColumns({
     columns,
     selectable,
@@ -148,15 +148,14 @@ export function DataTable<TData, TValue>({
     },
   })
 
-  // Handle search parameter changes
   React.useEffect(() => {
     if (enableUrlState && searchKey) {
       table
         .getColumn(String(searchKey))
         ?.setFilterValue((searchParams as any).search || '')
     }
-  }, [enableUrlState, searchKey, (searchParams as any).search])
-  // Handle row selection changes
+  }, [enableUrlState, searchKey])
+
   React.useEffect(() => {
     if (onRowSelectionChange && selectable) {
       const selected = table
@@ -165,6 +164,7 @@ export function DataTable<TData, TValue>({
       onRowSelectionChange(selected)
     }
   }, [rowSelection, selectable, onRowSelectionChange])
+
   return (
     <div className="space-y-4">
       <DataTableToolbar

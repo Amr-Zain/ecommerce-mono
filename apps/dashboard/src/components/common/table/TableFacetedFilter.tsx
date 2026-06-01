@@ -20,10 +20,9 @@ import {
 import useFetch from '@/hooks/UseFetch'
 import { ApiResponse } from '@/types/api/http'
 import { FieldOption } from '@/types/components/form'
-import { Filter, SelectFilter } from '@/types/components/table'
+import { SelectFilter } from '@/types/components/table'
 import { useTranslation } from 'react-i18next'
 import { useDebounce } from '@/hooks/useDebounce'
-
 
 export function DataTableFacetedFilter<TData>({
   paramKey,
@@ -36,7 +35,7 @@ export function DataTableFacetedFilter<TData>({
   queryKey,
   select,
   general,
-  closeOnSelect, // optional: force-close after any selection
+  closeOnSelect,
   hasSearch,
 }: {
   paramKey: string
@@ -60,12 +59,13 @@ export function DataTableFacetedFilter<TData>({
   const [open, setOpen] = React.useState(false)
   const shouldClose = closeOnSelect ?? !multiple
   const { t } = useTranslation()
-  const dataOptions = React.useMemo<FieldOption[]>(() => {
+
+  const dataOptions = useMemo<FieldOption[]>(() => {
     if (endpoint) return data ?? []
     return options ?? []
   }, [endpoint, data, options])
 
-  const selectedValues = React.useMemo(() => {
+  const selectedValues = useMemo(() => {
     if (multiple) {
       if (Array.isArray(currentValue)) return new Set(currentValue as string[])
       if (typeof currentValue === 'string' && currentValue.length > 0) {
@@ -216,10 +216,7 @@ export function DataTableFacetedFilter<TData>({
                             {isSelected && <Check className="h-4 w-4" />}
                           </div>
                         )}
-                        {/* {option?.icon && (
-                      <option.icon className="me-2 h-4 w-4 text-muted-foreground" />
-                    )} */}
-                        <span className='line-clamp-2'>{option.label}</span>
+                        <span className="line-clamp-2">{option.label}</span>
                       </CommandItem>
                     )
                   })}
