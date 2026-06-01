@@ -7,6 +7,7 @@ import { UserIcon, Logout01Icon } from "@hugeicons/core-free-icons"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -114,33 +115,36 @@ export function DashboardHeader() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" dir={isRTL ? 'rtl' : 'ltr'}>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium leading-none">
-                    {user?.name}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <Link to={'/profile'}>
-                <DropdownMenuItem>
-                  <HugeiconsIcon icon={UserIcon} className="me-2 h-4 w-4" />
-                  {t('Text.profile')}
+              <DropdownMenuGroup>
+
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-medium leading-none">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <Link to={'/profile'}>
+                  <DropdownMenuItem>
+                    <HugeiconsIcon icon={UserIcon} className="me-2 h-4 w-4" />
+                    {t('Text.profile')}
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    setConfirmOpen(true)
+                  }}
+                >
+                  <HugeiconsIcon icon={Logout01Icon} className="me-2 h-4 w-4" />
+                  {t('Text.logout')}
                 </DropdownMenuItem>
-              </Link>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault()
-                  setConfirmOpen(true)
-                }}
-              >
-                <HugeiconsIcon icon={Logout01Icon} className="me-2 h-4 w-4" />
-                {t('Text.logout')}
-              </DropdownMenuItem>
+              </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
           <ConfirmModal

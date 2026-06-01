@@ -235,21 +235,23 @@ export function AppSidebar() {
                   </DropdownMenuLabel>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem render={<Link to={'/profile'} preload="intent" />}>
-                  <HugeiconsIcon icon={UserIcon} className="me-2 h-4 w-4" />
-                  {t('Text.profile')}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault()
-                    setConfirmOpen(true)
-                  }}
-                  className='flex gap-2 cursor-pointer'
-                >
+                <DropdownMenuGroup>
+                  <DropdownMenuItem render={<Link to={'/profile'} preload="intent" />}>
+                    <HugeiconsIcon icon={UserIcon} className="me-2 h-4 w-4" />
+                    {t('Text.profile')}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      setConfirmOpen(true)
+                    }}
+                    className='flex gap-2 cursor-pointer'
+                  >
                   <HugeiconsIcon icon={Logout01Icon} className="me-2 h-4 w-4" />
                   {t('Text.logout')}
                 </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>

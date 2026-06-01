@@ -15,17 +15,21 @@ function CollapsibleTrigger({ ...props }: CollapsiblePrimitive.Trigger.Props) {
 
 function CollapsibleContent({
   className,
+  children,
   ...props
 }: CollapsiblePrimitive.Panel.Props) {
   return (
     <CollapsiblePrimitive.Panel
       data-slot="collapsible-content"
+      keepMounted
       className={cn(
-        "overflow-hidden data-open:animate-collapsible-down data-closed:animate-collapsible-up",
+        "grid transition-[grid-template-rows] duration-200 ease-out data-open:grid-rows-[1fr] data-closed:grid-rows-[0fr]",
         className
       )}
       {...props}
-    />
+    >
+      <div className="overflow-hidden min-h-0">{children}</div>
+    </CollapsiblePrimitive.Panel>
   )
 }
 

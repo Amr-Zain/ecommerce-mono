@@ -72,6 +72,7 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
                 <DropdownMenuLabel className="text-start">{translatedTitle}</DropdownMenuLabel>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
+              <DropdownMenuGroup>
               {item?.subItems?.map((subItem: IMenuItem) => {
                 const subIsActive = isPathActive(subItem.url, pathname)
                 const translatedSubTitle = t(subItem.title)
@@ -81,6 +82,7 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
                   </DropdownMenuItem>
                 )
               })}
+              </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>

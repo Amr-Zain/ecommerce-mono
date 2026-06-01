@@ -183,7 +183,7 @@ function AppSelect<T extends FieldValues, TData>({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between h-12"
+          className="w-full justify-between h-10 bg-background!"
           disabled={disabled}
           onClick={(e) => {
             // Prevent button click if clicking on clear button area
@@ -238,6 +238,7 @@ function AppSelect<T extends FieldValues, TData>({
                 maxHeight: 300,
                 overflowY: 'auto',
                 padding: 0,
+                margin: "4px"
               }}
             >
               <CommandGroup className="p-0">
@@ -259,7 +260,7 @@ function AppSelect<T extends FieldValues, TData>({
                           handleSelectSingle(valueStr)
                         }
                       }}
-                      className="flex items-center gap-2 data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[selected=false]:bg-transparent hover:bg-accent hover:text-accent-foreground"
+                      className="cursor-pointer flex items-center gap-2 data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[selected=false]:bg-transparent hover:bg-accent hover:text-accent-foreground"
                     >
                       <Check
                         className={cn(

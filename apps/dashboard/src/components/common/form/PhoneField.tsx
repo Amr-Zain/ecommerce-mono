@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@ecommerce/ui/components/select'
-import { Input } from '@ecommerce/ui/components/input'
+import { Input } from '@/components/ui/Input'
 import { useTranslation } from 'react-i18next'
 
 import { CountryDetails } from '@/types/api/country'
@@ -192,7 +192,7 @@ function PhoneField<T extends FieldValues>({
             >
               <FormControl>
                 <SelectTrigger
-                  className={`text-text p-1 sm:p-4 ${codeClass}`}
+                  className={`text-text p-1 sm:p-4 ${codeClass} bg-background! h-10!`}
                   dir={t('lang')}
                 >
                   <SelectValue placeholder={t('Form.labels.phoneCode')} />

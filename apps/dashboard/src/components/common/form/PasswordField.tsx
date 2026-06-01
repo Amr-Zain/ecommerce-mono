@@ -7,7 +7,7 @@ import {
   FormItem,
   FormMessage,
 } from "@ecommerce/ui/components/form";
-import { Input } from "@ecommerce/ui/components/input";
+import { Input } from "@/components/ui/Input";
 import { useState } from "react";
 import { ControllerRenderProps, FieldValues, Path } from "react-hook-form";
 
