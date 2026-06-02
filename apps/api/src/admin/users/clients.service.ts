@@ -57,9 +57,9 @@ export class ClientsService {
   private async transformClientShow(user: UserInterface) {
     const [baseUser, orderStats, orderCount, reviewStats, reviews, orders] = await Promise.all([
       this.transformClientListItem(user),
-      this.prisma.orderPayment.aggregate({
-        where: { order: { userId: user.id } },
-        _sum: { totalPrice: true },
+      this.prisma.paymentTransaction.aggregate({
+        where: { order: { userId: user.id }, paymentStatus: 'completed' },
+        _sum: { amount: true },
       }),
       this.prisma.order.count({
         where: { userId: user.id },
@@ -105,7 +105,7 @@ export class ClientsService {
       redeemedRewardsCount: 0,
       statistics: {
         totalOrders: orderCount,
-        totalSpent: orderStats._sum.totalPrice ?? 0,
+        totalSpent: orderStats._sum.amount ?? 0,
         activeCartItems: 0,
         activeCartTotal: 0,
         reviewsCount: reviewStats._count._all,
@@ -113,11 +113,11 @@ export class ClientsService {
         devicesCount: 0,
         addressesCount: user.addresses?.length ?? 0,
       },
-      recentOrders: orders.map((order) => ({
+      recentOrders: orders.map((order: any) => ({
         id: order.id,
-        orderNumber: order.id,
+        orderNumber: order.orderNumber || order.id,
         status: order.status,
-        total: order.payments.reduce((sum, payment) => sum + Number(payment.totalPrice), 0),
+        total: order.payments.reduce((sum: number, payment: any) => sum + Number(payment.amount), 0),
         createdAt: order.createdAt,
       })),
       recentReviews: reviews.map((review) => ({

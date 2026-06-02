@@ -1,17 +1,21 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PRODUCTS_REPOSITORY, IProductsRepository } from '@/common/interfaces';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
+import { ClientWishlistService } from '../wishlist/client-wishlist.service';
 
 @Injectable()
 export class ClientProductsService {
-  constructor(@Inject(PRODUCTS_REPOSITORY) private readonly productsRepo: IProductsRepository) {}
+  constructor(
+    @Inject(PRODUCTS_REPOSITORY) private readonly productsRepo: IProductsRepository,
+    private readonly wishlistService: ClientWishlistService,
+  ) {}
 
-  async findAll(langId: string = 'en') {
+  async findAll(langId: string = 'en', userId?: bigint) {
     const query: AdvancedQueryDto = {
       paginate: false,
       filters: { isActive: true },
     };
-    return this.productsRepo.findAll(query, langId, {
+    const products = await this.productsRepo.findAll(query, langId, {
       select: {
         id: true,
         hasVariants: true,
@@ -40,9 +44,14 @@ export class ClientProductsService {
         },
       },
     });
+
+    return Array.isArray(products)
+      ? this.wishlistService.decorateProductsWithWishlist(products, userId)
+      : products;
   }
 
-  async findOne(id: bigint) {
-    return this.productsRepo.findProductById(id);
+  async findOne(id: bigint, userId?: bigint) {
+    const product = await this.productsRepo.findProductById(id);
+    return this.wishlistService.decorateProductWithWishlist(product, userId);
   }
 }

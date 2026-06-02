@@ -454,6 +454,81 @@ export class AuthService {
             data: { userId: user.id },
           });
 
+          // Cart Migration
+          const guestCart = await tx.cart.findUnique({
+            where: { userId: guestUser.id },
+            include: { items: true },
+          });
+
+          if (guestCart && guestCart.items.length > 0) {
+            let userCart = await tx.cart.findUnique({
+              where: { userId: user.id },
+            });
+            if (!userCart) {
+              userCart = await tx.cart.create({
+                data: { userId: user.id },
+              });
+            }
+
+            for (const item of guestCart.items) {
+              const duplicateItem = await tx.cartItem.findUnique({
+                where: {
+                  cartId_productId_variantId: {
+                    cartId: userCart.id,
+                    productId: item.productId,
+                    variantId: item.variantId as bigint,
+                  },
+                },
+              });
+
+              if (duplicateItem) {
+                await tx.cartItem.update({
+                  where: { id: duplicateItem.id },
+                  data: { quantity: duplicateItem.quantity + item.quantity },
+                });
+                await tx.cartItem.delete({
+                  where: { id: item.id },
+                });
+              } else {
+                await tx.cartItem.update({
+                  where: { id: item.id },
+                  data: { cartId: userCart.id },
+                });
+              }
+            }
+
+            await tx.cart.delete({
+              where: { id: guestCart.id },
+            });
+          }
+
+          const guestWishlistItems = await tx.wishlistItem.findMany({
+            where: { userId: guestUser.id },
+            select: { id: true, productId: true },
+          });
+
+          for (const item of guestWishlistItems) {
+            const duplicateItem = await tx.wishlistItem.findUnique({
+              where: {
+                userId_productId: {
+                  userId: user.id,
+                  productId: item.productId,
+                },
+              },
+            });
+
+            if (duplicateItem) {
+              await tx.wishlistItem.delete({
+                where: { id: item.id },
+              });
+            } else {
+              await tx.wishlistItem.update({
+                where: { id: item.id },
+                data: { userId: user.id },
+              });
+            }
+          }
+
           // Delete guest user
           await tx.user.delete({
             where: { id: guestUser.id },

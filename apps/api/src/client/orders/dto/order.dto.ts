@@ -1,28 +1,15 @@
-import { IsArray, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsString } from 'class-validator';
+import { i18nValidationMessage } from 'nestjs-i18n';
+import { I18nTranslations } from '../../../generated/i18n.generated';
 
-export class OrderItemDto {
-  @IsNumber()
-  productId!: number;
-
+export class CancelOrderDto {
   @IsOptional()
-  @IsNumber()
-  variantId?: number;
-
-  @IsNumber()
-  quantity!: number;
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  reason?: string;
 }
 
-export class CreateOrderDto {
+export class OrderQueryDto {
   @IsOptional()
-  @IsNumber()
-  addressId?: number;
-
-  @IsString()
-  paymentMethod!: string;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => OrderItemDto)
-  items!: OrderItemDto[];
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  status?: string;
 }

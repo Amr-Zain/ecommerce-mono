@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { SLIDERS_REPOSITORY, ISlidersRepository, COLLECTIONS_REPOSITORY, ICollectionsRepository, PRODUCTS_REPOSITORY, IProductsRepository } from '@/common/interfaces';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
+import { ClientWishlistService } from '../wishlist/client-wishlist.service';
 
 @Injectable()
 export class ClientHomeService {
@@ -9,9 +10,10 @@ export class ClientHomeService {
     @Inject(SLIDERS_REPOSITORY) private readonly slidersRepo: ISlidersRepository,
     @Inject(COLLECTIONS_REPOSITORY) private readonly collectionsRepo: ICollectionsRepository,
     @Inject(PRODUCTS_REPOSITORY) private readonly productsRepo: IProductsRepository,
+    private readonly wishlistService: ClientWishlistService,
   ) {}
 
-  async getHomePage(langId: string = 'en') {
+  async getHomePage(langId: string = 'en', userId?: bigint) {
     const sliderQuery: AdvancedQueryDto = {
       paginate: false,
       filters: { isActive: true },
@@ -78,10 +80,14 @@ export class ClientHomeService {
       }),
     ]);
 
+    const productsWithWishlist = Array.isArray(featuredProducts)
+      ? await this.wishlistService.decorateProductsWithWishlist(featuredProducts, userId)
+      : featuredProducts;
+
     return {
       sliders,
       featuredCollections,
-      featuredProducts,
+      featuredProducts: productsWithWishlist,
     };
   }
 }

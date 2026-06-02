@@ -1,8 +1,8 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Query, Headers } from '@nestjs/common';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ClientOrdersService } from './client-orders.service';
-import { CreateOrderDto } from './dto/order.dto';
+import { CancelOrderDto, OrderQueryDto } from './dto/order.dto';
 
 @ApiContext('client')
 @Controller('orders')
@@ -10,17 +10,30 @@ export class ClientOrdersController {
   constructor(private readonly ordersService: ClientOrdersService) {}
 
   @Get()
-  findAll(@CurrentUser() user: { id: bigint }) {
-    return this.ordersService.findAll(user.id);
+  findAll(
+    @CurrentUser() user: { id: bigint },
+    @Query() query: OrderQueryDto,
+    @Headers('accept-language') lang: string = 'en',
+  ) {
+    return this.ordersService.findAll(user.id, query, lang);
   }
 
   @Get(':id')
-  findOne(@CurrentUser() user: { id: bigint }, @Param('id') id: string) {
-    return this.ordersService.findOne(user.id, BigInt(id));
+  findOne(
+    @CurrentUser() user: { id: bigint },
+    @Param('id') id: string,
+    @Headers('accept-language') lang: string = 'en',
+  ) {
+    return this.ordersService.findOne(user.id, BigInt(id), lang);
   }
 
-  @Post()
-  create(@CurrentUser() user: { id: bigint }, @Body() dto: CreateOrderDto) {
-    return this.ordersService.create(user.id, dto);
+  @Post(':id/cancel')
+  cancel(
+    @CurrentUser() user: { id: bigint },
+    @Param('id') id: string,
+    @Body() dto: CancelOrderDto,
+    @Headers('accept-language') lang: string = 'en',
+  ) {
+    return this.ordersService.cancel(user.id, BigInt(id), dto, lang);
   }
 }

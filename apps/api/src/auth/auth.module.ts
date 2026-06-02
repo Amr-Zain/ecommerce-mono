@@ -8,6 +8,7 @@ import { AuthController } from './auth.controller';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { OptionalJwtAuthGuard } from './guards/optional-jwt-auth.guard';
 import { PermissionDiscoveryService } from './services/permission-discovery.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RefreshTokensRepository } from './repositories/refresh-tokens.repository';
@@ -36,9 +37,10 @@ import { UsersModule as CoreUsersModule } from '@/core/users/users.module';
     LocalStrategy,
     JwtStrategy,
     JwtRefreshStrategy,
+    OptionalJwtAuthGuard,
     PermissionDiscoveryService,
     RefreshTokensRepository,
   ],
-  exports: [AuthService, RefreshTokensRepository],
+  exports: [AuthService, RefreshTokensRepository, OptionalJwtAuthGuard],
 })
 export class AuthModule {}
