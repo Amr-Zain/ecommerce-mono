@@ -63,6 +63,7 @@ export type I18nTranslations = {
         "payment_bank_transfer_awaiting_admin": string;
         "payment_bank_transfer_verified": string;
         "payment_bank_transfer_refund_completed": string;
+        "payment_refund_failed": string;
         "payment_intent_not_found": string;
         "pending_checkout_not_found": string;
         "pending_checkout_transaction_missing": string;

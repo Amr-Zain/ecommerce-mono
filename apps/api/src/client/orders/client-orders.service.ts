@@ -4,13 +4,16 @@ import { CancelOrderDto, OrderQueryDto } from './dto/order.dto';
 import { DEFAULT_LANGUAGE, INVENTORY_REASONS } from '@/common/constants/commerce.constants';
 import { ORDER_STATUSES, UNCANCELABLE_ORDER_STATUSES } from './order.constants';
 import { PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
+import { PaymentService } from '@/shared/payment/payment.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ClientOrdersService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly paymentService: PaymentService,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
@@ -59,7 +62,7 @@ export class ClientOrdersService {
   async cancel(userId: bigint, id: bigint, dto: CancelOrderDto, langId: string = DEFAULT_LANGUAGE) {
     const order = await this.prisma.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: true, payments: true },
     });
 
     if (!order || order.userId !== userId) {
@@ -72,12 +75,41 @@ export class ClientOrdersService {
       );
     }
 
+    const completedPayment = order.payments.find((payment) => payment.paymentStatus === PAYMENT_STATUSES.completed);
+    const refundResult = completedPayment
+      ? await this.paymentService.refundPayment(
+          order.paymentMethod,
+          completedPayment.transactionRef || '',
+          Number(completedPayment.amount),
+        )
+      : null;
+
+    if (refundResult && refundResult.status !== PAYMENT_STATUSES.refunded) {
+      throw new BadRequestException(this.i18n.t('errors.payment_refund_failed'));
+    }
+
     return this.prisma.$transaction(async (tx) => {
       // 1. Update order status
+      if (completedPayment && refundResult) {
+        await tx.paymentTransaction.create({
+          data: {
+            orderId: order.id,
+            amount: completedPayment.amount,
+            paymentMethod: order.paymentMethod,
+            paymentStatus: refundResult.status,
+            transactionRef: completedPayment.transactionRef ? `ref_${completedPayment.transactionRef}` : 'refund',
+            gatewayResponse: (refundResult.gatewayResponse ?? {}) as Prisma.InputJsonValue,
+            currency: completedPayment.currency,
+            paidAt: new Date(),
+          },
+        });
+      }
+
       const updatedOrder = await tx.order.update({
         where: { id },
         data: {
           status: ORDER_STATUSES.cancelled,
+          paymentStatus: refundResult ? PAYMENT_STATUSES.refunded : order.paymentStatus,
           cancelledAt: new Date(),
           cancelReason: dto.reason || this.i18n.t('errors.order_cancelled_by_client'),
         },
@@ -121,11 +153,13 @@ export class ClientOrdersService {
         }
       }
 
-      // 3. Update payment transactions status if pending
-      await tx.paymentTransaction.updateMany({
-        where: { orderId: id, paymentStatus: PAYMENT_STATUSES.pending },
-        data: { paymentStatus: PAYMENT_STATUSES.failed },
-      });
+      // 3. Update payment transactions status if pending and no refund was needed
+      if (!refundResult) {
+        await tx.paymentTransaction.updateMany({
+          where: { orderId: id, paymentStatus: PAYMENT_STATUSES.pending },
+          data: { paymentStatus: PAYMENT_STATUSES.failed },
+        });
+      }
 
       return this.formatOrder(updatedOrder);
     });

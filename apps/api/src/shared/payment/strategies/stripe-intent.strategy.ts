@@ -18,14 +18,18 @@ import {
 } from '../payment.constants';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class StripeIntentStrategy implements PaymentStrategy {
   readonly methodName = PAYMENT_METHODS.stripeIntent;
   private stripe: Stripe.Stripe;
 
-  constructor(private readonly i18n: I18nService<I18nTranslations>) {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || STRIPE_CONFIG.defaultSecretKey);
+  constructor(
+    private readonly i18n: I18nService<I18nTranslations>,
+    private readonly configService: ConfigService,
+  ) {
+    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || STRIPE_CONFIG.defaultSecretKey);
   }
 
   async initiate(referenceId: string, amount: number, options?: PaymentInitiateOptions): Promise<PaymentInitResult> {

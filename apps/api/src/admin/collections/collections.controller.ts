@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
@@ -7,6 +7,7 @@ import { I18nLang } from 'nestjs-i18n';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
+import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 
 @ApiContext('admin')
 @Controller('collections')
@@ -22,7 +23,7 @@ export class CollectionsController {
 
   @Get()
   @RequirePermissions({ resource: 'collections', action: 'list' })
-  findAll(@Query() query: CollectionQueryDto, @I18nLang() lang: string) {
+  findAll(@ParsedQuery(CollectionQueryDto) query: CollectionQueryDto, @I18nLang() lang: string) {
     return this.collectionsService.findAll(query, lang);
   }
 

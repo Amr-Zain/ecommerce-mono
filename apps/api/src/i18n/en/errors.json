@@ -49,6 +49,7 @@
   "payment_bank_transfer_awaiting_admin": "Bank transfer awaiting admin verification",
   "payment_bank_transfer_verified": "Bank transfer verified by administrator",
   "payment_bank_transfer_refund_completed": "Bank transfer refund completed",
+  "payment_refund_failed": "Payment refund failed",
   "payment_intent_not_found": "No payment_intent found for this session",
   "pending_checkout_not_found": "Pending checkout not found",
   "pending_checkout_transaction_missing": "Pending checkout payment transaction is missing"

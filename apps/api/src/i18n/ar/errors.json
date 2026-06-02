@@ -49,6 +49,7 @@
   "payment_bank_transfer_awaiting_admin": "التحويل البنكي بانتظار تأكيد الإدارة",
   "payment_bank_transfer_verified": "تم تأكيد التحويل البنكي بواسطة الإدارة",
   "payment_bank_transfer_refund_completed": "تم استرداد التحويل البنكي",
+  "payment_refund_failed": "فشل استرداد الدفع",
   "payment_intent_not_found": "لم يتم العثور على payment_intent لهذه الجلسة",
   "pending_checkout_not_found": "عملية الدفع المعلقة غير موجودة",
   "pending_checkout_transaction_missing": "معاملة الدفع المعلقة غير موجودة"

@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
+import { I18nLang } from 'nestjs-i18n';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ClientCartService } from './client-cart.service';
@@ -10,7 +11,7 @@ export class ClientCartController {
   constructor(private readonly cartService: ClientCartService) {}
 
   @Get()
-  getCart(@CurrentUser() user: { id: bigint }, @Headers('accept-language') lang: string = 'en') {
+  getCart(@CurrentUser() user: { id: bigint }, @I18nLang() lang: string) {
     return this.cartService.getCart(user.id, lang);
   }
 
@@ -18,7 +19,7 @@ export class ClientCartController {
   addItem(
     @CurrentUser() user: { id: bigint },
     @Body() dto: AddToCartDto,
-    @Headers('accept-language') lang: string = 'en',
+    @I18nLang() lang: string,
   ) {
     return this.cartService.addItem(user.id, dto, lang);
   }
@@ -28,7 +29,7 @@ export class ClientCartController {
     @CurrentUser() user: { id: bigint },
     @Param('id') id: string,
     @Body() dto: UpdateCartItemDto,
-    @Headers('accept-language') lang: string = 'en',
+    @I18nLang() lang: string,
   ) {
     return this.cartService.updateItemQuantity(user.id, BigInt(id), dto, lang);
   }
@@ -37,13 +38,13 @@ export class ClientCartController {
   removeItem(
     @CurrentUser() user: { id: bigint },
     @Param('id') id: string,
-    @Headers('accept-language') lang: string = 'en',
+    @I18nLang() lang: string,
   ) {
     return this.cartService.removeItem(user.id, BigInt(id), lang);
   }
 
   @Delete()
-  clearCart(@CurrentUser() user: { id: bigint }, @Headers('accept-language') lang: string = 'en') {
+  clearCart(@CurrentUser() user: { id: bigint }, @I18nLang() lang: string) {
     return this.cartService.clearCart(user.id, lang);
   }
 }

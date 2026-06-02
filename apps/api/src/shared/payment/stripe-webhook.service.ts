@@ -19,6 +19,7 @@ import { PaymentService } from './payment.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { Prisma } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 type StripeEvent = {
   type: string;
@@ -98,15 +99,16 @@ export class StripeWebhookService {
     private readonly prisma: PrismaService,
     private readonly paymentService: PaymentService,
     private readonly i18n: I18nService<I18nTranslations>,
+    private readonly configService: ConfigService,
   ) {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || STRIPE_CONFIG.defaultSecretKey);
+    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || STRIPE_CONFIG.defaultSecretKey);
   }
 
   constructEvent(rawBody: Buffer, signature?: string): StripeEvent {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || STRIPE_CONFIG.defaultWebhookSecret;
+    const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || STRIPE_CONFIG.defaultWebhookSecret;
 
     if (!webhookSecret) {
-      if (process.env.NODE_ENV === 'production') {
+      if (this.configService.get<string>('NODE_ENV') === 'production') {
         throw new BadRequestException('Stripe webhook secret is not configured');
       }
       return JSON.parse(rawBody.toString()) as StripeEvent;

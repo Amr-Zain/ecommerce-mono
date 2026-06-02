@@ -167,6 +167,10 @@ export class ClientCheckoutService {
     return Number(Math.min(subtotal, discount).toFixed(2));
   }
 
+  private calculateDiscountedSubtotal(items: CartItemForTotals[]) {
+    return Number(items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2));
+  }
+
   private isOnlinePaymentMethod(paymentMethod: string) {
     return (ONLINE_PAYMENT_METHODS as readonly string[]).includes(paymentMethod);
   }
@@ -214,12 +218,15 @@ export class ClientCheckoutService {
     let coupon: CouponForCheckout | null = null;
 
     if (dto.couponCode) {
-      coupon = await this.validateCoupon(dto.couponCode, cart.subtotal, userId);
+      const discountedSubtotal = this.calculateDiscountedSubtotal(
+        cart.items.flatMap((item) => (item ? [{ price: item.price, quantity: item.quantity }] : [])),
+      );
+      coupon = await this.validateCoupon(dto.couponCode, discountedSubtotal, userId);
       if (coupon.discountType === DISCOUNT_TYPES.freeShipping) {
         isFreeShipping = true;
         couponDiscount = 0;
       } else {
-        couponDiscount = this.calculateCouponDiscount(coupon, cart.subtotal);
+        couponDiscount = this.calculateCouponDiscount(coupon, discountedSubtotal);
       }
     }
 
@@ -385,17 +392,17 @@ export class ClientCheckoutService {
         });
       }
 
-      const rawSubtotal = pricedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const discountedSubtotal = this.calculateDiscountedSubtotal(pricedItems);
       let couponDiscount = 0;
       let isFreeShipping = false;
       let coupon: CouponForCheckout | null = null;
 
       if (dto.couponCode) {
-        coupon = await this.validateCoupon(dto.couponCode, rawSubtotal, userId, tx);
+        coupon = await this.validateCoupon(dto.couponCode, discountedSubtotal, userId, tx);
         if (coupon.discountType === DISCOUNT_TYPES.freeShipping) {
           isFreeShipping = true;
         } else {
-          couponDiscount = this.calculateCouponDiscount(coupon, rawSubtotal);
+          couponDiscount = this.calculateCouponDiscount(coupon, discountedSubtotal);
         }
       }
 
@@ -714,7 +721,7 @@ export class ClientCheckoutService {
         });
       }
 
-      const rawSubtotal = pricedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const discountedSubtotal = this.calculateDiscountedSubtotal(pricedItems);
 
       // 4. Validate Coupon (inside transaction)
       let couponDiscount = 0;
@@ -722,11 +729,11 @@ export class ClientCheckoutService {
       let coupon: CouponForCheckout | null = null;
 
       if (dto.couponCode) {
-        coupon = await this.validateCoupon(dto.couponCode, rawSubtotal, userId, tx);
+        coupon = await this.validateCoupon(dto.couponCode, discountedSubtotal, userId, tx);
         if (coupon.discountType === DISCOUNT_TYPES.freeShipping) {
           isFreeShipping = true;
         } else {
-          couponDiscount = this.calculateCouponDiscount(coupon, rawSubtotal);
+          couponDiscount = this.calculateCouponDiscount(coupon, discountedSubtotal);
         }
 
         // Increment coupon usage

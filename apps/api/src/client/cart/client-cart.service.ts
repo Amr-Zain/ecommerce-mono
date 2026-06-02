@@ -6,6 +6,71 @@ import { PrismaService } from '@/prisma';
 import { DEFAULT_LANGUAGE, FALLBACK_LABELS } from '@/common/constants/commerce.constants';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { Prisma } from '@prisma/client';
+
+type CartTranslation = {
+  langId: string;
+  name: string | null;
+};
+
+type CartVariantAttribute = {
+  attributeId: bigint;
+  valueId: bigint;
+  attribute: { translations?: CartTranslation[] };
+  value: { translations?: CartTranslation[] };
+};
+
+type CartProduct = {
+  translations?: CartTranslation[];
+  variants?: CartVariant[];
+  discountType?: string | null;
+  discountValue?: Prisma.Decimal | number | string | null;
+};
+
+type CartVariant = {
+  id: bigint;
+  price: Prisma.Decimal | number | string;
+  compareAtPrice?: Prisma.Decimal | number | string | null;
+  stockQuantity: number;
+  discountType?: string | null;
+  discountValue?: Prisma.Decimal | number | string | null;
+  attributes?: CartVariantAttribute[];
+};
+
+type CartItemWithProduct = {
+  id: bigint;
+  productId: bigint;
+  variantId: bigint | null;
+  quantity: number;
+  product: CartProduct;
+  variant?: CartVariant | null;
+};
+
+type CartWithProducts = {
+  id: bigint;
+  userId: bigint;
+  items?: CartItemWithProduct[];
+};
+
+type FormattedCartItem = {
+  id: string;
+  productId: string;
+  variantId: string;
+  quantity: number;
+  productName: string;
+  price: number;
+  compareAtPrice?: number;
+  originalPrice: number;
+  lineTotal: number;
+  attributes: {
+    attributeId: string;
+    valueId: string;
+    name: string;
+    value: string;
+  }[];
+};
+
+const isFormattedCartItem = (item: FormattedCartItem | null): item is FormattedCartItem => item !== null;
 
 @Injectable()
 export class ClientCartService {
@@ -17,7 +82,7 @@ export class ClientCartService {
   ) {}
 
   async getCart(userId: bigint, langId: string = DEFAULT_LANGUAGE) {
-    const cart = await this.cartsRepo.findOrCreateByUserId(userId);
+    const cart = (await this.cartsRepo.findOrCreateByUserId(userId)) as unknown as CartWithProducts;
 
     if (!cart.items || cart.items.length === 0) {
       return {
@@ -30,30 +95,40 @@ export class ClientCartService {
     }
 
     const items = cart.items
-      .map((item: any) => {
+      .map((item: CartItemWithProduct): FormattedCartItem | null => {
         const variant = item.variant || item.product.variants?.[0];
         if (!variant) {
           return null;
         }
 
         // Compute item price using pricing service
-        const pricing = this.pricingService.computePrice(Number(variant.price), variant, item.product);
+        const pricing = this.pricingService.computePrice(
+          Number(variant.price),
+          {
+            type: variant.discountType ?? null,
+            value: variant.discountValue ? Number(variant.discountValue) : null,
+          },
+          {
+            type: item.product.discountType ?? null,
+            value: item.product.discountValue ? Number(item.product.discountValue) : null,
+          },
+        );
 
         const nameTranslation =
-          item.product.translations?.find((t: any) => t.langId === langId)?.name ||
-          item.product.translations?.find((t: any) => t.langId === DEFAULT_LANGUAGE)?.name ||
+          item.product.translations?.find((t) => t.langId === langId)?.name ||
+          item.product.translations?.find((t) => t.langId === DEFAULT_LANGUAGE)?.name ||
           FALLBACK_LABELS.product;
 
         // Format attributes nicely
         const attributes =
-          variant.attributes?.map((attr: any) => {
+          variant.attributes?.map((attr) => {
             const attrName =
-              attr.attribute.translations?.find((t: any) => t.langId === langId)?.name ||
-              attr.attribute.translations?.find((t: any) => t.langId === DEFAULT_LANGUAGE)?.name ||
+              attr.attribute.translations?.find((t) => t.langId === langId)?.name ||
+              attr.attribute.translations?.find((t) => t.langId === DEFAULT_LANGUAGE)?.name ||
               FALLBACK_LABELS.attribute;
             const valName =
-              attr.value.translations?.find((t: any) => t.langId === langId)?.name ||
-              attr.value.translations?.find((t: any) => t.langId === DEFAULT_LANGUAGE)?.name ||
+              attr.value.translations?.find((t) => t.langId === langId)?.name ||
+              attr.value.translations?.find((t) => t.langId === DEFAULT_LANGUAGE)?.name ||
               FALLBACK_LABELS.value;
             return {
               attributeId: attr.attributeId.toString(),
@@ -76,10 +151,10 @@ export class ClientCartService {
           attributes,
         };
       })
-      .filter(Boolean);
+      .filter(isFormattedCartItem);
 
-    const subtotal = items.reduce((sum, item: any) => sum + item.lineTotal, 0);
-    const itemCount = items.reduce((sum, item: any) => sum + item.quantity, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     return {
       id: cart.id.toString(),
@@ -94,7 +169,7 @@ export class ClientCartService {
     const cart = await this.cartsRepo.findOrCreateByUserId(userId);
 
     // Resolve the variant — either specific or default first active variant
-    let resolvedVariant: any;
+    let resolvedVariant: CartVariant | null;
 
     if (dto.variantId) {
       resolvedVariant = await this.prisma.productVariant.findFirst({

@@ -1,4 +1,5 @@
-import { Controller, Get, Patch, Post, Param, Body, Query, Headers } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Body, Query } from '@nestjs/common';
+import { I18nLang } from 'nestjs-i18n';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { AuthUserPayload } from '@/auth/auth.service';
@@ -11,12 +12,12 @@ export class AdminOrdersController {
   constructor(private readonly ordersService: AdminOrdersService) {}
 
   @Get()
-  findAll(@Query() query: AdminOrderQueryDto, @Headers('accept-language') lang: string = 'en') {
+  findAll(@Query() query: AdminOrderQueryDto, @I18nLang() lang: string) {
     return this.ordersService.findAll(query, lang);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Headers('accept-language') lang: string = 'en') {
+  findOne(@Param('id') id: string, @I18nLang() lang: string) {
     return this.ordersService.findOne(BigInt(id), lang);
   }
 
@@ -25,7 +26,7 @@ export class AdminOrdersController {
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,
     @CurrentUser() user: AuthUserPayload,
-    @Headers('accept-language') lang: string = 'en',
+    @I18nLang() lang: string,
   ) {
     return this.ordersService.updateStatus(BigInt(id), dto, user, lang);
   }
@@ -34,7 +35,7 @@ export class AdminOrdersController {
   confirmPayment(
     @Param('id') id: string,
     @CurrentUser() user: AuthUserPayload,
-    @Headers('accept-language') lang: string = 'en',
+    @I18nLang() lang: string,
   ) {
     return this.ordersService.confirmPayment(BigInt(id), user, lang);
   }
@@ -44,7 +45,7 @@ export class AdminOrdersController {
     @Param('id') id: string,
     @Body() dto: OrderRefundDto,
     @CurrentUser() user: AuthUserPayload,
-    @Headers('accept-language') lang: string = 'en',
+    @I18nLang() lang: string,
   ) {
     return this.ordersService.refund(BigInt(id), dto, user, lang);
   }

@@ -1,9 +1,9 @@
-import { Controller, Post, Body, Headers } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
+import { I18nLang } from 'nestjs-i18n';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ClientCheckoutService } from './client-checkout.service';
 import { CheckoutPreviewDto, PlaceOrderDto, VerifyCheckoutPaymentDto } from './dto/checkout.dto';
-import { DEFAULT_LANGUAGE } from '@/common/constants/commerce.constants';
 
 @ApiContext('client')
 @Controller('checkout')
@@ -14,7 +14,7 @@ export class ClientCheckoutController {
   preview(
     @CurrentUser() user: { id: bigint },
     @Body() dto: CheckoutPreviewDto,
-    @Headers('accept-language') lang: string = DEFAULT_LANGUAGE,
+    @I18nLang() lang: string,
   ) {
     return this.checkoutService.previewCheckout(user.id, dto, lang);
   }
@@ -23,7 +23,7 @@ export class ClientCheckoutController {
   placeOrder(
     @CurrentUser() user: { id: bigint },
     @Body() dto: PlaceOrderDto,
-    @Headers('accept-language') lang: string = DEFAULT_LANGUAGE,
+    @I18nLang() lang: string,
   ) {
     return this.checkoutService.placeOrder(user.id, dto, lang);
   }
