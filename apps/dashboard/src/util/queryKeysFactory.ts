@@ -11,12 +11,12 @@ export const usersQueryKeys = {
     is_active?: string
     keyword?: string
   }) => [
-      ...usersQueryKeys.all(),
-      { page },
-      { is_active },
-      { is_ban },
-      { keyword },
-    ],
+    ...usersQueryKeys.all(),
+    { page },
+    { is_active },
+    { is_ban },
+    { keyword },
+  ],
   getUser: (userId: string) => [usersQueryKeys.all(), 'one', { userId }],
 }
 export const citiesQueryKeys = {
@@ -77,7 +77,8 @@ export const supervisorsQueryKeys = {
 }
 export const rolesQueryKeys = {
   all: () => ['roles'] as const,
-  get: (roleId?: string) => [...rolesQueryKeys.all(), 'one', { roleId }] as const,
+  get: (roleId?: string) =>
+    [...rolesQueryKeys.all(), 'one', { roleId }] as const,
   filterd: (search: any) => [...rolesQueryKeys.all(), search] as const,
 }
 
@@ -85,8 +86,10 @@ export const categoriesQueryKeys = {
   all: () => ['categories'] as const,
   getCategory: (categoryId?: string) =>
     [...categoriesQueryKeys.all(), 'one', { categoryId }] as const,
-  filterdNotPage: (search: any) => [...categoriesQueryKeys.all(), search] as const,
-  filterd: (search: any) => [...categoriesQueryKeys.all(), "paginated", search] as const,
+  filterdNotPage: (search: any) =>
+    [...categoriesQueryKeys.all(), search] as const,
+  filterd: (search: any) =>
+    [...categoriesQueryKeys.all(), 'paginated', search] as const,
 }
 export const faqQueryKeys = {
   all: () => ['faqs'] as const,
@@ -161,6 +164,12 @@ export const offersQueryKeys = {
   getOffer: (id: string | number) => ['offers', 'one', id] as const,
 }
 
+export const couponsQueryKeys = {
+  all: () => ['coupons'] as const,
+  filterd: (filters?: unknown) => ['coupons', 'filterd', filters] as const,
+  getCoupon: (id: string | number) => ['coupons', 'one', id] as const,
+}
+
 export const reviewsQueryKeys = {
   all: () => ['reviews'] as const,
   filterd: (filters?: Record<string, any>) =>
@@ -209,7 +218,8 @@ export const userQueryKeys = {
   all: () => ['users'] as const,
   filterd: (params?: unknown) =>
     [...userQueryKeys.all(), 'filtered', params] as const,
-  getUser: (id: string | number) => [...userQueryKeys.all(), 'one', String(id)] as const,
+  getUser: (id: string | number) =>
+    [...userQueryKeys.all(), 'one', String(id)] as const,
 }
 
 export const tiersQueryKeys = {
@@ -227,10 +237,9 @@ export const dashboardQueryKeys = {
 
 export const settingsQueryKeys = {
   all: () => ['settings'] as const,
-  list: (params?: unknown) => [...settingsQueryKeys.all(), 'list', params] as const,
+  list: (params?: unknown) =>
+    [...settingsQueryKeys.all(), 'list', params] as const,
 }
-
-
 
 export const shopifyStoresQueryKeys = {
   all: () => ['shopify-stores'] as const,
@@ -247,4 +256,3 @@ export const adminNotificationsQueryKeys = {
   get: (id: string | number) =>
     [...adminNotificationsQueryKeys.all(), 'one', String(id)] as const,
 }
-

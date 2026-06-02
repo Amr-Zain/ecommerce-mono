@@ -20,88 +20,92 @@ import { FAQ_TYPE_OPTIONS } from '@/types/api/faq'
 import { STATIC_PAGE_TYPE_OPTIONS } from '@/components/pagesComponents/StaticPages/Config'
 
 export const makePageSchema = (t: TFn) => {
-  return z.object({
-    image: z.any().optional(),
-    type: requiredEnum(
-      t,
-      t('Form.labels.type'),
-      STATIC_PAGE_TYPE_OPTIONS.map((item) => item.value) as [
-        string,
-        ...string[],
-      ],
-    ),
-    ...multiLangValidation.title(t, 5),
-    ...multiLangValidation.content(t),
-  }).superRefine((data, ctx) => {
-    const MIN_VISIBLE_CHARS = 10
+  return z
+    .object({
+      image: z.any().optional(),
+      type: requiredEnum(
+        t,
+        t('Form.labels.type'),
+        STATIC_PAGE_TYPE_OPTIONS.map((item) => item.value) as [
+          string,
+          ...string[],
+        ],
+      ),
+      ...multiLangValidation.title(t, 5),
+      ...multiLangValidation.content(t),
+    })
+    .superRefine((data, ctx) => {
+      const MIN_VISIBLE_CHARS = 10
 
-    const plainAr = extractPlainText(data.content_ar)
-    const plainEn = extractPlainText(data.content_en)
+      const plainAr = extractPlainText(data.content_ar)
+      const plainEn = extractPlainText(data.content_en)
 
-    if (plainAr.length < MIN_VISIBLE_CHARS) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['content_ar'],
-        message: t('Validation.minChars', {
-          field: t('Form.labels.contentAr'),
-          min: MIN_VISIBLE_CHARS,
-        }),
-      })
-    }
+      if (plainAr.length < MIN_VISIBLE_CHARS) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['content_ar'],
+          message: t('Validation.minChars', {
+            field: t('Form.labels.contentAr'),
+            min: MIN_VISIBLE_CHARS,
+          }),
+        })
+      }
 
-    if (plainEn.length < MIN_VISIBLE_CHARS) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['content_en'],
-        message: t('Validation.minChars', {
-          field: t('Form.labels.contentEn'),
-          min: MIN_VISIBLE_CHARS,
-        }),
-      })
-    }
-  })
+      if (plainEn.length < MIN_VISIBLE_CHARS) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['content_en'],
+          message: t('Validation.minChars', {
+            field: t('Form.labels.contentEn'),
+            min: MIN_VISIBLE_CHARS,
+          }),
+        })
+      }
+    })
 }
 export type StaticPageFormData = z.infer<ReturnType<typeof makePageSchema>>
 
 export const makeFaqSchema = (t: TFn) =>
-  z.object({
-    // type: requiredEnum(
-    //   t,
-    //   t('Form.labels.type'),
-    //   FAQ_TYPE_OPTIONS.map((item) => item.value) as [string, ...string[]],
-    // ),
-    question_en: requiredString(t, t('Form.labels.questionEn'), 5),
-    question_ar: requiredString(t, t('Form.labels.questionAr'), 5),
-    answer_en: requiredString(t, t('Form.labels.answerEn')),
-    answer_ar: requiredString(t, t('Form.labels.answerAr')),
-  }).superRefine((data, ctx) => {
-    const MIN_VISIBLE_CHARS = 10
+  z
+    .object({
+      // type: requiredEnum(
+      //   t,
+      //   t('Form.labels.type'),
+      //   FAQ_TYPE_OPTIONS.map((item) => item.value) as [string, ...string[]],
+      // ),
+      question_en: requiredString(t, t('Form.labels.questionEn'), 5),
+      question_ar: requiredString(t, t('Form.labels.questionAr'), 5),
+      answer_en: requiredString(t, t('Form.labels.answerEn')),
+      answer_ar: requiredString(t, t('Form.labels.answerAr')),
+    })
+    .superRefine((data, ctx) => {
+      const MIN_VISIBLE_CHARS = 10
 
-    const plainAr = extractPlainText(data.answer_ar)
-    const plainEn = extractPlainText(data.answer_en)
+      const plainAr = extractPlainText(data.answer_ar)
+      const plainEn = extractPlainText(data.answer_en)
 
-    if (plainAr.length < MIN_VISIBLE_CHARS) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['answer_ar'],
-        message: t('Validation.minChars', {
-          field: t('Form.labels.answerAr'),
-          min: MIN_VISIBLE_CHARS,
-        }),
-      })
-    }
+      if (plainAr.length < MIN_VISIBLE_CHARS) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['answer_ar'],
+          message: t('Validation.minChars', {
+            field: t('Form.labels.answerAr'),
+            min: MIN_VISIBLE_CHARS,
+          }),
+        })
+      }
 
-    if (plainEn.length < MIN_VISIBLE_CHARS) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['answer_en'],
-        message: t('Validation.minChars', {
-          field: t('Form.labels.answerEn'),
-          min: MIN_VISIBLE_CHARS,
-        }),
-      })
-    }
-  })
+      if (plainEn.length < MIN_VISIBLE_CHARS) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['answer_en'],
+          message: t('Validation.minChars', {
+            field: t('Form.labels.answerEn'),
+            min: MIN_VISIBLE_CHARS,
+          }),
+        })
+      }
+    })
 
 export type FaqFormData = z.infer<ReturnType<typeof makeFaqSchema>>
 
@@ -164,38 +168,40 @@ export type CountryFormData = z.infer<ReturnType<typeof makeCountrySchema>>
 
 // -------------------- Page Additional --------------------
 export const makePageAdditionalSchema = (t: TFn) => {
-  return z.object({
-    image: z.any().optional(),
-    ...multiLangValidation.title(t, 5),
-    ...multiLangValidation.content(t),
-  }).superRefine((data, ctx) => {
-    const MIN_VISIBLE_CHARS = 5
+  return z
+    .object({
+      image: z.any().optional(),
+      ...multiLangValidation.title(t, 5),
+      ...multiLangValidation.content(t),
+    })
+    .superRefine((data, ctx) => {
+      const MIN_VISIBLE_CHARS = 5
 
-    const plainAr = extractPlainText(data.content_ar)
-    const plainEn = extractPlainText(data.content_en)
+      const plainAr = extractPlainText(data.content_ar)
+      const plainEn = extractPlainText(data.content_en)
 
-    if (plainAr.length < MIN_VISIBLE_CHARS) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['content_ar'],
-        message: t('Validation.minChars', {
-          field: t('Form.labels.contentAr'),
-          min: MIN_VISIBLE_CHARS,
-        }),
-      })
-    }
+      if (plainAr.length < MIN_VISIBLE_CHARS) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['content_ar'],
+          message: t('Validation.minChars', {
+            field: t('Form.labels.contentAr'),
+            min: MIN_VISIBLE_CHARS,
+          }),
+        })
+      }
 
-    if (plainEn.length < MIN_VISIBLE_CHARS) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['content_en'],
-        message: t('Validation.minChars', {
-          field: t('Form.labels.contentEn'),
-          min: MIN_VISIBLE_CHARS,
-        }),
-      })
-    }
-  })
+      if (plainEn.length < MIN_VISIBLE_CHARS) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['content_en'],
+          message: t('Validation.minChars', {
+            field: t('Form.labels.contentEn'),
+            min: MIN_VISIBLE_CHARS,
+          }),
+        })
+      }
+    })
 }
 export type PageAdditionalForm = z.infer<
   ReturnType<typeof makePageAdditionalSchema>
@@ -223,7 +229,8 @@ export type ChangePasswordFormData = z.infer<
 export const buildEditProfileSchema = (
   t: TFn,
   currentPhoneLimit: number | null,
-  phoneStartingNumber: number | null) => {
+  phoneStartingNumber: number | null,
+) => {
   const labels = {
     image: L(t, 'image'),
     name: L(t, 'name'),
@@ -246,7 +253,8 @@ export const buildEditProfileSchema = (
       email: zodString.email(),
     })
     .superRefine((v, ctx) => {
-      if (phoneStartingNumber === null || phoneStartingNumber === undefined) return
+      if (phoneStartingNumber === null || phoneStartingNumber === undefined)
+        return
       const requiredPrefix = String(phoneStartingNumber)
       const phone = String(v.phone ?? '')
       console.log('pre', requiredPrefix, phone)
@@ -277,7 +285,10 @@ export type ProfileSettingsFormData = z.infer<
 >
 
 // -------------------- Supervisor --------------------
-export const makeSupervisorSchema = (t: TFn, currentPhoneLimit: number | null, phoneStartingNumber?: number | null,
+export const makeSupervisorSchema = (
+  t: TFn,
+  currentPhoneLimit: number | null,
+  phoneStartingNumber?: number | null,
 ) => {
   const labels = {
     role: t('Form.labels.role'),
@@ -329,7 +340,8 @@ export const makeSupervisorSchema = (t: TFn, currentPhoneLimit: number | null, p
       },
     )
     .superRefine((v, ctx) => {
-      if (phoneStartingNumber === null || phoneStartingNumber === undefined) return
+      if (phoneStartingNumber === null || phoneStartingNumber === undefined)
+        return
       const requiredPrefix = String(phoneStartingNumber)
       const phone = String(v.phone ?? '')
       console.log('pre', requiredPrefix, phone)
@@ -404,7 +416,8 @@ export const updateSupervisorSchema = (
       },
     )
     .superRefine((v, ctx) => {
-      if (phoneStartingNumber === null || phoneStartingNumber === undefined) return
+      if (phoneStartingNumber === null || phoneStartingNumber === undefined)
+        return
       const requiredPrefix = String(phoneStartingNumber)
       const phone = String(v.phone ?? '')
 
@@ -445,7 +458,10 @@ export const makeCategorySchema = (t: TFn) => {
   return z.object({
     image: stringOrUidHashObject(t),
     sort_order: digitsOnlyString(t, labels.sortOrder, 1, 4),
-    parent_id: z.union([z.string().optional().nullable(), z.number().optional().nullable()]),
+    parent_id: z.union([
+      z.string().optional().nullable(),
+      z.number().optional().nullable(),
+    ]),
     description_en: requiredString(t, t('Form.labels.descriptionEn')),
     description_ar: requiredString(t, t('Form.labels.descriptionAr')),
     ...multiLangValidation.name(t, 3, 1),
@@ -455,21 +471,49 @@ export const makeCategorySchema = (t: TFn) => {
           shopify_collection_gid: z
             .string()
             .trim()
-            .min(1, { message: t('Validation.required', { field: t('categories.shopify_collection_gid') }) })
+            .min(1, {
+              message: t('Validation.required', {
+                field: t('categories.shopify_collection_gid'),
+              }),
+            })
             .max(128)
             .regex(/^gid:\/\/shopify\/Collection\/\d+$/, {
-              message: t('Validation.format', { format: 'gid://shopify/Collection/{id}', field: t('categories.shopify_collection_gid') }),
+              message: t('Validation.format', {
+                format: 'gid://shopify/Collection/{id}',
+                field: t('categories.shopify_collection_gid'),
+              }),
             }),
-          shopify_collection_name: z.string().trim().min(1, { message: t('Validation.required', { field: t('categories.shopify_collection_name') }) }),
+          shopify_collection_name: z
+            .string()
+            .trim()
+            .min(1, {
+              message: t('Validation.required', {
+                field: t('categories.shopify_collection_name'),
+              }),
+            }),
           odoo_metaobject_gid: z
             .string()
             .trim()
-            .min(1, { message: t('Validation.required', { field: t('categories.odoo_metaobject_gid') }) })
+            .min(1, {
+              message: t('Validation.required', {
+                field: t('categories.odoo_metaobject_gid'),
+              }),
+            })
             .max(128)
             .regex(/^gid:\/\/shopify\/Metaobject\/\d+$/, {
-              message: t('Validation.format', { format: 'gid://shopify/Metaobject/{id}', field: t('categories.odoo_metaobject_gid') }),
+              message: t('Validation.format', {
+                format: 'gid://shopify/Metaobject/{id}',
+                field: t('categories.odoo_metaobject_gid'),
+              }),
             }),
-          odoo_category_name: z.string().trim().min(1, { message: t('Validation.required', { field: t('categories.odoo_category_name') }) }),
+          odoo_category_name: z
+            .string()
+            .trim()
+            .min(1, {
+              message: t('Validation.required', {
+                field: t('categories.odoo_category_name'),
+              }),
+            }),
           is_active: z.boolean().default(true),
         }),
       )
@@ -498,11 +542,7 @@ export const makeShowRoomSchema = (
         currentPhoneLimit ?? 0,
       ),
 
-      email: z
-        .string()
-        .email()
-        .optional()
-        .or(z.literal('')),
+      email: z.string().email().optional().or(z.literal('')),
       url: z.string().url().or(z.literal('')),
 
       map: z.object({
@@ -516,7 +556,8 @@ export const makeShowRoomSchema = (
       image: stringOrUidHashObject(t),
     })
     .superRefine((v, ctx) => {
-      if (phoneStartingNumber === null || phoneStartingNumber === undefined) return
+      if (phoneStartingNumber === null || phoneStartingNumber === undefined)
+        return
       const requiredPrefix = String(phoneStartingNumber)
       const phone = String(v.phone ?? '')
 
@@ -566,10 +607,7 @@ export const makeProductSchema = (t: TFn) => {
     .object({
       image: stringOrUidHashObject(t),
       gallery: z.array(z.any()).nonempty(),
-      collection_id: z.union([
-        z.string().optional(),
-        z.number().optional(),
-      ]),
+      collection_id: z.union([z.string().optional(), z.number().optional()]),
 
       ...multiLangValidation.name(t, 3, 1, 60),
       ...multiLangValidation.description(t, 5),
@@ -630,7 +668,11 @@ export const makeSliderSchema = (t: any) =>
       // }),
     })
     .superRefine((data, ctx) => {
-      if (data.start_date && data.end_date && data.start_date >= data.end_date) {
+      if (
+        data.start_date &&
+        data.end_date &&
+        data.start_date >= data.end_date
+      ) {
         ctx.addIssue({
           code: 'custom',
           path: ['start_date'],
@@ -689,7 +731,9 @@ export const makeEarningRuleSchema = (t: (k: string) => string) =>
       }
     })
 
-export type EarningRuleFormData = z.infer<ReturnType<typeof makeEarningRuleSchema>>
+export type EarningRuleFormData = z.infer<
+  ReturnType<typeof makeEarningRuleSchema>
+>
 
 export const makeOfferSchema = (t: TFn) =>
   z
@@ -730,34 +774,88 @@ export const makeOfferSchema = (t: TFn) =>
       }
     })
 
-
 export type OfferFormData = z.infer<ReturnType<typeof makeOfferSchema>>
+
+export const makeCouponSchema = (t: TFn) =>
+  z
+    .object({
+      code: requiredString(t, t('coupons.labels.code'), 2),
+      discount_type: requiredString(t, t('coupons.labels.discount_type'), 1),
+      discount_value: requiredNumber(t, t('coupons.labels.discount_value'), 0),
+      min_order_amount: requiredNumber(
+        t,
+        t('coupons.labels.min_order_amount'),
+        0,
+      ),
+      max_discount: requiredNumber(t, t('coupons.labels.max_discount'), 0),
+      usage_limit: requiredNumber(t, t('coupons.labels.usage_limit'), 1),
+      per_user_limit: requiredNumber(t, t('coupons.labels.per_user_limit'), 1),
+      starts_at: z.date(),
+      expires_at: z.date(),
+      is_active: z.boolean(),
+    })
+    .superRefine((data, ctx) => {
+      if (
+        data.starts_at &&
+        data.expires_at &&
+        data.starts_at >= data.expires_at
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['starts_at'],
+          message: t('Validation.startBeforeEnd'),
+        })
+      }
+      if (data.discount_type === 'percentage' && +data.discount_value > 100) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['discount_value'],
+          message: t('Validation.percentage100'),
+        })
+      }
+    })
+
+export type CouponFormData = z.infer<ReturnType<typeof makeCouponSchema>>
 
 // -------------------- Shopify Store --------------------
 export const makeShopifyStoreSchema = (t: TFn, isUpdate?: boolean) => {
   return z.object({
     shop_domain: zodString.regex(/^[a-z0-9-]+\.myshopify\.com$/i, {
-      message: t('Validation.format', { format: 'example.myshopify.com', field: t('Form.labels.shop_domain') }),
+      message: t('Validation.format', {
+        format: 'example.myshopify.com',
+        field: t('Form.labels.shop_domain'),
+      }),
     }),
     is_active: z.boolean().default(true),
-    settings: z.object({
-      client_id: isUpdate ? requiredString(t, 'Client ID') : z.string().optional().nullable(),
-      client_secret: isUpdate ? requiredString(t, 'Client Secret') : z.string().optional().nullable(),
-      redirect_uri: isUpdate ? zodString.url() : zodString.url().optional().nullable(),
-      return_url: isUpdate
-        ? requiredString(t, t('Form.labels.return_url'), 3)
-        : z.string().optional().or(z.literal('')).nullable(),
-      include_protected_topics: z.boolean().default(false),
-      protected_customer_data_approved: z.boolean().default(false),
-      api_version: isUpdate
-        ? requiredString(t, t('Form.labels.api_version'), 1)
-        : z.string().optional().or(z.literal('')).nullable(),
-      state_ttl: z.coerce.number().default(600),
-      scopes: z.array(zodString.min(1)).default([]),
-    }).optional().nullable(),
+    settings: z
+      .object({
+        client_id: isUpdate
+          ? requiredString(t, 'Client ID')
+          : z.string().optional().nullable(),
+        client_secret: isUpdate
+          ? requiredString(t, 'Client Secret')
+          : z.string().optional().nullable(),
+        redirect_uri: isUpdate
+          ? zodString.url()
+          : zodString.url().optional().nullable(),
+        return_url: isUpdate
+          ? requiredString(t, t('Form.labels.return_url'), 3)
+          : z.string().optional().or(z.literal('')).nullable(),
+        include_protected_topics: z.boolean().default(false),
+        protected_customer_data_approved: z.boolean().default(false),
+        api_version: isUpdate
+          ? requiredString(t, t('Form.labels.api_version'), 1)
+          : z.string().optional().or(z.literal('')).nullable(),
+        state_ttl: z.coerce.number().default(600),
+        scopes: z.array(zodString.min(1)).default([]),
+      })
+      .optional()
+      .nullable(),
   })
 }
-export type ShopifyStoreFormData = z.infer<ReturnType<typeof makeShopifyStoreSchema>>
+export type ShopifyStoreFormData = z.infer<
+  ReturnType<typeof makeShopifyStoreSchema>
+>
 
 // -------------------- Admin Notification --------------------
 export const ADMIN_NOTIFICATION_SCOPE_OPTIONS = [
@@ -786,6 +884,6 @@ export const makeAdminNotificationSchema = (t: TFn) => {
   })
 }
 
-export type AdminNotificationFormData = z.infer<ReturnType<typeof makeAdminNotificationSchema>>
-
-
+export type AdminNotificationFormData = z.infer<
+  ReturnType<typeof makeAdminNotificationSchema>
+>

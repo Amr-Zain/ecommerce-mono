@@ -8,9 +8,13 @@ import { dashboardQueryKeys, ordersQueryKeys } from '@/util/queryKeysFactory'
 import { searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { Order } from '@/types/api/order'
+import type { Meta } from '@/types/api/http'
 import { TableLoader } from '@/components/common/table/TableLoader'
 import { Suspense } from 'react'
-import { OrderStatusStats, OrderStatusStatsSkeleton } from '@/components/pagesComponents/Orders/OrderStatusStats'
+import {
+  OrderStatusStats,
+  OrderStatusStatsSkeleton,
+} from '@/components/pagesComponents/Orders/OrderStatusStats'
 
 import { hasPermission, routePermission } from '@/lib/utils'
 
@@ -24,17 +28,15 @@ export const Route = createFileRoute('/_main/orders/')({
   component: RouteComponent,
   validateSearch: (search: Record<string, unknown>) => ({
     ...searchParamsValidate(search),
-    'filters[status]': toStr(search['filters[status]']),
-    'filters[financial_status]': toStr(search['filters[financial_status]']),
-    'filters[fulfillment_status]': toStr(search['filters[fulfillment_status]']),
+    status: toStr(search.status),
+    paymentStatus: toStr(search.paymentStatus),
   }),
   loaderDeps: ({ search }) => ({
     search: {
       ...searchParamsValidate(search),
-      'filters[status]': toStr(search['filters[status]']),
-      'filters[financial_status]': toStr(search['filters[financial_status]']),
-      'filters[fulfillment_status]': toStr(search['filters[fulfillment_status]']),
-    }
+      status: toStr(search.status),
+      paymentStatus: toStr(search.paymentStatus),
+    },
   }),
   loader: ({ context, deps: { search } }) => {
     const { queryClient } = context as RouterContext
@@ -52,8 +54,8 @@ export const Route = createFileRoute('/_main/orders/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: dashboardQueryKeys.statistics(),
-        endpoint: 'dashboard/home'
-      })
+        endpoint: 'dashboard/home',
+      }),
     )
   },
 })
@@ -61,10 +63,13 @@ export const Route = createFileRoute('/_main/orders/')({
 function OrdersTable() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<
-    ApiResponse<{
-      orders: Order[],
-      meta: any
-    }, 'orders'>
+    ApiResponse<
+      {
+        orders: Order[]
+        meta: Meta
+      },
+      'orders'
+    >
   >({
     queryKey: ordersQueryKeys.filterd(search),
     endpoint,
@@ -79,9 +84,11 @@ function RouteComponent() {
   return (
     <>
       <SmartBreadcrumbs entityKey="menu.orders" />
-      {hasPermission('dashboard-home', 'index') && <Suspense fallback={<OrderStatusStatsSkeleton />}>
-        <OrderStatusStats />
-      </Suspense>}
+      {hasPermission('dashboard-home', 'index') && (
+        <Suspense fallback={<OrderStatusStatsSkeleton />}>
+          <OrderStatusStats />
+        </Suspense>
+      )}
       <Suspense fallback={<TableLoader />}>
         <OrdersTable />
       </Suspense>
