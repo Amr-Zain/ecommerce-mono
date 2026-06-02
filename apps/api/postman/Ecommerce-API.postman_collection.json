@@ -1960,6 +1960,159 @@
               }
             }
           ]
+        },
+        {
+          "name": "Coupons",
+          "item": [
+            {
+              "name": "List Coupons",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/coupons",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "coupons"]
+                }
+              }
+            },
+            {
+              "name": "Get Coupon by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/coupons/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "coupons", "1"]
+                }
+              }
+            },
+            {
+              "name": "Create Coupon",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"SUMMER20\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 20,\n  \"minOrderAmount\": 100,\n  \"maxDiscount\": 50,\n  \"usageLimit\": 100,\n  \"perUserLimit\": 1,\n  \"startsAt\": \"2026-06-01T00:00:00Z\",\n  \"expiresAt\": \"2026-07-01T00:00:00Z\",\n  \"isActive\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/coupons",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "coupons"]
+                }
+              }
+            },
+            {
+              "name": "Update Coupon",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"discountValue\": 25,\n  \"isActive\": false\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/coupons/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "coupons", "1"]
+                }
+              }
+            },
+            {
+              "name": "Delete Coupon",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/coupons/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "coupons", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Orders",
+          "item": [
+            {
+              "name": "List Orders",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/orders?status=confirmed",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "orders"],
+                  "query": [
+                    { "key": "status", "value": "confirmed" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Order by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/orders/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "orders", "1"]
+                }
+              }
+            },
+            {
+              "name": "Update Order Status",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"shipped\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/orders/1/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "orders", "1", "status"]
+                }
+              }
+            },
+            {
+              "name": "Confirm Payment",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/orders/1/confirm-payment",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "orders", "1", "confirm-payment"]
+                }
+              }
+            },
+            {
+              "name": "Refund Order",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Customer requested refund\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/orders/1/refund",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "orders", "1", "refund"]
+                }
+              }
+            }
+          ]
         }
       ]
     },
@@ -2458,17 +2611,150 @@
           ]
         },
         {
+          "name": "Cart",
+          "item": [
+            {
+              "name": "Get My Cart",
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/cart",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "cart"]
+                }
+              }
+            },
+            {
+              "name": "Add Item to Cart",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"productId\": 1,\n  \"variantId\": 1,\n  \"quantity\": 2\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/cart/items",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "cart", "items"]
+                }
+              }
+            },
+            {
+              "name": "Update Cart Item Quantity",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"quantity\": 3\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/cart/items/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "cart", "items", "1"]
+                }
+              }
+            },
+            {
+              "name": "Remove Cart Item",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/cart/items/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "cart", "items", "1"]
+                }
+              }
+            },
+            {
+              "name": "Clear Cart",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/cart",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "cart"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checkout",
+          "item": [
+            {
+              "name": "Preview Checkout",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"addressId\": 1,\n  \"couponCode\": \"SUMMER20\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/checkout/preview",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "checkout", "preview"]
+                }
+              }
+            },
+            {
+              "name": "Place Order",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"addressId\": 1,\n  \"paymentMethod\": \"cod\",\n  \"couponCode\": \"SUMMER20\",\n  \"notes\": \"Leave at door\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/checkout/place-order",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "checkout", "place-order"]
+                }
+              }
+            }
+          ]
+        },
+        {
           "name": "Orders",
           "item": [
             {
               "name": "List My Orders",
               "request": {
                 "method": "GET",
-                "header": [],
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
                 "url": {
-                  "raw": "{{baseUrl}}/client/orders",
+                  "raw": "{{baseUrl}}/client/orders?status=delivered",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "orders"]
+                  "path": ["client", "orders"],
+                  "query": [
+                    { "key": "status", "value": "delivered" }
+                  ]
                 }
               }
             },
@@ -2476,7 +2762,9 @@
               "name": "Get Order by ID",
               "request": {
                 "method": "GET",
-                "header": [],
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/orders/1",
                   "host": ["{{baseUrl}}"],
@@ -2485,19 +2773,21 @@
               }
             },
             {
-              "name": "Create Order",
+              "name": "Cancel Order",
               "request": {
                 "method": "POST",
-                "header": [],
+                "header": [
+                  { "key": "Accept-Language", "value": "en" }
+                ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"addressId\": 1,\n  \"paymentMethod\": \"cash\",\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"variantId\": 1,\n      \"quantity\": 2\n    }\n  ]\n}",
+                  "raw": "{\n  \"reason\": \"Changed my mind\"\n}",
                   "options": { "raw": { "language": "json" } }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/client/orders",
+                  "raw": "{{baseUrl}}/client/orders/1/cancel",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "orders"]
+                  "path": ["client", "orders", "1", "cancel"]
                 }
               }
             }
