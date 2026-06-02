@@ -1,24 +1,40 @@
 model Order {
-  id            BigInt         @id @default(autoincrement())
-  userId        BigInt         @map("user_id")
-  user          User           @relation(fields: [userId], references: [id], onDelete: Restrict)
-  addressId     BigInt?        @map("address_id")
-  address       Address?       @relation(fields: [addressId], references: [id], onDelete: SetNull)
-  vatValue      Decimal        @default(0) @map("vat_value") @db.Decimal(12, 2)
-  vatType       String?        @map("vat_type")
-  status        String         @default("pending")
-  paymentMethod String         @map("payment_method")
-  paymentStatus String         @default("pending") @map("payment_status")
-  isActive      Boolean        @default(true) @map("is_active")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at")
-  items         OrderItem[]
-  payments      OrderPayment[]
+  id                      BigInt               @id @default(autoincrement())
+  orderNumber             String               @unique @map("order_number")
+  userId                  BigInt               @map("user_id")
+  user                    User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  addressId               BigInt?              @map("address_id")
+  address                 Address?             @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  shippingAddressSnapshot Json?                @map("shipping_address_snapshot") @db.JsonB
+  countryId               BigInt?              @map("country_id")
+  countryNameSnapshot     String?              @map("country_name_snapshot")
+  cityNameSnapshot        String?              @map("city_name_snapshot")
+  shippingFee             Decimal              @default(0) @map("shipping_fee") @db.Decimal(12, 2)
+  subtotal                Decimal              @default(0) @db.Decimal(12, 2)
+  discountAmount          Decimal              @default(0) @map("discount_amount") @db.Decimal(12, 2)
+  couponId                BigInt?              @map("coupon_id")
+  coupon                  Coupon?              @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponCodeSnapshot      String?              @map("coupon_code_snapshot")
+  vatValue                Decimal              @default(0) @map("vat_value") @db.Decimal(12, 2)
+  vatType                 String?              @map("vat_type")
+  totalPrice              Decimal              @default(0) @map("total_price") @db.Decimal(12, 2)
+  status                  String               @default("pending")
+  paymentMethod           String               @map("payment_method")
+  paymentStatus           String               @default("pending") @map("payment_status")
+  notes                   String?              @db.Text
+  isActive                Boolean              @default(true) @map("is_active")
+  createdAt               DateTime             @default(now()) @map("created_at")
+  updatedAt               DateTime             @default(now()) @updatedAt @map("updated_at")
+  cancelledAt             DateTime?            @map("cancelled_at")
+  cancelReason            String?              @map("cancel_reason")
+  items                   OrderItem[]
+  payments                PaymentTransaction[]
 
   @@index([userId])
   @@index([addressId])
   @@index([status])
   @@index([paymentStatus])
+  @@index([orderNumber])
   @@map("orders")
 }
 
@@ -34,6 +50,10 @@ model OrderItem {
   unitPriceSnapshot     Decimal                @default(0) @map("unit_price_snapshot") @db.Decimal(12, 2)
   discountValueSnapshot Decimal                @default(0) @map("discount_value_snapshot") @db.Decimal(12, 2)
   discountTypeSnapshot  String?                @map("discount_type_snapshot")
+  productNameSnapshot   String                 @map("product_name_snapshot")
+  variantInfoSnapshot   Json?                  @map("variant_info_snapshot") @db.JsonB
+  imageSnapshot         String?                @map("image_snapshot")
+  totalPrice            Decimal                @default(0) @map("total_price") @db.Decimal(12, 2)
   isActive              Boolean                @default(true) @map("is_active")
   createdAt             DateTime               @default(now()) @map("created_at")
   translations          OrderItemTranslation[]
@@ -48,7 +68,7 @@ model OrderItemTranslation {
   id                  BigInt    @id @default(autoincrement())
   recordId            BigInt    @map("record_id")
   orderItem           OrderItem @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  langId              String    @map("lang_id") // Removed Lang enum
+  langId              String    @map("lang_id")
   nameSnapshot        String    @map("name_snapshot")
   descriptionSnapshot String?   @map("description_snapshot") @db.Text
 
@@ -56,19 +76,112 @@ model OrderItemTranslation {
   @@map("order_items_translations")
 }
 
-model OrderPayment {
-  id            BigInt   @id @default(autoincrement())
-  orderId       BigInt   @map("order_id")
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  totalPrice    Decimal  @default(0) @map("total_price") @db.Decimal(12, 2)
-  vatValue      Decimal  @default(0) @map("vat_value") @db.Decimal(12, 2)
-  vatType       String?  @map("vat_type")
-  paymentMethod String   @map("payment_method")
-  paymentStatus String   @default("pending") @map("payment_status")
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
+model PaymentTransaction {
+  id              BigInt    @id @default(autoincrement())
+  orderId         BigInt    @map("order_id")
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount          Decimal   @default(0) @db.Decimal(12, 2)
+  paymentMethod   String    @map("payment_method")
+  paymentStatus   String    @default("pending") @map("payment_status")
+  transactionRef  String?   @map("transaction_ref")
+  gatewayResponse Json?     @map("gateway_response") @db.JsonB
+  paidAt          DateTime? @map("paid_at")
+  currency        String    @default("SAR")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   @@index([orderId])
   @@index([paymentStatus])
-  @@map("order_payments")
+  @@map("payment_transactions")
+}
+
+model PendingCheckout {
+  id                 BigInt              @id @default(autoincrement())
+  userId             BigInt              @map("user_id")
+  addressId          BigInt              @map("address_id")
+  paymentMethod      String              @map("payment_method")
+  paymentStatus      String              @default("pending") @map("payment_status")
+  transactionRef     String?             @unique @map("transaction_ref")
+  amount             Decimal             @default(0) @db.Decimal(12, 2)
+  currency           String              @default("SAR")
+  couponCode         String?             @map("coupon_code")
+  notes              String?             @db.Text
+  langId             String              @default("en") @map("lang_id")
+  checkoutSnapshot   Json                @map("checkout_snapshot") @db.JsonB
+  gatewayResponse    Json?               @map("gateway_response") @db.JsonB
+  orderId            BigInt?             @map("order_id")
+  expiresAt          DateTime            @map("expires_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at")
+  reservations       StockReservation[]
+  couponReservations CouponReservation[]
+
+  @@index([userId])
+  @@index([paymentStatus])
+  @@index([transactionRef])
+  @@map("pending_checkouts")
+}
+
+model CouponReservation {
+  id                BigInt          @id @default(autoincrement())
+  pendingCheckoutId BigInt          @map("pending_checkout_id")
+  pendingCheckout   PendingCheckout @relation(fields: [pendingCheckoutId], references: [id], onDelete: Cascade)
+  couponId          BigInt          @map("coupon_id")
+  coupon            Coupon          @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  userId            BigInt          @map("user_id")
+  status            String          @default("reserved")
+  expiresAt         DateTime        @map("expires_at")
+  consumedAt        DateTime?       @map("consumed_at")
+  releasedAt        DateTime?       @map("released_at")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  @@index([pendingCheckoutId])
+  @@index([couponId])
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("coupon_reservations")
+}
+
+model StockReservation {
+  id                BigInt          @id @default(autoincrement())
+  pendingCheckoutId BigInt          @map("pending_checkout_id")
+  pendingCheckout   PendingCheckout @relation(fields: [pendingCheckoutId], references: [id], onDelete: Cascade)
+  variantId         BigInt          @map("variant_id")
+  variant           ProductVariant  @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  quantity          Int
+  status            String          @default("reserved")
+  expiresAt         DateTime        @map("expires_at")
+  consumedAt        DateTime?       @map("consumed_at")
+  releasedAt        DateTime?       @map("released_at")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  @@index([pendingCheckoutId])
+  @@index([variantId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("stock_reservations")
+}
+
+model Coupon {
+  id             BigInt              @id @default(autoincrement())
+  code           String              @unique
+  discountType   String              @map("discount_type") // FIXED, PERCENTAGE, FREE_SHIPPING
+  discountValue  Decimal             @map("discount_value") @db.Decimal(12, 2)
+  minOrderAmount Decimal?            @map("min_order_amount") @db.Decimal(12, 2)
+  maxDiscount    Decimal?            @map("max_discount") @db.Decimal(12, 2)
+  usageLimit     Int?                @map("usage_limit")
+  usageCount     Int                 @default(0) @map("usage_count")
+  perUserLimit   Int                 @default(1) @map("per_user_limit")
+  startsAt       DateTime?           @map("starts_at")
+  expiresAt      DateTime?           @map("expires_at")
+  isActive       Boolean             @default(true) @map("is_active")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @default(now()) @updatedAt @map("updated_at")
+  orders         Order[]
+  reservations   CouponReservation[]
+
+  @@map("coupons")
 }

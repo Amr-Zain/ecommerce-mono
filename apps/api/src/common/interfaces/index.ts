@@ -23,3 +23,7 @@ export type { AdminReview, AdminReviewProduct, AdminReviewUser, ClientReview, Cl
 export { REVIEWS_REPOSITORY } from './reviews.interface';
 export type { ShowRoomTranslation, ShowRoom, IShowRoomsRepository } from './show-rooms.interface';
 export { SHOW_ROOMS_REPOSITORY } from './show-rooms.interface';
+export type { CartItem, Cart, ICartsRepository } from './carts.interface';
+export { CARTS_REPOSITORY } from './carts.interface';
+export type { Coupon, ICouponsRepository } from './coupons.interface';
+export { COUPONS_REPOSITORY } from './coupons.interface';

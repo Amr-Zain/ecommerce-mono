@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { COUNTRY_CODES, DISCOUNT_TYPES, TAX_RATES } from '@/common/constants/commerce.constants';
 
 export interface Discount {
   type: string | null;
@@ -30,9 +31,9 @@ export class PricingService {
       const compareAtPrice = rawPrice;
       let actualPrice = rawPrice;
 
-      if (discountType === 'PERCENTAGE') {
+      if (discountType === DISCOUNT_TYPES.percentage) {
         actualPrice = rawPrice - (rawPrice * (discountValue / 100));
-      } else if (discountType === 'FIXED') {
+      } else if (discountType === DISCOUNT_TYPES.fixed) {
         actualPrice = rawPrice - discountValue;
       }
 
@@ -43,5 +44,59 @@ export class PricingService {
     }
 
     return { price: Number(rawPrice.toFixed(2)) };
+  }
+
+  calculateVat(
+    subtotal: number,
+    phoneCode?: string | null,
+    countryShortName?: string | null,
+  ): { vatRate: number; vatAmount: number } {
+    const isSA =
+      phoneCode?.replace(/[^0-9]/g, '') === COUNTRY_CODES.saudiPhoneCode ||
+      COUNTRY_CODES.saudiShortNames.includes(countryShortName?.toUpperCase() as any);
+
+    if (isSA) {
+      const vatRate = TAX_RATES.saudiArabiaVat;
+      const vatAmount = Number((subtotal * vatRate).toFixed(2));
+      return { vatRate, vatAmount };
+    }
+
+    return { vatRate: 0, vatAmount: 0 };
+  }
+
+  calculateTotals(
+    items: { price: number; quantity: number }[],
+    shippingFee: number,
+    discountAmount: number,
+    phoneCode?: string | null,
+    countryShortName?: string | null,
+  ): {
+    subtotal: number;
+    shippingFee: number;
+    discountAmount: number;
+    vatAmount: number;
+    vatRate: number;
+    totalPrice: number;
+  } {
+    const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const netSubtotal = Math.max(0, subtotal - discountAmount);
+    
+    const { vatRate, vatAmount } = this.calculateVat(
+      netSubtotal,
+      phoneCode,
+      countryShortName,
+    );
+
+    const rawTotal = netSubtotal + shippingFee + vatAmount;
+    const totalPrice = Math.max(0, Number(rawTotal.toFixed(2)));
+
+    return {
+      subtotal: Number(subtotal.toFixed(2)),
+      shippingFee: Number(shippingFee.toFixed(2)),
+      discountAmount: Number(discountAmount.toFixed(2)),
+      vatAmount: Number(vatAmount.toFixed(2)),
+      vatRate,
+      totalPrice,
+    };
   }
 }

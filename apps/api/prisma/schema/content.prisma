@@ -11,12 +11,12 @@ model StaticPage {
 }
 
 model StaticPageTranslation {
-  id       BigInt     @id @default(autoincrement())
-  recordId BigInt     @map("record_id")
+  id         BigInt     @id @default(autoincrement())
+  recordId   BigInt     @map("record_id")
   staticPage StaticPage @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  langId   String     @map("lang_id") // Removed Lang enum
-  title    String
-  content  String?    @db.Text
+  langId     String     @map("lang_id") // Removed Lang enum
+  title      String
+  content    String?    @db.Text
 
   @@unique([recordId, langId])
   @@map("static_pages_translations")

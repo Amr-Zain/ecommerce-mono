@@ -1,19 +1,20 @@
 model Role {
-  id          BigInt       @id @default(autoincrement())
-  isActive    Boolean      @default(true) @map("is_active")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at")
-  users       User[]
-  permissions Permission[] @relation("RoleToPermission")
-  translations RoleTranslation[] 
+  id           BigInt            @id @default(autoincrement())
+  isActive     Boolean           @default(true) @map("is_active")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at")
+  users        User[]
+  permissions  Permission[]      @relation("RoleToPermission")
+  translations RoleTranslation[]
+
   @@map("roles")
 }
 
 model RoleTranslation {
-  id       BigInt   @id @default(autoincrement())
-  recordId BigInt   @map("record_id")
-  role     Role     @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  langId   String   @map("lang_id")
+  id       BigInt @id @default(autoincrement())
+  recordId BigInt @map("record_id")
+  role     Role   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  langId   String @map("lang_id")
   name     String
 
   @@unique([recordId, langId])
@@ -22,8 +23,8 @@ model RoleTranslation {
 
 model Permission {
   id        BigInt   @id @default(autoincrement())
-  resource  String   // e.g., "users", "orders", "products"
-  action    String   // e.g., "create", "read", "update", "delete", "list"
+  resource  String // e.g., "users", "orders", "products"
+  action    String // e.g., "create", "read", "update", "delete", "list"
   roles     Role[]   @relation("RoleToPermission")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
@@ -33,33 +34,35 @@ model Permission {
 }
 
 model User {
-  id                      BigInt                 @id @default(autoincrement())
-  name                    String?                @default("guest")
-  email                   String?                @unique
-  roleId                  BigInt?                @map("role")
-  role                    Role?                  @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  userType                String?                @default("client") @map("user_type")
-  guestToken              String?                @unique @map("guest_token")
+  id                      BigInt         @id @default(autoincrement())
+  name                    String?        @default("guest")
+  email                   String?        @unique
+  roleId                  BigInt?        @map("role")
+  role                    Role?          @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  userType                String?        @default("client") @map("user_type")
+  guestToken              String?        @unique @map("guest_token")
   password                String?
   gender                  String?
   phone                   String?
-  phoneCode               String?                @map("phone_code")
-  isPhoneVerified         Boolean                @default(false) @map("is_phone_verified")
-  isEmailVerified         Boolean                @default(false) @map("is_email_verified")
-  isActive                Boolean                @default(true) @map("is_active")
-  emailVerificationCode   String?                @map("email_verification_code") // 4-digit code
-  emailVerificationExpiry DateTime?              @map("email_verification_expiry")
-  phoneVerificationCode   String?                @map("phone_verification_code") // 4-digit code
-  phoneVerificationExpiry DateTime?              @map("phone_verification_expiry")
-  passwordResetCode       String?                @map("password_reset_code") // 4-digit code
-  passwordResetExpiry     DateTime?              @map("password_reset_expiry")
-  settings                Json?                  @default("{}")
-  createdAt               DateTime               @default(now()) @map("created_at")
-  updatedAt               DateTime               @default(now()) @updatedAt @map("updated_at")
+  phoneCode               String?        @map("phone_code")
+  isPhoneVerified         Boolean        @default(false) @map("is_phone_verified")
+  isEmailVerified         Boolean        @default(false) @map("is_email_verified")
+  isActive                Boolean        @default(true) @map("is_active")
+  emailVerificationCode   String?        @map("email_verification_code") // 4-digit code
+  emailVerificationExpiry DateTime?      @map("email_verification_expiry")
+  phoneVerificationCode   String?        @map("phone_verification_code") // 4-digit code
+  phoneVerificationExpiry DateTime?      @map("phone_verification_expiry")
+  passwordResetCode       String?        @map("password_reset_code") // 4-digit code
+  passwordResetExpiry     DateTime?      @map("password_reset_expiry")
+  settings                Json?          @default("{}")
+  createdAt               DateTime       @default(now()) @map("created_at")
+  updatedAt               DateTime       @default(now()) @updatedAt @map("updated_at")
   addresses               Address[]
   reviews                 Review[]
   orders                  Order[]
   refreshTokens           RefreshToken[]
+  cart                    Cart?
+  wishlistItems           WishlistItem[]
 
   @@index([email])
   @@index([phone])

@@ -17,6 +17,8 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from './auth/guards/permissions.guard';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { PaymentModule } from './shared/payment/payment.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -29,10 +31,12 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
       load: [databaseConfig],
       expandVariables: true,
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     CommonModule,
     MediaModule,
     AuthModule,
+    PaymentModule,
     ClientModule,
     AdminModule,
     // Set path prefixes for modules
