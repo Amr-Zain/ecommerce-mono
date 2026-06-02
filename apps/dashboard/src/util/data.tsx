@@ -1,10 +1,34 @@
-import { HugeiconsIcon } from "@hugeicons/react"
-import type { IconSvgElement, HugeiconsIconProps } from "@hugeicons/react"
-import { Award01Icon, BarChartIcon, Notification01Icon, Book01Icon, Building03Icon, ChartColumnStackedIcon, ClipboardIcon, CreditCardIcon, DatabaseIcon, Flag01Icon, HelpCircleIcon, Home01Icon, Message01Icon, PercentIcon, BalanceScaleIcon, Settings01Icon, Shield01Icon, ShoppingCart01Icon, SlidersHorizontalIcon, Store01Icon, UserMultipleIcon } from "@hugeicons/core-free-icons";
-import { MenuItem } from "@/types/components/sidebar";
+import { HugeiconsIcon } from '@hugeicons/react'
+import type { IconSvgElement, HugeiconsIconProps } from '@hugeicons/react'
+import {
+  Award01Icon,
+  BarChartIcon,
+  Notification01Icon,
+  Book01Icon,
+  Building03Icon,
+  ChartColumnStackedIcon,
+  ClipboardIcon,
+  CreditCardIcon,
+  DatabaseIcon,
+  Flag01Icon,
+  HelpCircleIcon,
+  Home01Icon,
+  Message01Icon,
+  PercentIcon,
+  BalanceScaleIcon,
+  Settings01Icon,
+  Shield01Icon,
+  ShoppingCart01Icon,
+  SlidersHorizontalIcon,
+  Store01Icon,
+  UserMultipleIcon,
+} from '@hugeicons/core-free-icons'
+import { MenuItem } from '@/types/components/sidebar'
 
 const H = (icon: IconSvgElement) => {
-  const Comp = (props: Omit<HugeiconsIconProps, 'icon'>) => <HugeiconsIcon icon={icon} {...props} />
+  const Comp = (props: Omit<HugeiconsIconProps, 'icon'>) => (
+    <HugeiconsIcon icon={icon} {...props} />
+  )
   return Comp
 }
 const Award = H(Award01Icon)
@@ -108,6 +132,12 @@ export const getProductsAndShowRoomsMenuItems: MenuItem[] = [
     url: '/orders',
     icon: ShoppingCart,
     // badge: '23',
+    checkPermission: true,
+  },
+  {
+    title: 'menu.coupons',
+    url: '/coupons',
+    icon: Percent,
     checkPermission: true,
   },
   {

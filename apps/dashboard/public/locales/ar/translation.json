@@ -104,7 +104,8 @@
     "tiers": "المستويات",
     "shopifyStores": "متاجر شوبيفاي",
     "shopify-stores": "متاجر شوبيفاي",
-    "admin_notifications": "إشعارات الإدارة"
+    "admin_notifications": "إشعارات الإدارة",
+    "coupons": "الكوبونات"
   },
   "workspace": {
     "switch": "تبديل مساحة العمل",
@@ -197,7 +198,8 @@
     "back_to_home": "العودة للرئيسية",
     "metadata": "البيانات الوصفية",
     "no_notifications": "لا توجد إشعارات",
-    "no_notifications_desc": "عندما يكون لديك إشعارات، ستظهر هنا."
+    "no_notifications_desc": "عندما يكون لديك إشعارات، ستظهر هنا.",
+    "coupon": "كوبون"
   },
   "map": {
     "searchPlaceholder": "ابحث عن موقع...",
@@ -590,9 +592,9 @@
       "nameEn": "أدخل الاسم بالإنجليزية",
       "attribute": "اختر سمة",
       "price": "أدخل السعر",
-      "stock": "أدخل الكمية",
+      "stock": "أدخل كمية المخزون",
       "barcode": "أدخل الباركود",
-      "sku": "أدخل SKU",
+      "sku": "أدخل رمز المنتج (SKU)",
       "status": "اختر الحالة",
       "products": "اختر المنتجات",
       "slugEn": "أدخل المعرّف بالإنجليزية",
@@ -629,11 +631,8 @@
       "passwordConfirmation": "تأكيد كلمة المرور",
       "gender": "اختر الجنس",
       "category": "اختر الفئة",
-      "price": "أدخل السعر",
       "discountType": "اختر نوع الخصم",
       "discountValue": "أدخل قيمة الخصم",
-      "stock": "أدخل كمية المخزون",
-      "sku": "أدخل رمز المنتج (SKU)",
       "user_id": "أدخل رقم المستخدم",
       "product_id": "أدخل رقم المنتج",
       "scope": "مثلاً read_products",
@@ -1134,7 +1133,23 @@
       "note_attributes": "تفاصيل إضافية",
       "marketing_opt_in": "الاشتراك في التسويق",
       "contact_email": "بريد التواصل",
-      "total_line_items_price": "إجمالي سعر المنتجات"
+      "total_line_items_price": "إجمالي سعر المنتجات",
+      "payment_status": "حالة الدفع",
+      "item": "عنصر",
+      "quantity": "الكمية",
+      "no_payments": "لا توجد معاملات دفع بعد",
+      "customer": "العميل",
+      "name": "الاسم",
+      "country": "الدولة",
+      "city": "المدينة",
+      "address": "العنوان",
+      "shipping_fee": "رسوم الشحن",
+      "vat": "ضريبة القيمة المضافة",
+      "actions": "الإجراءات",
+      "change_status": "تغيير الحالة",
+      "select_status": "اختر الحالة",
+      "final_status": "هذا الطلب في حالة نهائية بالفعل.",
+      "refund_reason": "سبب الاسترداد"
     },
     "status": {
       "open": "قيد التنفيذ",
@@ -1157,7 +1172,10 @@
       "completed": "مكتمل",
       "rejected": "مرفوض",
       "intended": "مقصود",
-      "fulfilled": "تم التنفيذ"
+      "fulfilled": "تم التنفيذ",
+      "shipped": "تم الشحن",
+      "delivered": "تم التسليم",
+      "refunded": "تم الاسترداد"
     },
     "financialStatus": {
       "paid": "مدفوع",
@@ -1179,9 +1197,24 @@
       "partially_fulfilled": "تم التنفيذ جزئياً",
       "partial": "تم التنفيذ جزئياً",
       "restocked": "أعيد التخزين"
+    },
+    "paymentStatus": {
+      "pending": "قيد الانتظار",
+      "completed": "مكتمل",
+      "awaiting_confirmation": "بانتظار التأكيد",
+      "failed": "فشل",
+      "refunded": "تم الاسترداد",
+      "expired": "منتهي الصلاحية",
+      "requires_review": "يتطلب مراجعة",
+      "processing_payment": "جار معالجة الدفع"
+    },
+    "actions": {
+      "confirm_payment": "تأكيد الدفع",
+      "payment_confirmed": "تم تأكيد الدفع",
+      "refund": "استرداد",
+      "refunded": "تم الاسترداد"
     }
   },
-
   "paymentSessions": {
     "entity": "جلسة دفع",
     "labels": {
@@ -1512,6 +1545,30 @@
       "not_sent": "لم يُرسَل",
       "info": "معلومات الإشعار",
       "target_info": "تفاصيل الاستهداف"
+    }
+  },
+  "coupons": {
+    "entity": "كوبون",
+    "labels": {
+      "code": "الكود",
+      "discount_type": "نوع الخصم",
+      "discount_value": "قيمة الخصم",
+      "min_order_amount": "الحد الأدنى للطلب",
+      "max_discount": "أقصى خصم",
+      "usage_limit": "حد الاستخدام",
+      "usage_count": "مرات الاستخدام",
+      "per_user_limit": "الحد لكل مستخدم",
+      "starts_at": "يبدأ في",
+      "expires_at": "ينتهي في"
+    },
+    "placeholders": {
+      "code": "SUMMER25",
+      "discount_type": "اختر نوع الخصم"
+    },
+    "discountTypes": {
+      "percentage": "نسبة مئوية",
+      "fixed": "مبلغ ثابت",
+      "free_shipping": "شحن مجاني"
     }
   }
 }

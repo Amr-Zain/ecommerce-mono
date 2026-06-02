@@ -105,7 +105,8 @@
     "tiers": "Tiers",
     "shopify-stores": "Shopify Stores",
     "shopifyStores": "Shopify Stores",
-    "admin_notifications": "Admin Notifications"
+    "admin_notifications": "Admin Notifications",
+    "coupons": "Coupons"
   },
   "workspace": {
     "switch": "Switch Workspace",
@@ -207,7 +208,8 @@
     "back_to_home": "Back to Home",
     "metadata": "Metadata",
     "no_notifications": "No notifications",
-    "no_notifications_desc": "When you have notifications, they will appear here."
+    "no_notifications_desc": "When you have notifications, they will appear here.",
+    "coupon": "Coupon"
   },
   "map": {
     "searchPlaceholder": "Search for a location...",
@@ -675,7 +677,7 @@
       "price": "Enter price",
       "stock": "Enter stock quantity",
       "barcode": "Enter barcode",
-      "sku": "Enter SKU",
+      "sku": "Enter SKU code",
       "status": "Select status",
       "slugEn": "Enter English slug",
       "titileAr": "Enter Arabic title",
@@ -712,11 +714,8 @@
       "passwordConfirmation": "Confirm password",
       "gender": "Select gender",
       "category": "Select category",
-      "price": "Enter price",
       "discountType": "Choose discount type",
       "discountValue": "Enter discount value",
-      "stock": "Enter stock quantity",
-      "sku": "Enter SKU code",
       "user_id": "Enter User ID",
       "product_id": "Enter Product ID",
       "scope": "e.g. read_products",
@@ -1140,14 +1139,30 @@
       "status": "Status",
       "financial_status": "Financial Status",
       "fulfillment_status": "Fulfillment Status",
+      "payment_status": "Payment Status",
       "items": "Items",
+      "item": "item",
       "items_count": "items",
+      "quantity": "Quantity",
       "price_summary": "Price Summary",
       "payments": "Payments",
+      "no_payments": "No payment transactions yet",
       "shipping_address": "Shipping Address",
+      "customer": "Customer",
+      "name": "Name",
+      "country": "Country",
+      "city": "City",
+      "address": "Address",
       "billing_address": "Billing Address",
       "shipping_method": "Shipping Method",
+      "shipping_fee": "Shipping Fee",
+      "vat": "VAT",
       "details": "Details",
+      "actions": "Actions",
+      "change_status": "Change Status",
+      "select_status": "Select status",
+      "final_status": "This order is already in a final status.",
+      "refund_reason": "Refund reason",
       "order_id": "Order ID",
       "processed_at": "Processed At",
       "paid_at": "Paid At",
@@ -1230,7 +1245,28 @@
       "active": "Active",
       "expired": "Expired",
       "Expired": "Expired",
+      "pending": "Pending",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "refunded": "Refunded",
       "fulfilled": "Fulfilled"
+    },
+    "paymentStatus": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "awaiting_confirmation": "Awaiting confirmation",
+      "failed": "Failed",
+      "refunded": "Refunded",
+      "expired": "Expired",
+      "requires_review": "Requires review",
+      "processing_payment": "Processing payment"
+    },
+    "actions": {
+      "confirm_payment": "Confirm payment",
+      "payment_confirmed": "Payment confirmed",
+      "refund": "Refund",
+      "refunded": "Refund completed"
     },
     "financialStatus": {
       "paid": "Paid",
@@ -1254,7 +1290,6 @@
       "restocked": "Restocked"
     }
   },
-
   "paymentSessions": {
     "entity": "Payment Session",
     "labels": {
@@ -1487,6 +1522,30 @@
       "not_sent": "Not Sent",
       "info": "Notification Info",
       "target_info": "Target Details"
+    }
+  },
+  "coupons": {
+    "entity": "Coupon",
+    "labels": {
+      "code": "Code",
+      "discount_type": "Discount Type",
+      "discount_value": "Discount Value",
+      "min_order_amount": "Minimum Order Amount",
+      "max_discount": "Maximum Discount",
+      "usage_limit": "Usage Limit",
+      "usage_count": "Used",
+      "per_user_limit": "Per User Limit",
+      "starts_at": "Starts At",
+      "expires_at": "Expires At"
+    },
+    "placeholders": {
+      "code": "SUMMER25",
+      "discount_type": "Select discount type"
+    },
+    "discountTypes": {
+      "percentage": "Percentage",
+      "fixed": "Fixed amount",
+      "free_shipping": "Free shipping"
     }
   }
 }

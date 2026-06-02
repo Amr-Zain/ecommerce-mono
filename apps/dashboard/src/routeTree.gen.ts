@@ -31,6 +31,7 @@ import { Route as MainOrdersIndexRouteImport } from './routes/_main/orders/index
 import { Route as MainOffersIndexRouteImport } from './routes/_main/offers/index'
 import { Route as MainFaqsIndexRouteImport } from './routes/_main/faqs/index'
 import { Route as MainEarningRulesIndexRouteImport } from './routes/_main/earning-rules/index'
+import { Route as MainCouponsIndexRouteImport } from './routes/_main/coupons/index'
 import { Route as MainCategoriesIndexRouteImport } from './routes/_main/categories/index'
 import { Route as MainAttributesIndexRouteImport } from './routes/_main/attributes/index'
 import { Route as MainAdminNotificationsIndexRouteImport } from './routes/_main/admin-notifications/index'
@@ -45,6 +46,7 @@ import { Route as MainProductsAddRouteImport } from './routes/_main/products/add
 import { Route as MainOffersAddRouteImport } from './routes/_main/offers/add'
 import { Route as MainFaqsAddRouteImport } from './routes/_main/faqs/add'
 import { Route as MainEarningRulesAddRouteImport } from './routes/_main/earning-rules/add'
+import { Route as MainCouponsAddRouteImport } from './routes/_main/coupons/add'
 import { Route as MainCategoriesAddRouteImport } from './routes/_main/categories/add'
 import { Route as MainAttributesAddRouteImport } from './routes/_main/attributes/add'
 import { Route as MainSettingsShopifyStoresIndexRouteImport } from './routes/_main/settings/shopify-stores/index'
@@ -75,6 +77,7 @@ import { Route as MainOrdersShowIdRouteImport } from './routes/_main/orders/show
 import { Route as MainOffersEditIdRouteImport } from './routes/_main/offers/edit/$id'
 import { Route as MainFaqsEditIdRouteImport } from './routes/_main/faqs/edit/$id'
 import { Route as MainEarningRulesEditIdRouteImport } from './routes/_main/earning-rules/edit/$id'
+import { Route as MainCouponsEditIdRouteImport } from './routes/_main/coupons/edit/$id'
 import { Route as MainCategoriesShowIdRouteImport } from './routes/_main/categories/show/$id'
 import { Route as MainCategoriesEditIdRouteImport } from './routes/_main/categories/edit/$id'
 import { Route as MainAttributesValuesAddRouteImport } from './routes/_main/attributes/values/add'
@@ -198,6 +201,11 @@ const MainEarningRulesIndexRoute = MainEarningRulesIndexRouteImport.update({
   path: '/earning-rules/',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainCouponsIndexRoute = MainCouponsIndexRouteImport.update({
+  id: '/coupons/',
+  path: '/coupons/',
+  getParentRoute: () => MainRouteRoute,
+} as any)
 const MainCategoriesIndexRoute = MainCategoriesIndexRouteImport.update({
   id: '/categories/',
   path: '/categories/',
@@ -267,6 +275,11 @@ const MainFaqsAddRoute = MainFaqsAddRouteImport.update({
 const MainEarningRulesAddRoute = MainEarningRulesAddRouteImport.update({
   id: '/earning-rules/add',
   path: '/earning-rules/add',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainCouponsAddRoute = MainCouponsAddRouteImport.update({
+  id: '/coupons/add',
+  path: '/coupons/add',
   getParentRoute: () => MainRouteRoute,
 } as any)
 const MainCategoriesAddRoute = MainCategoriesAddRouteImport.update({
@@ -428,6 +441,11 @@ const MainEarningRulesEditIdRoute = MainEarningRulesEditIdRouteImport.update({
   path: '/earning-rules/edit/$id',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainCouponsEditIdRoute = MainCouponsEditIdRouteImport.update({
+  id: '/coupons/edit/$id',
+  path: '/coupons/edit/$id',
+  getParentRoute: () => MainRouteRoute,
+} as any)
 const MainCategoriesShowIdRoute = MainCategoriesShowIdRouteImport.update({
   id: '/categories/show/$id',
   path: '/categories/show/$id',
@@ -503,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/attributes/add': typeof MainAttributesAddRoute
   '/categories/add': typeof MainCategoriesAddRoute
+  '/coupons/add': typeof MainCouponsAddRoute
   '/earning-rules/add': typeof MainEarningRulesAddRoute
   '/faqs/add': typeof MainFaqsAddRoute
   '/offers/add': typeof MainOffersAddRoute
@@ -517,6 +536,7 @@ export interface FileRoutesByFullPath {
   '/admin-notifications/': typeof MainAdminNotificationsIndexRoute
   '/attributes/': typeof MainAttributesIndexRoute
   '/categories/': typeof MainCategoriesIndexRoute
+  '/coupons/': typeof MainCouponsIndexRoute
   '/earning-rules/': typeof MainEarningRulesIndexRoute
   '/faqs/': typeof MainFaqsIndexRoute
   '/offers/': typeof MainOffersIndexRoute
@@ -540,6 +560,7 @@ export interface FileRoutesByFullPath {
   '/attributes/values/add': typeof MainAttributesValuesAddRoute
   '/categories/edit/$id': typeof MainCategoriesEditIdRoute
   '/categories/show/$id': typeof MainCategoriesShowIdRoute
+  '/coupons/edit/$id': typeof MainCouponsEditIdRoute
   '/earning-rules/edit/$id': typeof MainEarningRulesEditIdRoute
   '/faqs/edit/$id': typeof MainFaqsEditIdRoute
   '/offers/edit/$id': typeof MainOffersEditIdRoute
@@ -582,6 +603,7 @@ export interface FileRoutesByTo {
   '/': typeof MainIndexRoute
   '/attributes/add': typeof MainAttributesAddRoute
   '/categories/add': typeof MainCategoriesAddRoute
+  '/coupons/add': typeof MainCouponsAddRoute
   '/earning-rules/add': typeof MainEarningRulesAddRoute
   '/faqs/add': typeof MainFaqsAddRoute
   '/offers/add': typeof MainOffersAddRoute
@@ -596,6 +618,7 @@ export interface FileRoutesByTo {
   '/admin-notifications': typeof MainAdminNotificationsIndexRoute
   '/attributes': typeof MainAttributesIndexRoute
   '/categories': typeof MainCategoriesIndexRoute
+  '/coupons': typeof MainCouponsIndexRoute
   '/earning-rules': typeof MainEarningRulesIndexRoute
   '/faqs': typeof MainFaqsIndexRoute
   '/offers': typeof MainOffersIndexRoute
@@ -619,6 +642,7 @@ export interface FileRoutesByTo {
   '/attributes/values/add': typeof MainAttributesValuesAddRoute
   '/categories/edit/$id': typeof MainCategoriesEditIdRoute
   '/categories/show/$id': typeof MainCategoriesShowIdRoute
+  '/coupons/edit/$id': typeof MainCouponsEditIdRoute
   '/earning-rules/edit/$id': typeof MainEarningRulesEditIdRoute
   '/faqs/edit/$id': typeof MainFaqsEditIdRoute
   '/offers/edit/$id': typeof MainOffersEditIdRoute
@@ -663,6 +687,7 @@ export interface FileRoutesById {
   '/_main/': typeof MainIndexRoute
   '/_main/attributes/add': typeof MainAttributesAddRoute
   '/_main/categories/add': typeof MainCategoriesAddRoute
+  '/_main/coupons/add': typeof MainCouponsAddRoute
   '/_main/earning-rules/add': typeof MainEarningRulesAddRoute
   '/_main/faqs/add': typeof MainFaqsAddRoute
   '/_main/offers/add': typeof MainOffersAddRoute
@@ -677,6 +702,7 @@ export interface FileRoutesById {
   '/_main/admin-notifications/': typeof MainAdminNotificationsIndexRoute
   '/_main/attributes/': typeof MainAttributesIndexRoute
   '/_main/categories/': typeof MainCategoriesIndexRoute
+  '/_main/coupons/': typeof MainCouponsIndexRoute
   '/_main/earning-rules/': typeof MainEarningRulesIndexRoute
   '/_main/faqs/': typeof MainFaqsIndexRoute
   '/_main/offers/': typeof MainOffersIndexRoute
@@ -700,6 +726,7 @@ export interface FileRoutesById {
   '/_main/attributes/values/add': typeof MainAttributesValuesAddRoute
   '/_main/categories/edit/$id': typeof MainCategoriesEditIdRoute
   '/_main/categories/show/$id': typeof MainCategoriesShowIdRoute
+  '/_main/coupons/edit/$id': typeof MainCouponsEditIdRoute
   '/_main/earning-rules/edit/$id': typeof MainEarningRulesEditIdRoute
   '/_main/faqs/edit/$id': typeof MainFaqsEditIdRoute
   '/_main/offers/edit/$id': typeof MainOffersEditIdRoute
@@ -744,6 +771,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/attributes/add'
     | '/categories/add'
+    | '/coupons/add'
     | '/earning-rules/add'
     | '/faqs/add'
     | '/offers/add'
@@ -758,6 +786,7 @@ export interface FileRouteTypes {
     | '/admin-notifications/'
     | '/attributes/'
     | '/categories/'
+    | '/coupons/'
     | '/earning-rules/'
     | '/faqs/'
     | '/offers/'
@@ -781,6 +810,7 @@ export interface FileRouteTypes {
     | '/attributes/values/add'
     | '/categories/edit/$id'
     | '/categories/show/$id'
+    | '/coupons/edit/$id'
     | '/earning-rules/edit/$id'
     | '/faqs/edit/$id'
     | '/offers/edit/$id'
@@ -823,6 +853,7 @@ export interface FileRouteTypes {
     | '/'
     | '/attributes/add'
     | '/categories/add'
+    | '/coupons/add'
     | '/earning-rules/add'
     | '/faqs/add'
     | '/offers/add'
@@ -837,6 +868,7 @@ export interface FileRouteTypes {
     | '/admin-notifications'
     | '/attributes'
     | '/categories'
+    | '/coupons'
     | '/earning-rules'
     | '/faqs'
     | '/offers'
@@ -860,6 +892,7 @@ export interface FileRouteTypes {
     | '/attributes/values/add'
     | '/categories/edit/$id'
     | '/categories/show/$id'
+    | '/coupons/edit/$id'
     | '/earning-rules/edit/$id'
     | '/faqs/edit/$id'
     | '/offers/edit/$id'
@@ -903,6 +936,7 @@ export interface FileRouteTypes {
     | '/_main/'
     | '/_main/attributes/add'
     | '/_main/categories/add'
+    | '/_main/coupons/add'
     | '/_main/earning-rules/add'
     | '/_main/faqs/add'
     | '/_main/offers/add'
@@ -917,6 +951,7 @@ export interface FileRouteTypes {
     | '/_main/admin-notifications/'
     | '/_main/attributes/'
     | '/_main/categories/'
+    | '/_main/coupons/'
     | '/_main/earning-rules/'
     | '/_main/faqs/'
     | '/_main/offers/'
@@ -940,6 +975,7 @@ export interface FileRouteTypes {
     | '/_main/attributes/values/add'
     | '/_main/categories/edit/$id'
     | '/_main/categories/show/$id'
+    | '/_main/coupons/edit/$id'
     | '/_main/earning-rules/edit/$id'
     | '/_main/faqs/edit/$id'
     | '/_main/offers/edit/$id'
@@ -1138,6 +1174,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainEarningRulesIndexRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/_main/coupons/': {
+      id: '/_main/coupons/'
+      path: '/coupons'
+      fullPath: '/coupons/'
+      preLoaderRoute: typeof MainCouponsIndexRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/_main/categories/': {
       id: '/_main/categories/'
       path: '/categories'
@@ -1234,6 +1277,13 @@ declare module '@tanstack/react-router' {
       path: '/earning-rules/add'
       fullPath: '/earning-rules/add'
       preLoaderRoute: typeof MainEarningRulesAddRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/coupons/add': {
+      id: '/_main/coupons/add'
+      path: '/coupons/add'
+      fullPath: '/coupons/add'
+      preLoaderRoute: typeof MainCouponsAddRouteImport
       parentRoute: typeof MainRouteRoute
     }
     '/_main/categories/add': {
@@ -1446,6 +1496,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainEarningRulesEditIdRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/_main/coupons/edit/$id': {
+      id: '/_main/coupons/edit/$id'
+      path: '/coupons/edit/$id'
+      fullPath: '/coupons/edit/$id'
+      preLoaderRoute: typeof MainCouponsEditIdRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/_main/categories/show/$id': {
       id: '/_main/categories/show/$id'
       path: '/categories/show/$id'
@@ -1537,6 +1594,7 @@ interface MainRouteRouteChildren {
   MainIndexRoute: typeof MainIndexRoute
   MainAttributesAddRoute: typeof MainAttributesAddRoute
   MainCategoriesAddRoute: typeof MainCategoriesAddRoute
+  MainCouponsAddRoute: typeof MainCouponsAddRoute
   MainEarningRulesAddRoute: typeof MainEarningRulesAddRoute
   MainFaqsAddRoute: typeof MainFaqsAddRoute
   MainOffersAddRoute: typeof MainOffersAddRoute
@@ -1551,6 +1609,7 @@ interface MainRouteRouteChildren {
   MainAdminNotificationsIndexRoute: typeof MainAdminNotificationsIndexRoute
   MainAttributesIndexRoute: typeof MainAttributesIndexRoute
   MainCategoriesIndexRoute: typeof MainCategoriesIndexRoute
+  MainCouponsIndexRoute: typeof MainCouponsIndexRoute
   MainEarningRulesIndexRoute: typeof MainEarningRulesIndexRoute
   MainFaqsIndexRoute: typeof MainFaqsIndexRoute
   MainOffersIndexRoute: typeof MainOffersIndexRoute
@@ -1574,6 +1633,7 @@ interface MainRouteRouteChildren {
   MainAttributesValuesAddRoute: typeof MainAttributesValuesAddRoute
   MainCategoriesEditIdRoute: typeof MainCategoriesEditIdRoute
   MainCategoriesShowIdRoute: typeof MainCategoriesShowIdRoute
+  MainCouponsEditIdRoute: typeof MainCouponsEditIdRoute
   MainEarningRulesEditIdRoute: typeof MainEarningRulesEditIdRoute
   MainFaqsEditIdRoute: typeof MainFaqsEditIdRoute
   MainOffersEditIdRoute: typeof MainOffersEditIdRoute
@@ -1614,6 +1674,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainIndexRoute: MainIndexRoute,
   MainAttributesAddRoute: MainAttributesAddRoute,
   MainCategoriesAddRoute: MainCategoriesAddRoute,
+  MainCouponsAddRoute: MainCouponsAddRoute,
   MainEarningRulesAddRoute: MainEarningRulesAddRoute,
   MainFaqsAddRoute: MainFaqsAddRoute,
   MainOffersAddRoute: MainOffersAddRoute,
@@ -1628,6 +1689,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainAdminNotificationsIndexRoute: MainAdminNotificationsIndexRoute,
   MainAttributesIndexRoute: MainAttributesIndexRoute,
   MainCategoriesIndexRoute: MainCategoriesIndexRoute,
+  MainCouponsIndexRoute: MainCouponsIndexRoute,
   MainEarningRulesIndexRoute: MainEarningRulesIndexRoute,
   MainFaqsIndexRoute: MainFaqsIndexRoute,
   MainOffersIndexRoute: MainOffersIndexRoute,
@@ -1651,6 +1713,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainAttributesValuesAddRoute: MainAttributesValuesAddRoute,
   MainCategoriesEditIdRoute: MainCategoriesEditIdRoute,
   MainCategoriesShowIdRoute: MainCategoriesShowIdRoute,
+  MainCouponsEditIdRoute: MainCouponsEditIdRoute,
   MainEarningRulesEditIdRoute: MainEarningRulesEditIdRoute,
   MainFaqsEditIdRoute: MainFaqsEditIdRoute,
   MainOffersEditIdRoute: MainOffersEditIdRoute,

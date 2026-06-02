@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { HugeiconsIcon } from "@hugeicons/react"
+import { HugeiconsIcon } from '@hugeicons/react'
 import {
   ArrowRight01Icon,
   Home01Icon,
@@ -28,7 +28,7 @@ import {
   Notification01Icon,
   BarChartIcon,
   StarIcon,
-} from "@hugeicons/core-free-icons"
+} from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import {
   Breadcrumb,
@@ -60,6 +60,7 @@ const entityIconMap: Record<string, React.ReactNode> = {
   'menu.rewards': <HugeiconsIcon icon={Award01Icon} />,
   'menu.tiers': <HugeiconsIcon icon={BarChartIcon} />,
   'menu.offers': <HugeiconsIcon icon={PercentIcon} />,
+  'menu.coupons': <HugeiconsIcon icon={PercentIcon} />,
   'menu.faqs': <HugeiconsIcon icon={HelpCircleIcon} />,
   'menu.sliders': <HugeiconsIcon icon={SlidersHorizontalIcon} />,
   'menu.static-pages': <HugeiconsIcon icon={Book01Icon} />,
@@ -118,29 +119,35 @@ export function SmartBreadcrumbs(props: {
   const base: BuiltCrumb[] = [
     ...(includeHome
       ? [
-        {
-          label: t('menu.home'),
-          to: '/' as const,
-          icon: entityIconMap['menu.home'] ?? <HugeiconsIcon icon={Home01Icon} />,
-        },
-      ]
+          {
+            label: t('menu.home'),
+            to: '/' as const,
+            icon: entityIconMap['menu.home'] ?? (
+              <HugeiconsIcon icon={Home01Icon} />
+            ),
+          },
+        ]
       : []),
-    ...(!!entityKey ? [{
-      label: t(entityKey),
-      to: entityTo,
-      icon: entityIconOverride ?? entityIconMap[entityKey],
-    }] : []),
+    ...(!!entityKey
+      ? [
+          {
+            label: t(entityKey),
+            to: entityTo,
+            icon: entityIconOverride ?? entityIconMap[entityKey],
+          },
+        ]
+      : []),
   ]
 
   // optional Action crumb
   const actionCrumbs: BuiltCrumb[] =
     action !== 'none'
       ? [
-        {
-          label: t(actionPresets[action].key),
-          icon: actionPresets[action].icon,
-        },
-      ]
+          {
+            label: t(actionPresets[action].key),
+            icon: actionPresets[action].icon,
+          },
+        ]
       : []
 
   // final list (no slice!)
@@ -160,7 +167,10 @@ export function SmartBreadcrumbs(props: {
               <BreadcrumbItem className="flex items-center">
                 {to ? (
                   <BreadcrumbLink className="page-title inline-flex items-center gap-1">
-                    <Link to={to} className="inline-flex items-center gap-1 text-nowrap">
+                    <Link
+                      to={to}
+                      className="inline-flex items-center gap-1 text-nowrap"
+                    >
                       {icon} {label}
                     </Link>
                   </BreadcrumbLink>
@@ -177,7 +187,10 @@ export function SmartBreadcrumbs(props: {
 
               {!isLast && (
                 <BreadcrumbSeparator aria-hidden="true" className="mx-2">
-                  <HugeiconsIcon icon={ArrowRight01Icon} className="size-5 rtl:rotate-180" />
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    className="size-5 rtl:rotate-180"
+                  />
                 </BreadcrumbSeparator>
               )}
             </React.Fragment>
