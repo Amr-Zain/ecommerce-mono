@@ -184,6 +184,20 @@ export const ordersQueryKeys = {
   getOrder: (id: string | number) => ['orders', 'one', id] as const,
 }
 
+export const returnsQueryKeys = {
+  all: () => ['returns'] as const,
+  filterd: (filters?: Record<string, any>) =>
+    ['returns', 'filterd', filters] as const,
+  getReturn: (id: string | number) => ['returns', 'one', id] as const,
+}
+
+export const exchangesQueryKeys = {
+  all: () => ['exchanges'] as const,
+  filterd: (filters?: Record<string, any>) =>
+    ['exchanges', 'filterd', filters] as const,
+  getExchange: (id: string | number) => ['exchanges', 'one', id] as const,
+}
+
 export const paymentGatewaysQueryKeys = {
   all: () => ['payment-gateways'] as const,
   filterd: (params?: unknown) =>

@@ -27,6 +27,7 @@ export const getStatusColor = (status: string) => {
       return 'text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800'
     case ORDER_STATUSES.refunded:
     case PAYMENT_STATUSES.refunded:
+    case PAYMENT_STATUSES.partiallyRefunded:
       return 'text-purple-600 bg-purple-50 border-purple-200 dark:text-purple-400 dark:bg-purple-950/30 dark:border-purple-800'
     case PAYMENT_STATUSES.requiresReview:
       return 'text-orange-600 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-950/30 dark:border-orange-800'
@@ -58,24 +59,24 @@ export const StatusBadge = ({
 export const orderColumns = (
   t: (key: string) => string,
 ): ColumnDef<Order>[] => [
-  textColumn<Order>('orderNumber', 'orders.labels.order_number', {
+  textColumn<Order>('order_number', 'orders.labels.order_number', {
     render: (info) => (
       <span className="font-bold text-primary">
         {info.getValue() as string}
       </span>
     ),
   }),
-  textColumn<Order>('userName', 'orders.labels.customer', {
+  textColumn<Order>('user_name', 'orders.labels.customer', {
     render: (info) => (
       <div className="min-w-0">
         <p className="font-medium truncate">{info.getValue() as string}</p>
         <p className="text-xs text-muted-foreground truncate">
-          {info.row.original.userEmail || '-'}
+          {info.row.original.user_email || '-'}
         </p>
       </div>
     ),
   }),
-  textColumn<Order>('totalPrice', 'orders.labels.total_price', {
+  textColumn<Order>('total_price', 'orders.labels.total_price', {
     render: (info) => (
       <span className="font-semibold tabular-nums">
         {(info.getValue() as number).toFixed(2)}{' '}
@@ -92,7 +93,7 @@ export const orderColumns = (
       />
     ),
   }),
-  textColumn<Order>('paymentStatus', 'orders.labels.payment_status', {
+  textColumn<Order>('payment_status', 'orders.labels.payment_status', {
     render: (info) => (
       <StatusBadge
         status={info.getValue() as string}
@@ -101,8 +102,8 @@ export const orderColumns = (
       />
     ),
   }),
-  textColumn<Order>('paymentMethod', 'orders.labels.payment_method'),
-  textColumn<Order>('createdAt', 'table.createdAt', {
+  textColumn<Order>('payment_method', 'orders.labels.payment_method'),
+  textColumn<Order>('created_at', 'table.createdAt', {
     render: (info) => new Date(info.getValue() as string).toLocaleString(),
   }),
   {
@@ -136,7 +137,7 @@ export const getOrderFilters = (t: (key: string) => string): Filter[] => [
     multiple: false,
   },
   {
-    id: 'paymentStatus',
+    id: 'payment_status',
     title: t('orders.labels.payment_status'),
     options: Object.values(PAYMENT_STATUSES).map((status) => ({
       label: t(`orders.paymentStatus.${status}`),
@@ -145,7 +146,7 @@ export const getOrderFilters = (t: (key: string) => string): Filter[] => [
     multiple: false,
   },
   {
-    id: 'sort[createdAt]',
+    id: 'sort[created_at]',
     title: t('sort.title'),
     options: [
       { label: t('sort.asc'), value: 'asc' },

@@ -135,6 +135,18 @@ export const getProductsAndShowRoomsMenuItems: MenuItem[] = [
     checkPermission: true,
   },
   {
+    title: 'menu.returns',
+    url: '/returns',
+    icon: ShoppingCart,
+    checkPermission: true,
+  },
+  {
+    title: 'menu.exchanges',
+    url: '/exchanges',
+    icon: ShoppingCart,
+    checkPermission: true,
+  },
+  {
     title: 'menu.coupons',
     url: '/coupons',
     icon: Percent,

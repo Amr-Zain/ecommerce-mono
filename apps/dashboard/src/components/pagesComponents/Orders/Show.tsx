@@ -7,9 +7,13 @@ import {
   CreditCard,
   MapPin,
   User,
-  RotateCcw,
   CheckCircle2,
   Truck,
+  History,
+  XCircle,
+  RefreshCcw,
+  TriangleAlert,
+  LoaderCircle,
 } from 'lucide-react'
 import {
   Card,
@@ -21,16 +25,24 @@ import { Badge } from '@ecommerce/ui/components/badge'
 import { Button } from '@ecommerce/ui/components/button'
 import { Textarea } from '@ecommerce/ui/components/textarea'
 import { Separator } from '@ecommerce/ui/components/separator'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@ecommerce/ui/components/dialog'
 import { SARIcon } from '@/components/common/Icons'
 import { useMutate } from '@/hooks/UseMutate'
 import { ApiResponseBase } from '@/types/api/http'
 import {
-  AdminOrderRefundPayload,
   AdminOrderTransitionPayload,
   getAllowedOrderTransitions,
   ORDER_STATUSES,
   OrderDetail,
   OrderStatus,
+  MANUAL_PAYMENT_METHODS,
   PAYMENT_STATUSES,
 } from '@/types/api/order'
 import { ordersQueryKeys } from '@/util/queryKeysFactory'
@@ -48,20 +60,40 @@ export default function OrderShow({ order }: OrderShowProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | ''>('')
-  const [refundReason, setRefundReason] = useState('')
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
   const currency = order.payments?.[0]?.currency ?? 'SAR'
   const allowedTransitions = useMemo(
     () => getAllowedOrderTransitions(order.status),
     [order.status],
   )
+  const cancellationRefundAttempt = order.payments.find(
+    (payment) =>
+      payment.refund_source === 'cancellation' &&
+      (payment.payment_status === PAYMENT_STATUSES.processingPayment ||
+        payment.payment_status === PAYMENT_STATUSES.requiresReview),
+  )
+  const cancellationRefundProcessing =
+    cancellationRefundAttempt?.payment_status ===
+    PAYMENT_STATUSES.processingPayment
+  const cancellationRefundRequiresReview =
+    cancellationRefundAttempt?.payment_status === PAYMENT_STATUSES.requiresReview
+  const cancellationRefundBlocked = Boolean(cancellationRefundAttempt)
+  const canUpdateOrder = hasPermission('orders', 'update')
   const canConfirmPayment =
-    order.paymentStatus === PAYMENT_STATUSES.pending ||
-    order.paymentStatus === PAYMENT_STATUSES.awaitingConfirmation
-  const canRefund =
-    order.paymentStatus === PAYMENT_STATUSES.completed &&
-    (order.status === ORDER_STATUSES.processing ||
-      order.status === ORDER_STATUSES.delivered)
-
+    !cancellationRefundBlocked &&
+    (MANUAL_PAYMENT_METHODS as readonly string[]).includes(
+      order.payment_method,
+    ) &&
+    order.payments.some(
+      (payment) =>
+        !payment.refund_source &&
+        (MANUAL_PAYMENT_METHODS as readonly string[]).includes(
+          payment.payment_method,
+        ) &&
+        (payment.payment_status === PAYMENT_STATUSES.pending ||
+          payment.payment_status === PAYMENT_STATUSES.awaitingConfirmation),
+    )
   const invalidateOrder = () => {
     queryClient.invalidateQueries({
       queryKey: ordersQueryKeys.getOrder(order.id),
@@ -87,9 +119,14 @@ export default function OrderShow({ order }: OrderShowProps) {
     onSuccess: (data) => {
       toast.success(data.message || t('status_changed_successfully'))
       setSelectedStatus('')
+      setCancelDialogOpen(false)
+      setCancelReason('')
       invalidateOrder()
     },
-    onError: (_error, normalized) => toast.error(normalized.message),
+    onError: (_error, normalized) => {
+      toast.error(normalized.message)
+      invalidateOrder()
+    },
   })
 
   const confirmPaymentMutation = useMutate<
@@ -111,39 +148,19 @@ export default function OrderShow({ order }: OrderShowProps) {
       toast.success(data.message || t('orders.actions.payment_confirmed'))
       invalidateOrder()
     },
-    onError: (_error, normalized) => toast.error(normalized.message),
-  })
-
-  const refundMutation = useMutate<
-    ApiResponseBase<OrderDetail>,
-    AdminOrderRefundPayload
-  >({
-    endpoint: `orders/${order.id}/refund`,
-    mutationKey: [...ordersQueryKeys.getOrder(order.id), 'refund'],
-    method: 'post',
-    mutationOptions: {
-      meta: {
-        invalidates: [
-          ordersQueryKeys.getOrder(order.id),
-          ordersQueryKeys.all(),
-        ],
-      },
-    },
-    onSuccess: (data) => {
-      toast.success(data.message || t('orders.actions.refunded'))
-      setRefundReason('')
+    onError: (_error, normalized) => {
+      toast.error(normalized.message)
       invalidateOrder()
     },
-    onError: (_error, normalized) => toast.error(normalized.message),
   })
 
   const submitStatusChange = () => {
-    if (!selectedStatus) return
+    if (!selectedStatus || cancellationRefundBlocked || !canUpdateOrder) return
+    if (selectedStatus === ORDER_STATUSES.cancelled) {
+      setCancelDialogOpen(true)
+      return
+    }
     statusMutation.mutate({ status: selectedStatus })
-  }
-
-  const submitRefund = () => {
-    refundMutation.mutate({ reason: refundReason.trim() || undefined })
   }
 
   return (
@@ -153,13 +170,13 @@ export default function OrderShow({ order }: OrderShowProps) {
           <div className="flex items-center gap-3">
             <Package className="h-7 w-7 text-primary" />
             <h1 className="text-2xl font-black tracking-tight">
-              {t('orders.entity')} {order.orderNumber}
+              {t('orders.entity')} {order.order_number}
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>{new Date(order.createdAt).toLocaleString()}</span>
-            <span>{order.userName}</span>
-            {order.userEmail && <span>{order.userEmail}</span>}
+            <span>{new Date(order.created_at).toLocaleString()}</span>
+            <span>{order.user_name}</span>
+            {order.user_email && <span>{order.user_email}</span>}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -169,12 +186,12 @@ export default function OrderShow({ order }: OrderShowProps) {
             t={t}
           />
           <StatusBadge
-            status={order.paymentStatus}
+            status={order.payment_status}
             labelPrefix="orders.paymentStatus"
             t={t}
           />
           <Badge variant="outline" className="capitalize">
-            {order.paymentMethod}
+            {order.payment_method}
           </Badge>
         </div>
       </div>
@@ -193,23 +210,23 @@ export default function OrderShow({ order }: OrderShowProps) {
                 <div key={item.id}>
                   <div className="grid gap-3 px-5 py-4 sm:grid-cols-[1fr_auto]">
                     <div className="min-w-0">
-                      <p className="font-bold">{item.productNameSnapshot}</p>
+                      <p className="font-bold">{item.product_name_snapshot}</p>
                       <p className="text-xs text-muted-foreground">
                         {t('orders.labels.quantity')}: {item.quantity}
                       </p>
-                      {item.discountTypeSnapshot && (
+                      {item.discount_type_snapshot && (
                         <Badge variant="secondary" className="mt-2 text-[10px]">
-                          {item.discountTypeSnapshot}:{' '}
-                          {money(item.discountValueSnapshot, currency)}
+                          {item.discount_type_snapshot}:{' '}
+                          {money(item.discount_value_snapshot, currency)}
                         </Badge>
                       )}
                     </div>
                     <div className="text-start sm:text-end">
                       <p className="font-black tabular-nums">
-                        {money(item.totalPrice, currency)}
+                        {money(item.total_price, currency)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {money(item.unitPriceSnapshot, currency)} /{' '}
+                        {money(item.unit_price_snapshot, currency)} /{' '}
                         {t('orders.labels.item')}
                       </p>
                     </div>
@@ -233,27 +250,50 @@ export default function OrderShow({ order }: OrderShowProps) {
                   <div key={payment.id} className="rounded-md border p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <p className="font-bold">{payment.paymentMethod}</p>
+                        <p className="font-bold">{payment.payment_method}</p>
                         <p className="text-xs text-muted-foreground">
-                          {payment.transactionRef || '-'}
+                          {payment.transaction_ref || '-'}
                         </p>
                       </div>
                       <StatusBadge
-                        status={payment.paymentStatus}
+                        status={payment.payment_status}
                         labelPrefix="orders.paymentStatus"
                         t={t}
                       />
                     </div>
                     <div className="mt-3 flex items-center justify-between text-sm">
                       <span>
-                        {payment.paidAt
-                          ? new Date(payment.paidAt).toLocaleString()
+                        {payment.paid_at
+                          ? new Date(payment.paid_at).toLocaleString()
                           : '-'}
                       </span>
                       <span className="font-black">
                         {money(payment.amount, payment.currency)}
                       </span>
                     </div>
+                    {payment.refund_source && (
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <span>
+                          {t('orders.labels.refund_source')}:{' '}
+                          {t(`orders.refundSources.${payment.refund_source}`)}
+                        </span>
+                        {payment.refund_reason && (
+                          <span>
+                            {t('orders.labels.refund_reason')}:{' '}
+                            {payment.refund_reason}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {payment.payment_status ===
+                      PAYMENT_STATUSES.requiresReview &&
+                      payment.refund_source === 'cancellation' && (
+                        <RetryCancellationRefund
+                          orderId={order.id}
+                          refundId={payment.id}
+                          onSuccess={invalidateOrder}
+                        />
+                      )}
                   </div>
                 ))
               ) : (
@@ -274,6 +314,37 @@ export default function OrderShow({ order }: OrderShowProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 p-5">
+              {cancellationRefundBlocked && (
+                <div
+                  className={cn(
+                    'rounded-md border p-3 text-sm',
+                    cancellationRefundRequiresReview
+                      ? 'border-orange-300 bg-orange-50 text-orange-800 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-300'
+                      : 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300',
+                  )}
+                >
+                  <div className="flex items-start gap-2">
+                    {cancellationRefundProcessing ? (
+                      <LoaderCircle className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+                    ) : (
+                      <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                    )}
+                    <div>
+                      <p className="font-bold">
+                        {t(
+                          cancellationRefundRequiresReview
+                            ? 'orders.messages.cancellation_refund_requires_review'
+                            : 'orders.messages.cancellation_refund_processing',
+                        )}
+                      </p>
+                      <p className="mt-1 text-xs">
+                        {t('orders.messages.actions_locked')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">
                   {t('orders.labels.change_status')}
@@ -284,6 +355,7 @@ export default function OrderShow({ order }: OrderShowProps) {
                     value={selectedStatus}
                     disabled={
                       !hasPermission('orders', 'update') ||
+                      cancellationRefundBlocked ||
                       allowedTransitions.length === 0
                     }
                     onChange={(event) =>
@@ -299,18 +371,24 @@ export default function OrderShow({ order }: OrderShowProps) {
                   </select>
                   <Button
                     onClick={submitStatusChange}
-                    disabled={!selectedStatus || statusMutation.isPending}
+                    disabled={
+                      !selectedStatus ||
+                      statusMutation.isPending ||
+                      cancellationRefundBlocked ||
+                      !canUpdateOrder
+                    }
                     className="shrink-0"
                   >
                     <Truck className="h-4 w-4" />
                     {t('actions.update')}
                   </Button>
                 </div>
-                {allowedTransitions.length === 0 && (
+                {!cancellationRefundBlocked &&
+                  allowedTransitions.length === 0 && (
                   <p className="text-xs text-muted-foreground">
                     {t('orders.labels.final_status')}
                   </p>
-                )}
+                  )}
               </div>
 
               <Separator />
@@ -321,7 +399,7 @@ export default function OrderShow({ order }: OrderShowProps) {
                 disabled={
                   !canConfirmPayment ||
                   confirmPaymentMutation.isPending ||
-                  !hasPermission('orders', 'update')
+                  !canUpdateOrder
                 }
                 onClick={() => confirmPaymentMutation.mutate({})}
               >
@@ -329,32 +407,31 @@ export default function OrderShow({ order }: OrderShowProps) {
                 {t('orders.actions.confirm_payment')}
               </Button>
 
-              <div className="space-y-2">
-                <Textarea
-                  value={refundReason}
-                  onChange={(event) => setRefundReason(event.target.value)}
-                  placeholder={t('orders.labels.refund_reason')}
-                  disabled={
-                    !canRefund ||
-                    refundMutation.isPending ||
-                    !hasPermission('orders', 'update')
-                  }
-                  className="min-h-20"
-                />
-                <Button
-                  variant="destructive"
-                  className="w-full justify-start"
-                  disabled={
-                    !canRefund ||
-                    refundMutation.isPending ||
-                    !hasPermission('orders', 'update')
-                  }
-                  onClick={submitRefund}
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  {t('orders.actions.refund')}
-                </Button>
-              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="pt-0">
+            <CardHeader className="border-b bg-muted/30 py-4">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <History className="h-5 w-5 text-primary" />
+                {t('orders.labels.status_history')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-5">
+              {order.status_history.map((entry) => (
+                <div key={entry.id || `${entry.new_status}-${entry.created_at}`} className="border-s ps-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <StatusBadge status={entry.new_status} labelPrefix="orders.status" t={t} />
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(entry.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {entry.actor_type ? t(`orders.actors.${entry.actor_type}`) : '-'}
+                    {entry.reason ? `: ${entry.reason}` : ''}
+                  </p>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -366,14 +443,14 @@ export default function OrderShow({ order }: OrderShowProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 p-5 text-sm">
-              <InfoRow label={t('orders.labels.name')} value={order.userName} />
+              <InfoRow label={t('orders.labels.name')} value={order.user_name} />
               <InfoRow
                 label={t('orders.labels.email')}
-                value={order.userEmail || '-'}
+                value={order.user_email || '-'}
               />
               <InfoRow
                 label={t('orders.labels.phone')}
-                value={order.userPhone || '-'}
+                value={order.user_phone || '-'}
               />
             </CardContent>
           </Card>
@@ -388,26 +465,26 @@ export default function OrderShow({ order }: OrderShowProps) {
             <CardContent className="space-y-3 p-5 text-sm">
               <InfoRow
                 label={t('orders.labels.country')}
-                value={order.countryNameSnapshot || '-'}
+                value={order.country_name_snapshot || '-'}
               />
               <InfoRow
                 label={t('orders.labels.city')}
-                value={order.cityNameSnapshot || '-'}
+                value={order.city_name_snapshot || '-'}
               />
               <InfoRow
                 label={t('orders.labels.address')}
                 value={
-                  typeof order.shippingAddressSnapshot === 'object' &&
-                  order.shippingAddressSnapshot &&
-                  'address' in order.shippingAddressSnapshot
-                    ? String(order.shippingAddressSnapshot.address)
+                  typeof order.shipping_address_snapshot === 'object' &&
+                  order.shipping_address_snapshot &&
+                  'address' in order.shipping_address_snapshot
+                    ? String(order.shipping_address_snapshot.address)
                     : '-'
                 }
               />
             </CardContent>
           </Card>
 
-          <Card className={cn('border', getStatusColor(order.paymentStatus))}>
+          <Card className={cn('border', getStatusColor(order.payment_status))}>
             <CardContent className="space-y-2 p-5">
               <TotalRow
                 label={t('orders.labels.subtotal')}
@@ -416,31 +493,108 @@ export default function OrderShow({ order }: OrderShowProps) {
               />
               <TotalRow
                 label={t('orders.labels.shipping_fee')}
-                value={order.shippingFee}
+                value={order.shipping_fee}
                 currency={currency}
               />
               <TotalRow
                 label={t('orders.labels.discount')}
-                value={-order.discountAmount}
+                value={-order.discount_amount}
                 currency={currency}
               />
               <TotalRow
                 label={t('orders.labels.vat')}
-                value={order.vatValue}
+                value={order.vat_value}
                 currency={currency}
               />
               <Separator />
               <TotalRow
                 label={t('orders.labels.total_price')}
-                value={order.totalPrice}
+                value={order.total_price}
                 currency={currency}
                 strong
               />
+              <Separator />
+              <TotalRow label={t('orders.labels.paid_amount')} value={order.original_paid_amount} currency={currency} />
+              <TotalRow label={t('orders.labels.refunded_amount')} value={order.refunded_amount} currency={currency} />
+              <TotalRow label={t('orders.labels.reserved_refund_amount')} value={order.reserved_refund_amount} currency={currency} />
+              <TotalRow label={t('orders.labels.remaining_refundable_amount')} value={order.remaining_refundable_amount} currency={currency} strong />
             </CardContent>
           </Card>
         </div>
       </div>
+
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('orders.actions.cancel_order')}</DialogTitle>
+            <DialogDescription>{t('orders.messages.cancel_warning')}</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={cancelReason}
+            onChange={(event) => setCancelReason(event.target.value)}
+            placeholder={t('orders.labels.cancel_reason')}
+            className="min-h-24"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+              {t('actions.cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={
+                statusMutation.isPending ||
+                cancellationRefundBlocked ||
+                !canUpdateOrder
+              }
+              onClick={() =>
+                statusMutation.mutate({
+                  status: ORDER_STATUSES.cancelled,
+                  reason: cancelReason.trim() || undefined,
+                })
+              }
+            >
+              <XCircle className="h-4 w-4" />
+              {t('orders.actions.confirm_cancel')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  )
+}
+
+function RetryCancellationRefund({
+  orderId,
+  refundId,
+  onSuccess,
+}: {
+  orderId: string
+  refundId: string
+  onSuccess: () => void
+}) {
+  const { t } = useTranslation()
+  const mutation = useMutate<ApiResponseBase<OrderDetail>, Record<string, never>>({
+    endpoint: `orders/${orderId}/cancellation-refunds/${refundId}/retry`,
+    mutationKey: ['orders', orderId, 'cancellation-refund', refundId],
+    method: 'post',
+    onSuccess: () => onSuccess(),
+    onError: (_error, normalized) => {
+      toast.error(normalized.message)
+      onSuccess()
+    },
+  })
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="mt-3"
+      disabled={mutation.isPending || !hasPermission('orders', 'update')}
+      onClick={() => mutation.mutate({})}
+    >
+      <RefreshCcw className="h-4 w-4" />
+      {t('orders.actions.retry_refund')}
+    </Button>
   )
 }
 

@@ -28,9 +28,7 @@ const Orders = ({
       rowUrl={(row) => `/orders/show/${row.id}`}
       initialState={{
         pagination: {
-          pageIndex: data.data.meta?.current_page
-            ? data.data.meta.current_page - 1
-            : 0,
+          pageIndex: data.data.meta?.current_page ? data.data.meta.current_page - 1 : 0,
           pageSize: data.data.meta?.per_page || 10,
         },
       }}

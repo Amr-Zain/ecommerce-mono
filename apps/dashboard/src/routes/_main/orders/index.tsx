@@ -29,13 +29,13 @@ export const Route = createFileRoute('/_main/orders/')({
   validateSearch: (search: Record<string, unknown>) => ({
     ...searchParamsValidate(search),
     status: toStr(search.status),
-    paymentStatus: toStr(search.paymentStatus),
+    payment_status: toStr(search.payment_status),
   }),
   loaderDeps: ({ search }) => ({
     search: {
       ...searchParamsValidate(search),
       status: toStr(search.status),
-      paymentStatus: toStr(search.paymentStatus),
+      payment_status: toStr(search.payment_status),
     },
   }),
   loader: ({ context, deps: { search } }) => {

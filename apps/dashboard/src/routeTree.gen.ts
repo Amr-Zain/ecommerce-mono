@@ -24,12 +24,14 @@ import { Route as MainShowRoomsIndexRouteImport } from './routes/_main/show-room
 import { Route as MainRolesIndexRouteImport } from './routes/_main/roles/index'
 import { Route as MainRewardsIndexRouteImport } from './routes/_main/rewards/index'
 import { Route as MainReviewsIndexRouteImport } from './routes/_main/reviews/index'
+import { Route as MainReturnsIndexRouteImport } from './routes/_main/returns/index'
 import { Route as MainProfileIndexRouteImport } from './routes/_main/profile/index'
 import { Route as MainProductsIndexRouteImport } from './routes/_main/products/index'
 import { Route as MainPaymentGatewaysIndexRouteImport } from './routes/_main/payment-gateways/index'
 import { Route as MainOrdersIndexRouteImport } from './routes/_main/orders/index'
 import { Route as MainOffersIndexRouteImport } from './routes/_main/offers/index'
 import { Route as MainFaqsIndexRouteImport } from './routes/_main/faqs/index'
+import { Route as MainExchangesIndexRouteImport } from './routes/_main/exchanges/index'
 import { Route as MainEarningRulesIndexRouteImport } from './routes/_main/earning-rules/index'
 import { Route as MainCouponsIndexRouteImport } from './routes/_main/coupons/index'
 import { Route as MainCategoriesIndexRouteImport } from './routes/_main/categories/index'
@@ -165,6 +167,11 @@ const MainReviewsIndexRoute = MainReviewsIndexRouteImport.update({
   path: '/reviews/',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainReturnsIndexRoute = MainReturnsIndexRouteImport.update({
+  id: '/returns/',
+  path: '/returns/',
+  getParentRoute: () => MainRouteRoute,
+} as any)
 const MainProfileIndexRoute = MainProfileIndexRouteImport.update({
   id: '/profile/',
   path: '/profile/',
@@ -194,6 +201,11 @@ const MainOffersIndexRoute = MainOffersIndexRouteImport.update({
 const MainFaqsIndexRoute = MainFaqsIndexRouteImport.update({
   id: '/faqs/',
   path: '/faqs/',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainExchangesIndexRoute = MainExchangesIndexRouteImport.update({
+  id: '/exchanges/',
+  path: '/exchanges/',
   getParentRoute: () => MainRouteRoute,
 } as any)
 const MainEarningRulesIndexRoute = MainEarningRulesIndexRouteImport.update({
@@ -538,12 +550,14 @@ export interface FileRoutesByFullPath {
   '/categories/': typeof MainCategoriesIndexRoute
   '/coupons/': typeof MainCouponsIndexRoute
   '/earning-rules/': typeof MainEarningRulesIndexRoute
+  '/exchanges/': typeof MainExchangesIndexRoute
   '/faqs/': typeof MainFaqsIndexRoute
   '/offers/': typeof MainOffersIndexRoute
   '/orders/': typeof MainOrdersIndexRoute
   '/payment-gateways/': typeof MainPaymentGatewaysIndexRoute
   '/products/': typeof MainProductsIndexRoute
   '/profile/': typeof MainProfileIndexRoute
+  '/returns/': typeof MainReturnsIndexRoute
   '/reviews/': typeof MainReviewsIndexRoute
   '/rewards/': typeof MainRewardsIndexRoute
   '/roles/': typeof MainRolesIndexRoute
@@ -620,12 +634,14 @@ export interface FileRoutesByTo {
   '/categories': typeof MainCategoriesIndexRoute
   '/coupons': typeof MainCouponsIndexRoute
   '/earning-rules': typeof MainEarningRulesIndexRoute
+  '/exchanges': typeof MainExchangesIndexRoute
   '/faqs': typeof MainFaqsIndexRoute
   '/offers': typeof MainOffersIndexRoute
   '/orders': typeof MainOrdersIndexRoute
   '/payment-gateways': typeof MainPaymentGatewaysIndexRoute
   '/products': typeof MainProductsIndexRoute
   '/profile': typeof MainProfileIndexRoute
+  '/returns': typeof MainReturnsIndexRoute
   '/reviews': typeof MainReviewsIndexRoute
   '/rewards': typeof MainRewardsIndexRoute
   '/roles': typeof MainRolesIndexRoute
@@ -704,12 +720,14 @@ export interface FileRoutesById {
   '/_main/categories/': typeof MainCategoriesIndexRoute
   '/_main/coupons/': typeof MainCouponsIndexRoute
   '/_main/earning-rules/': typeof MainEarningRulesIndexRoute
+  '/_main/exchanges/': typeof MainExchangesIndexRoute
   '/_main/faqs/': typeof MainFaqsIndexRoute
   '/_main/offers/': typeof MainOffersIndexRoute
   '/_main/orders/': typeof MainOrdersIndexRoute
   '/_main/payment-gateways/': typeof MainPaymentGatewaysIndexRoute
   '/_main/products/': typeof MainProductsIndexRoute
   '/_main/profile/': typeof MainProfileIndexRoute
+  '/_main/returns/': typeof MainReturnsIndexRoute
   '/_main/reviews/': typeof MainReviewsIndexRoute
   '/_main/rewards/': typeof MainRewardsIndexRoute
   '/_main/roles/': typeof MainRolesIndexRoute
@@ -788,12 +806,14 @@ export interface FileRouteTypes {
     | '/categories/'
     | '/coupons/'
     | '/earning-rules/'
+    | '/exchanges/'
     | '/faqs/'
     | '/offers/'
     | '/orders/'
     | '/payment-gateways/'
     | '/products/'
     | '/profile/'
+    | '/returns/'
     | '/reviews/'
     | '/rewards/'
     | '/roles/'
@@ -870,12 +890,14 @@ export interface FileRouteTypes {
     | '/categories'
     | '/coupons'
     | '/earning-rules'
+    | '/exchanges'
     | '/faqs'
     | '/offers'
     | '/orders'
     | '/payment-gateways'
     | '/products'
     | '/profile'
+    | '/returns'
     | '/reviews'
     | '/rewards'
     | '/roles'
@@ -953,12 +975,14 @@ export interface FileRouteTypes {
     | '/_main/categories/'
     | '/_main/coupons/'
     | '/_main/earning-rules/'
+    | '/_main/exchanges/'
     | '/_main/faqs/'
     | '/_main/offers/'
     | '/_main/orders/'
     | '/_main/payment-gateways/'
     | '/_main/products/'
     | '/_main/profile/'
+    | '/_main/returns/'
     | '/_main/reviews/'
     | '/_main/rewards/'
     | '/_main/roles/'
@@ -1125,6 +1149,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainReviewsIndexRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/_main/returns/': {
+      id: '/_main/returns/'
+      path: '/returns'
+      fullPath: '/returns/'
+      preLoaderRoute: typeof MainReturnsIndexRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/_main/profile/': {
       id: '/_main/profile/'
       path: '/profile'
@@ -1165,6 +1196,13 @@ declare module '@tanstack/react-router' {
       path: '/faqs'
       fullPath: '/faqs/'
       preLoaderRoute: typeof MainFaqsIndexRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/exchanges/': {
+      id: '/_main/exchanges/'
+      path: '/exchanges'
+      fullPath: '/exchanges/'
+      preLoaderRoute: typeof MainExchangesIndexRouteImport
       parentRoute: typeof MainRouteRoute
     }
     '/_main/earning-rules/': {
@@ -1611,12 +1649,14 @@ interface MainRouteRouteChildren {
   MainCategoriesIndexRoute: typeof MainCategoriesIndexRoute
   MainCouponsIndexRoute: typeof MainCouponsIndexRoute
   MainEarningRulesIndexRoute: typeof MainEarningRulesIndexRoute
+  MainExchangesIndexRoute: typeof MainExchangesIndexRoute
   MainFaqsIndexRoute: typeof MainFaqsIndexRoute
   MainOffersIndexRoute: typeof MainOffersIndexRoute
   MainOrdersIndexRoute: typeof MainOrdersIndexRoute
   MainPaymentGatewaysIndexRoute: typeof MainPaymentGatewaysIndexRoute
   MainProductsIndexRoute: typeof MainProductsIndexRoute
   MainProfileIndexRoute: typeof MainProfileIndexRoute
+  MainReturnsIndexRoute: typeof MainReturnsIndexRoute
   MainReviewsIndexRoute: typeof MainReviewsIndexRoute
   MainRewardsIndexRoute: typeof MainRewardsIndexRoute
   MainRolesIndexRoute: typeof MainRolesIndexRoute
@@ -1691,12 +1731,14 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainCategoriesIndexRoute: MainCategoriesIndexRoute,
   MainCouponsIndexRoute: MainCouponsIndexRoute,
   MainEarningRulesIndexRoute: MainEarningRulesIndexRoute,
+  MainExchangesIndexRoute: MainExchangesIndexRoute,
   MainFaqsIndexRoute: MainFaqsIndexRoute,
   MainOffersIndexRoute: MainOffersIndexRoute,
   MainOrdersIndexRoute: MainOrdersIndexRoute,
   MainPaymentGatewaysIndexRoute: MainPaymentGatewaysIndexRoute,
   MainProductsIndexRoute: MainProductsIndexRoute,
   MainProfileIndexRoute: MainProfileIndexRoute,
+  MainReturnsIndexRoute: MainReturnsIndexRoute,
   MainReviewsIndexRoute: MainReviewsIndexRoute,
   MainRewardsIndexRoute: MainRewardsIndexRoute,
   MainRolesIndexRoute: MainRolesIndexRoute,

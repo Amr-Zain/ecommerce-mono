@@ -1149,7 +1149,13 @@
       "change_status": "تغيير الحالة",
       "select_status": "اختر الحالة",
       "final_status": "هذا الطلب في حالة نهائية بالفعل.",
-      "refund_reason": "سبب الاسترداد"
+      "refund_reason": "سبب الاسترداد",
+      "refund_source": "مصدر الاسترداد",
+      "status_history": "سجل حالات الطلب",
+      "paid_amount": "المبلغ المدفوع",
+      "refunded_amount": "المبلغ المسترد",
+      "reserved_refund_amount": "استرداد قيد المراجعة",
+      "remaining_refundable_amount": "المبلغ المتبقي للاسترداد"
     },
     "status": {
       "open": "قيد التنفيذ",
@@ -1206,13 +1212,33 @@
       "refunded": "تم الاسترداد",
       "expired": "منتهي الصلاحية",
       "requires_review": "يتطلب مراجعة",
-      "processing_payment": "جار معالجة الدفع"
+      "processing_payment": "جار معالجة الدفع",
+      "partially_refunded": "مسترد جزئياً"
     },
     "actions": {
       "confirm_payment": "تأكيد الدفع",
       "payment_confirmed": "تم تأكيد الدفع",
       "refund": "استرداد",
-      "refunded": "تم الاسترداد"
+      "refunded": "تم الاسترداد",
+      "cancel_order": "إلغاء الطلب",
+      "confirm_cancel": "تأكيد الإلغاء",
+      "retry_refund": "إعادة محاولة الاسترداد"
+    },
+    "actors": {
+      "admin": "الإدارة",
+      "client": "العميل",
+      "system": "النظام"
+    },
+    "refundSources": {
+      "cancellation": "إلغاء الطلب",
+      "return": "إرجاع",
+      "exchange": "استبدال"
+    },
+    "messages": {
+      "cancel_warning": "إلغاء الطلب يعيد كامل المبلغ المتبقي ويعيد المخزون ولا يمكن التراجع عنه.",
+      "cancellation_refund_processing": "جار معالجة استرداد الإلغاء",
+      "cancellation_refund_requires_review": "استرداد الإلغاء يتطلب مراجعة",
+      "actions_locked": "تم إيقاف إجراءات حالة الطلب والدفع حتى يتم إنهاء استرداد الإلغاء."
     }
   },
   "paymentSessions": {
@@ -1569,6 +1595,109 @@
       "percentage": "نسبة مئوية",
       "fixed": "مبلغ ثابت",
       "free_shipping": "شحن مجاني"
+    }
+  },
+  "returns": {
+    "labels": {
+      "id": "المعرف",
+      "order_id": "الطلب",
+      "customer": "العميل",
+      "item_count": "العناصر",
+      "status": "الحالة",
+      "refund_status": "حالة الاسترداد",
+      "calculated_refund_amount": "الاسترداد المحسوب",
+      "adjusted_refund_amount": "الاسترداد المعدل",
+      "shipping_refund_amount": "استرداد الشحن",
+      "final_refund_amount": "الاسترداد النهائي"
+    },
+    "status": {
+      "requested": "Requested",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled_by_client": "Cancelled by client",
+      "item_received": "Item received",
+      "refunded": "Refunded",
+      "completed": "Completed"
+    },
+    "refundStatus": {
+      "none": "لا يوجد",
+      "requires_refund": "يتطلب الاسترداد",
+      "processing": "جاري معالجة الاسترداد",
+      "requires_review": "يتطلب المراجعة",
+      "refunded": "تم الاسترداد",
+      "manual_refunded": "تم الاسترداد يدوياً",
+      "waived": "تم التنازل"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "receive": "Receive",
+      "refund": "Refund",
+      "retry_refund": "إعادة محاولة الاسترداد",
+      "complete": "Complete"
+    },
+    "confirm": {
+      "approve": "هل تريد الموافقة على طلب الإرجاع؟",
+      "reject": "هل تريد رفض طلب الإرجاع؟",
+      "receive": "هل تريد تسجيل استلام جميع الكميات المعروضة وحساب الاسترداد؟",
+      "refund": "هل تريد تنفيذ استرداد الإرجاع المحسوب الآن؟",
+      "complete": "هل تريد إكمال طلب الإرجاع؟"
+    }
+  },
+  "exchanges": {
+    "labels": {
+      "id": "ID",
+      "order_id": "Order",
+      "customer": "Customer",
+      "item_count": "Items",
+      "status": "Status",
+      "price_adjustment_status": "Price adjustment",
+      "total_old_value": "Old value",
+      "total_new_value": "New value",
+      "total_price_difference": "Price difference",
+      "replacement_shipping_fee": "Replacement shipping",
+      "settlement_amount": "التسوية",
+      "reservation_expires_at": "انتهاء حجز المخزون"
+    },
+    "status": {
+      "requested": "Requested",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled_by_client": "Cancelled by client",
+      "item_received": "Item received",
+      "replacement_shipped": "Replacement shipped",
+      "completed": "Completed",
+      "requires_review": "Requires review"
+    },
+    "priceAdjustmentStatus": {
+      "none": "None",
+      "requires_payment": "بانتظار دفع العميل",
+      "paid": "Paid",
+      "requires_refund": "Requires refund",
+      "refunded": "Refunded",
+      "waived": "Waived"
+    },
+    "actions": {
+      "approve": "موافقة",
+      "retry_reservation": "إعادة محاولة حجز المخزون",
+      "release_expired_reservation": "تحرير الحجز المنتهي",
+      "reject": "Reject",
+      "receive": "Receive",
+      "refund_difference": "Refund difference",
+      "waive_adjustment": "Waive adjustment",
+      "ship": "Ship",
+      "complete": "Complete"
+    },
+    "confirm": {
+      "approve": "هل تريد الموافقة وحجز مخزون الاستبدال؟",
+      "retry-reservation": "هل تريد إعادة محاولة حجز مخزون الاستبدال؟",
+      "release-expired": "هل تريد تحرير حجز الاستبدال المنتهي؟",
+      "reject": "هل تريد رفض طلب الاستبدال وتحرير المخزون المحجوز؟",
+      "receive": "هل تريد تسجيل استلام جميع الكميات وحساب التسوية النهائية؟",
+      "refund-difference": "هل تريد استرداد فرق سعر الاستبدال الآن؟",
+      "waive-adjustment": "هل تريد التنازل عن مبلغ الدفع أو الاسترداد المطلوب؟",
+      "ship": "هل تريد تسجيل شحن البديل؟",
+      "complete": "هل تريد إكمال طلب الاستبدال؟"
     }
   }
 }

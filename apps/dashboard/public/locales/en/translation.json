@@ -1163,6 +1163,12 @@
       "select_status": "Select status",
       "final_status": "This order is already in a final status.",
       "refund_reason": "Refund reason",
+      "refund_source": "Refund source",
+      "status_history": "Status history",
+      "paid_amount": "Paid amount",
+      "refunded_amount": "Refunded amount",
+      "reserved_refund_amount": "Refund pending review",
+      "remaining_refundable_amount": "Remaining refundable",
       "order_id": "Order ID",
       "processed_at": "Processed At",
       "paid_at": "Paid At",
@@ -1260,13 +1266,34 @@
       "refunded": "Refunded",
       "expired": "Expired",
       "requires_review": "Requires review",
-      "processing_payment": "Processing payment"
+      "processing_payment": "Processing payment",
+      "partially_refunded": "Partially refunded"
     },
     "actions": {
       "confirm_payment": "Confirm payment",
       "payment_confirmed": "Payment confirmed",
       "refund": "Refund",
-      "refunded": "Refund completed"
+      "retry_refund": "Retry refund",
+      "refunded": "Refund completed",
+      "cancel_order": "Cancel order",
+      "confirm_cancel": "Confirm cancellation",
+      "retry_refund": "Retry refund"
+    },
+    "actors": {
+      "admin": "Admin",
+      "client": "Client",
+      "system": "System"
+    },
+    "refundSources": {
+      "cancellation": "Order cancellation",
+      "return": "Return",
+      "exchange": "Exchange"
+    },
+    "messages": {
+      "cancel_warning": "Cancelling refunds the full remaining payment, restores all stock, and cannot be undone.",
+      "cancellation_refund_processing": "Cancellation refund is processing",
+      "cancellation_refund_requires_review": "Cancellation refund requires review",
+      "actions_locked": "Order status and payment actions are locked until the cancellation refund is resolved."
     },
     "financialStatus": {
       "paid": "Paid",
@@ -1546,6 +1573,108 @@
       "percentage": "Percentage",
       "fixed": "Fixed amount",
       "free_shipping": "Free shipping"
+    }
+  },
+  "returns": {
+    "labels": {
+      "id": "ID",
+      "order_id": "Order",
+      "customer": "Customer",
+      "item_count": "Items",
+      "status": "Status",
+      "refund_status": "Refund status",
+      "calculated_refund_amount": "Calculated refund",
+      "adjusted_refund_amount": "Adjusted refund",
+      "shipping_refund_amount": "Shipping refund",
+      "final_refund_amount": "Final refund"
+    },
+    "status": {
+      "requested": "Requested",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled_by_client": "Cancelled by client",
+      "item_received": "Item received",
+      "refunded": "Refunded",
+      "completed": "Completed"
+    },
+    "refundStatus": {
+      "none": "None",
+      "requires_refund": "Requires refund",
+      "processing": "Processing refund",
+      "requires_review": "Requires review",
+      "refunded": "Refunded",
+      "manual_refunded": "Manually refunded",
+      "waived": "Waived"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "receive": "Receive",
+      "refund": "Refund",
+      "complete": "Complete"
+    },
+    "confirm": {
+      "approve": "Approve this return request?",
+      "reject": "Reject this return request?",
+      "receive": "Mark all listed quantities as received using the shown dispositions and refund calculation?",
+      "refund": "Process the calculated return refund now?",
+      "complete": "Complete this return request?"
+    }
+  },
+  "exchanges": {
+    "labels": {
+      "id": "ID",
+      "order_id": "Order",
+      "customer": "Customer",
+      "item_count": "Items",
+      "status": "Status",
+      "price_adjustment_status": "Price adjustment",
+      "total_old_value": "Old value",
+      "total_new_value": "New value",
+      "total_price_difference": "Price difference",
+      "replacement_shipping_fee": "Replacement shipping",
+      "settlement_amount": "Settlement",
+      "reservation_expires_at": "Reservation expires"
+    },
+    "status": {
+      "requested": "Requested",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled_by_client": "Cancelled by client",
+      "item_received": "Item received",
+      "replacement_shipped": "Replacement shipped",
+      "completed": "Completed",
+      "requires_review": "Requires review"
+    },
+    "priceAdjustmentStatus": {
+      "none": "None",
+      "requires_payment": "Awaiting customer payment",
+      "paid": "Paid",
+      "requires_refund": "Requires refund",
+      "refunded": "Refunded",
+      "waived": "Waived"
+    },
+    "actions": {
+      "approve": "Approve",
+      "retry_reservation": "Retry stock reservation",
+      "release_expired_reservation": "Release expired reservation",
+      "reject": "Reject",
+      "receive": "Receive",
+      "refund_difference": "Refund difference",
+      "waive_adjustment": "Waive adjustment",
+      "ship": "Ship",
+      "complete": "Complete"
+    },
+    "confirm": {
+      "approve": "Approve and reserve replacement stock?",
+      "retry-reservation": "Retry reserving replacement stock?",
+      "release-expired": "Release this expired replacement reservation?",
+      "reject": "Reject this exchange request and release reserved stock?",
+      "receive": "Mark all listed quantities as received and calculate the final settlement?",
+      "refund-difference": "Refund the exchange price difference now?",
+      "waive-adjustment": "Waive the required payment or refund adjustment?",
+      "ship": "Mark the replacement as shipped?",
+      "complete": "Complete this exchange request?"
     }
   }
 }
