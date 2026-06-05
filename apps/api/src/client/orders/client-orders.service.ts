@@ -1,58 +1,46 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CancelOrderDto, OrderQueryDto } from './dto/order.dto';
-import { DEFAULT_LANGUAGE, INVENTORY_REASONS } from '@/common/constants/commerce.constants';
+import { DEFAULT_LANGUAGE } from '@/common/constants/commerce.constants';
 import { ORDER_STATUSES, UNCANCELABLE_ORDER_STATUSES } from './order.constants';
-import { PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
-import { PaymentService } from '@/shared/payment/payment.service';
+import { ORDER_STATUS_ACTORS } from '@/shared/payment/payment.constants';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { Prisma } from '@prisma/client';
+import { OrderLifecycleService } from '@/shared/orders/order-lifecycle.service';
+import { IOrdersRepository, ORDERS_REPOSITORY } from '@/common/interfaces';
+
+type ClientOrderWithRelations = Prisma.OrderGetPayload<{
+  include: {
+    items: {
+      include: {
+        translations: true;
+      };
+    };
+    payments: true;
+    statusHistory: true;
+  };
+}>;
 
 @Injectable()
 export class ClientOrdersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly paymentService: PaymentService,
+    private readonly orderLifecycleService: OrderLifecycleService,
     private readonly i18n: I18nService<I18nTranslations>,
+    @Inject(ORDERS_REPOSITORY) private readonly ordersRepository: IOrdersRepository,
   ) {}
 
   async findAll(userId: bigint, query: OrderQueryDto, langId: string = DEFAULT_LANGUAGE) {
-    const where: any = { userId };
-    if (query.status) {
-      where.status = query.status;
-    }
-
-    const orders = await this.prisma.order.findMany({
-      where,
-      include: {
-        items: {
-          include: {
-            translations: { where: { langId } },
-          },
-        },
-        payments: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const orders = await this.ordersRepository.findClientOrders(userId, query.status, langId);
 
     return orders.map((order) => this.formatOrder(order));
   }
 
   async findOne(userId: bigint, id: bigint, langId: string = DEFAULT_LANGUAGE) {
-    const order = await this.prisma.order.findUnique({
-      where: { id },
-      include: {
-        items: {
-          include: {
-            translations: { where: { langId } },
-          },
-        },
-        payments: true,
-      },
-    });
+    const order = await this.ordersRepository.findClientOrderById(userId, id, langId);
 
-    if (!order || order.userId !== userId) {
+    if (!order) {
       throw new NotFoundException(this.i18n.t('errors.order_not_found'));
     }
 
@@ -60,10 +48,7 @@ export class ClientOrdersService {
   }
 
   async cancel(userId: bigint, id: bigint, dto: CancelOrderDto, langId: string = DEFAULT_LANGUAGE) {
-    const order = await this.prisma.order.findUnique({
-      where: { id },
-      include: { items: true, payments: true },
-    });
+    const order = await this.ordersRepository.findLifecycleOrder(id);
 
     if (!order || order.userId !== userId) {
       throw new NotFoundException(this.i18n.t('errors.order_not_found'));
@@ -75,97 +60,18 @@ export class ClientOrdersService {
       );
     }
 
-    const completedPayment = order.payments.find((payment) => payment.paymentStatus === PAYMENT_STATUSES.completed);
-    const refundResult = completedPayment
-      ? await this.paymentService.refundPayment(
-          order.paymentMethod,
-          completedPayment.transactionRef || '',
-          Number(completedPayment.amount),
-        )
-      : null;
-
-    if (refundResult && refundResult.status !== PAYMENT_STATUSES.refunded) {
-      throw new BadRequestException(this.i18n.t('errors.payment_refund_failed'));
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Update order status
-      if (completedPayment && refundResult) {
-        await tx.paymentTransaction.create({
-          data: {
-            orderId: order.id,
-            amount: completedPayment.amount,
-            paymentMethod: order.paymentMethod,
-            paymentStatus: refundResult.status,
-            transactionRef: completedPayment.transactionRef ? `ref_${completedPayment.transactionRef}` : 'refund',
-            gatewayResponse: (refundResult.gatewayResponse ?? {}) as Prisma.InputJsonValue,
-            currency: completedPayment.currency,
-            paidAt: new Date(),
-          },
-        });
-      }
-
-      const updatedOrder = await tx.order.update({
-        where: { id },
-        data: {
-          status: ORDER_STATUSES.cancelled,
-          paymentStatus: refundResult ? PAYMENT_STATUSES.refunded : order.paymentStatus,
-          cancelledAt: new Date(),
-          cancelReason: dto.reason || this.i18n.t('errors.order_cancelled_by_client'),
-        },
-        include: {
-          items: {
-            include: {
-              translations: { where: { langId } },
-            },
-          },
-          payments: true,
-        },
-      });
-
-      // 2. Restore stock for each item
-      for (const item of order.items) {
-        if (item.variantId) {
-          const variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-          });
-
-          if (variant) {
-            const previousStock = variant.stockQuantity;
-            const newStock = previousStock + item.quantity;
-
-            await tx.productVariant.update({
-              where: { id: variant.id },
-              data: { stockQuantity: newStock },
-            });
-
-            // Log adjustment
-            await tx.inventoryLog.create({
-              data: {
-                variantId: variant.id,
-                changeAmount: item.quantity,
-                previousStock,
-                newStock,
-                reason: INVENTORY_REASONS.return,
-              },
-            });
-          }
-        }
-      }
-
-      // 3. Update payment transactions status if pending and no refund was needed
-      if (!refundResult) {
-        await tx.paymentTransaction.updateMany({
-          where: { orderId: id, paymentStatus: PAYMENT_STATUSES.pending },
-          data: { paymentStatus: PAYMENT_STATUSES.failed },
-        });
-      }
-
-      return this.formatOrder(updatedOrder);
+    await this.orderLifecycleService.cancelOrder({
+      orderId: id,
+      allowedStatuses: [ORDER_STATUSES.pending],
+      actorType: ORDER_STATUS_ACTORS.client,
+      actorUserId: userId,
+      reason: dto.reason || this.i18n.t('errors.order_cancelled_by_client'),
     });
+    return this.findOne(userId, id, langId);
   }
 
-  private formatOrder(order: any) {
+  private formatOrder(order: ClientOrderWithRelations) {
+    const paymentSummary = this.orderLifecycleService.paymentSummary(order.payments);
     return {
       id: order.id.toString(),
       orderNumber: order.orderNumber,
@@ -191,9 +97,15 @@ export class ClientOrdersService {
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
       cancelledAt: order.cancelledAt,
+      deliveredAt: order.deliveredAt,
       cancelReason: order.cancelReason,
+      ...paymentSummary,
+      statusHistory: order.statusHistory.map((entry) => ({
+        newStatus: entry.newStatus,
+        createdAt: entry.createdAt,
+      })),
       items:
-        order.items?.map((item: any) => ({
+        order.items?.map((item) => ({
           id: item.id.toString(),
           productId: item.productId?.toString() || null,
           variantId: item.variantId?.toString() || null,
@@ -201,13 +113,18 @@ export class ClientOrdersService {
           unitPriceSnapshot: Number(item.unitPriceSnapshot),
           discountValueSnapshot: Number(item.discountValueSnapshot),
           discountTypeSnapshot: item.discountTypeSnapshot,
+          lineSubtotalSnapshot: Number(item.lineSubtotalSnapshot),
+          couponDiscountShare: Number(item.couponDiscountShare),
+          netLineTotal: Number(item.netLineTotal),
+          netUnitPrice: Number(item.netUnitPrice),
+          vatShare: Number(item.vatShare),
           productNameSnapshot: item.productNameSnapshot,
           variantInfoSnapshot: item.variantInfoSnapshot,
           imageSnapshot: item.imageSnapshot,
           totalPrice: Number(item.totalPrice),
         })) || [],
       payments:
-        order.payments?.map((payment: any) => ({
+        order.payments?.map((payment) => ({
           id: payment.id.toString(),
           amount: Number(payment.amount),
           paymentMethod: payment.paymentMethod,

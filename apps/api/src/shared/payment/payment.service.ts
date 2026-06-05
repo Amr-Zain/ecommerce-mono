@@ -7,6 +7,7 @@ import {
   PaymentInitiateOptions,
   PaymentCancelResult,
   PaymentGatewayData,
+  PaymentRefundOptions,
 } from './interfaces/payment.interfaces';
 import { CodStrategy } from './strategies/cod.strategy';
 import { BankTransferStrategy } from './strategies/bank-transfer.strategy';
@@ -63,9 +64,14 @@ export class PaymentService {
     return strategy.verify(transactionRef, gatewayData);
   }
 
-  async refundPayment(method: string, transactionRef: string, amount: number): Promise<PaymentRefundResult> {
+  async refundPayment(
+    method: string,
+    transactionRef: string,
+    amount: number,
+    options?: PaymentRefundOptions,
+  ): Promise<PaymentRefundResult> {
     const strategy = this.getStrategy(method);
-    return strategy.refund(transactionRef, amount);
+    return strategy.refund(transactionRef, amount, options);
   }
 
   async cancelPayment(method: string, transactionRef: string): Promise<PaymentCancelResult> {

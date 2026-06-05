@@ -27,8 +27,12 @@ model Order {
   updatedAt               DateTime             @default(now()) @updatedAt @map("updated_at")
   cancelledAt             DateTime?            @map("cancelled_at")
   cancelReason            String?              @map("cancel_reason")
+  deliveredAt             DateTime?            @map("delivered_at")
   items                   OrderItem[]
   payments                PaymentTransaction[]
+  returnRequests          ReturnRequest[]
+  exchangeRequests        ExchangeRequest[]
+  statusHistory           OrderStatusHistory[]
 
   @@index([userId])
   @@index([addressId])
@@ -54,9 +58,16 @@ model OrderItem {
   variantInfoSnapshot   Json?                  @map("variant_info_snapshot") @db.JsonB
   imageSnapshot         String?                @map("image_snapshot")
   totalPrice            Decimal                @default(0) @map("total_price") @db.Decimal(12, 2)
+  lineSubtotalSnapshot  Decimal                @default(0) @map("line_subtotal_snapshot") @db.Decimal(12, 2)
+  couponDiscountShare   Decimal                @default(0) @map("coupon_discount_share") @db.Decimal(12, 2)
+  netLineTotal          Decimal                @default(0) @map("net_line_total") @db.Decimal(12, 2)
+  netUnitPrice          Decimal                @default(0) @map("net_unit_price") @db.Decimal(12, 2)
+  vatShare              Decimal                @default(0) @map("vat_share") @db.Decimal(12, 2)
   isActive              Boolean                @default(true) @map("is_active")
   createdAt             DateTime               @default(now()) @map("created_at")
   translations          OrderItemTranslation[]
+  returnRequestItems    ReturnRequestItem[]
+  exchangeRequestItems  ExchangeRequestItem[]
 
   @@index([orderId])
   @@index([productId])
@@ -77,22 +88,211 @@ model OrderItemTranslation {
 }
 
 model PaymentTransaction {
-  id              BigInt    @id @default(autoincrement())
-  orderId         BigInt    @map("order_id")
-  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount          Decimal   @default(0) @db.Decimal(12, 2)
-  paymentMethod   String    @map("payment_method")
-  paymentStatus   String    @default("pending") @map("payment_status")
-  transactionRef  String?   @map("transaction_ref")
-  gatewayResponse Json?     @map("gateway_response") @db.JsonB
-  paidAt          DateTime? @map("paid_at")
-  currency        String    @default("SAR")
-  isActive        Boolean   @default(true) @map("is_active")
-  createdAt       DateTime  @default(now()) @map("created_at")
+  id                BigInt           @id @default(autoincrement())
+  orderId           BigInt           @map("order_id")
+  order             Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount            Decimal          @default(0) @db.Decimal(12, 2)
+  paymentMethod     String           @map("payment_method")
+  paymentStatus     String           @default("pending") @map("payment_status")
+  transactionRef    String?          @map("transaction_ref")
+  gatewayResponse   Json?            @map("gateway_response") @db.JsonB
+  paidAt            DateTime?        @map("paid_at")
+  currency          String           @default("SAR")
+  isActive          Boolean          @default(true) @map("is_active")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  refundSource      String?          @map("refund_source")
+  refundReason      String?          @map("refund_reason") @db.Text
+  idempotencyKey    String?          @map("idempotency_key")
+  requestedById     BigInt?          @map("requested_by_id")
+  returnRequestId   BigInt?          @map("return_request_id")
+  returnRequest     ReturnRequest?   @relation(fields: [returnRequestId], references: [id], onDelete: SetNull)
+  exchangeRequestId BigInt?          @map("exchange_request_id")
+  exchangeRequest   ExchangeRequest? @relation(fields: [exchangeRequestId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([paymentStatus])
+  @@index([idempotencyKey])
+  @@index([returnRequestId])
+  @@index([exchangeRequestId])
   @@map("payment_transactions")
+}
+
+model OrderStatusHistory {
+  id             BigInt   @id @default(autoincrement())
+  orderId        BigInt   @map("order_id")
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  previousStatus String?  @map("previous_status")
+  newStatus      String   @map("new_status")
+  actorType      String   @map("actor_type")
+  actorUserId    BigInt?  @map("actor_user_id")
+  reason         String?  @db.Text
+  metadata       Json?    @db.JsonB
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([orderId])
+  @@index([newStatus])
+  @@index([createdAt])
+  @@map("order_status_history")
+}
+
+model ReturnRequest {
+  id                            BigInt                        @id @default(autoincrement())
+  orderId                       BigInt                        @map("order_id")
+  order                         Order                         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId                        BigInt                        @map("user_id")
+  user                          User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status                        String                        @default("requested")
+  refundStatus                  String                        @default("none") @map("refund_status")
+  calculatedRefundAmount        Decimal                       @default(0) @map("calculated_refund_amount") @db.Decimal(12, 2)
+  calculatedVatRefundAmount     Decimal                       @default(0) @map("calculated_vat_refund_amount") @db.Decimal(12, 2)
+  adjustedRefundAmount          Decimal                       @default(0) @map("adjusted_refund_amount") @db.Decimal(12, 2)
+  adjustedVatRefundAmount       Decimal                       @default(0) @map("adjusted_vat_refund_amount") @db.Decimal(12, 2)
+  maxShippingRefundAmount       Decimal                       @default(0) @map("max_shipping_refund_amount") @db.Decimal(12, 2)
+  suggestedShippingRefundAmount Decimal                       @default(0) @map("suggested_shipping_refund_amount") @db.Decimal(12, 2)
+  shippingRefundAmount          Decimal                       @default(0) @map("shipping_refund_amount") @db.Decimal(12, 2)
+  finalRefundAmount             Decimal                       @default(0) @map("final_refund_amount") @db.Decimal(12, 2)
+  refundAdjustmentReason        String?                       @map("refund_adjustment_reason") @db.Text
+  shippingRefundReason          String?                       @map("shipping_refund_reason") @db.Text
+  clientNote                    String?                       @map("client_note") @db.Text
+  adminNote                     String?                       @map("admin_note") @db.Text
+  requestedAt                   DateTime                      @default(now()) @map("requested_at")
+  approvedAt                    DateTime?                     @map("approved_at")
+  rejectedAt                    DateTime?                     @map("rejected_at")
+  cancelledAt                   DateTime?                     @map("cancelled_at")
+  itemReceivedAt                DateTime?                     @map("item_received_at")
+  refundedAt                    DateTime?                     @map("refunded_at")
+  completedAt                   DateTime?                     @map("completed_at")
+  createdAt                     DateTime                      @default(now()) @map("created_at")
+  updatedAt                     DateTime                      @default(now()) @updatedAt @map("updated_at")
+  items                         ReturnRequestItem[]
+  payments                      PaymentTransaction[]
+  history                       ReturnExchangeStatusHistory[] @relation("ReturnRequestHistory")
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@map("return_requests")
+}
+
+model ReturnRequestItem {
+  id                        BigInt          @id @default(autoincrement())
+  returnRequestId           BigInt          @map("return_request_id")
+  returnRequest             ReturnRequest   @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  orderItemId               BigInt          @map("order_item_id")
+  orderItem                 OrderItem       @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  oldVariantId              BigInt?         @map("old_variant_id")
+  oldVariant                ProductVariant? @relation("ReturnOldVariant", fields: [oldVariantId], references: [id], onDelete: SetNull)
+  quantity                  Int
+  acceptedQuantity          Int             @default(0) @map("accepted_quantity")
+  returnReason              String          @map("return_reason")
+  clientNote                String?         @map("client_note") @db.Text
+  adminNote                 String?         @map("admin_note") @db.Text
+  itemDisposition           String          @default("restock") @map("item_disposition")
+  oldUnitPriceSnapshot      Decimal         @default(0) @map("old_unit_price_snapshot") @db.Decimal(12, 2)
+  oldNetUnitPrice           Decimal         @default(0) @map("old_net_unit_price") @db.Decimal(12, 2)
+  calculatedRefundAmount    Decimal         @default(0) @map("calculated_refund_amount") @db.Decimal(12, 2)
+  calculatedVatRefundAmount Decimal         @default(0) @map("calculated_vat_refund_amount") @db.Decimal(12, 2)
+  adjustedRefundAmount      Decimal         @default(0) @map("adjusted_refund_amount") @db.Decimal(12, 2)
+  adjustedVatRefundAmount   Decimal         @default(0) @map("adjusted_vat_refund_amount") @db.Decimal(12, 2)
+  refundAdjustmentReason    String?         @map("refund_adjustment_reason") @db.Text
+  createdAt                 DateTime        @default(now()) @map("created_at")
+  updatedAt                 DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  @@index([returnRequestId])
+  @@index([orderItemId])
+  @@index([oldVariantId])
+  @@map("return_request_items")
+}
+
+model ExchangeRequest {
+  id                              BigInt                        @id @default(autoincrement())
+  orderId                         BigInt                        @map("order_id")
+  order                           Order                         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId                          BigInt                        @map("user_id")
+  user                            User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status                          String                        @default("requested")
+  priceAdjustmentStatus           String                        @default("none") @map("price_adjustment_status")
+  totalOldValue                   Decimal                       @default(0) @map("total_old_value") @db.Decimal(12, 2)
+  totalNewValue                   Decimal                       @default(0) @map("total_new_value") @db.Decimal(12, 2)
+  totalPriceDifference            Decimal                       @default(0) @map("total_price_difference") @db.Decimal(12, 2)
+  suggestedReplacementShippingFee Decimal                       @default(0) @map("suggested_replacement_shipping_fee") @db.Decimal(12, 2)
+  replacementShippingFee          Decimal                       @default(0) @map("replacement_shipping_fee") @db.Decimal(12, 2)
+  settlementAmount                Decimal                       @default(0) @map("settlement_amount") @db.Decimal(12, 2)
+  shippingFeeReason               String?                       @map("shipping_fee_reason") @db.Text
+  clientNote                      String?                       @map("client_note") @db.Text
+  adminNote                       String?                       @map("admin_note") @db.Text
+  replacementReservedAt           DateTime?                     @map("replacement_reserved_at")
+  requestedAt                     DateTime                      @default(now()) @map("requested_at")
+  approvedAt                      DateTime?                     @map("approved_at")
+  rejectedAt                      DateTime?                     @map("rejected_at")
+  cancelledAt                     DateTime?                     @map("cancelled_at")
+  itemReceivedAt                  DateTime?                     @map("item_received_at")
+  replacementShippedAt            DateTime?                     @map("replacement_shipped_at")
+  completedAt                     DateTime?                     @map("completed_at")
+  createdAt                       DateTime                      @default(now()) @map("created_at")
+  updatedAt                       DateTime                      @default(now()) @updatedAt @map("updated_at")
+  items                           ExchangeRequestItem[]
+  payments                        PaymentTransaction[]
+  history                         ReturnExchangeStatusHistory[] @relation("ExchangeRequestHistory")
+  replacementExpiresAt            DateTime?                     @map("replacement_expires_at")
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@index([priceAdjustmentStatus])
+  @@map("exchange_requests")
+}
+
+model ReturnExchangeStatusHistory {
+  id                BigInt           @id @default(autoincrement())
+  returnRequestId   BigInt?          @map("return_request_id")
+  returnRequest     ReturnRequest?   @relation("ReturnRequestHistory", fields: [returnRequestId], references: [id], onDelete: Cascade)
+  exchangeRequestId BigInt?          @map("exchange_request_id")
+  exchangeRequest   ExchangeRequest? @relation("ExchangeRequestHistory", fields: [exchangeRequestId], references: [id], onDelete: Cascade)
+  previousStatus    String?          @map("previous_status")
+  newStatus         String           @map("new_status")
+  actorType         String           @map("actor_type")
+  actorUserId       BigInt?          @map("actor_user_id")
+  reason            String?          @db.Text
+  metadata          Json?            @db.JsonB
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  @@index([returnRequestId])
+  @@index([exchangeRequestId])
+  @@index([createdAt])
+  @@map("return_exchange_status_history")
+}
+
+model ExchangeRequestItem {
+  id                   BigInt          @id @default(autoincrement())
+  exchangeRequestId    BigInt          @map("exchange_request_id")
+  exchangeRequest      ExchangeRequest @relation(fields: [exchangeRequestId], references: [id], onDelete: Cascade)
+  orderItemId          BigInt          @map("order_item_id")
+  orderItem            OrderItem       @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  oldVariantId         BigInt?         @map("old_variant_id")
+  oldVariant           ProductVariant? @relation("ExchangeOldVariant", fields: [oldVariantId], references: [id], onDelete: SetNull)
+  newVariantId         BigInt          @map("new_variant_id")
+  newVariant           ProductVariant  @relation("ExchangeNewVariant", fields: [newVariantId], references: [id], onDelete: Restrict)
+  quantity             Int
+  acceptedQuantity     Int             @default(0) @map("accepted_quantity")
+  exchangeReason       String          @map("exchange_reason")
+  clientNote           String?         @map("client_note") @db.Text
+  adminNote            String?         @map("admin_note") @db.Text
+  itemDisposition      String          @default("restock") @map("item_disposition")
+  oldUnitPriceSnapshot Decimal         @default(0) @map("old_unit_price_snapshot") @db.Decimal(12, 2)
+  oldNetUnitPrice      Decimal         @default(0) @map("old_net_unit_price") @db.Decimal(12, 2)
+  newUnitPriceSnapshot Decimal         @default(0) @map("new_unit_price_snapshot") @db.Decimal(12, 2)
+  oldValue             Decimal         @default(0) @map("old_value") @db.Decimal(12, 2)
+  newValue             Decimal         @default(0) @map("new_value") @db.Decimal(12, 2)
+  priceDifference      Decimal         @default(0) @map("price_difference") @db.Decimal(12, 2)
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  @@index([exchangeRequestId])
+  @@index([orderItemId])
+  @@index([oldVariantId])
+  @@index([newVariantId])
+  @@map("exchange_request_items")
 }
 
 model PendingCheckout {

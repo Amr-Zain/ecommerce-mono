@@ -77,6 +77,20 @@ type CartItemForTotals = {
   quantity: number;
 };
 
+type OrderItemPricingInput = {
+  quantity: number;
+  unitPriceSnapshot: number;
+  totalPrice: number;
+};
+
+type AllocatedOrderItemPricing = {
+  lineSubtotalSnapshot: number;
+  couponDiscountShare: number;
+  netLineTotal: number;
+  netUnitPrice: number;
+  vatShare: number;
+};
+
 const toPrismaJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 @Injectable()
@@ -169,6 +183,66 @@ export class ClientCheckoutService {
 
   private calculateDiscountedSubtotal(items: CartItemForTotals[]) {
     return Number(items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2));
+  }
+
+  private allocateOrderItemPricing(
+    items: OrderItemPricingInput[],
+    couponDiscount: number,
+    vatAmount: number,
+  ): AllocatedOrderItemPricing[] {
+    const lineSubtotals = items.map((item) => Number((item.unitPriceSnapshot * item.quantity).toFixed(2)));
+    const subtotal = Number(lineSubtotals.reduce((sum, value) => sum + value, 0).toFixed(2));
+
+    if (subtotal <= 0) {
+      return items.map(() => ({
+        lineSubtotalSnapshot: 0,
+        couponDiscountShare: 0,
+        netLineTotal: 0,
+        netUnitPrice: 0,
+        vatShare: 0,
+      }));
+    }
+
+    const allocate = (total: number, weights: number[], weightTotal: number) => {
+      if (total <= 0 || weightTotal <= 0) {
+        return weights.map(() => 0);
+      }
+
+      const allocations = weights.map((weight) =>
+        Number(((weight / weightTotal) * total).toFixed(2)),
+      );
+      const allocatedTotal = Number(allocations.reduce((sum, value) => sum + value, 0).toFixed(2));
+      const remainder = Number((total - allocatedTotal).toFixed(2));
+      if (remainder !== 0 && allocations.length > 0) {
+        const largestLineIndex = weights.reduce(
+          (largestIndex, value, index) => (value > weights[largestIndex] ? index : largestIndex),
+          0,
+        );
+        allocations[largestLineIndex] = Number((allocations[largestLineIndex] + remainder).toFixed(2));
+      }
+      return allocations;
+    };
+
+    const couponShares = allocate(couponDiscount, lineSubtotals, subtotal);
+    const netLineTotals = lineSubtotals.map((lineSubtotal, index) => {
+      const couponDiscountShare = Math.min(lineSubtotal, couponShares[index] ?? 0);
+      return Number(Math.max(0, lineSubtotal - couponDiscountShare).toFixed(2));
+    });
+    const netSubtotal = Number(netLineTotals.reduce((sum, value) => sum + value, 0).toFixed(2));
+    const vatShares = allocate(vatAmount, netLineTotals, netSubtotal);
+
+    return items.map((item, index) => {
+      const lineSubtotalSnapshot = lineSubtotals[index];
+      const couponDiscountShare = Math.min(lineSubtotalSnapshot, couponShares[index] ?? 0);
+      const netLineTotal = netLineTotals[index] ?? 0;
+      return {
+        lineSubtotalSnapshot,
+        couponDiscountShare,
+        netLineTotal,
+        netUnitPrice: Number((netLineTotal / item.quantity).toFixed(2)),
+        vatShare: vatShares[index] ?? 0,
+      };
+    });
   }
 
   private isOnlinePaymentMethod(paymentMethod: string) {
@@ -416,6 +490,11 @@ export class ClientCheckoutService {
         phoneCode,
         countryShortName,
       );
+      const onlineItemAllocations = this.allocateOrderItemPricing(orderItems, couponDiscount, totals.vatAmount);
+      const allocatedOrderItems = orderItems.map((item, index) => ({
+        ...item,
+        ...onlineItemAllocations[index],
+      }));
 
       const snapshot = {
         userId: userId.toString(),
@@ -440,7 +519,7 @@ export class ClientCheckoutService {
           ...totals,
           vatType: totals.vatRate > 0 ? `${VAT_TYPE_PREFIX}_${totals.vatRate * 100}` : null,
         },
-        items: orderItems,
+        items: allocatedOrderItems,
       };
 
       const pendingCheckout = await tx.pendingCheckout.create({
@@ -459,7 +538,7 @@ export class ClientCheckoutService {
         },
       });
 
-      for (const item of orderItems) {
+      for (const item of allocatedOrderItems) {
         const variantId = BigInt(item.variantId);
         const reserveResult = await tx.productVariant.updateMany({
           where: {
@@ -756,6 +835,11 @@ export class ClientCheckoutService {
         phoneCode,
         countryShortName,
       );
+      const itemAllocations = this.allocateOrderItemPricing(orderItemsToCreate, couponDiscount, totals.vatAmount);
+      const allocatedOrderItemsToCreate = orderItemsToCreate.map((item, index) => ({
+        ...item,
+        ...itemAllocations[index],
+      }));
 
       // 6. Generate orderNumber (ORD-YYYYMMDD-XXXXX)
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -794,8 +878,15 @@ export class ClientCheckoutService {
           paymentMethod: dto.paymentMethod,
           paymentStatus: PAYMENT_STATUSES.pending,
           notes: dto.notes,
+          statusHistory: {
+            create: {
+              newStatus: ORDER_STATUSES.pending,
+              actorType: 'client',
+              actorUserId: userId,
+            },
+          },
           items: {
-            create: orderItemsToCreate.map((oi) => ({
+            create: allocatedOrderItemsToCreate.map((oi) => ({
               productId: oi.productId,
               variantId: oi.variantId,
               quantity: oi.quantity,
@@ -805,6 +896,11 @@ export class ClientCheckoutService {
               productNameSnapshot: oi.productNameSnapshot,
               variantInfoSnapshot: oi.variantInfoSnapshot,
               totalPrice: oi.totalPrice,
+              lineSubtotalSnapshot: oi.lineSubtotalSnapshot,
+              couponDiscountShare: oi.couponDiscountShare,
+              netLineTotal: oi.netLineTotal,
+              netUnitPrice: oi.netUnitPrice,
+              vatShare: oi.vatShare,
               translations: oi.translations,
             })),
           },

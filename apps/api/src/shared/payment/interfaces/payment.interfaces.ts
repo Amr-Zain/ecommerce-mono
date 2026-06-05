@@ -24,6 +24,10 @@ export interface PaymentRefundResult {
   gatewayResponse?: PaymentGatewayData;
 }
 
+export interface PaymentRefundOptions {
+  idempotencyKey?: string;
+}
+
 export interface PaymentCancelResult {
   status: Extract<PaymentStatus, 'failed' | 'expired' | 'pending'>;
   gatewayResponse?: PaymentGatewayData;
@@ -33,6 +37,6 @@ export interface PaymentStrategy {
   readonly methodName: string;
   initiate(referenceId: string, amount: number, options?: PaymentInitiateOptions): Promise<PaymentInitResult>;
   verify(transactionRef: string, gatewayData: PaymentGatewayData): Promise<PaymentVerifyResult>;
-  refund(transactionRef: string, amount: number): Promise<PaymentRefundResult>;
+  refund(transactionRef: string, amount: number, options?: PaymentRefundOptions): Promise<PaymentRefundResult>;
   cancel(transactionRef: string): Promise<PaymentCancelResult>;
 }

@@ -82,12 +82,15 @@ export class StripeIntentStrategy implements PaymentStrategy {
     }
   }
 
-  async refund(transactionRef: string, amount: number): Promise<PaymentRefundResult> {
+  async refund(transactionRef: string, amount: number, options?: { idempotencyKey?: string }): Promise<PaymentRefundResult> {
     try {
-      const refund = await this.stripe.refunds.create({
-        payment_intent: transactionRef,
-        amount: Math.round(amount * 100),
-      });
+      const refund = await this.stripe.refunds.create(
+        {
+          payment_intent: transactionRef,
+          amount: Math.round(amount * 100),
+        },
+        options?.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : undefined,
+      );
 
       return {
         status: PAYMENT_STATUSES.refunded,

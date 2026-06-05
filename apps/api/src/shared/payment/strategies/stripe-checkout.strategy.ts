@@ -98,7 +98,7 @@ export class StripeCheckoutStrategy implements PaymentStrategy {
     }
   }
 
-  async refund(transactionRef: string, amount: number): Promise<PaymentRefundResult> {
+  async refund(transactionRef: string, amount: number, options?: { idempotencyKey?: string }): Promise<PaymentRefundResult> {
     try {
       const session = await this.stripe.checkout.sessions.retrieve(transactionRef);
       if (!session.payment_intent) {
@@ -108,10 +108,13 @@ export class StripeCheckoutStrategy implements PaymentStrategy {
         };
       }
 
-      const refund = await this.stripe.refunds.create({
-        payment_intent: session.payment_intent as string,
-        amount: Math.round(amount * 100),
-      });
+      const refund = await this.stripe.refunds.create(
+        {
+          payment_intent: session.payment_intent as string,
+          amount: Math.round(amount * 100),
+        },
+        options?.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : undefined,
+      );
 
       return {
         status: PAYMENT_STATUSES.refunded,

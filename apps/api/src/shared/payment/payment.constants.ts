@@ -6,6 +6,7 @@ export const PAYMENT_METHODS = {
 } as const;
 
 export const ONLINE_PAYMENT_METHODS = [PAYMENT_METHODS.stripeCheckout, PAYMENT_METHODS.stripeIntent] as const;
+export const MANUAL_PAYMENT_METHODS = [PAYMENT_METHODS.cod, PAYMENT_METHODS.bankTransfer] as const;
 
 export const PAYMENT_STATUSES = {
   pending: 'pending',
@@ -13,9 +14,22 @@ export const PAYMENT_STATUSES = {
   awaitingConfirmation: 'awaiting_confirmation',
   failed: 'failed',
   refunded: 'refunded',
+  partiallyRefunded: 'partially_refunded',
   expired: 'expired',
   requiresReview: 'requires_review',
   processingPayment: 'processing_payment',
+} as const;
+
+export const REFUND_SOURCES = {
+  cancellation: 'cancellation',
+  return: 'return',
+  exchange: 'exchange',
+} as const;
+
+export const ORDER_STATUS_ACTORS = {
+  admin: 'admin',
+  client: 'client',
+  system: 'system',
 } as const;
 
 export const STOCK_RESERVATION_STATUSES = {

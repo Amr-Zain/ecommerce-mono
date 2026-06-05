@@ -4,7 +4,7 @@ import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { AuthUserPayload } from '@/auth/auth.service';
 import { AdminOrdersService } from './admin-orders.service';
-import { UpdateOrderStatusDto, OrderRefundDto, AdminOrderQueryDto } from './dto/admin-order.dto';
+import { UpdateOrderStatusDto, AdminOrderQueryDto } from './dto/admin-order.dto';
 
 @ApiContext('admin')
 @Controller('orders')
@@ -40,13 +40,13 @@ export class AdminOrdersController {
     return this.ordersService.confirmPayment(BigInt(id), user, lang);
   }
 
-  @Post(':id/refund')
-  refund(
+  @Post(':id/cancellation-refunds/:refundId/retry')
+  retryCancellationRefund(
     @Param('id') id: string,
-    @Body() dto: OrderRefundDto,
+    @Param('refundId') refundId: string,
     @CurrentUser() user: AuthUserPayload,
     @I18nLang() lang: string,
   ) {
-    return this.ordersService.refund(BigInt(id), dto, user, lang);
+    return this.ordersService.retryCancellationRefund(BigInt(id), BigInt(refundId), user, lang);
   }
 }

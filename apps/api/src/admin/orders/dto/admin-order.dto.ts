@@ -15,9 +15,7 @@ export class UpdateOrderStatusDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
   @IsEnum(OrderStatus, { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
   status!: OrderStatus;
-}
 
-export class OrderRefundDto {
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   reason?: string;

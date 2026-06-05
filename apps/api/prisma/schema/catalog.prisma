@@ -126,12 +126,15 @@ model ProductVariant {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
 
-  attributes        VariantAttribute[]
-  orderItems        OrderItem[]
-  cartItems         CartItem[]
-  inventoryLogs     InventoryLog[]
-  priceHistory      PriceHistory[]
-  stockReservations StockReservation[]
+  attributes         VariantAttribute[]
+  orderItems         OrderItem[]
+  cartItems          CartItem[]
+  inventoryLogs      InventoryLog[]
+  priceHistory       PriceHistory[]
+  stockReservations  StockReservation[]
+  returnRequestItems ReturnRequestItem[]   @relation("ReturnOldVariant")
+  exchangeItemsFrom  ExchangeRequestItem[] @relation("ExchangeOldVariant")
+  exchangeItemsTo    ExchangeRequestItem[] @relation("ExchangeNewVariant")
 
   @@index([productId])
   @@map("product_variants")

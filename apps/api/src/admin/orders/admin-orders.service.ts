@@ -1,17 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { UpdateOrderStatusDto, OrderRefundDto, AdminOrderQueryDto } from './dto/admin-order.dto';
-import { PaymentService } from '@/shared/payment/payment.service';
+import { UpdateOrderStatusDto, AdminOrderQueryDto } from './dto/admin-order.dto';
 import { AuthUserPayload } from '@/auth/auth.service';
-import { INVENTORY_REASONS } from '@/common/constants/commerce.constants';
-import { PAYMENT_CURRENCIES, PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
+import { MANUAL_PAYMENT_METHODS, ORDER_STATUS_ACTORS, PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
 import { Prisma } from '@prisma/client';
+import { OrderLifecycleService } from '@/shared/orders/order-lifecycle.service';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '@/generated/i18n.generated';
+import { IOrdersRepository, ORDERS_REPOSITORY } from '@/common/interfaces';
 
 const ADMIN_ORDER_TRANSITIONS: Record<string, readonly string[]> = {
   pending: ['processing', 'cancelled'],
-  processing: ['shipped', 'cancelled', 'refunded'],
+  processing: ['shipped', 'cancelled'],
   shipped: ['delivered'],
-  delivered: ['refunded'],
+  delivered: [],
   cancelled: [],
   refunded: [],
 };
@@ -25,26 +27,17 @@ type AdminOrderWithRelations = Prisma.OrderGetPayload<{
     };
     payments: true;
     user: true;
+    statusHistory: true;
   };
 }>;
-
-type RefundableOrder = Prisma.OrderGetPayload<{
-  include: {
-    items: true;
-    payments: true;
-  };
-}>;
-
-type RestorableOrderItem = {
-  variantId: bigint | null;
-  quantity: number;
-};
 
 @Injectable()
 export class AdminOrdersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly paymentService: PaymentService,
+    private readonly orderLifecycleService: OrderLifecycleService,
+    private readonly i18n: I18nService<I18nTranslations>,
+    @Inject(ORDERS_REPOSITORY) private readonly ordersRepository: IOrdersRepository,
   ) {}
 
   async findAll(query: AdminOrderQueryDto, langId: string = 'en') {
@@ -52,90 +45,63 @@ export class AdminOrdersService {
     if (query.status) where.status = query.status;
     if (query.paymentStatus) where.paymentStatus = query.paymentStatus;
 
-    const orders = await this.prisma.order.findMany({
-      where,
-      include: {
-        items: {
-          include: {
-            translations: { where: { langId } },
-          },
-        },
-        payments: true,
-        user: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const orders = await this.ordersRepository.findAdminOrders(where, langId);
 
     return orders.map((o) => this.formatOrder(o));
   }
 
   async findOne(id: bigint, langId: string = 'en') {
-    const order = await this.prisma.order.findUnique({
-      where: { id },
-      include: {
-        items: {
-          include: {
-            translations: { where: { langId } },
-          },
-        },
-        payments: true,
-        user: true,
-      },
-    });
+    const order = await this.ordersRepository.findAdminOrderById(id, langId);
 
     if (!order) {
-      throw new NotFoundException('Order not found');
+      throw new NotFoundException(this.i18n.t('errors.order_not_found'));
     }
 
     return this.formatOrder(order);
   }
 
   async updateStatus(id: bigint, dto: UpdateOrderStatusDto, adminUser: AuthUserPayload, langId: string = 'en') {
-    const order = await this.prisma.order.findUnique({
-      where: { id },
-      include: { items: true, payments: true },
-    });
+    const order = await this.ordersRepository.findLifecycleOrder(id);
 
     if (!order) {
-      throw new NotFoundException('Order not found');
+      throw new NotFoundException(this.i18n.t('errors.order_not_found'));
     }
-
     const newStatus = dto.status.toLowerCase();
 
     if (order.status === newStatus) {
       return this.findOne(id, langId);
     }
 
+    if (
+      order.payments.some(
+        (payment) =>
+          payment.refundSource === 'cancellation' &&
+          (payment.paymentStatus === PAYMENT_STATUSES.processingPayment ||
+            payment.paymentStatus === PAYMENT_STATUSES.requiresReview),
+      )
+    ) {
+      throw new BadRequestException(this.i18n.t('errors.order_cancellation_refund_in_progress'));
+    }
+
     this.assertAllowedTransition(order.status, newStatus);
 
-    if (newStatus === 'cancelled' && order.paymentStatus === PAYMENT_STATUSES.completed) {
-      return this.refundPaidOrder(order, adminUser, langId, 'cancelled', 'Cancelled by admin with refund');
+    if (newStatus === 'cancelled') {
+      await this.orderLifecycleService.cancelOrder({
+        orderId: id,
+        allowedStatuses: ['pending', 'processing'],
+        actorType: ORDER_STATUS_ACTORS.admin,
+        actorUserId: adminUser.id,
+        reason: dto.reason,
+      });
+      return this.findOne(id, langId);
     }
 
-    if (newStatus === 'refunded') {
-      return this.refundPaidOrder(order, adminUser, langId, 'refunded', 'Refunded by admin');
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      // If status is transitioning to cancelled, restore stock
-      if (newStatus === 'cancelled' && order.status !== 'cancelled') {
-        await this.restoreOrderStock(tx, order.items);
-
-        // Fail pending transactions
-        await tx.paymentTransaction.updateMany({
-          where: {
-            orderId: id,
-            paymentStatus: { in: [PAYMENT_STATUSES.pending, PAYMENT_STATUSES.awaitingConfirmation] },
-          },
-          data: { paymentStatus: PAYMENT_STATUSES.failed },
-        });
-      }
-
+    await this.prisma.$transaction(async (tx) => {
       const updated = await tx.order.update({
         where: { id },
         data: {
           status: newStatus,
-          ...(newStatus === 'cancelled' ? { cancelledAt: new Date(), cancelReason: 'Cancelled by admin' } : {}),
+          ...(newStatus === 'delivered' ? { deliveredAt: order.deliveredAt || new Date() } : {}),
         },
         include: {
           items: {
@@ -145,28 +111,42 @@ export class AdminOrdersService {
           },
           payments: true,
           user: true,
+          statusHistory: { orderBy: { createdAt: 'asc' } },
         },
       });
+      await this.orderLifecycleService.createStatusHistory(tx, {
+        orderId: id,
+        previousStatus: order.status,
+        newStatus,
+        actorType: ORDER_STATUS_ACTORS.admin,
+        actorUserId: adminUser.id,
+        reason: dto.reason,
+      });
 
-      return this.formatOrder(updated);
+      return updated;
     });
+    return this.findOne(id, langId);
   }
 
   async confirmPayment(id: bigint, adminUser: AuthUserPayload, langId: string = 'en') {
-    const order = await this.prisma.order.findUnique({
-      where: { id },
-      include: { payments: true },
-    });
+    const order = await this.ordersRepository.findOrderWithPayments(id);
 
     if (!order) {
-      throw new NotFoundException('Order not found');
+      throw new NotFoundException(this.i18n.t('errors.order_not_found'));
+    }
+    if (!(MANUAL_PAYMENT_METHODS as readonly string[]).includes(order.paymentMethod)) {
+      throw new BadRequestException(this.i18n.t('errors.order_manual_payment_confirmation_only'));
     }
 
     const pendingPayment = order.payments.find(
-      (p) => p.paymentStatus === PAYMENT_STATUSES.awaitingConfirmation || p.paymentStatus === PAYMENT_STATUSES.pending,
+      (payment) =>
+        !payment.refundSource &&
+        (MANUAL_PAYMENT_METHODS as readonly string[]).includes(payment.paymentMethod) &&
+        (payment.paymentStatus === PAYMENT_STATUSES.awaitingConfirmation ||
+          payment.paymentStatus === PAYMENT_STATUSES.pending),
     );
     if (!pendingPayment) {
-      throw new BadRequestException('No pending payment found that requires confirmation');
+      throw new BadRequestException(this.i18n.t('errors.order_pending_payment_confirmation_not_found'));
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -198,6 +178,7 @@ export class AdminOrdersService {
           },
           payments: true,
           user: true,
+          statusHistory: { orderBy: { createdAt: 'asc' } },
         },
       });
 
@@ -205,26 +186,9 @@ export class AdminOrdersService {
     });
   }
 
-  async refund(id: bigint, dto: OrderRefundDto, adminUser: AuthUserPayload, langId: string = 'en') {
-    const order = await this.prisma.order.findUnique({
-      where: { id },
-      include: { payments: true, items: true },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Order not found');
-    }
-
-    if (order.status === 'refunded') {
-      throw new BadRequestException('Order is already refunded');
-    }
-
-    const completedPayment = order.payments.find((p) => p.paymentStatus === PAYMENT_STATUSES.completed);
-    if (!completedPayment) {
-      throw new BadRequestException('Cannot refund an order without a completed payment');
-    }
-
-    return this.refundPaidOrder(order, adminUser, langId, 'refunded', dto.reason || 'Refunded by admin');
+  async retryCancellationRefund(id: bigint, refundId: bigint, adminUser: AuthUserPayload, langId: string = 'en') {
+    await this.orderLifecycleService.retryCancellationRefund(id, refundId, adminUser.id);
+    return this.findOne(id, langId);
   }
 
   private assertAllowedTransition(currentStatus: string, nextStatus: string) {
@@ -235,104 +199,8 @@ export class AdminOrdersService {
     }
   }
 
-  private async refundPaidOrder(
-    order: RefundableOrder,
-    adminUser: AuthUserPayload,
-    langId: string,
-    targetStatus: 'cancelled' | 'refunded',
-    reason: string,
-  ) {
-    const completedPayment = order.payments.find((payment) => payment.paymentStatus === PAYMENT_STATUSES.completed);
-    if (!completedPayment) {
-      throw new BadRequestException('Cannot refund an order without a completed payment');
-    }
-
-    const refundResult = await this.paymentService.refundPayment(
-      order.paymentMethod,
-      completedPayment.transactionRef || '',
-      Number(completedPayment.amount),
-    );
-
-    if (refundResult.status !== PAYMENT_STATUSES.refunded) {
-      throw new BadRequestException('Payment refund failed');
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      await tx.paymentTransaction.create({
-        data: {
-          orderId: order.id,
-          amount: completedPayment.amount,
-          paymentMethod: order.paymentMethod,
-          paymentStatus: refundResult.status,
-          transactionRef: completedPayment.transactionRef ? `ref_${completedPayment.transactionRef}` : 'refund',
-          gatewayResponse: {
-            ...refundResult.gatewayResponse,
-            verifiedBy: 'admin',
-            adminId: adminUser?.id ? adminUser.id.toString() : null,
-          },
-          currency: PAYMENT_CURRENCIES.sar,
-          paidAt: new Date(),
-        },
-      });
-
-      await this.restoreOrderStock(tx, order.items);
-
-      const updatedOrder = await tx.order.update({
-        where: { id: order.id },
-        data: {
-          status: targetStatus,
-          paymentStatus: PAYMENT_STATUSES.refunded,
-          cancelReason: reason,
-          cancelledAt: new Date(),
-        },
-        include: {
-          items: {
-            include: {
-              translations: { where: { langId } },
-            },
-          },
-          payments: true,
-          user: true,
-        },
-      });
-
-      return this.formatOrder(updatedOrder);
-    });
-  }
-
-  private async restoreOrderStock(tx: Prisma.TransactionClient, items: RestorableOrderItem[]) {
-    for (const item of items) {
-      if (!item.variantId) {
-        continue;
-      }
-
-      const variant = await tx.productVariant.findUnique({
-        where: { id: item.variantId },
-      });
-
-      if (!variant) {
-        continue;
-      }
-
-      const previousStock = variant.stockQuantity;
-      const newStock = previousStock + item.quantity;
-      await tx.productVariant.update({
-        where: { id: variant.id },
-        data: { stockQuantity: newStock },
-      });
-      await tx.inventoryLog.create({
-        data: {
-          variantId: variant.id,
-          changeAmount: item.quantity,
-          previousStock,
-          newStock,
-          reason: INVENTORY_REASONS.return,
-        },
-      });
-    }
-  }
-
   private formatOrder(order: AdminOrderWithRelations) {
+    const paymentSummary = this.orderLifecycleService.paymentSummary(order.payments);
     return {
       id: order.id.toString(),
       orderNumber: order.orderNumber,
@@ -361,7 +229,19 @@ export class AdminOrdersService {
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
       cancelledAt: order.cancelledAt,
+      deliveredAt: order.deliveredAt,
       cancelReason: order.cancelReason,
+      ...paymentSummary,
+      statusHistory: order.statusHistory.map((entry) => ({
+        id: entry.id.toString(),
+        previousStatus: entry.previousStatus,
+        newStatus: entry.newStatus,
+        actorType: entry.actorType,
+        actorUserId: entry.actorUserId?.toString() || null,
+        reason: entry.reason,
+        metadata: entry.metadata,
+        createdAt: entry.createdAt,
+      })),
       items:
         order.items?.map((item) => ({
           id: item.id.toString(),
@@ -371,6 +251,11 @@ export class AdminOrdersService {
           unitPriceSnapshot: Number(item.unitPriceSnapshot),
           discountValueSnapshot: Number(item.discountValueSnapshot),
           discountTypeSnapshot: item.discountTypeSnapshot,
+          lineSubtotalSnapshot: Number(item.lineSubtotalSnapshot),
+          couponDiscountShare: Number(item.couponDiscountShare),
+          netLineTotal: Number(item.netLineTotal),
+          netUnitPrice: Number(item.netUnitPrice),
+          vatShare: Number(item.vatShare),
           productNameSnapshot: item.productNameSnapshot,
           variantInfoSnapshot: item.variantInfoSnapshot,
           imageSnapshot: item.imageSnapshot,
@@ -387,6 +272,8 @@ export class AdminOrdersService {
           currency: payment.currency,
           paidAt: payment.paidAt,
           createdAt: payment.createdAt,
+          refundSource: payment.refundSource,
+          refundReason: payment.refundReason,
         })) || [],
     };
   }

@@ -16,6 +16,8 @@ import { ClientShowRoomsModule } from './show-rooms/client-show-rooms.module';
 import { ClientCartModule } from './cart/client-cart.module';
 import { ClientCheckoutModule } from './checkout/client-checkout.module';
 import { ClientWishlistModule } from './wishlist/client-wishlist.module';
+import { ClientReturnsModule } from './returns/client-returns.module';
+import { ClientWalletModule } from './wallet/client-wallet.module';
 import { RouterModule } from '@nestjs/core';
 
 @Module({
@@ -36,6 +38,8 @@ import { RouterModule } from '@nestjs/core';
     ClientCartModule,
     ClientCheckoutModule,
     ClientWishlistModule,
+    ClientReturnsModule,
+    ClientWalletModule,
     ProfileModule,
 
     RouterModule.register([
@@ -58,6 +62,8 @@ import { RouterModule } from '@nestjs/core';
           { path: '', module: ClientCartModule },
           { path: '', module: ClientCheckoutModule },
           { path: '', module: ClientWishlistModule },
+          { path: '', module: ClientReturnsModule },
+          { path: '', module: ClientWalletModule },
           { path: '', module: ProfileModule },
         ],
       },

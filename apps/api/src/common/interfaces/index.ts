@@ -27,3 +27,5 @@ export type { CartItem, Cart, ICartsRepository } from './carts.interface';
 export { CARTS_REPOSITORY } from './carts.interface';
 export type { Coupon, ICouponsRepository } from './coupons.interface';
 export { COUPONS_REPOSITORY } from './coupons.interface';
+export type { Order, AdminOrderRecord, ClientOrderRecord, OrderLifecycleRecord, IOrdersRepository } from './orders.interface';
+export { ORDERS_REPOSITORY } from './orders.interface';

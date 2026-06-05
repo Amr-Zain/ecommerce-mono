@@ -20,6 +20,12 @@ import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { Prisma } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
+import {
+  WALLET_PAYMENT_PURPOSES,
+  WALLET_TRANSACTION_DIRECTIONS,
+  WALLET_TRANSACTION_STATUSES,
+  WALLET_TRANSACTION_TYPES,
+} from '@/common/constants/wallet.constants';
 
 type StripeEvent = {
   type: string;
@@ -43,6 +49,11 @@ type CheckoutSnapshotItem = {
   productNameSnapshot: string;
   variantInfoSnapshot: Record<string, string>;
   totalPrice: number;
+  lineSubtotalSnapshot: number;
+  couponDiscountShare: number;
+  netLineTotal: number;
+  netUnitPrice: number;
+  vatShare: number;
   translations?: {
     langId: string;
     nameSnapshot: string | null;
@@ -238,6 +249,13 @@ export class StripeWebhookService {
   }
 
   private async handleCheckoutSessionCompleted(session: StripeObject) {
+    if (this.isWalletDeposit(session)) {
+      return this.handleWalletDepositCompleted(session);
+    }
+    if (this.isExchangePayment(session)) {
+      return this.handleExchangePaymentCompleted(session);
+    }
+
     if (session.payment_status !== 'paid') {
       return { received: true, skipped: true };
     }
@@ -247,11 +265,27 @@ export class StripeWebhookService {
   }
 
   private async handlePaymentIntentSucceeded(intent: StripeObject) {
+    if (this.isWalletDeposit(intent)) {
+      return this.handleWalletDepositCompleted(intent);
+    }
+    if (this.isExchangePayment(intent)) {
+      return this.handleExchangePaymentCompleted(intent);
+    }
+
     const pendingCheckoutId = this.getPendingCheckoutId(intent);
     return this.createPaidOrderFromPendingCheckout(pendingCheckoutId, intent.id, intent);
   }
 
   private async markPendingCheckoutByStripeObject(stripeObject: StripeObject, status: string) {
+    if (this.isWalletDeposit(stripeObject)) {
+      await this.markWalletDepositByStripeObject(stripeObject, status);
+      return { received: true };
+    }
+    if (this.isExchangePayment(stripeObject)) {
+      await this.markExchangePaymentByStripeObject(stripeObject, status);
+      return { received: true };
+    }
+
     const pendingCheckoutId = this.getPendingCheckoutId(stripeObject);
     if (!pendingCheckoutId) {
       return { received: true, skipped: true };
@@ -266,6 +300,131 @@ export class StripeWebhookService {
     return (
       stripeObject.metadata?.[STRIPE_CONFIG.pendingCheckoutMetadataKey] || stripeObject.metadata?.checkoutId || null
     );
+  }
+
+  private isWalletDeposit(stripeObject: StripeObject) {
+    return stripeObject.metadata?.purpose === WALLET_PAYMENT_PURPOSES.deposit;
+  }
+
+  private isExchangePayment(stripeObject: StripeObject) {
+    return Boolean(stripeObject.metadata?.exchangeRequestId);
+  }
+
+  private async handleExchangePaymentCompleted(stripeObject: StripeObject) {
+    const exchangeRequestId = stripeObject.metadata?.exchangeRequestId;
+    if (!exchangeRequestId) return { received: true, skipped: true };
+    return this.prisma.$transaction(async (tx) => {
+      const exchange = await tx.exchangeRequest.findUnique({ where: { id: BigInt(exchangeRequestId) } });
+      if (!exchange) return { received: true, skipped: true };
+      const payment = await tx.paymentTransaction.findFirst({
+        where: {
+          exchangeRequestId: exchange.id,
+          transactionRef: stripeObject.id,
+          refundSource: null,
+        },
+      });
+      if (!payment) return { received: true, requiresReview: true };
+      if (exchange.priceAdjustmentStatus === 'paid') return { received: true, exchangeRequestId };
+      const claim = await tx.exchangeRequest.updateMany({
+        where: { id: exchange.id, priceAdjustmentStatus: 'requires_payment' },
+        data: { priceAdjustmentStatus: 'paid' },
+      });
+      if (claim.count !== 1) return { received: true, requiresReview: true };
+      await tx.paymentTransaction.update({
+        where: { id: payment.id },
+        data: { paymentStatus: PAYMENT_STATUSES.completed, paidAt: new Date(), gatewayResponse: toPrismaJson(stripeObject) },
+      });
+      return { received: true, exchangeRequestId };
+    });
+  }
+
+  private async markExchangePaymentByStripeObject(stripeObject: StripeObject, status: string) {
+    const exchangeRequestId = stripeObject.metadata?.exchangeRequestId;
+    if (!exchangeRequestId) return;
+    await this.prisma.paymentTransaction.updateMany({
+      where: { exchangeRequestId: BigInt(exchangeRequestId), transactionRef: stripeObject.id, refundSource: null },
+      data: { paymentStatus: status, gatewayResponse: toPrismaJson(stripeObject) },
+    });
+  }
+
+  private async handleWalletDepositCompleted(stripeObject: StripeObject) {
+    if (stripeObject.payment_status && stripeObject.payment_status !== 'paid') {
+      return { received: true, skipped: true };
+    }
+
+    const walletTransactionId = stripeObject.metadata?.walletTransactionId;
+    if (!walletTransactionId) {
+      return { received: true, skipped: true };
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const transaction = await tx.walletTransaction.findUnique({
+        where: { id: BigInt(walletTransactionId) },
+      });
+
+      if (!transaction) {
+        return { received: true, skipped: true };
+      }
+
+      if (transaction.status === WALLET_TRANSACTION_STATUSES.completed) {
+        return { received: true, walletTransactionId };
+      }
+
+      if (
+        transaction.type !== WALLET_TRANSACTION_TYPES.deposit ||
+        transaction.direction !== WALLET_TRANSACTION_DIRECTIONS.credit ||
+        transaction.status !== WALLET_TRANSACTION_STATUSES.pending
+      ) {
+        await tx.walletTransaction.update({
+          where: { id: transaction.id },
+          data: {
+            status: WALLET_TRANSACTION_STATUSES.requiresReview,
+            gatewayResponse: toPrismaJson(stripeObject),
+          },
+        });
+        return { received: true, requiresReview: true, walletTransactionId };
+      }
+
+      const claim = await tx.walletTransaction.updateMany({
+        where: { id: transaction.id, status: WALLET_TRANSACTION_STATUSES.pending },
+        data: {
+          status: WALLET_TRANSACTION_STATUSES.completed,
+          transactionRef: stripeObject.id,
+          gatewayResponse: toPrismaJson(stripeObject),
+          completedAt: new Date(),
+        },
+      });
+
+      if (claim.count !== 1) {
+        return { received: true, walletTransactionId };
+      }
+
+      await tx.wallet.update({
+        where: { id: transaction.walletId },
+        data: { availableBalance: { increment: transaction.amount } },
+      });
+
+      return { received: true, walletTransactionId };
+    });
+  }
+
+  private async markWalletDepositByStripeObject(stripeObject: StripeObject, status: string) {
+    const walletTransactionId = stripeObject.metadata?.walletTransactionId;
+    if (!walletTransactionId) return;
+
+    await this.prisma.walletTransaction.updateMany({
+      where: {
+        id: BigInt(walletTransactionId),
+        type: WALLET_TRANSACTION_TYPES.deposit,
+        direction: WALLET_TRANSACTION_DIRECTIONS.credit,
+        status: WALLET_TRANSACTION_STATUSES.pending,
+      },
+      data: {
+        status: status === PAYMENT_STATUSES.expired ? WALLET_TRANSACTION_STATUSES.expired : WALLET_TRANSACTION_STATUSES.failed,
+        failedAt: new Date(),
+        gatewayResponse: toPrismaJson(stripeObject),
+      },
+    });
   }
 
   private async createPaidOrderFromPendingCheckout(
@@ -378,6 +537,13 @@ export class StripeWebhookService {
           paymentMethod: pendingCheckout.paymentMethod,
           paymentStatus: PAYMENT_STATUSES.completed,
           notes: pendingCheckout.notes,
+          statusHistory: {
+            create: {
+              newStatus: ORDER_STATUSES.processing,
+              actorType: 'system',
+              metadata: toPrismaJson({ source: 'stripe_webhook' }),
+            },
+          },
           items: {
             create: snapshot.items.map((item: CheckoutSnapshotItem) => ({
               productId: BigInt(item.productId),
@@ -389,6 +555,11 @@ export class StripeWebhookService {
               productNameSnapshot: item.productNameSnapshot,
               variantInfoSnapshot: item.variantInfoSnapshot,
               totalPrice: item.totalPrice,
+              lineSubtotalSnapshot: item.lineSubtotalSnapshot,
+              couponDiscountShare: item.couponDiscountShare,
+              netLineTotal: item.netLineTotal,
+              netUnitPrice: item.netUnitPrice,
+              vatShare: item.vatShare,
               translations: {
                 create: (item.translations?.length
                   ? item.translations

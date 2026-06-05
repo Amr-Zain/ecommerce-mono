@@ -33,6 +33,17 @@ async function main() {
 
   console.log('Super Admin Role created/updated');
 
+  const returnExchangePermissions = ['returns', 'exchanges'].flatMap((resource) =>
+    ['list', 'read', 'update'].map((action) => ({ resource, action })),
+  );
+  for (const permission of returnExchangePermissions) {
+    await prisma.permission.upsert({
+      where: { resource_action: permission },
+      update: { roles: { connect: { id: superAdminRole.id } } },
+      create: { ...permission, roles: { connect: { id: superAdminRole.id } } },
+    });
+  }
+
   // 2. Create Super Admin User
   const adminEmail = 'admin@ecommerce.com';
   const hashedPassword = await bcrypt.hash('password123', 10);
