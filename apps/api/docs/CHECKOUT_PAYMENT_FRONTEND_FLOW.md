@@ -270,9 +270,9 @@ Admin status transitions are restricted:
 ```ts
 const transitions = {
   pending: ['processing', 'cancelled'],
-  processing: ['shipped', 'cancelled', 'refunded'],
+  processing: ['shipped', 'cancelled'],
   shipped: ['delivered'],
-  delivered: ['refunded'],
+  delivered: [],
   cancelled: [],
   refunded: [],
 };
@@ -286,17 +286,9 @@ If an admin cancels an unpaid order:
 
 If an admin cancels a paid order:
 
-1. Backend calls the payment provider refund strategy.
-2. A refund payment transaction is created.
-3. Order status becomes `cancelled`.
-4. Order payment status becomes `refunded`.
-5. Stock is restored.
+1. Backend locks the order and calculates the full remaining refundable amount.
+2. A cancellation refund attempt is reserved before calling the provider.
+3. After refund success, order status becomes `cancelled`, payment status becomes `refunded`, stock is restored, and a status-audit entry is created.
+4. If Stripe refund fails or is uncertain, order and stock stay unchanged and payment status becomes `requires_review`.
 
-If an admin changes status to `refunded`:
-
-1. Backend requires a completed payment transaction.
-2. Backend calls the payment provider refund strategy.
-3. A refund payment transaction is created.
-4. Order status becomes `refunded`.
-5. Order payment status becomes `refunded`.
-6. Stock is restored.
+There is no standalone admin order-refund action. Partial refunds happen only through return/exchange flows. See `docs/order-cancellation-status-audit-flow.md`.

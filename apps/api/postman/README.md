@@ -477,11 +477,113 @@ Client endpoints use `@ApiContext('client')` which returns thin responses: only 
 | GET | `/client/orders` | List user's orders |
 | GET | `/client/orders/:id` | Get order detail |
 | POST | `/client/orders` | Create order |
+| POST | `/client/orders/:id/cancel` | Cancel a `pending` order, refund remaining payment, and restore stock |
+
+### Returns (requires client JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/client/returns` | List user's return requests |
+| POST | `/client/returns` | Create return request with one or more items |
+| POST | `/client/returns/:id/cancel` | Cancel return while `requested` |
+
+### Exchanges (requires client JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/client/exchanges` | List user's exchange requests |
+| POST | `/client/exchanges` | Create exchange request with one or more items |
+| POST | `/client/exchanges/:id/cancel` | Cancel exchange while `requested` |
+
+### Wallet (requires client JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/client/wallet` | Get current wallet balance |
+| GET | `/client/wallet/transactions?filters[type]=deposit&filters[status]=completed` | List wallet transactions with advanced filters |
+| POST | `/client/wallet/deposits` | Create Stripe wallet deposit |
+| GET | `/client/wallet/deposits/:id` | Get deposit transaction |
+| POST | `/client/wallet/deposits/:id/verify` | Verify deposit if webhook is delayed |
+| GET | `/client/wallet/withdrawals?filters[status]=requested` | List withdrawal requests with advanced filters |
+| POST | `/client/wallet/withdrawals` | Request manual bank transfer withdrawal |
+| GET | `/client/wallet/withdrawals/:id` | Get withdrawal request |
+| POST | `/client/wallet/withdrawals/:id/cancel` | Cancel withdrawal while `requested` |
+
+## Admin Order, Return, And Exchange Endpoints
+
+### Orders (requires admin JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/admin/orders` | List/filter orders |
+| GET | `/admin/orders/:id` | Get order detail with payment totals and full status audit |
+| PATCH | `/admin/orders/:id/status` | Move order through allowed fulfillment transitions or cancel before shipping |
+| POST | `/admin/orders/:id/confirm-payment` | Confirm pending/manual payment |
+| POST | `/admin/orders/:orderId/cancellation-refunds/:refundId/retry` | Retry a cancellation refund requiring review |
+
+Cancellation uses `PATCH /admin/orders/:id/status`:
+
+```json
+{
+  "status": "cancelled",
+  "reason": "Customer requested cancellation before shipment"
+}
+```
+
+There is no standalone admin order-refund endpoint. Cancellation refunds the full remaining payment and restores stock. Partial refunds are available only through return/exchange flows.
+
+### Returns (requires admin JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/admin/returns` | List/filter return requests |
+| GET | `/admin/returns/:id` | Get return detail, items, refund state, and status history |
+| POST | `/admin/returns/:id/approve` | Approve return request |
+| POST | `/admin/returns/:id/reject` | Reject return request |
+| POST | `/admin/returns/:id/receive` | Mark all returned items received, set dispositions, and lock adjusted refund/shipping amounts |
+| POST | `/admin/returns/:id/refund` | Process or record the locked return refund |
+| POST | `/admin/returns/:id/complete` | Complete refunded return |
+
+### Exchanges (requires admin JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/admin/exchanges` | List/filter exchange requests |
+| GET | `/admin/exchanges/:id` | Get exchange detail, items, reservation, settlement, and status history |
+| POST | `/admin/exchanges/:id/approve` | Approve exchange and reserve replacement stock |
+| POST | `/admin/exchanges/:id/retry-reservation` | Retry replacement reservation after stock becomes available |
+| POST | `/admin/exchanges/release-expired` | Release all expired replacement reservations and move them to review |
+| POST | `/admin/exchanges/:id/reject` | Reject exchange and release reserved stock if needed |
+| POST | `/admin/exchanges/:id/receive` | Mark all old items received, set dispositions, and lock replacement shipping settlement |
+| POST | `/admin/exchanges/:id/payment` | Create payment for higher replacement price |
+| POST | `/admin/exchanges/:id/verify-payment` | Verify exchange difference payment |
+| POST | `/admin/exchanges/:id/refund-difference` | Refund lower replacement price difference |
+| POST | `/admin/exchanges/:id/waive-adjustment` | Waive required payment/refund difference |
+| POST | `/admin/exchanges/:id/ship` | Mark replacement shipped |
+| POST | `/admin/exchanges/:id/complete` | Complete shipped exchange |
+
+The exchange payment endpoints create or verify the gateway payment operation. The admin dashboard does not mark Stripe payments paid; verified webhook/gateway confirmation settles them.
+
+### Wallet (requires admin JWT)
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/admin/wallets?search=email&filters[status]=active` | List wallets with advanced filters |
+| GET | `/admin/wallets/:id` | Get wallet detail |
+| GET | `/admin/wallet-transactions?filters[user_id]=1&filters[type]=deposit` | List all wallet transactions |
+| GET | `/admin/wallet-withdrawals?filters[status]=requested` | List withdrawal requests |
+| GET | `/admin/wallet-withdrawals/:id` | Get withdrawal request |
+| POST | `/admin/wallet-withdrawals/:id/approve` | Approve manual withdrawal |
+| POST | `/admin/wallet-withdrawals/:id/paid` | Mark withdrawal as manually transferred |
+| POST | `/admin/wallet-withdrawals/:id/reject` | Reject and return pending balance |
+| POST | `/admin/wallet-withdrawals/:id/fail` | Mark failed and return pending balance |
 
 ## Notes
 
 - All timestamps are in ISO 8601 format
 - BigInt IDs are returned as strings in JSON responses
+- API responses are returned in `snake_case`
+- Order details include `original_paid_amount`, `refunded_amount`, `reserved_refund_amount`, `remaining_refundable_amount`, and `status_history`.
+- Client cancellation is allowed only for `pending`; admin cancellation is allowed for `pending` and `processing`.
+- Failed/uncertain Stripe cancellation refunds keep order and stock unchanged and require retry/review.
+- Return/exchange request bodies in the collection use `snake_case`
+- Wallet request bodies in the collection use `snake_case`; wallet list endpoints use advanced query filters.
+- Return/exchange create payloads use `items[]`.
+- Admin return receive payloads cannot refund more than the calculated item/VAT amount or original shipping fee.
+- Admin exchange receive payloads settle `total_price_difference + replacement_shipping_fee`.
 - Passwords are automatically hashed using bcrypt
 - Default user type is "client" if not specified
 - Admin endpoints return all language keys (`en`, `ar`, etc.) plus promoted fields

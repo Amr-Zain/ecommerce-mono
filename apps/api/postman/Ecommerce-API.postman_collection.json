@@ -1971,8 +1971,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/admin/coupons",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "coupons"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "coupons"
+                  ]
                 }
               }
             },
@@ -1983,8 +1988,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/admin/coupons/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "coupons", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "coupons",
+                    "1"
+                  ]
                 }
               }
             },
@@ -1996,12 +2007,21 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"code\": \"SUMMER20\",\n  \"discountType\": \"PERCENTAGE\",\n  \"discountValue\": 20,\n  \"minOrderAmount\": 100,\n  \"maxDiscount\": 50,\n  \"usageLimit\": 100,\n  \"perUserLimit\": 1,\n  \"startsAt\": \"2026-06-01T00:00:00Z\",\n  \"expiresAt\": \"2026-07-01T00:00:00Z\",\n  \"isActive\": true\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/admin/coupons",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "coupons"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "coupons"
+                  ]
                 }
               }
             },
@@ -2013,12 +2033,22 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"discountValue\": 25,\n  \"isActive\": false\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/admin/coupons/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "coupons", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "coupons",
+                    "1"
+                  ]
                 }
               }
             },
@@ -2029,8 +2059,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/admin/coupons/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "coupons", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "coupons",
+                    "1"
+                  ]
                 }
               }
             }
@@ -2045,11 +2081,19 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/admin/orders?status=confirmed",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "orders"],
+              "raw": "{{baseUrl}}/admin/orders?status=processing",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "orders"
+                  ],
                   "query": [
-                    { "key": "status", "value": "confirmed" }
+                    {
+                      "key": "status",
+                  "value": "processing"
+                    }
                   ]
                 }
               }
@@ -2061,8 +2105,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/admin/orders/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "orders", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "orders",
+                    "1"
+                  ]
                 }
               }
             },
@@ -2074,12 +2124,23 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"status\": \"shipped\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/admin/orders/1/status",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "orders", "1", "status"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "orders",
+                    "1",
+                    "status"
+                  ]
                 }
               }
             },
@@ -2090,25 +2151,956 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/admin/orders/1/confirm-payment",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "orders", "1", "confirm-payment"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "orders",
+                    "1",
+                    "confirm-payment"
+                  ]
                 }
               }
             },
             {
-              "name": "Refund Order",
+              "name": "Cancel Order Before Shipping",
               "request": {
-                "method": "POST",
+                "method": "PATCH",
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"reason\": \"Customer requested refund\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "raw": "{\n  \"status\": \"cancelled\",\n  \"reason\": \"Customer requested cancellation before shipment\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/admin/orders/1/refund",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["admin", "orders", "1", "refund"]
+                  "raw": "{{baseUrl}}/admin/orders/1/status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "orders",
+                    "1",
+                    "status"
+                  ]
+                },
+                "description": "Allowed only while the order is pending or processing. Refunds the full remaining paid amount and restores all stock only after refund success."
+              }
+            },
+            {
+              "name": "Retry Cancellation Refund",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/orders/1/cancellation-refunds/1/retry",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "orders",
+                    "1",
+                    "cancellation-refunds",
+                    "1",
+                    "retry"
+                  ]
+                }
+              },
+              "description": "Retry a Stripe cancellation refund transaction in requires_review status using the same idempotency key."
+            }
+          ]
+        },
+        {
+          "name": "Returns",
+          "item": [
+            {
+              "name": "List Returns",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/returns?status=requested",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "returns"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "requested"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Return",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/returns/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "returns",
+                    "1"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Approve Return",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/returns/1/approve",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "returns",
+                    "1",
+                    "approve"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reject Return",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Return request rejected after review\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/returns/1/reject",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "returns",
+                    "1",
+                    "reject"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Receive Return Item",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"items\": [\n    {\n      \"id\": \"1\",\n      \"accepted_quantity\": 1,\n      \"disposition\": \"restock\",\n      \"adjusted_refund_amount\": 100,\n      \"adjusted_vat_refund_amount\": 15,\n      \"refund_adjustment_reason\": \"Accepted full refund\",\n      \"note\": \"Item received in sellable condition\"\n    }\n  ],\n  \"shipping_refund_amount\": 0,\n  \"shipping_refund_reason\": \"Customer size change\",\n  \"note\": \"Received and inspected\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/returns/1/receive",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "returns",
+                    "1",
+                    "receive"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refund Return",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Refund processed\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/returns/1/refund",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "returns",
+                    "1",
+                    "refund"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Complete Return",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/returns/1/complete",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "returns",
+                    "1",
+                    "complete"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Exchanges",
+          "item": [
+            {
+              "name": "List Exchanges",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges?status=requested",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "requested"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Exchange",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Approve Exchange",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/approve",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "approve"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Retry Exchange Reservation",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/retry-reservation",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "retry-reservation"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Release Expired Exchange Reservations",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/release-expired",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "release-expired"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reject Exchange",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Exchange request rejected after review\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/reject",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "reject"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Receive Exchange Item",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"items\": [\n    {\n      \"id\": \"1\",\n      \"accepted_quantity\": 1,\n      \"disposition\": \"restock\",\n      \"note\": \"Old item received\"\n    }\n  ],\n  \"replacement_shipping_fee\": 0,\n  \"shipping_fee_reason\": \"Store fault or waived shipping\",\n  \"note\": \"Old item received and inspected\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/receive",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "receive"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Exchange Difference Payment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"payment_method\": \"stripe_checkout\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/payment",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "payment"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Verify Exchange Difference Payment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"transaction_ref\": \"pi_or_session_reference\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/verify-payment",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "verify-payment"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Refund Exchange Difference",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Refunded cheaper replacement difference\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/refund-difference",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "refund-difference"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Waive Exchange Adjustment",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Price difference waived by admin\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/waive-adjustment",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "waive-adjustment"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Ship Exchange Replacement",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/ship",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "ship"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Complete Exchange",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/exchanges/1/complete",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "exchanges",
+                    "1",
+                    "complete"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Wallet",
+          "item": [
+            {
+              "name": "List Wallets",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/wallets?search=customer%40example.com&filters%5Bstatus%5D=active&sort%5Bcreated_at%5D=desc&page=1&limit=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "wallets"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "customer@example.com"
+                    },
+                    {
+                      "key": "filters[status]",
+                      "value": "active"
+                    },
+                    {
+                      "key": "sort[created_at]",
+                      "value": "desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Wallet",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/wallets/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "wallets",
+                    "1"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "List Wallet Transactions",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/wallet-transactions?filters%5Buser_id%5D=1&filters%5Btype%5D=deposit&filters%5Bstatus%5D=completed&sort%5Bcreated_at%5D=desc&page=1&limit=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "wallet-transactions"
+                  ],
+                  "query": [
+                    {
+                      "key": "filters[user_id]",
+                      "value": "1"
+                    },
+                    {
+                      "key": "filters[type]",
+                      "value": "deposit"
+                    },
+                    {
+                      "key": "filters[status]",
+                      "value": "completed"
+                    },
+                    {
+                      "key": "sort[created_at]",
+                      "value": "desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "List Withdrawals",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/wallet-withdrawals?filters%5Bstatus%5D=requested&sort%5Bcreated_at%5D=desc&page=1&limit=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "wallet-withdrawals"
+                  ],
+                  "query": [
+                    {
+                      "key": "filters[status]",
+                      "value": "requested"
+                    },
+                    {
+                      "key": "sort[created_at]",
+                      "value": "desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Withdrawal",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/wallet-withdrawals/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "wallet-withdrawals",
+                    "1"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Approve Withdrawal",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/wallet-withdrawals/1/approve",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "wallet-withdrawals",
+                    "1",
+                    "approve"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Approved for manual bank transfer\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Mark Withdrawal Paid",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/wallet-withdrawals/1/paid",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "wallet-withdrawals",
+                    "1",
+                    "paid"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"transfer_reference\": \"BANK-TRANSFER-REF-001\",\n  \"note\": \"Transferred manually by finance\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Reject Withdrawal",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/wallet-withdrawals/1/reject",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "wallet-withdrawals",
+                    "1",
+                    "reject"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Invalid bank details\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Fail Withdrawal",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/wallet-withdrawals/1/fail",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "wallet-withdrawals",
+                    "1",
+                    "fail"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Bank transfer failed\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 }
               }
             }
@@ -2139,8 +3131,13 @@
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/client/home",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "home"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "home"
+                  ]
                 }
               }
             }
@@ -2152,17 +3149,39 @@
             {
               "name": "List Countries (active)",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/countries?page=1&limit=50",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "countries"],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "countries"
+                  ],
                   "query": [
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "50" },
-                    { "key": "filters[isActive]", "value": "1" }
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "50"
+                    },
+                    {
+                      "key": "filters[isActive]",
+                      "value": "1"
+                    }
                   ]
                 }
               }
@@ -2170,13 +3189,27 @@
             {
               "name": "Get Country by ID",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/countries/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "countries", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "countries",
+                    "1"
+                  ]
                 }
               }
             }
@@ -2188,16 +3221,35 @@
             {
               "name": "List Cities (active)",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/cities?page=1&limit=50",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "cities"],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "cities"
+                  ],
                   "query": [
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "50" }
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "50"
+                    }
                   ]
                 }
               }
@@ -2205,13 +3257,27 @@
             {
               "name": "Get City by ID",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/cities/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "cities", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "cities",
+                    "1"
+                  ]
                 }
               }
             }
@@ -2223,13 +3289,26 @@
             {
               "name": "List Active Sliders",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/sliders",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "sliders"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "sliders"
+                  ]
                 }
               }
             }
@@ -2241,13 +3320,26 @@
             {
               "name": "List Active FAQs",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/faqs",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "faqs"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "faqs"
+                  ]
                 }
               }
             }
@@ -2259,16 +3351,35 @@
             {
               "name": "List Active Collectionss",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/collections?page=1&limit=50",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "collections"],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "collections"
+                  ],
                   "query": [
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "50" }
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "50"
+                    }
                   ]
                 }
               }
@@ -2276,13 +3387,27 @@
             {
               "name": "Get Collection by ID",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/collections/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "collections", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "collections",
+                    "1"
+                  ]
                 }
               }
             }
@@ -2294,16 +3419,35 @@
             {
               "name": "List Active Products",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/products?page=1&limit=20",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "products"],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "products"
+                  ],
                   "query": [
-                    { "key": "page", "value": "1" },
-                    { "key": "limit", "value": "20" }
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
                   ]
                 }
               }
@@ -2311,13 +3455,27 @@
             {
               "name": "Get Product by ID",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/products/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "products", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "products",
+                    "1"
+                  ]
                 }
               }
             }
@@ -2329,26 +3487,53 @@
             {
               "name": "List Active Attributes",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/attributes",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "attributes"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "attributes"
+                  ]
                 }
               }
             },
             {
               "name": "Get Attribute with Values",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/attributes/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "attributes", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "attributes",
+                    "1"
+                  ]
                 }
               }
             }
@@ -2360,26 +3545,53 @@
             {
               "name": "List Active Pages",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/static-pages",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "static-pages"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "static-pages"
+                  ]
                 }
               }
             },
             {
               "name": "Get Page by Slug",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
-                "header": [{ "key": "Accept-Language", "value": "en", "type": "text" }],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
                 "url": {
                   "raw": "{{baseUrl}}/client/static-pages/about-us",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "static-pages", "about-us"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "static-pages",
+                    "about-us"
+                  ]
                 }
               }
             }
@@ -2424,12 +3636,21 @@
               "request": {
                 "method": "GET",
                 "header": [
-                  { "key": "Accept-Language", "value": "en", "type": "text" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/client/profile",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "profile"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "profile"
+                  ]
                 }
               }
             },
@@ -2438,17 +3659,30 @@
               "request": {
                 "method": "PUT",
                 "header": [
-                  { "key": "Accept-Language", "value": "en", "type": "text" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"+966512345678\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/profile",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "profile"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "profile"
+                  ]
                 }
               }
             },
@@ -2460,12 +3694,22 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"image\": \"MEDIA_HASH_HERE\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/profile/image",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "profile", "image"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "profile",
+                    "image"
+                  ]
                 }
               }
             }
@@ -2481,8 +3725,13 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/client/addresses",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "addresses"
+                  ]
                 }
               }
             },
@@ -2494,12 +3743,21 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"address\": \"123 Main Street\",\n  \"cityId\": 1,\n  \"countryId\": 1,\n  \"streetName\": \"Main St\",\n  \"buildingNumber\": \"123\",\n  \"isDefault\": true\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/addresses",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "addresses"
+                  ]
                 }
               }
             },
@@ -2511,12 +3769,22 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"address\": \"456 Updated Street\",\n  \"isDefault\": true\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/addresses/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "addresses",
+                    "1"
+                  ]
                 }
               }
             },
@@ -2527,8 +3795,15 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/client/addresses/1/default",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses", "1", "default"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "addresses",
+                    "1",
+                    "default"
+                  ]
                 }
               }
             },
@@ -2539,8 +3814,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/client/addresses/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "addresses",
+                    "1"
+                  ]
                 }
               }
             }
@@ -2552,13 +3833,22 @@
             {
               "name": "List Reviews for Product (Public)",
               "request": {
-                "auth": { "type": "noauth" },
+                "auth": {
+                  "type": "noauth"
+                },
                 "method": "GET",
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/client/reviews/products/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "reviews", "products", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "reviews",
+                    "products",
+                    "1"
+                  ]
                 }
               }
             },
@@ -2570,12 +3860,21 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"productId\": 1,\n  \"rating\": 5,\n  \"comment\": \"Great product!\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/reviews",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "reviews"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "reviews"
+                  ]
                 }
               }
             },
@@ -2587,12 +3886,22 @@
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated review\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/reviews/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "reviews", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "reviews",
+                    "1"
+                  ]
                 }
               }
             },
@@ -2603,8 +3912,14 @@
                 "header": [],
                 "url": {
                   "raw": "{{baseUrl}}/client/reviews/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "reviews", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "reviews",
+                    "1"
+                  ]
                 }
               }
             }
@@ -2618,12 +3933,20 @@
               "request": {
                 "method": "GET",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/client/cart",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "cart"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "cart"
+                  ]
                 }
               }
             },
@@ -2632,17 +3955,30 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"productId\": 1,\n  \"variantId\": 1,\n  \"quantity\": 2\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/cart/items",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "cart", "items"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "cart",
+                    "items"
+                  ]
                 }
               }
             },
@@ -2651,17 +3987,31 @@
               "request": {
                 "method": "PATCH",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"quantity\": 3\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/cart/items/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "cart", "items", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "cart",
+                    "items",
+                    "1"
+                  ]
                 }
               }
             },
@@ -2670,12 +4020,22 @@
               "request": {
                 "method": "DELETE",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/client/cart/items/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "cart", "items", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "cart",
+                    "items",
+                    "1"
+                  ]
                 }
               }
             },
@@ -2684,12 +4044,20 @@
               "request": {
                 "method": "DELETE",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/client/cart",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "cart"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "cart"
+                  ]
                 }
               }
             }
@@ -2703,17 +4071,30 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"addressId\": 1,\n  \"couponCode\": \"SUMMER20\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/checkout/preview",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "checkout", "preview"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "checkout",
+                    "preview"
+                  ]
                 }
               }
             },
@@ -2722,17 +4103,30 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"addressId\": 1,\n  \"paymentMethod\": \"cod\",\n  \"couponCode\": \"SUMMER20\",\n  \"notes\": \"Leave at door\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/checkout/place-order",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "checkout", "place-order"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "checkout",
+                    "place-order"
+                  ]
                 }
               }
             }
@@ -2746,14 +4140,25 @@
               "request": {
                 "method": "GET",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/client/orders?status=delivered",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "orders"],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "orders"
+                  ],
                   "query": [
-                    { "key": "status", "value": "delivered" }
+                    {
+                      "key": "status",
+                      "value": "delivered"
+                    }
                   ]
                 }
               }
@@ -2763,12 +4168,21 @@
               "request": {
                 "method": "GET",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "url": {
                   "raw": "{{baseUrl}}/client/orders/1",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "orders", "1"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "orders",
+                    "1"
+                  ]
                 }
               }
             },
@@ -2777,17 +4191,471 @@
               "request": {
                 "method": "POST",
                 "header": [
-                  { "key": "Accept-Language", "value": "en" }
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
                 ],
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"reason\": \"Changed my mind\"\n}",
-                  "options": { "raw": { "language": "json" } }
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 },
                 "url": {
                   "raw": "{{baseUrl}}/client/orders/1/cancel",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["client", "orders", "1", "cancel"]
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "orders",
+                    "1",
+                    "cancel"
+                  ]
+                }
+              },
+              "description": "Client cancellation is allowed only while the order is pending. It refunds the full remaining paid amount and restores stock only after refund success."
+            }
+          ]
+        },
+        {
+          "name": "Returns",
+          "item": [
+            {
+              "name": "List My Returns",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/returns",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "returns"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Return Request",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Return selected order items\",\n  \"items\": [\n    {\n      \"order_item_id\": \"1\",\n      \"quantity\": 1,\n      \"reason\": \"wrong_size\",\n      \"note\": \"Size does not fit\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/returns",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "returns"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cancel Return Request",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/returns/1/cancel",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "returns",
+                    "1",
+                    "cancel"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Exchanges",
+          "item": [
+            {
+              "name": "List My Exchanges",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/exchanges",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "exchanges"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Exchange Request",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Exchange selected order items\",\n  \"items\": [\n    {\n      \"order_item_id\": \"1\",\n      \"new_variant_id\": \"2\",\n      \"quantity\": 1,\n      \"reason\": \"wrong_size\",\n      \"note\": \"Need a larger size\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/exchanges",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "exchanges"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Cancel Exchange Request",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/exchanges/1/cancel",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "exchanges",
+                    "1",
+                    "cancel"
+                  ],
+                  "query": []
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Wallet",
+          "item": [
+            {
+              "name": "Get Wallet",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wallet",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "wallet"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "List Transactions",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wallet/transactions?filters%5Btype%5D=deposit&filters%5Bstatus%5D=completed&sort%5Bcreated_at%5D=desc&page=1&limit=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "wallet",
+                    "transactions"
+                  ],
+                  "query": [
+                    {
+                      "key": "filters[type]",
+                      "value": "deposit"
+                    },
+                    {
+                      "key": "filters[status]",
+                      "value": "completed"
+                    },
+                    {
+                      "key": "sort[created_at]",
+                      "value": "desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Stripe Checkout Deposit",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wallet/deposits",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "wallet",
+                    "deposits"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 100,\n  \"payment_method\": \"stripe_checkout\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Verify Deposit",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wallet/deposits/1/verify",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "wallet",
+                    "deposits",
+                    "1",
+                    "verify"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Deposit",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wallet/deposits/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "wallet",
+                    "deposits",
+                    "1"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "List Withdrawals",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wallet/withdrawals?filters%5Bstatus%5D=requested&sort%5Bcreated_at%5D=desc&page=1&limit=10",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "wallet",
+                    "withdrawals"
+                  ],
+                  "query": [
+                    {
+                      "key": "filters[status]",
+                      "value": "requested"
+                    },
+                    {
+                      "key": "sort[created_at]",
+                      "value": "desc"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Withdrawal",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wallet/withdrawals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "wallet",
+                    "withdrawals"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 50,\n  \"method\": \"bank_transfer\",\n  \"details\": {\n    \"bank_name\": \"Bank Name\",\n    \"account_holder\": \"John Doe\",\n    \"account_number\": \"1234567890\",\n    \"iban\": \"SA0000000000000000000000\"\n  },\n  \"note\": \"Manual bank transfer withdrawal request\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Get Withdrawal",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wallet/withdrawals/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "wallet",
+                    "withdrawals",
+                    "1"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Cancel Withdrawal",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wallet/withdrawals/1/cancel",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "client",
+                    "wallet",
+                    "withdrawals",
+                    "1",
+                    "cancel"
+                  ]
                 }
               }
             }
