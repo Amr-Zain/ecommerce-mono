@@ -5,14 +5,20 @@ import { PrismaService } from '@/prisma';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { INVENTORY_REASONS } from '@/common/constants/commerce.constants';
 import {
-  ONLINE_PAYMENT_METHODS,
   ORDER_STATUS_ACTORS,
   PAYMENT_CURRENCIES,
   PAYMENT_STATUSES,
   REFUND_SOURCES,
 } from '@/shared/payment/payment.constants';
 import { PaymentService } from '@/shared/payment/payment.service';
-import { IOrdersRepository, ORDERS_REPOSITORY } from '@/common/interfaces';
+import {
+  IOrdersRepository,
+  ORDERS_REPOSITORY,
+  IPaymentTransactionsRepository,
+  PAYMENT_TRANSACTIONS_REPOSITORY,
+  IVariantsRepository,
+  VARIANTS_REPOSITORY,
+} from '@/common/interfaces';
 
 const toJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
@@ -25,6 +31,9 @@ export class OrderLifecycleService {
     private readonly paymentService: PaymentService,
     private readonly i18n: I18nService<I18nTranslations>,
     @Inject(ORDERS_REPOSITORY) private readonly ordersRepository: IOrdersRepository,
+    @Inject(PAYMENT_TRANSACTIONS_REPOSITORY)
+    private readonly paymentTransactionsRepository: IPaymentTransactionsRepository,
+    @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
   ) {}
 
   paymentSummary(payments: { amount: Prisma.Decimal; paymentStatus: string; refundSource?: string | null }[]) {
@@ -98,8 +107,8 @@ export class OrderLifecycleService {
       }
 
       const idempotencyKey = `cancel_order_${order.id.toString()}_${Date.now()}`;
-      const attempt = await tx.paymentTransaction.create({
-        data: {
+      const attempt = await this.paymentTransactionsRepository.create(
+        {
           orderId: order.id,
           amount: summary.remainingRefundableAmount,
           paymentMethod: order.paymentMethod,
@@ -112,11 +121,13 @@ export class OrderLifecycleService {
           idempotencyKey,
           requestedById: input.actorUserId,
         },
-      });
-      await tx.order.update({
-        where: { id: order.id },
-        data: { paymentStatus: PAYMENT_STATUSES.processingPayment },
-      });
+        tx,
+      );
+      await this.ordersRepository.updateOrder(
+        order.id,
+        { paymentStatus: PAYMENT_STATUSES.processingPayment },
+        tx,
+      );
 
       return {
         attemptId: attempt.id,
@@ -135,13 +146,11 @@ export class OrderLifecycleService {
   }
 
   async retryCancellationRefund(orderId: bigint, refundId: bigint, adminId?: bigint) {
-    const attempt = await this.prisma.paymentTransaction.findFirst({
-      where: {
-        id: refundId,
-        orderId,
-        refundSource: REFUND_SOURCES.cancellation,
-        paymentStatus: PAYMENT_STATUSES.requiresReview,
-      },
+    const attempt = await this.paymentTransactionsRepository.findFirst({
+      id: refundId,
+      orderId,
+      refundSource: REFUND_SOURCES.cancellation,
+      paymentStatus: PAYMENT_STATUSES.requiresReview,
     });
     if (!attempt) throw new NotFoundException(this.i18n.t('errors.order_cancellation_refund_not_found'));
     const gateway = (attempt.gatewayResponse || {}) as Record<string, unknown>;
@@ -150,22 +159,26 @@ export class OrderLifecycleService {
       throw new BadRequestException(this.i18n.t('errors.order_cancellation_refund_invalid'));
     }
     await this.prisma.$transaction(async (tx) => {
-      const claimed = await tx.paymentTransaction.updateMany({
-        where: {
-          id: attempt.id,
-          orderId,
-          refundSource: REFUND_SOURCES.cancellation,
-          paymentStatus: PAYMENT_STATUSES.requiresReview,
+      const claimed = await this.paymentTransactionsRepository.updateMany(
+        {
+          where: {
+            id: attempt.id,
+            orderId,
+            refundSource: REFUND_SOURCES.cancellation,
+            paymentStatus: PAYMENT_STATUSES.requiresReview,
+          },
+          data: { paymentStatus: PAYMENT_STATUSES.processingPayment, requestedById: adminId },
         },
-        data: { paymentStatus: PAYMENT_STATUSES.processingPayment, requestedById: adminId },
-      });
+        tx,
+      );
       if (claimed.count !== 1) {
         throw new NotFoundException(this.i18n.t('errors.order_cancellation_refund_not_found'));
       }
-      await tx.order.update({
-        where: { id: orderId },
-        data: { paymentStatus: PAYMENT_STATUSES.processingPayment },
-      });
+      await this.ordersRepository.updateOrder(
+        orderId,
+        { paymentStatus: PAYMENT_STATUSES.processingPayment },
+        tx,
+      );
     });
     await this.processCancellationRefund(attempt.id, {
       method: attempt.paymentMethod,
@@ -188,7 +201,7 @@ export class OrderLifecycleService {
         : summary.remainingRefundableAmount <= 0
           ? PAYMENT_STATUSES.refunded
           : PAYMENT_STATUSES.partiallyRefunded;
-    await tx.order.update({ where: { id: orderId }, data: { paymentStatus } });
+    await this.ordersRepository.updateOrder(orderId, { paymentStatus }, tx);
     return summary;
   }
 
@@ -221,17 +234,7 @@ export class OrderLifecycleService {
       metadata?: unknown;
     },
   ) {
-    return tx.orderStatusHistory.create({
-      data: {
-        orderId: input.orderId,
-        previousStatus: input.previousStatus,
-        newStatus: input.newStatus,
-        actorType: input.actorType,
-        actorUserId: input.actorUserId,
-        reason: input.reason,
-        metadata: input.metadata ? toJson(input.metadata) : undefined,
-      },
-    });
+    return this.ordersRepository.createStatusHistory(input, tx);
   }
 
   private async processCancellationRefund(
@@ -267,16 +270,16 @@ export class OrderLifecycleService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      const attempt = await tx.paymentTransaction.findUnique({ where: { id: attemptId } });
+      const attempt = await this.paymentTransactionsRepository.findById(attemptId, tx);
       if (!attempt) throw new NotFoundException(this.i18n.t('errors.order_cancellation_refund_not_found'));
       await this.ordersRepository.lock(attempt.orderId, tx);
       const order = await this.ordersRepository.findLifecycleOrder(attempt.orderId, tx);
       if (!order) throw new NotFoundException(this.i18n.t('errors.order_not_found'));
       if (order.status === 'cancelled') return;
 
-      await tx.paymentTransaction.update({
-        where: { id: attempt.id },
-        data: {
+      await this.paymentTransactionsRepository.update(
+        attempt.id,
+        {
           paymentStatus: PAYMENT_STATUSES.refunded,
           gatewayResponse: toJson({
             originalTransactionRef: input.originalTransactionRef,
@@ -284,7 +287,8 @@ export class OrderLifecycleService {
           }),
           paidAt: new Date(),
         },
-      });
+        tx,
+      );
       await this.finalizeCancellation(tx, order, {
         actorType: input.actorType,
         actorUserId: input.actorUserId,
@@ -299,24 +303,24 @@ export class OrderLifecycleService {
     refundResponse: unknown,
   ) {
     await this.prisma.$transaction(async (tx) => {
-      const attempt = await tx.paymentTransaction.findUniqueOrThrow({
-        where: { id: attemptId },
-        select: { orderId: true },
-      });
-      await tx.paymentTransaction.update({
-        where: { id: attemptId },
-        data: {
+      const attempt = await this.paymentTransactionsRepository.findById(attemptId, tx);
+      if (!attempt) throw new NotFoundException(this.i18n.t('errors.order_cancellation_refund_not_found'));
+      await this.paymentTransactionsRepository.update(
+        attemptId,
+        {
           paymentStatus: PAYMENT_STATUSES.requiresReview,
           gatewayResponse: toJson({
             originalTransactionRef,
             refundResponse,
           }),
         },
-      });
-      await tx.order.update({
-        where: { id: attempt.orderId },
-        data: { paymentStatus: PAYMENT_STATUSES.requiresReview },
-      });
+        tx,
+      );
+      await this.ordersRepository.updateOrder(
+        attempt.orderId,
+        { paymentStatus: PAYMENT_STATUSES.requiresReview },
+        tx,
+      );
     });
   }
 
@@ -327,33 +331,30 @@ export class OrderLifecycleService {
   ) {
     for (const item of order.items) {
       if (!item.variantId) continue;
-      const variant = await tx.productVariant.findUnique({ where: { id: item.variantId } });
-      if (!variant) continue;
-      const previousStock = variant.stockQuantity;
-      const newStock = previousStock + item.quantity;
-      await tx.productVariant.update({ where: { id: variant.id }, data: { stockQuantity: newStock } });
-      await tx.inventoryLog.create({
-        data: {
-          variantId: variant.id,
-          changeAmount: item.quantity,
-          previousStock,
-          newStock,
-          reason: INVENTORY_REASONS.return,
-        },
-      });
+      await this.variantsRepository.adjustStock(
+        item.variantId,
+        item.quantity,
+        INVENTORY_REASONS.return,
+        tx,
+      );
     }
 
-    await tx.paymentTransaction.updateMany({
-      where: {
-        orderId: order.id,
-        paymentStatus: { in: [PAYMENT_STATUSES.pending, PAYMENT_STATUSES.awaitingConfirmation] },
+    await this.paymentTransactionsRepository.updateMany(
+      {
+        where: {
+          orderId: order.id,
+          paymentStatus: { in: [PAYMENT_STATUSES.pending, PAYMENT_STATUSES.awaitingConfirmation] },
+        },
+        data: { paymentStatus: PAYMENT_STATUSES.failed },
       },
-      data: { paymentStatus: PAYMENT_STATUSES.failed },
-    });
-    const summary = this.paymentSummary(await tx.paymentTransaction.findMany({ where: { orderId: order.id } }));
-    await tx.order.update({
-      where: { id: order.id },
-      data: {
+      tx,
+    );
+    const summary = this.paymentSummary(
+      await this.paymentTransactionsRepository.findMany({ orderId: order.id }, tx),
+    );
+    await this.ordersRepository.updateOrder(
+      order.id,
+      {
         status: 'cancelled',
         paymentStatus:
           summary.refundedAmount > 0
@@ -368,7 +369,8 @@ export class OrderLifecycleService {
         cancelledAt: new Date(),
         cancelReason: input.reason,
       },
-    });
+      tx,
+    );
     await this.createStatusHistory(tx, {
       orderId: order.id,
       previousStatus: order.status,
