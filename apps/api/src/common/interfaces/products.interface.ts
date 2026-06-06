@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { QueryOptions } from '../../common/repositories/base.repository';
@@ -86,7 +87,11 @@ export interface ProductUpdatePlan {
 export const PRODUCTS_REPOSITORY = Symbol('IProductsRepository');
 
 export interface IProductsRepository {
-  findAll(query: AdvancedQueryDto, langId?: string, options?: QueryOptions): Promise<PaginatedResult<Product> | Product[]>;
+  findAll(
+    query: AdvancedQueryDto,
+    langId?: string,
+    options?: QueryOptions,
+  ): Promise<PaginatedResult<Product> | Product[]>;
   createProductWithVariants(dto: unknown): Promise<Product | null>;
   findProductById(id: number | bigint): Promise<Product | null>;
   create(data: Record<string, unknown>, options?: Record<string, unknown>): Promise<Product>;
@@ -100,9 +105,24 @@ export interface IVariantsRepository {
   findVariantById(id: number | bigint): Promise<ProductVariant | null>;
   createVariant(data: unknown, gallery?: string[]): Promise<ProductVariant>;
   updateVariant(id: number | bigint, data: unknown): Promise<ProductVariant>;
-  adjustStock(variantId: number | bigint, amount: number, reason: string): Promise<ProductVariant>;
+  adjustStock(
+    variantId: number | bigint,
+    amount: number,
+    reason: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ProductVariant>;
+  findActiveVariantsWithProduct(ids: bigint[], tx?: Prisma.TransactionClient): Promise<any[]>;
+  findActiveVariantStocks(
+    ids: bigint[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<Array<{ id: bigint; stockQuantity: number }>>;
+  reserveStock(variantId: bigint, quantity: number, reason: string, tx: Prisma.TransactionClient): Promise<boolean>;
   findAll(query: AdvancedQueryDto): Promise<PaginatedResult<ProductVariant> | ProductVariant[]>;
   create(data: Record<string, unknown>, options?: Record<string, unknown>): Promise<ProductVariant>;
-  update(id: number | bigint, data: Record<string, unknown>, options?: Record<string, unknown>): Promise<ProductVariant>;
+  update(
+    id: number | bigint,
+    data: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ): Promise<ProductVariant>;
   delete(id: number | bigint): Promise<ProductVariant>;
 }

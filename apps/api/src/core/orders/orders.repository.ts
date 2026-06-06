@@ -79,4 +79,46 @@ export class OrdersRepository extends BaseRepository<Order> implements IOrdersRe
   async lock(id: bigint, tx: Prisma.TransactionClient) {
     await tx.$queryRaw`SELECT id FROM orders WHERE id = ${id} FOR UPDATE`;
   }
+
+  async updateOrder(
+    id: bigint,
+    data: Prisma.OrderUpdateInput,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Order> {
+    return tx.order.update({ where: { id }, data });
+  }
+
+  async createStatusHistory(
+    input: {
+      orderId: bigint;
+      previousStatus?: string | null;
+      newStatus: string;
+      actorType: string;
+      actorUserId?: bigint;
+      reason?: string;
+      metadata?: unknown;
+    },
+    tx: Prisma.TransactionClient = this.prisma,
+  ) {
+    const toJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
+    return tx.orderStatusHistory.create({
+      data: {
+        orderId: input.orderId,
+        previousStatus: input.previousStatus,
+        newStatus: input.newStatus,
+        actorType: input.actorType,
+        actorUserId: input.actorUserId,
+        reason: input.reason,
+        metadata: input.metadata ? toJson(input.metadata) : undefined,
+      },
+    });
+  }
+
+  findOrderItemsWithOrder(ids: bigint[], tx: Prisma.TransactionClient = this.prisma) {
+    return tx.orderItem.findMany({ where: { id: { in: ids } }, include: { order: true } });
+  }
+
+  async lockOrderItem(id: bigint, tx: Prisma.TransactionClient) {
+    await tx.$queryRaw`SELECT id FROM order_items WHERE id = ${id} FOR UPDATE`;
+  }
 }

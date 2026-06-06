@@ -7,6 +7,8 @@ import { StripeIntentStrategy } from './strategies/stripe-intent.strategy';
 import { StripeWebhookController } from './stripe-webhook.controller';
 import { StripeWebhookService } from './stripe-webhook.service';
 import { PaymentReservationCleanupService } from './payment-reservation-cleanup.service';
+import { PAYMENT_TRANSACTIONS_REPOSITORY } from '@/common/interfaces';
+import { PaymentTransactionsRepository } from './repositories/payment-transactions.repository';
 
 @Module({
   controllers: [StripeWebhookController],
@@ -18,7 +20,11 @@ import { PaymentReservationCleanupService } from './payment-reservation-cleanup.
     StripeIntentStrategy,
     StripeWebhookService,
     PaymentReservationCleanupService,
+    {
+      provide: PAYMENT_TRANSACTIONS_REPOSITORY,
+      useClass: PaymentTransactionsRepository,
+    },
   ],
-  exports: [PaymentService, StripeWebhookService],
+  exports: [PaymentService, StripeWebhookService, PAYMENT_TRANSACTIONS_REPOSITORY],
 })
 export class PaymentModule {}

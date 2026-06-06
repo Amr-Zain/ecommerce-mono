@@ -88,10 +88,7 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
     });
   }
 
-  async findVariantsAttributesByProductExcluding(
-    productId: number | bigint,
-    excludeId: number | bigint,
-  ) {
+  async findVariantsAttributesByProductExcluding(productId: number | bigint, excludeId: number | bigint) {
     return this.prisma.productVariant.findMany({
       where: { productId: BigInt(productId), id: { not: BigInt(excludeId) } },
       include: {
@@ -139,9 +136,7 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
 
       // Mark parent product as having variants
       const productId =
-        typeof data.product === 'object' && data.product !== null
-          ? (data.product as any).connect?.id
-          : undefined;
+        typeof data.product === 'object' && data.product !== null ? (data.product as any).connect?.id : undefined;
       if (productId) {
         await prisma.product.update({
           where: { id: BigInt(productId) },
@@ -303,8 +298,8 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
     });
   }
 
-  async adjustStock(variantId: number | bigint, amount: number, reason: string) {
-    return this.prisma.$transaction(async (prisma) => {
+  async adjustStock(variantId: number | bigint, amount: number, reason: string, tx?: Prisma.TransactionClient) {
+    const execute = async (prisma: Prisma.TransactionClient) => {
       const variant = await prisma.productVariant.findUnique({
         where: { id: BigInt(variantId) },
         select: { id: true, stockQuantity: true },
@@ -336,43 +331,81 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
       });
 
       return updated;
+    };
+
+    if (tx) {
+      return execute(tx);
+    }
+    return this.prisma.$transaction(execute);
+  }
+
+  findActiveVariantsWithProduct(ids: bigint[], tx: Prisma.TransactionClient = this.prisma) {
+    return tx.productVariant.findMany({
+      where: { id: { in: ids }, isActive: true },
+      include: { product: true },
     });
+  }
+
+  findActiveVariantStocks(ids: bigint[], tx: Prisma.TransactionClient = this.prisma) {
+    return tx.productVariant.findMany({
+      where: { id: { in: ids }, isActive: true },
+      select: { id: true, stockQuantity: true },
+    });
+  }
+
+  async reserveStock(variantId: bigint, quantity: number, reason: string, tx: Prisma.TransactionClient) {
+    const reserved = await tx.productVariant.updateMany({
+      where: { id: variantId, isActive: true, stockQuantity: { gte: quantity } },
+      data: { stockQuantity: { decrement: quantity } },
+    });
+    if (reserved.count !== 1) return false;
+    const variant = await tx.productVariant.findUniqueOrThrow({ where: { id: variantId } });
+    await tx.inventoryLog.create({
+      data: {
+        variantId,
+        changeAmount: -quantity,
+        previousStock: variant.stockQuantity + quantity,
+        newStock: variant.stockQuantity,
+        reason,
+      },
+    });
+    return true;
   }
 
   async findAll(query: AdvancedQueryDto) {
     return this.paginate(query);
   }
   async getPriceLogs(variantId: number | bigint, query: AdvancedQueryDto) {
-     const where = { variantId: BigInt(variantId) };
+    const where = { variantId: BigInt(variantId) };
     const orderBy = { createdAt: 'desc' as const };
     if (query.paginate === false) {
-          const data = await this.prisma.priceHistory.findMany({ where, orderBy });
-          return { data };
-        }
-    
-        const { skip, take } = PaginationUtil.getPrismaParams(query);
-        const [data, total] = await Promise.all([
-          this.prisma.priceHistory.findMany({ where, orderBy, skip, take }),
-          this.prisma.priceHistory.count({ where }),
-        ]);
-    
-        return PaginationUtil.createResult(data, query.page || 1, query.limit || 10, total)
-      }
+      const data = await this.prisma.priceHistory.findMany({ where, orderBy });
+      return { data };
+    }
 
-      async getInventoryLogs(variantId: number | bigint, query: AdvancedQueryDto) {
-     const where = { variantId: BigInt(variantId) };
+    const { skip, take } = PaginationUtil.getPrismaParams(query);
+    const [data, total] = await Promise.all([
+      this.prisma.priceHistory.findMany({ where, orderBy, skip, take }),
+      this.prisma.priceHistory.count({ where }),
+    ]);
+
+    return PaginationUtil.createResult(data, query.page || 1, query.limit || 10, total);
+  }
+
+  async getInventoryLogs(variantId: number | bigint, query: AdvancedQueryDto) {
+    const where = { variantId: BigInt(variantId) };
     const orderBy = { createdAt: 'desc' as const };
     if (query.paginate === false) {
-          const data = await this.prisma.inventoryLog.findMany({ where, orderBy });
-          return { data };
-        }
-    
-        const { skip, take } = PaginationUtil.getPrismaParams(query);
-        const [data, total] = await Promise.all([
-          this.prisma.inventoryLog.findMany({ where, orderBy, skip, take }),
-          this.prisma.inventoryLog.count({ where }),
-        ]);
-    
-        return PaginationUtil.createResult(data, query.page || 1, query.limit || 10, total)
-      }      
+      const data = await this.prisma.inventoryLog.findMany({ where, orderBy });
+      return { data };
+    }
+
+    const { skip, take } = PaginationUtil.getPrismaParams(query);
+    const [data, total] = await Promise.all([
+      this.prisma.inventoryLog.findMany({ where, orderBy, skip, take }),
+      this.prisma.inventoryLog.count({ where }),
+    ]);
+
+    return PaginationUtil.createResult(data, query.page || 1, query.limit || 10, total);
+  }
 }

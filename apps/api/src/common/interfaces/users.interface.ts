@@ -39,6 +39,11 @@ export interface User {
 
 export const USERS_REPOSITORY = Symbol('IUsersRepository');
 
+export type GuestMigrationResult = {
+  guestUserId: bigint;
+  targetUserId: bigint;
+} | null;
+
 export interface IUsersRepository extends IBaseRepository<User> {
   findAll(query: AdvancedQueryDto, langId?: string): Promise<PaginatedResult<User> | User[]>;
   findAllAdmins(query: AdvancedQueryDto, langId?: string): Promise<PaginatedResult<User> | User[]>;
@@ -51,4 +56,5 @@ export interface IUsersRepository extends IBaseRepository<User> {
   updateUser(id: bigint, data: unknown): Promise<User>;
   deleteUser(id: bigint): Promise<User>;
   emailExists(email: string, excludeId?: bigint): Promise<boolean>;
+  migrateGuestData(guestToken: string, targetUserId: bigint): Promise<GuestMigrationResult>;
 }

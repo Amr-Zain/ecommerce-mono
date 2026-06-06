@@ -6,7 +6,8 @@ import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { MediaService } from '@/media/media.service';
 import { MediaType } from '@/media/enums/media-type.enum';
-import { USERS_REPOSITORY, IUsersRepository } from '@/common/interfaces';
+import { GuestMigrationResult, USERS_REPOSITORY, IUsersRepository } from '@/common/interfaces';
+import { GuestMigrationRepository } from './guest-migration.repository';
 
 type User = Prisma.UserGetPayload<{
   include: { role: true };
@@ -22,6 +23,7 @@ export class UsersRepository extends BaseRepository<User> implements IUsersRepos
     prisma: PrismaService,
     private readonly queryBuilder: QueryBuilderService,
     mediaService: MediaService,
+    private readonly guestMigrationRepository: GuestMigrationRepository,
   ) {
     super(prisma, mediaService);
   }
@@ -147,6 +149,10 @@ export class UsersRepository extends BaseRepository<User> implements IUsersRepos
     }
 
     return this.exists(where);
+  }
+
+  async migrateGuestData(guestToken: string, targetUserId: bigint): Promise<GuestMigrationResult> {
+    return this.guestMigrationRepository.migrateGuestData(guestToken, targetUserId);
   }
 
   public excludePassword(user: User): User {
