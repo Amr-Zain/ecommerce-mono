@@ -566,6 +566,31 @@ Client endpoints use `@ApiContext('client')` which returns thin responses: only 
 | POST   | `/client/exchanges`            | Create exchange request with one or more items |
 | POST   | `/client/exchanges/:id/cancel` | Cancel exchange while `requested`              |
 
+### Notifications (requires client JWT)
+
+| Method | URL                                     | Description                             |
+| ------ | --------------------------------------- | --------------------------------------- |
+| GET    | `/client/notifications?page=1&limit=20` | List the current client's notifications |
+| GET    | `/client/notifications?unread=true`     | List unread notifications               |
+| GET    | `/client/notifications/unread-count`    | Get unread notification count           |
+| PATCH  | `/client/notifications/:id/read`        | Mark one owned notification as read     |
+| PATCH  | `/client/notifications/read-all`        | Mark all owned notifications as read    |
+| GET    | `/client/notifications/stream`          | Open the notification SSE stream        |
+
+The REST endpoints are the durable notification source. The SSE stream delivers new notifications and heartbeat events while connected.
+
+For reliable SSE testing outside the storefront, use:
+
+```bash
+curl -N \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Accept: text/event-stream" \
+  -H "Accept-Language: en" \
+  http://localhost:3000/client/notifications/stream
+```
+
+Postman support for long-lived SSE requests can vary by version. Keep the stream request open and use the REST list endpoint to recover any missed events.
+
 ### Wallet (requires client JWT)
 
 | Method | URL                                                                           | Description                                    |
@@ -634,6 +659,19 @@ There is no standalone admin order-refund endpoint. Cancellation refunds the ful
 | POST   | `/admin/exchanges/:id/complete`          | Complete shipped exchange                                                               |
 
 The exchange payment endpoints create or verify the gateway payment operation. The admin dashboard does not mark Stripe payments paid; verified webhook/gateway confirmation settles them.
+
+### Notifications (requires admin JWT)
+
+| Method | URL                                    | Description                            |
+| ------ | -------------------------------------- | -------------------------------------- |
+| GET    | `/admin/notifications?page=1&limit=20` | List the current admin's notifications |
+| GET    | `/admin/notifications?unread=true`     | List unread notifications              |
+| GET    | `/admin/notifications/unread-count`    | Get unread notification count          |
+| PATCH  | `/admin/notifications/:id/read`        | Mark one owned notification as read    |
+| PATCH  | `/admin/notifications/read-all`        | Mark all owned notifications as read   |
+| GET    | `/admin/notifications/stream`          | Open the notification SSE stream       |
+
+Admin notifications are generated only for active admins whose role has `list` or `read` permission for the related resource.
 
 ### Wallet (requires admin JWT)
 

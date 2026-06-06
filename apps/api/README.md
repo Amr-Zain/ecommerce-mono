@@ -42,18 +42,24 @@ Ecommerce API is a high-performance, progressive [NestJS](https://github.com/nes
 
 ### Layers
 
-| Layer | Path | Purpose |
-|---|---|---|
-| **Admin API** | `src/admin/` | CRUD endpoints protected by JWT + RBAC permissions |
-| **Client API** | `src/client/` | Public/authenticated storefront endpoints |
-| **Core** | `src/core/` | Pure data-access repositories, no HTTP dependency |
-| **Auth** | `src/auth/` | JWT auth, OTP, guards, strategies |
-| **Media** | `src/media/` | Polymorphic media attachment system |
-| **Common** | `src/common/` | Interceptors, filters, pipes, base repository, utilities |
-| **Prisma** | `src/prisma/` | Database service & module |
-| **Shared** | `src/shared/` | Domain-agnostic services (cache, email, SMS, SMS) |
+| Layer          | Path          | Purpose                                                  |
+| -------------- | ------------- | -------------------------------------------------------- |
+| **Admin API**  | `src/admin/`  | CRUD endpoints protected by JWT + RBAC permissions       |
+| **Client API** | `src/client/` | Public/authenticated storefront endpoints                |
+| **Core**       | `src/core/`   | Pure data-access repositories, no HTTP dependency        |
+| **Auth**       | `src/auth/`   | JWT auth, OTP, guards, strategies                        |
+| **Media**      | `src/media/`  | Polymorphic media attachment system                      |
+| **Common**     | `src/common/` | Interceptors, filters, pipes, base repository, utilities |
+| **Prisma**     | `src/prisma/` | Database service & module                                |
+| **Shared**     | `src/shared/` | Domain-agnostic services (cache, email, SMS, SMS)        |
 
 ## Key Design Patterns
+
+### Durable Domain Events
+
+Business lifecycle events use a PostgreSQL transactional outbox and NestJS EventEmitter2. Events are committed with business changes, then dispatched asynchronously to idempotent listeners such as in-app notifications.
+
+See [Durable Domain Events and Notifications](docs/domain-events.md) for publishing rules, event catalog, listener patterns, notification endpoints, and operational guidance.
 
 ### Dual-Context API (`@ApiContext` decorator)
 
@@ -209,52 +215,52 @@ src/
 
 Protected by JWT + RBAC. Full CRUD with all language translations.
 
-| Route | Module |
-|---|---|
-| `GET /admin/dashboard` | Dashboard |
-| `/admin/countries` | Countries |
-| `/admin/cities` | Cities |
-| `/admin/sliders` | Sliders |
-| `/admin/faqs` | FAQs |
-| `/admin/collections` | Collections |
-| `/admin/products` | Products |
-| `/admin/attributes` | Attributes |
-| `/admin/static-pages` | Static Pages |
-| `/admin/roles` | Roles |
-| `/admin/users` | Users |
+| Route                  | Module       |
+| ---------------------- | ------------ |
+| `GET /admin/dashboard` | Dashboard    |
+| `/admin/countries`     | Countries    |
+| `/admin/cities`        | Cities       |
+| `/admin/sliders`       | Sliders      |
+| `/admin/faqs`          | FAQs         |
+| `/admin/collections`   | Collections  |
+| `/admin/products`      | Products     |
+| `/admin/attributes`    | Attributes   |
+| `/admin/static-pages`  | Static Pages |
+| `/admin/roles`         | Roles        |
+| `/admin/users`         | Users        |
 
 ### Client (`/client/*`)
 
 Catalog endpoints are `@Public()`. Write endpoints (reviews, orders, addresses, profile) require client JWT.
 
-| Route | Module | Auth |
-|---|---|---|
-| `GET /client/home` | Home | Public |
-| `GET /client/countries` | Countries | Public |
-| `GET /client/cities` | Cities | Public |
-| `GET /client/sliders` | Sliders | Public |
-| `GET /client/faqs` | FAQs | Public |
-| `GET /client/collections` | Collections | Public |
-| `GET /client/products` | Products | Public |
-| `GET /client/attributes` | Attributes | Public |
-| `GET /client/static-pages` | Static Pages | Public |
-| `GET/POST /client/addresses` | Addresses | JWT |
-| `GET/POST /client/reviews` | Reviews | JWT |
-| `GET/POST /client/orders` | Orders | JWT |
-| `GET/PUT /client/profile` | Profile | JWT |
+| Route                        | Module       | Auth   |
+| ---------------------------- | ------------ | ------ |
+| `GET /client/home`           | Home         | Public |
+| `GET /client/countries`      | Countries    | Public |
+| `GET /client/cities`         | Cities       | Public |
+| `GET /client/sliders`        | Sliders      | Public |
+| `GET /client/faqs`           | FAQs         | Public |
+| `GET /client/collections`    | Collections  | Public |
+| `GET /client/products`       | Products     | Public |
+| `GET /client/attributes`     | Attributes   | Public |
+| `GET /client/static-pages`   | Static Pages | Public |
+| `GET/POST /client/addresses` | Addresses    | JWT    |
+| `GET/POST /client/reviews`   | Reviews      | JWT    |
+| `GET/POST /client/orders`    | Orders       | JWT    |
+| `GET/PUT /client/profile`    | Profile      | JWT    |
 
 ### Auth (`/auth/*`)
 
-| Endpoint | Description |
-|---|---|
-| `POST /auth/send-otp` | Send OTP code |
-| `POST /auth/login-otp` | Login with OTP |
-| `POST /auth/create-guest` | Create guest account |
-| `POST /auth/register` | Register new user |
-| `POST /auth/login` | Email/password login |
-| `POST /auth/refresh` | Refresh access token |
+| Endpoint                     | Description            |
+| ---------------------------- | ---------------------- |
+| `POST /auth/send-otp`        | Send OTP code          |
+| `POST /auth/login-otp`       | Login with OTP         |
+| `POST /auth/create-guest`    | Create guest account   |
+| `POST /auth/register`        | Register new user      |
+| `POST /auth/login`           | Email/password login   |
+| `POST /auth/refresh`         | Refresh access token   |
 | `POST /auth/forgot-password` | Request password reset |
-| `POST /auth/reset-password` | Reset password |
+| `POST /auth/reset-password`  | Reset password         |
 
 ## Response Format
 
@@ -290,15 +296,15 @@ Client endpoints return only whitelisted fields per entity type. Admin fields (`
 
 ### Query Parameters
 
-| Param | Example | Description |
-|---|---|---|
-| `page` | `?page=2` | Page number |
-| `limit` | `?limit=20` | Items per page |
-| `search` | `?search=foo` | Full-text search |
-| `sortBy` | `?sortBy=name` | Sort field |
-| `sortOrder` | `?sortOrder=desc` | Sort direction |
-| `filter` | `?filter=isActive:true` | Field filter |
-| `include` | `?include=translations` | Include relations |
+| Param       | Example                 | Description       |
+| ----------- | ----------------------- | ----------------- |
+| `page`      | `?page=2`               | Page number       |
+| `limit`     | `?limit=20`             | Items per page    |
+| `search`    | `?search=foo`           | Full-text search  |
+| `sortBy`    | `?sortBy=name`          | Sort field        |
+| `sortOrder` | `?sortOrder=desc`       | Sort direction    |
+| `filter`    | `?filter=isActive:true` | Field filter      |
+| `include`   | `?include=translations` | Include relations |
 
 ## License
 

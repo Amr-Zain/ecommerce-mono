@@ -2415,6 +2415,111 @@
               }
             }
           ]
+        },
+        {
+          "name": "Notifications",
+          "description": "In-app notifications for the authenticated admin user. REST is the durable source; the SSE stream provides immediate single-instance delivery.",
+          "item": [
+            {
+              "name": "List Notifications",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/notifications?page=1&limit=20&unread=false",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "notifications"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "unread",
+                      "value": "false"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Unread Notification Count",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/notifications/unread-count",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "notifications", "unread-count"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mark Notification Read",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/notifications/1/read",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "notifications", "1", "read"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mark All Notifications Read",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/notifications/read-all",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "notifications", "read-all"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Stream Notifications (SSE)",
+              "request": {
+                "method": "GET",
+                "description": "Long-lived Server-Sent Events stream. Keep the request open. Postman support may vary; use curl -N or the storefront/dashboard for reliable SSE testing.",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "text/event-stream"
+                  },
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/notifications/stream",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "notifications", "stream"]
+                }
+              },
+              "response": []
+            }
+          ]
         }
       ]
     },
@@ -3660,6 +3765,111 @@
                   "path": ["client", "wallet", "withdrawals", "1", "cancel"]
                 }
               }
+            }
+          ]
+        },
+        {
+          "name": "Notifications",
+          "description": "In-app notifications for the authenticated client user. REST is the durable source; the SSE stream provides immediate single-instance delivery.",
+          "item": [
+            {
+              "name": "List Notifications",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/notifications?page=1&limit=20&unread=false",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "notifications"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "unread",
+                      "value": "false"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Get Unread Notification Count",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/notifications/unread-count",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "notifications", "unread-count"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mark Notification Read",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/notifications/1/read",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "notifications", "1", "read"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Mark All Notifications Read",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/client/notifications/read-all",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "notifications", "read-all"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Stream Notifications (SSE)",
+              "request": {
+                "method": "GET",
+                "description": "Long-lived Server-Sent Events stream. Keep the request open. Postman support may vary; use curl -N or the storefront/dashboard for reliable SSE testing.",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "text/event-stream"
+                  },
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/notifications/stream",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "notifications", "stream"]
+                }
+              },
+              "response": []
             }
           ]
         }
