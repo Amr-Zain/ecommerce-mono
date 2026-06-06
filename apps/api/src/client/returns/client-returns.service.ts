@@ -22,6 +22,8 @@ import {
   RETURN_REQUESTS_REPOSITORY,
   VARIANTS_REPOSITORY,
 } from '@/common/interfaces';
+import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
+import { createDomainEvent, DOMAIN_EVENTS, exchangeStatusEvent, returnStatusEvent, type ReturnRequestedPayload, type ExchangeRequestedPayload, type ReturnStatusPayload, type ExchangeStatusPayload } from '@/common/events/domain-event';
 import {
   CreateExchangeRequestDto,
   CreateExchangeRequestItemDto,
@@ -76,6 +78,7 @@ export class ClientReturnsService {
     @Inject(EXCHANGE_REQUESTS_REPOSITORY) private readonly exchangeRequestsRepository: IExchangeRequestsRepository,
     @Inject(ORDERS_REPOSITORY) private readonly ordersRepository: IOrdersRepository,
     @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
+    private readonly domainEvents: DomainEventPublisher,
   ) {}
 
   async findReturns(userId: bigint) {
@@ -174,6 +177,21 @@ export class ClientReturnsService {
           actorType: 'client',
           actorUserId: userId,
         },
+        tx,
+      );
+      await this.domainEvents.publish(
+        createDomainEvent<ReturnRequestedPayload>({
+          eventName: DOMAIN_EVENTS.returnRequested,
+          aggregateType: 'return',
+          aggregateId: created.id.toString(),
+          actor: { type: 'client', userId: userId.toString() },
+          payload: {
+            returnRequestId: created.id.toString(),
+            orderId: order.id.toString(),
+            userId: userId.toString(),
+            status: RETURN_REQUEST_STATUSES.requested,
+          },
+        }),
         tx,
       );
       return created;
@@ -302,6 +320,21 @@ export class ClientReturnsService {
         },
         tx,
       );
+      await this.domainEvents.publish(
+        createDomainEvent<ExchangeRequestedPayload>({
+          eventName: DOMAIN_EVENTS.exchangeRequested,
+          aggregateType: 'exchange',
+          aggregateId: created.id.toString(),
+          actor: { type: 'client', userId: userId.toString() },
+          payload: {
+            exchangeRequestId: created.id.toString(),
+            orderId: orderItems[0].order.id.toString(),
+            userId: userId.toString(),
+            status: EXCHANGE_REQUEST_STATUSES.requested,
+          },
+        }),
+        tx,
+      );
       return created;
     });
 
@@ -339,6 +372,23 @@ export class ClientReturnsService {
         },
         tx,
       );
+      await this.domainEvents.publish(
+        createDomainEvent<ReturnStatusPayload>({
+          eventName: returnStatusEvent(RETURN_REQUEST_STATUSES.cancelledByClient),
+          aggregateType: 'return',
+          aggregateId: id.toString(),
+          actor: { type: 'client', userId: userId.toString() },
+          payload: {
+            returnRequestId: id.toString(),
+            orderId: current.orderId.toString(),
+            userId: userId.toString(),
+            previousStatus: current.status,
+            newStatus: RETURN_REQUEST_STATUSES.cancelledByClient,
+            status: RETURN_REQUEST_STATUSES.cancelledByClient,
+          },
+        }),
+        tx,
+      );
       return result;
     });
     return this.formatReturnRequest(updated);
@@ -373,6 +423,23 @@ export class ClientReturnsService {
           actorType: 'client',
           actorUserId: userId,
         },
+        tx,
+      );
+      await this.domainEvents.publish(
+        createDomainEvent<ExchangeStatusPayload>({
+          eventName: exchangeStatusEvent(EXCHANGE_REQUEST_STATUSES.cancelledByClient),
+          aggregateType: 'exchange',
+          aggregateId: id.toString(),
+          actor: { type: 'client', userId: userId.toString() },
+          payload: {
+            exchangeRequestId: id.toString(),
+            orderId: current.orderId.toString(),
+            userId: userId.toString(),
+            previousStatus: current.status,
+            newStatus: EXCHANGE_REQUEST_STATUSES.cancelledByClient,
+            status: EXCHANGE_REQUEST_STATUSES.cancelledByClient,
+          },
+        }),
         tx,
       );
       return result;

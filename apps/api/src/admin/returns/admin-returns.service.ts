@@ -12,6 +12,8 @@ import {
   PRICE_ADJUSTMENT_STATUSES,
   REFUND_STATUSES,
   RETURN_REQUEST_STATUSES,
+  type ExchangeRequestStatus,
+  type ReturnRequestStatus,
 } from '@/common/constants/return-exchange.constants';
 import { ONLINE_PAYMENT_METHODS, PAYMENT_CURRENCIES, PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
 import { REFUND_SOURCES } from '@/shared/payment/payment.constants';
@@ -35,6 +37,8 @@ import {
   RETURN_REQUESTS_REPOSITORY,
   VARIANTS_REPOSITORY,
 } from '@/common/interfaces';
+import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
+import { createDomainEvent, DOMAIN_EVENTS, exchangeStatusEvent, returnStatusEvent, type ReturnStatusPayload, type ExchangeStatusPayload, type ExchangeReservationExpiredPayload, type PaymentCompletedPayload, type PaymentFailedPayload } from '@/common/events/domain-event';
 
 const SETTLED_PRICE_STATUSES: readonly string[] = [
   PRICE_ADJUSTMENT_STATUSES.none,
@@ -94,6 +98,7 @@ export class AdminReturnsService {
     @Inject(PAYMENT_TRANSACTIONS_REPOSITORY)
     private readonly paymentTransactionsRepository: IPaymentTransactionsRepository,
     @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
+    private readonly domainEvents: DomainEventPublisher,
   ) {}
 
   async findReturns(query: AdminReturnExchangeQueryDto = {}) {
@@ -493,6 +498,17 @@ export class AdminReturnsService {
         },
         tx,
       );
+      await this.publishPaymentEvent(tx, {
+        eventName: DOMAIN_EVENTS.paymentCompleted,
+        aggregateType: 'return',
+        aggregateId: id,
+        orderId: request.orderId,
+        userId: request.userId,
+        paymentId: attempt.id,
+        status: PAYMENT_STATUSES.refunded,
+        amount: refundAmount,
+        actorUserId: adminId,
+      });
       await this.returnRequestsRepository.update(
         {
           where: { id },
@@ -864,6 +880,17 @@ export class AdminReturnsService {
         },
         tx,
       );
+      await this.publishPaymentEvent(tx, {
+        eventName: DOMAIN_EVENTS.paymentCompleted,
+        aggregateType: 'exchange',
+        aggregateId: id,
+        orderId: request.orderId,
+        userId: request.userId,
+        paymentId,
+        status: PAYMENT_STATUSES.completed,
+        amount: Number(payment.amount),
+        actorUserId: adminId,
+      });
     });
     return this.findExchange(id);
   }
@@ -994,6 +1021,17 @@ export class AdminReturnsService {
         },
         tx,
       );
+      await this.publishPaymentEvent(tx, {
+        eventName: DOMAIN_EVENTS.paymentCompleted,
+        aggregateType: 'exchange',
+        aggregateId: id,
+        orderId: request.orderId,
+        userId: request.userId,
+        paymentId: attempt.id,
+        status: PAYMENT_STATUSES.refunded,
+        amount,
+        actorUserId: adminId,
+      });
       await this.exchangeRequestsRepository.update(
         {
           where: { id },
@@ -1265,20 +1303,67 @@ export class AdminReturnsService {
   private async addHistory(
     tx: Prisma.TransactionClient,
     input: {
-      returnRequestId?: bigint;
-      exchangeRequestId?: bigint;
       previousStatus: string;
-      newStatus: string;
       actorUserId?: bigint;
       reason?: string;
-    },
+    } & (
+      | {
+          returnRequestId: bigint;
+          exchangeRequestId?: never;
+          newStatus: ReturnRequestStatus;
+        }
+      | {
+          returnRequestId?: never;
+          exchangeRequestId: bigint;
+          newStatus: ExchangeRequestStatus;
+        }
+    ),
   ) {
     const data = { ...input, actorType: 'admin' };
-    if (input.returnRequestId) {
+    if (input.exchangeRequestId === undefined) {
       await this.returnRequestsRepository.createHistory(data, tx);
+      const request = await this.returnRequestsRepository.findUnique({ where: { id: input.returnRequestId } }, tx);
+      await this.domainEvents.publish(
+        createDomainEvent<ReturnStatusPayload>({
+          eventName: returnStatusEvent(input.newStatus),
+          aggregateType: 'return',
+          aggregateId: input.returnRequestId.toString(),
+          actor: { type: 'admin', userId: input.actorUserId?.toString() },
+          payload: {
+            returnRequestId: input.returnRequestId.toString(),
+            orderId: request?.orderId.toString() ?? '',
+            userId: request?.userId.toString() ?? '',
+            previousStatus: input.previousStatus,
+            newStatus: input.newStatus,
+            status: input.newStatus,
+          },
+        }),
+        tx,
+      );
       return;
     }
     await this.exchangeRequestsRepository.createHistory(data, tx);
+    const request = await this.exchangeRequestsRepository.findUnique({ where: { id: input.exchangeRequestId! } }, tx);
+    await this.domainEvents.publish(
+      createDomainEvent<ExchangeStatusPayload | ExchangeReservationExpiredPayload>({
+        eventName:
+          input.reason === 'reservation_expired'
+            ? DOMAIN_EVENTS.exchangeReservationExpired
+            : exchangeStatusEvent(input.newStatus),
+        aggregateType: 'exchange',
+        aggregateId: input.exchangeRequestId!.toString(),
+        actor: { type: 'admin', userId: input.actorUserId?.toString() },
+        payload: {
+          exchangeRequestId: input.exchangeRequestId!.toString(),
+          orderId: request?.orderId.toString() ?? '',
+          userId: request?.userId.toString() ?? '',
+          previousStatus: input.previousStatus,
+          newStatus: input.newStatus,
+          status: input.newStatus,
+        },
+      }),
+      tx,
+    );
   }
 
   private async markReturnRefundReview(id: bigint, attemptId: bigint, error: unknown) {
@@ -1296,6 +1381,18 @@ export class AdminReturnsService {
         { where: { id }, data: { refundStatus: REFUND_STATUSES.requiresReview } },
         tx,
       );
+      const request = await this.returnRequestsRepository.findUnique({ where: { id } }, tx);
+      if (request) {
+        await this.publishPaymentEvent(tx, {
+          eventName: DOMAIN_EVENTS.paymentFailed,
+          aggregateType: 'return',
+          aggregateId: id,
+          orderId: request.orderId,
+          userId: request.userId,
+          paymentId: attemptId,
+          status: PAYMENT_STATUSES.requiresReview,
+        });
+      }
     });
   }
 
@@ -1314,6 +1411,18 @@ export class AdminReturnsService {
         { where: { id }, data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.requiresRefund } },
         tx,
       );
+      const request = await this.exchangeRequestsRepository.findUnique({ where: { id } }, tx);
+      if (request) {
+        await this.publishPaymentEvent(tx, {
+          eventName: DOMAIN_EVENTS.paymentFailed,
+          aggregateType: 'exchange',
+          aggregateId: id,
+          orderId: request.orderId,
+          userId: request.userId,
+          paymentId: attemptId,
+          status: PAYMENT_STATUSES.requiresReview,
+        });
+      }
     });
   }
 
@@ -1347,5 +1456,37 @@ export class AdminReturnsService {
         reason: 'reservation_expired',
       });
     });
+  }
+
+  private publishPaymentEvent(
+    tx: Prisma.TransactionClient,
+    input: {
+      eventName: string;
+      aggregateType: string;
+      aggregateId: bigint;
+      orderId: bigint;
+      userId: bigint;
+      paymentId: bigint;
+      status: string;
+      amount?: number;
+      actorUserId?: bigint;
+    },
+  ) {
+    return this.domainEvents.publish(
+      createDomainEvent<PaymentCompletedPayload | PaymentFailedPayload>({
+        eventName: input.eventName,
+        aggregateType: input.aggregateType,
+        aggregateId: input.aggregateId.toString(),
+        actor: { type: input.actorUserId ? 'admin' : 'system', userId: input.actorUserId?.toString() },
+        payload: {
+          orderId: input.orderId.toString(),
+          userId: input.userId.toString(),
+          paymentId: input.paymentId.toString(),
+          status: input.status,
+          amount: input.amount,
+        } as any,
+      }),
+      tx,
+    );
   }
 }

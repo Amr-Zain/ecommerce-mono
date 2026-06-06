@@ -19,6 +19,15 @@ import {
   IVariantsRepository,
   VARIANTS_REPOSITORY,
 } from '@/common/interfaces';
+import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
+import {
+  createDomainEvent,
+  DOMAIN_EVENTS,
+  type OrderStatusChangedPayload,
+  type OrderCancelledPayload,
+  type PaymentCompletedPayload,
+  type PaymentFailedPayload,
+} from '@/common/events/domain-event';
 
 const toJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
@@ -34,7 +43,8 @@ export class OrderLifecycleService {
     @Inject(PAYMENT_TRANSACTIONS_REPOSITORY)
     private readonly paymentTransactionsRepository: IPaymentTransactionsRepository,
     @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
-  ) {}
+    private readonly domainEvents: DomainEventPublisher,
+  ) { }
 
   paymentSummary(payments: { amount: Prisma.Decimal; paymentStatus: string; refundSource?: string | null }[]) {
     const paid = this.round(
@@ -123,11 +133,7 @@ export class OrderLifecycleService {
         },
         tx,
       );
-      await this.ordersRepository.updateOrder(
-        order.id,
-        { paymentStatus: PAYMENT_STATUSES.processingPayment },
-        tx,
-      );
+      await this.ordersRepository.updateOrder(order.id, { paymentStatus: PAYMENT_STATUSES.processingPayment }, tx);
 
       return {
         attemptId: attempt.id,
@@ -174,11 +180,7 @@ export class OrderLifecycleService {
       if (claimed.count !== 1) {
         throw new NotFoundException(this.i18n.t('errors.order_cancellation_refund_not_found'));
       }
-      await this.ordersRepository.updateOrder(
-        orderId,
-        { paymentStatus: PAYMENT_STATUSES.processingPayment },
-        tx,
-      );
+      await this.ordersRepository.updateOrder(orderId, { paymentStatus: PAYMENT_STATUSES.processingPayment }, tx);
     });
     await this.processCancellationRefund(attempt.id, {
       method: attempt.paymentMethod,
@@ -234,7 +236,25 @@ export class OrderLifecycleService {
       metadata?: unknown;
     },
   ) {
-    return this.ordersRepository.createStatusHistory(input, tx);
+    const history = await this.ordersRepository.createStatusHistory(input, tx);
+    const order = await this.ordersRepository.findLifecycleOrder(input.orderId, tx);
+    await this.domainEvents.publish(
+      createDomainEvent<OrderStatusChangedPayload | OrderCancelledPayload>({
+        eventName: input.newStatus === 'cancelled' ? DOMAIN_EVENTS.orderCancelled : DOMAIN_EVENTS.orderStatusChanged,
+        aggregateType: 'order',
+        aggregateId: input.orderId.toString(),
+        actor: { type: input.actorType, userId: input.actorUserId?.toString() },
+        payload: {
+          orderId: input.orderId.toString(),
+          userId: order?.userId.toString(),
+          previousStatus: input.previousStatus ?? null,
+          newStatus: input.newStatus,
+          reason: input.reason ?? null,
+        },
+      }),
+      tx,
+    );
+    return history;
   }
 
   private async processCancellationRefund(
@@ -289,6 +309,23 @@ export class OrderLifecycleService {
         },
         tx,
       );
+      await this.domainEvents.publish(
+        createDomainEvent<PaymentCompletedPayload>({
+          eventName: DOMAIN_EVENTS.paymentCompleted,
+          aggregateType: 'order',
+          aggregateId: order.id.toString(),
+          actor: { type: input.actorType, userId: input.actorUserId?.toString() },
+          payload: {
+            orderId: order.id.toString(),
+            userId: order.userId.toString(),
+            status: PAYMENT_STATUSES.refunded,
+            paymentId: attempt.id.toString(),
+            amount: Number(attempt.amount),
+            refundSource: REFUND_SOURCES.cancellation,
+          },
+        }),
+        tx,
+      );
       await this.finalizeCancellation(tx, order, {
         actorType: input.actorType,
         actorUserId: input.actorUserId,
@@ -316,9 +353,22 @@ export class OrderLifecycleService {
         },
         tx,
       );
-      await this.ordersRepository.updateOrder(
-        attempt.orderId,
-        { paymentStatus: PAYMENT_STATUSES.requiresReview },
+      await this.ordersRepository.updateOrder(attempt.orderId, { paymentStatus: PAYMENT_STATUSES.requiresReview }, tx);
+      const order = await this.ordersRepository.findLifecycleOrder(attempt.orderId, tx);
+      await this.domainEvents.publish(
+        createDomainEvent<PaymentFailedPayload>({
+          eventName: DOMAIN_EVENTS.paymentFailed,
+          aggregateType: 'order',
+          aggregateId: attempt.orderId.toString(),
+          actor: { type: 'system' },
+          payload: {
+            orderId: attempt.orderId.toString(),
+            userId: order?.userId.toString(),
+            status: PAYMENT_STATUSES.requiresReview,
+            paymentId: attemptId.toString(),
+            refundSource: REFUND_SOURCES.cancellation,
+          },
+        }),
         tx,
       );
     });
@@ -331,12 +381,7 @@ export class OrderLifecycleService {
   ) {
     for (const item of order.items) {
       if (!item.variantId) continue;
-      await this.variantsRepository.adjustStock(
-        item.variantId,
-        item.quantity,
-        INVENTORY_REASONS.return,
-        tx,
-      );
+      await this.variantsRepository.adjustStock(item.variantId, item.quantity, INVENTORY_REASONS.return, tx);
     }
 
     await this.paymentTransactionsRepository.updateMany(
@@ -349,9 +394,7 @@ export class OrderLifecycleService {
       },
       tx,
     );
-    const summary = this.paymentSummary(
-      await this.paymentTransactionsRepository.findMany({ orderId: order.id }, tx),
-    );
+    const summary = this.paymentSummary(await this.paymentTransactionsRepository.findMany({ orderId: order.id }, tx));
     await this.ordersRepository.updateOrder(
       order.id,
       {
@@ -360,10 +403,10 @@ export class OrderLifecycleService {
           summary.refundedAmount > 0
             ? PAYMENT_STATUSES.refunded
             : order.payments.some(
-                  (payment) =>
-                    payment.paymentStatus === PAYMENT_STATUSES.pending ||
-                    payment.paymentStatus === PAYMENT_STATUSES.awaitingConfirmation,
-                )
+              (payment) =>
+                payment.paymentStatus === PAYMENT_STATUSES.pending ||
+                payment.paymentStatus === PAYMENT_STATUSES.awaitingConfirmation,
+            )
               ? PAYMENT_STATUSES.failed
               : order.paymentStatus,
         cancelledAt: new Date(),

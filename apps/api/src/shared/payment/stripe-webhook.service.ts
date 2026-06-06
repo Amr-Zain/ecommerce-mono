@@ -26,6 +26,8 @@ import {
   WALLET_TRANSACTION_STATUSES,
   WALLET_TRANSACTION_TYPES,
 } from '@/common/constants/wallet.constants';
+import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
+import { createDomainEvent, DOMAIN_EVENTS, type OrderCreatedPayload, type PaymentCompletedPayload } from '@/common/events/domain-event';
 
 type StripeEvent = {
   type: string;
@@ -111,6 +113,7 @@ export class StripeWebhookService {
     private readonly paymentService: PaymentService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly configService: ConfigService,
+    private readonly domainEvents: DomainEventPublisher,
   ) {
     this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || STRIPE_CONFIG.defaultSecretKey);
   }
@@ -332,7 +335,11 @@ export class StripeWebhookService {
       if (claim.count !== 1) return { received: true, requiresReview: true };
       await tx.paymentTransaction.update({
         where: { id: payment.id },
-        data: { paymentStatus: PAYMENT_STATUSES.completed, paidAt: new Date(), gatewayResponse: toPrismaJson(stripeObject) },
+        data: {
+          paymentStatus: PAYMENT_STATUSES.completed,
+          paidAt: new Date(),
+          gatewayResponse: toPrismaJson(stripeObject),
+        },
       });
       return { received: true, exchangeRequestId };
     });
@@ -420,7 +427,10 @@ export class StripeWebhookService {
         status: WALLET_TRANSACTION_STATUSES.pending,
       },
       data: {
-        status: status === PAYMENT_STATUSES.expired ? WALLET_TRANSACTION_STATUSES.expired : WALLET_TRANSACTION_STATUSES.failed,
+        status:
+          status === PAYMENT_STATUSES.expired
+            ? WALLET_TRANSACTION_STATUSES.expired
+            : WALLET_TRANSACTION_STATUSES.failed,
         failedAt: new Date(),
         gatewayResponse: toPrismaJson(stripeObject),
       },
@@ -581,7 +591,7 @@ export class StripeWebhookService {
         },
       });
 
-      await tx.paymentTransaction.create({
+      const payment = await tx.paymentTransaction.create({
         data: {
           orderId: order.id,
           amount: pendingCheckout.amount,
@@ -629,6 +639,40 @@ export class StripeWebhookService {
           orderId: order.id,
         },
       });
+
+      await this.domainEvents.publish(
+        createDomainEvent<OrderCreatedPayload>({
+          eventName: DOMAIN_EVENTS.orderCreated,
+          aggregateType: 'order',
+          aggregateId: order.id.toString(),
+          actor: { type: 'system' },
+          payload: {
+            orderId: order.id.toString(),
+            orderNumber: order.orderNumber,
+            userId: snapshot.userId,
+            status: order.status,
+            paymentStatus: PAYMENT_STATUSES.completed,
+            totalPrice: Number(order.totalPrice),
+          },
+        }),
+        tx,
+      );
+      await this.domainEvents.publish(
+        createDomainEvent<PaymentCompletedPayload>({
+          eventName: DOMAIN_EVENTS.paymentCompleted,
+          aggregateType: 'order',
+          aggregateId: order.id.toString(),
+          actor: { type: 'system' },
+          payload: {
+            orderId: order.id.toString(),
+            userId: snapshot.userId,
+            status: PAYMENT_STATUSES.completed,
+            paymentId: payment.id.toString(),
+            amount: Number(pendingCheckout.amount),
+          },
+        }),
+        tx,
+      );
 
       return { received: true, orderId: order.id.toString(), orderNumber: order.orderNumber };
     });

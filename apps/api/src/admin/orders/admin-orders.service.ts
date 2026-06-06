@@ -8,6 +8,8 @@ import { OrderLifecycleService } from '@/shared/orders/order-lifecycle.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { IOrdersRepository, ORDERS_REPOSITORY } from '@/common/interfaces';
+import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
+import { createDomainEvent, DOMAIN_EVENTS, type PaymentCompletedPayload } from '@/common/events/domain-event';
 
 const ADMIN_ORDER_TRANSITIONS: Record<string, readonly string[]> = {
   pending: ['processing', 'cancelled'],
@@ -38,6 +40,7 @@ export class AdminOrdersService {
     private readonly orderLifecycleService: OrderLifecycleService,
     private readonly i18n: I18nService<I18nTranslations>,
     @Inject(ORDERS_REPOSITORY) private readonly ordersRepository: IOrdersRepository,
+    private readonly domainEvents: DomainEventPublisher,
   ) {}
 
   async findAll(query: AdminOrderQueryDto, langId: string = 'en') {
@@ -181,6 +184,22 @@ export class AdminOrdersService {
           statusHistory: { orderBy: { createdAt: 'asc' } },
         },
       });
+      await this.domainEvents.publish(
+        createDomainEvent<PaymentCompletedPayload>({
+          eventName: DOMAIN_EVENTS.paymentCompleted,
+          aggregateType: 'order',
+          aggregateId: id.toString(),
+          actor: { type: 'admin', userId: adminUser.id.toString() },
+          payload: {
+            orderId: id.toString(),
+            userId: order.userId.toString(),
+            status: PAYMENT_STATUSES.completed,
+            paymentId: pendingPayment.id.toString(),
+            amount: Number(pendingPayment.amount),
+          },
+        }),
+        tx,
+      );
 
       return this.formatOrder(updatedOrder);
     });

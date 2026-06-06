@@ -27,6 +27,8 @@ import { I18nTranslations } from '@/generated/i18n.generated';
 import { StripeWebhookService } from '@/shared/payment/stripe-webhook.service';
 import { VerifyCheckoutPaymentDto } from './dto/checkout.dto';
 import { Prisma } from '@prisma/client';
+import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
+import { createDomainEvent, DOMAIN_EVENTS, type OrderCreatedPayload } from '@/common/events/domain-event';
 
 type CheckoutDbClient = PrismaService | Prisma.TransactionClient;
 
@@ -103,6 +105,7 @@ export class ClientCheckoutService {
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly stripeWebhookService: StripeWebhookService,
+    private readonly domainEvents: DomainEventPublisher,
   ) {}
 
   async validateCoupon(code: string, subtotal: number, userId: bigint, tx?: CheckoutDbClient) {
@@ -208,9 +211,7 @@ export class ClientCheckoutService {
         return weights.map(() => 0);
       }
 
-      const allocations = weights.map((weight) =>
-        Number(((weight / weightTotal) * total).toFixed(2)),
-      );
+      const allocations = weights.map((weight) => Number(((weight / weightTotal) * total).toFixed(2)));
       const allocatedTotal = Number(allocations.reduce((sum, value) => sum + value, 0).toFixed(2));
       const remainder = Number((total - allocatedTotal).toFixed(2));
       if (remainder !== 0 && allocations.length > 0) {
@@ -939,6 +940,24 @@ export class ClientCheckoutService {
           data: { paymentStatus: paymentInit.status },
         });
       }
+
+      await this.domainEvents.publish(
+        createDomainEvent<OrderCreatedPayload>({
+          eventName: DOMAIN_EVENTS.orderCreated,
+          aggregateType: 'order',
+          aggregateId: order.id.toString(),
+          actor: { type: 'client', userId: userId.toString() },
+          payload: {
+            orderId: order.id.toString(),
+            orderNumber: order.orderNumber,
+            userId: userId.toString(),
+            status: order.status,
+            paymentStatus: paymentInit.status,
+            totalPrice: Number(order.totalPrice),
+          },
+        }),
+        tx,
+      );
 
       // 9. Clear entire Cart
       await tx.cartItem.deleteMany({
