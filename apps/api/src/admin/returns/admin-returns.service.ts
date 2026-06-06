@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma';
@@ -25,6 +25,16 @@ import {
   AdminVerifyExchangePaymentDto,
   AdminReturnExchangeQueryDto,
 } from './dto/admin-return-exchange.dto';
+import {
+  EXCHANGE_REQUESTS_REPOSITORY,
+  IExchangeRequestsRepository,
+  IPaymentTransactionsRepository,
+  IReturnRequestsRepository,
+  IVariantsRepository,
+  PAYMENT_TRANSACTIONS_REPOSITORY,
+  RETURN_REQUESTS_REPOSITORY,
+  VARIANTS_REPOSITORY,
+} from '@/common/interfaces';
 
 const SETTLED_PRICE_STATUSES: readonly string[] = [
   PRICE_ADJUSTMENT_STATUSES.none,
@@ -44,7 +54,16 @@ type ReturnRequestWithRelations = Prisma.ReturnRequestGetPayload<{
     user: true;
     items: { include: { orderItem: true } };
   };
-}> & { history?: Array<{ previousStatus: string | null; newStatus: string; actorType: string; actorUserId: bigint | null; reason: string | null; createdAt: Date }> };
+}> & {
+  history?: Array<{
+    previousStatus: string | null;
+    newStatus: string;
+    actorType: string;
+    actorUserId: bigint | null;
+    reason: string | null;
+    createdAt: Date;
+  }>;
+};
 
 type ExchangeRequestWithRelations = Prisma.ExchangeRequestGetPayload<{
   include: {
@@ -52,7 +71,16 @@ type ExchangeRequestWithRelations = Prisma.ExchangeRequestGetPayload<{
     user: true;
     items: { include: { orderItem: true; newVariant: true } };
   };
-}> & { history?: Array<{ previousStatus: string | null; newStatus: string; actorType: string; actorUserId: bigint | null; reason: string | null; createdAt: Date }> };
+}> & {
+  history?: Array<{
+    previousStatus: string | null;
+    newStatus: string;
+    actorType: string;
+    actorUserId: bigint | null;
+    reason: string | null;
+    createdAt: Date;
+  }>;
+};
 
 @Injectable()
 export class AdminReturnsService {
@@ -61,26 +89,48 @@ export class AdminReturnsService {
     private readonly paymentService: PaymentService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly orderLifecycleService: OrderLifecycleService,
+    @Inject(RETURN_REQUESTS_REPOSITORY) private readonly returnRequestsRepository: IReturnRequestsRepository,
+    @Inject(EXCHANGE_REQUESTS_REPOSITORY) private readonly exchangeRequestsRepository: IExchangeRequestsRepository,
+    @Inject(PAYMENT_TRANSACTIONS_REPOSITORY)
+    private readonly paymentTransactionsRepository: IPaymentTransactionsRepository,
+    @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
   ) {}
 
   async findReturns(query: AdminReturnExchangeQueryDto = {}) {
     const where = this.requestWhere(query, RETURN_REQUEST_STATUSES);
-    const requests = await this.prisma.returnRequest.findMany({
+    const requests = await this.returnRequestsRepository.findMany({
       where,
-      include: { order: true, user: true, items: { include: { orderItem: true } }, history: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        order: true,
+        user: true,
+        items: { include: { orderItem: true } },
+        history: { orderBy: { createdAt: 'asc' } },
+      },
       orderBy: this.requestOrderBy(query),
       skip: query.paginate === false ? undefined : ((query.page ?? 1) - 1) * (query.limit ?? 10),
       take: query.paginate === false ? undefined : (query.limit ?? 10),
     });
     const data = requests.map((request) => this.formatReturnRequest(request));
     if (query.paginate === false) return data;
-    return { data, meta: { page: query.page ?? 1, limit: query.limit ?? 10, total: await this.prisma.returnRequest.count({ where }) } };
+    return {
+      data,
+      meta: {
+        page: query.page ?? 1,
+        limit: query.limit ?? 10,
+        total: await this.returnRequestsRepository.count(where),
+      },
+    };
   }
 
   async findReturn(id: bigint) {
-    const request = await this.prisma.returnRequest.findUnique({
+    const request = await this.returnRequestsRepository.findUnique({
       where: { id },
-      include: { order: true, user: true, items: { include: { orderItem: true } }, history: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        order: true,
+        user: true,
+        items: { include: { orderItem: true } },
+        history: { orderBy: { createdAt: 'asc' } },
+      },
     });
     if (!request) throw new NotFoundException(this.i18n.t('errors.return_request_not_found'));
     return this.formatReturnRequest(request);
@@ -88,22 +138,39 @@ export class AdminReturnsService {
 
   async findExchanges(query: AdminReturnExchangeQueryDto = {}) {
     const where = this.requestWhere(query, EXCHANGE_REQUEST_STATUSES);
-    const requests = await this.prisma.exchangeRequest.findMany({
+    const requests = await this.exchangeRequestsRepository.findMany({
       where,
-      include: { order: true, user: true, items: { include: { orderItem: true, newVariant: true } }, history: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        order: true,
+        user: true,
+        items: { include: { orderItem: true, newVariant: true } },
+        history: { orderBy: { createdAt: 'asc' } },
+      },
       orderBy: this.requestOrderBy(query),
       skip: query.paginate === false ? undefined : ((query.page ?? 1) - 1) * (query.limit ?? 10),
       take: query.paginate === false ? undefined : (query.limit ?? 10),
     });
     const data = requests.map((request) => this.formatExchangeRequest(request));
     if (query.paginate === false) return data;
-    return { data, meta: { page: query.page ?? 1, limit: query.limit ?? 10, total: await this.prisma.exchangeRequest.count({ where }) } };
+    return {
+      data,
+      meta: {
+        page: query.page ?? 1,
+        limit: query.limit ?? 10,
+        total: await this.exchangeRequestsRepository.count(where),
+      },
+    };
   }
 
   async findExchange(id: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({
+    const request = await this.exchangeRequestsRepository.findUnique({
       where: { id },
-      include: { order: true, user: true, items: { include: { orderItem: true, newVariant: true } }, history: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        order: true,
+        user: true,
+        items: { include: { orderItem: true, newVariant: true } },
+        history: { orderBy: { createdAt: 'asc' } },
+      },
     });
     if (!request) throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
     return this.formatExchangeRequest(request);
@@ -111,34 +178,56 @@ export class AdminReturnsService {
 
   async approveReturn(id: bigint, adminId?: bigint) {
     await this.prisma.$transaction(async (tx) => {
-      await this.lockReturn(tx, id);
-      const request = await tx.returnRequest.findUnique({ where: { id } });
+      await this.returnRequestsRepository.lock(id, tx);
+      const request = await this.returnRequestsRepository.findUnique({ where: { id } }, tx);
       if (!request) throw new NotFoundException(this.i18n.t('errors.return_request_not_found'));
-      if (request.status !== RETURN_REQUEST_STATUSES.requested) throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
-      await tx.returnRequest.update({ where: { id }, data: { status: RETURN_REQUEST_STATUSES.approved, approvedAt: new Date() } });
-      await this.addHistory(tx, { returnRequestId: id, previousStatus: request.status, newStatus: RETURN_REQUEST_STATUSES.approved, actorUserId: adminId });
+      if (request.status !== RETURN_REQUEST_STATUSES.requested)
+        throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
+      await this.returnRequestsRepository.update(
+        { where: { id }, data: { status: RETURN_REQUEST_STATUSES.approved, approvedAt: new Date() } },
+        tx,
+      );
+      await this.addHistory(tx, {
+        returnRequestId: id,
+        previousStatus: request.status,
+        newStatus: RETURN_REQUEST_STATUSES.approved,
+        actorUserId: adminId,
+      });
     });
     return this.findReturn(id);
   }
 
   async rejectReturn(id: bigint, dto: AdminRejectRequestDto, adminId?: bigint) {
-    const request = await this.prisma.returnRequest.findUnique({ where: { id } });
+    const request = await this.returnRequestsRepository.findUnique({ where: { id } });
     if (!request) throw new NotFoundException(this.i18n.t('errors.return_request_not_found'));
     if (request.status !== RETURN_REQUEST_STATUSES.requested) {
       throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
     }
     await this.prisma.$transaction(async (tx) => {
-      await this.lockReturn(tx, id);
-      const current = await tx.returnRequest.findUniqueOrThrow({ where: { id } });
-      if (current.status !== RETURN_REQUEST_STATUSES.requested) throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
-      await tx.returnRequest.update({ where: { id }, data: { status: RETURN_REQUEST_STATUSES.rejected, rejectedAt: new Date(), adminNote: dto.note } });
-      await this.addHistory(tx, { returnRequestId: id, previousStatus: current.status, newStatus: RETURN_REQUEST_STATUSES.rejected, actorUserId: adminId, reason: dto.note });
+      await this.returnRequestsRepository.lock(id, tx);
+      const current = await this.returnRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
+      if (current.status !== RETURN_REQUEST_STATUSES.requested)
+        throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
+      await this.returnRequestsRepository.update(
+        {
+          where: { id },
+          data: { status: RETURN_REQUEST_STATUSES.rejected, rejectedAt: new Date(), adminNote: dto.note },
+        },
+        tx,
+      );
+      await this.addHistory(tx, {
+        returnRequestId: id,
+        previousStatus: current.status,
+        newStatus: RETURN_REQUEST_STATUSES.rejected,
+        actorUserId: adminId,
+        reason: dto.note,
+      });
     });
     return this.findReturn(id);
   }
 
   async receiveReturn(id: bigint, dto: AdminReceiveReturnDto, adminId?: bigint) {
-    const request = await this.prisma.returnRequest.findUnique({
+    const request = await this.returnRequestsRepository.findUnique({
       where: { id },
       include: { order: true, items: { include: { orderItem: true } } },
     });
@@ -152,7 +241,7 @@ export class AdminReturnsService {
       throw new BadRequestException(this.i18n.t('errors.return_exchange_all_items_required'));
     }
 
-    const itemUpdates = request.items.map((item) => {
+    const itemUpdates = request.items.map((item: any) => {
       const input = inputItems.get(item.id.toString());
       if (!input) throw new BadRequestException(this.i18n.t('errors.return_exchange_all_items_required'));
       if (input.acceptedQuantity > item.quantity) {
@@ -186,7 +275,7 @@ export class AdminReturnsService {
     });
 
     const shippingRefundAmount = dto.shippingRefundAmount ?? Number(request.suggestedShippingRefundAmount);
-    const otherShippingRefunds = await this.prisma.returnRequest.aggregate({
+    const otherShippingRefunds = await this.returnRequestsRepository.aggregate({
       where: {
         orderId: request.orderId,
         id: { not: id },
@@ -194,7 +283,10 @@ export class AdminReturnsService {
       },
       _sum: { shippingRefundAmount: true },
     });
-    const remainingShippingRefund = Math.max(0, Number(request.order.shippingFee) - Number(otherShippingRefunds._sum.shippingRefundAmount ?? 0));
+    const remainingShippingRefund = Math.max(
+      0,
+      Number(request.order.shippingFee) - Number(otherShippingRefunds._sum.shippingRefundAmount ?? 0),
+    );
     if (shippingRefundAmount > remainingShippingRefund) {
       throw new BadRequestException(this.i18n.t('errors.return_shipping_refund_too_high'));
     }
@@ -202,60 +294,85 @@ export class AdminReturnsService {
       throw new BadRequestException(this.i18n.t('errors.return_shipping_refund_reason_required'));
     }
 
-    const adjustedRefundAmount = this.round(itemUpdates.reduce((sum, update) => sum + update.adjustedRefundAmount, 0));
-    const adjustedVatRefundAmount = this.round(itemUpdates.reduce((sum, update) => sum + update.adjustedVatRefundAmount, 0));
-    const calculatedRefundAmount = this.round(itemUpdates.reduce((sum, update) => sum + update.calculatedRefundAmount, 0));
-    const calculatedVatRefundAmount = this.round(itemUpdates.reduce((sum, update) => sum + update.calculatedVatRefundAmount, 0));
+    const adjustedRefundAmount = this.round(
+      itemUpdates.reduce((sum: number, update: any) => sum + update.adjustedRefundAmount, 0),
+    );
+    const adjustedVatRefundAmount = this.round(
+      itemUpdates.reduce((sum: number, update: any) => sum + update.adjustedVatRefundAmount, 0),
+    );
+    const calculatedRefundAmount = this.round(
+      itemUpdates.reduce((sum: number, update: any) => sum + update.calculatedRefundAmount, 0),
+    );
+    const calculatedVatRefundAmount = this.round(
+      itemUpdates.reduce((sum: number, update: any) => sum + update.calculatedVatRefundAmount, 0),
+    );
     const finalRefundAmount = this.round(adjustedRefundAmount + adjustedVatRefundAmount + shippingRefundAmount);
     await this.assertRemainingRefundCapacity(request.orderId, finalRefundAmount);
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      await this.lockReturn(tx, id);
-      const current = await tx.returnRequest.findUniqueOrThrow({ where: { id } });
+      await this.returnRequestsRepository.lock(id, tx);
+      const current = await this.returnRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
       if (current.status !== RETURN_REQUEST_STATUSES.approved) {
         throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
       }
       for (const update of itemUpdates) {
-        if (update.input.disposition === ITEM_DISPOSITIONS.restock && update.item.oldVariantId && update.input.acceptedQuantity > 0) {
+        if (
+          update.input.disposition === ITEM_DISPOSITIONS.restock &&
+          update.item.oldVariantId &&
+          update.input.acceptedQuantity > 0
+        ) {
           await this.adjustStock(tx, update.item.oldVariantId, update.input.acceptedQuantity, INVENTORY_REASONS.return);
         }
-        await tx.returnRequestItem.update({
-          where: { id: update.item.id },
-          data: {
-            acceptedQuantity: update.input.acceptedQuantity,
-            itemDisposition: update.input.disposition,
-            adminNote: update.input.note,
-            calculatedRefundAmount: update.calculatedRefundAmount,
-            calculatedVatRefundAmount: update.calculatedVatRefundAmount,
-            adjustedRefundAmount: update.adjustedRefundAmount,
-            adjustedVatRefundAmount: update.adjustedVatRefundAmount,
-            refundAdjustmentReason: update.input.refundAdjustmentReason,
+        await this.returnRequestsRepository.updateItem(
+          {
+            where: { id: update.item.id },
+            data: {
+              acceptedQuantity: update.input.acceptedQuantity,
+              itemDisposition: update.input.disposition,
+              adminNote: update.input.note,
+              calculatedRefundAmount: update.calculatedRefundAmount,
+              calculatedVatRefundAmount: update.calculatedVatRefundAmount,
+              adjustedRefundAmount: update.adjustedRefundAmount,
+              adjustedVatRefundAmount: update.adjustedVatRefundAmount,
+              refundAdjustmentReason: update.input.refundAdjustmentReason,
+            },
           },
-        });
+          tx,
+        );
       }
 
-      const result = await tx.returnRequest.update({
-        where: { id },
-        data: {
-          status: RETURN_REQUEST_STATUSES.itemReceived,
-          itemReceivedAt: new Date(),
-          refundStatus: finalRefundAmount > 0 ? REFUND_STATUSES.requiresRefund : REFUND_STATUSES.waived,
-          calculatedRefundAmount,
-          calculatedVatRefundAmount,
-          adjustedRefundAmount,
-          adjustedVatRefundAmount,
-          shippingRefundAmount,
-          finalRefundAmount,
-          refundAdjustmentReason: itemUpdates
-            .map((update) => update.input.refundAdjustmentReason)
-            .filter(Boolean)
-            .join('; ') || null,
-          shippingRefundReason: dto.shippingRefundReason,
-          adminNote: dto.note,
+      const result = await this.returnRequestsRepository.update(
+        {
+          where: { id },
+          data: {
+            status: RETURN_REQUEST_STATUSES.itemReceived,
+            itemReceivedAt: new Date(),
+            refundStatus: finalRefundAmount > 0 ? REFUND_STATUSES.requiresRefund : REFUND_STATUSES.waived,
+            calculatedRefundAmount,
+            calculatedVatRefundAmount,
+            adjustedRefundAmount,
+            adjustedVatRefundAmount,
+            shippingRefundAmount,
+            finalRefundAmount,
+            refundAdjustmentReason:
+              itemUpdates
+                .map((update: any) => update.input.refundAdjustmentReason)
+                .filter(Boolean)
+                .join('; ') || null,
+            shippingRefundReason: dto.shippingRefundReason,
+            adminNote: dto.note,
+          },
+          include: { order: true, user: true, items: { include: { orderItem: true } } },
         },
-        include: { order: true, user: true, items: { include: { orderItem: true } } },
+        tx,
+      );
+      await this.addHistory(tx, {
+        returnRequestId: id,
+        previousStatus: current.status,
+        newStatus: RETURN_REQUEST_STATUSES.itemReceived,
+        actorUserId: adminId,
+        reason: dto.note,
       });
-      await this.addHistory(tx, { returnRequestId: id, previousStatus: current.status, newStatus: RETURN_REQUEST_STATUSES.itemReceived, actorUserId: adminId, reason: dto.note });
       return result;
     });
 
@@ -263,7 +380,7 @@ export class AdminReturnsService {
   }
 
   async refundReturn(id: bigint, dto: AdminReturnRefundDto, adminId?: bigint) {
-    const request = await this.prisma.returnRequest.findUnique({
+    const request = await this.returnRequestsRepository.findUnique({
       where: { id },
       include: { order: { include: { payments: true } }, items: true, payments: true },
     });
@@ -277,7 +394,7 @@ export class AdminReturnsService {
 
     const refundAmount = Number(request.finalRefundAmount);
     if (refundAmount <= 0) {
-      const updated = await this.prisma.returnRequest.update({
+      const updated = await this.returnRequestsRepository.update({
         where: { id },
         data: {
           status: RETURN_REQUEST_STATUSES.refunded,
@@ -290,15 +407,20 @@ export class AdminReturnsService {
       return this.formatReturnRequest(updated);
     }
 
-    const completedPayment = request.order.payments.find((payment) => payment.paymentStatus === PAYMENT_STATUSES.completed);
+    const completedPayment = request.order.payments.find(
+      (payment: any) => payment.paymentStatus === PAYMENT_STATUSES.completed,
+    );
     const isOnlinePayment = (ONLINE_PAYMENT_METHODS as readonly string[]).includes(request.order.paymentMethod);
     if (isOnlinePayment && !completedPayment?.transactionRef) {
       throw new BadRequestException(this.i18n.t('errors.order_completed_payment_not_found'));
     }
 
     const attempt = await this.prisma.$transaction(async (tx) => {
-      await this.lockReturn(tx, id);
-      const current = await tx.returnRequest.findUniqueOrThrow({ where: { id }, include: { payments: true } });
+      await this.returnRequestsRepository.lock(id, tx);
+      const current = await this.returnRequestsRepository.findUniqueOrThrow(
+        { where: { id }, include: { payments: true } },
+        tx,
+      );
       if (
         current.status !== RETURN_REQUEST_STATUSES.itemReceived ||
         ![REFUND_STATUSES.requiresRefund, REFUND_STATUSES.requiresReview].includes(current.refundStatus as never)
@@ -306,18 +428,22 @@ export class AdminReturnsService {
         throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
       }
       await this.orderLifecycleService.assertRemainingRefundCapacityTx(tx, request.orderId, refundAmount);
-      const existing = current.payments.find((payment) =>
-        payment.refundSource === REFUND_SOURCES.return &&
-        [PAYMENT_STATUSES.processingPayment, PAYMENT_STATUSES.requiresReview].includes(payment.paymentStatus as never),
+      const existing = current.payments.find(
+        (payment: any) =>
+          payment.refundSource === REFUND_SOURCES.return &&
+          [PAYMENT_STATUSES.processingPayment, PAYMENT_STATUSES.requiresReview].includes(
+            payment.paymentStatus as never,
+          ),
       );
       const idempotencyKey = existing?.idempotencyKey ?? `return_refund_${id.toString()}`;
       const payment = existing
-        ? await tx.paymentTransaction.update({
-            where: { id: existing.id },
-            data: { paymentStatus: PAYMENT_STATUSES.processingPayment, requestedById: adminId },
-          })
-        : await tx.paymentTransaction.create({
-            data: {
+        ? await this.paymentTransactionsRepository.update(
+            existing.id,
+            { paymentStatus: PAYMENT_STATUSES.processingPayment, requestedById: adminId },
+            tx,
+          )
+        : await this.paymentTransactionsRepository.create(
+            {
               orderId: request.orderId,
               returnRequestId: id,
               amount: refundAmount,
@@ -330,8 +456,12 @@ export class AdminReturnsService {
               idempotencyKey,
               requestedById: adminId,
             },
-          });
-      await tx.returnRequest.update({ where: { id }, data: { refundStatus: REFUND_STATUSES.processing } });
+            tx,
+          );
+      await this.returnRequestsRepository.update(
+        { where: { id }, data: { refundStatus: REFUND_STATUSES.processing } },
+        tx,
+      );
       return payment;
     });
 
@@ -353,46 +483,68 @@ export class AdminReturnsService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await this.lockReturn(tx, id);
-      await tx.paymentTransaction.update({
-        where: { id: attempt.id },
-        data: { paymentStatus: PAYMENT_STATUSES.refunded, gatewayResponse: gatewayResponse as Prisma.InputJsonValue, paidAt: new Date() },
-      });
-      await tx.returnRequest.update({
-        where: { id },
-        data: {
-          status: RETURN_REQUEST_STATUSES.refunded,
-          refundStatus: isOnlinePayment ? REFUND_STATUSES.refunded : REFUND_STATUSES.manualRefunded,
-          refundedAt: new Date(),
-          adminNote: dto.note,
+      await this.returnRequestsRepository.lock(id, tx);
+      await this.paymentTransactionsRepository.update(
+        attempt.id,
+        {
+          paymentStatus: PAYMENT_STATUSES.refunded,
+          gatewayResponse: gatewayResponse as Prisma.InputJsonValue,
+          paidAt: new Date(),
         },
+        tx,
+      );
+      await this.returnRequestsRepository.update(
+        {
+          where: { id },
+          data: {
+            status: RETURN_REQUEST_STATUSES.refunded,
+            refundStatus: isOnlinePayment ? REFUND_STATUSES.refunded : REFUND_STATUSES.manualRefunded,
+            refundedAt: new Date(),
+            adminNote: dto.note,
+          },
+        },
+        tx,
+      );
+      await this.addHistory(tx, {
+        returnRequestId: id,
+        previousStatus: request.status,
+        newStatus: RETURN_REQUEST_STATUSES.refunded,
+        actorUserId: adminId,
+        reason: dto.note,
       });
-      await this.addHistory(tx, { returnRequestId: id, previousStatus: request.status, newStatus: RETURN_REQUEST_STATUSES.refunded, actorUserId: adminId, reason: dto.note });
       await this.orderLifecycleService.syncOrderPaymentStatus(tx, request.orderId);
     });
     return this.findReturn(id);
   }
 
   async completeReturn(id: bigint, adminId?: bigint) {
-    const request = await this.prisma.returnRequest.findUnique({ where: { id } });
+    const request = await this.returnRequestsRepository.findUnique({ where: { id } });
     if (!request) throw new NotFoundException(this.i18n.t('errors.return_request_not_found'));
     if (request.status !== RETURN_REQUEST_STATUSES.refunded && request.refundStatus !== REFUND_STATUSES.waived) {
       throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
     }
     await this.prisma.$transaction(async (tx) => {
-      await this.lockReturn(tx, id);
-      const current = await tx.returnRequest.findUniqueOrThrow({ where: { id } });
+      await this.returnRequestsRepository.lock(id, tx);
+      const current = await this.returnRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
       if (current.status !== RETURN_REQUEST_STATUSES.refunded && current.refundStatus !== REFUND_STATUSES.waived) {
         throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
       }
-      await tx.returnRequest.update({ where: { id }, data: { status: RETURN_REQUEST_STATUSES.completed, completedAt: new Date() } });
-      await this.addHistory(tx, { returnRequestId: id, previousStatus: current.status, newStatus: RETURN_REQUEST_STATUSES.completed, actorUserId: adminId });
+      await this.returnRequestsRepository.update(
+        { where: { id }, data: { status: RETURN_REQUEST_STATUSES.completed, completedAt: new Date() } },
+        tx,
+      );
+      await this.addHistory(tx, {
+        returnRequestId: id,
+        previousStatus: current.status,
+        newStatus: RETURN_REQUEST_STATUSES.completed,
+        actorUserId: adminId,
+      });
     });
     return this.findReturn(id);
   }
 
   async approveExchange(id: bigint, adminId?: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({
+    const request = await this.exchangeRequestsRepository.findUnique({
       where: { id },
       include: { items: true },
     });
@@ -405,49 +557,59 @@ export class AdminReturnsService {
     for (const item of request.items) {
       requiredByVariant.set(item.newVariantId, (requiredByVariant.get(item.newVariantId) ?? 0) + item.quantity);
     }
-    const availableVariants = await this.prisma.productVariant.findMany({
-      where: { id: { in: [...requiredByVariant.keys()] }, isActive: true },
-      select: { id: true, stockQuantity: true },
-    });
+    const availableVariants = await this.variantsRepository.findActiveVariantStocks([...requiredByVariant.keys()]);
     const available = new Map(availableVariants.map((variant) => [variant.id.toString(), variant.stockQuantity]));
     if ([...requiredByVariant].some(([variantId, quantity]) => (available.get(variantId.toString()) ?? 0) < quantity)) {
       await this.prisma.$transaction(async (tx) => {
-        await this.lockExchange(tx, id);
-        const current = await tx.exchangeRequest.findUniqueOrThrow({ where: { id } });
-        if (current.status !== EXCHANGE_REQUEST_STATUSES.requested) throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
-        await tx.exchangeRequest.update({ where: { id }, data: { status: EXCHANGE_REQUEST_STATUSES.requiresReview } });
-        await this.addHistory(tx, { exchangeRequestId: id, previousStatus: current.status, newStatus: EXCHANGE_REQUEST_STATUSES.requiresReview, actorUserId: adminId });
+        await this.exchangeRequestsRepository.lock(id, tx);
+        const current = await this.exchangeRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
+        if (current.status !== EXCHANGE_REQUEST_STATUSES.requested)
+          throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
+        await this.exchangeRequestsRepository.update(
+          { where: { id }, data: { status: EXCHANGE_REQUEST_STATUSES.requiresReview } },
+          tx,
+        );
+        await this.addHistory(tx, {
+          exchangeRequestId: id,
+          previousStatus: current.status,
+          newStatus: EXCHANGE_REQUEST_STATUSES.requiresReview,
+          actorUserId: adminId,
+        });
       });
       return this.findExchange(id);
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const current = await tx.exchangeRequest.findUniqueOrThrow({ where: { id } });
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const current = await this.exchangeRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
       if (current.status !== EXCHANGE_REQUEST_STATUSES.requested) {
         throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
       }
       for (const [variantId, quantity] of requiredByVariant.entries()) {
-        const reserved = await tx.productVariant.updateMany({
-          where: { id: variantId, isActive: true, stockQuantity: { gte: quantity } },
-          data: { stockQuantity: { decrement: quantity } },
-        });
-        if (reserved.count !== 1) {
+        const reserved = await this.variantsRepository.reserveStock(variantId, quantity, INVENTORY_REASONS.reserve, tx);
+        if (!reserved) {
           throw new BadRequestException(this.i18n.t('errors.insufficient_stock_units', { args: { available: 0 } }));
         }
-        await this.createInventoryLogAfterDelta(tx, variantId, -quantity, INVENTORY_REASONS.reserve);
       }
-      const result = await tx.exchangeRequest.update({
-        where: { id },
-        data: {
-          status: EXCHANGE_REQUEST_STATUSES.approved,
-          approvedAt: new Date(),
-          replacementReservedAt: new Date(),
-          replacementExpiresAt: new Date(Date.now() + EXCHANGE_RESERVATION_MINUTES * 60_000),
+      const result = await this.exchangeRequestsRepository.update(
+        {
+          where: { id },
+          data: {
+            status: EXCHANGE_REQUEST_STATUSES.approved,
+            approvedAt: new Date(),
+            replacementReservedAt: new Date(),
+            replacementExpiresAt: new Date(Date.now() + EXCHANGE_RESERVATION_MINUTES * 60_000),
+          },
+          include: { order: true, user: true, items: { include: { orderItem: true, newVariant: true } } },
         },
-        include: { order: true, user: true, items: { include: { orderItem: true, newVariant: true } } },
+        tx,
+      );
+      await this.addHistory(tx, {
+        exchangeRequestId: id,
+        previousStatus: current.status,
+        newStatus: EXCHANGE_REQUEST_STATUSES.approved,
+        actorUserId: adminId,
       });
-      await this.addHistory(tx, { exchangeRequestId: id, previousStatus: current.status, newStatus: EXCHANGE_REQUEST_STATUSES.approved, actorUserId: adminId });
       return result;
     });
 
@@ -455,7 +617,7 @@ export class AdminReturnsService {
   }
 
   async rejectExchange(id: bigint, dto: AdminRejectRequestDto, adminId?: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({ where: { id }, include: { items: true } });
+    const request = await this.exchangeRequestsRepository.findUnique({ where: { id }, include: { items: true } });
     if (!request) throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
     if (
       request.status !== EXCHANGE_REQUEST_STATUSES.requested &&
@@ -466,9 +628,15 @@ export class AdminReturnsService {
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const current = await tx.exchangeRequest.findUniqueOrThrow({ where: { id } });
-      if (![EXCHANGE_REQUEST_STATUSES.requested, EXCHANGE_REQUEST_STATUSES.approved, EXCHANGE_REQUEST_STATUSES.requiresReview].includes(current.status as never)) {
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const current = await this.exchangeRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
+      if (
+        ![
+          EXCHANGE_REQUEST_STATUSES.requested,
+          EXCHANGE_REQUEST_STATUSES.approved,
+          EXCHANGE_REQUEST_STATUSES.requiresReview,
+        ].includes(current.status as never)
+      ) {
         throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
       }
       if (ACTIVE_EXCHANGE_STOCK_STATUSES.includes(current.status as never)) {
@@ -476,19 +644,33 @@ export class AdminReturnsService {
           await this.adjustStock(tx, item.newVariantId, item.quantity, INVENTORY_REASONS.release);
         }
       }
-      const result = await tx.exchangeRequest.update({
-        where: { id },
-        data: { status: EXCHANGE_REQUEST_STATUSES.rejected, rejectedAt: new Date(), adminNote: dto.note, replacementExpiresAt: null },
-        include: { order: true, user: true, items: { include: { orderItem: true, newVariant: true } } },
+      const result = await this.exchangeRequestsRepository.update(
+        {
+          where: { id },
+          data: {
+            status: EXCHANGE_REQUEST_STATUSES.rejected,
+            rejectedAt: new Date(),
+            adminNote: dto.note,
+            replacementExpiresAt: null,
+          },
+          include: { order: true, user: true, items: { include: { orderItem: true, newVariant: true } } },
+        },
+        tx,
+      );
+      await this.addHistory(tx, {
+        exchangeRequestId: id,
+        previousStatus: current.status,
+        newStatus: EXCHANGE_REQUEST_STATUSES.rejected,
+        actorUserId: adminId,
+        reason: dto.note,
       });
-      await this.addHistory(tx, { exchangeRequestId: id, previousStatus: current.status, newStatus: EXCHANGE_REQUEST_STATUSES.rejected, actorUserId: adminId, reason: dto.note });
       return result;
     });
     return this.formatExchangeRequest(updated);
   }
 
   async receiveExchange(id: bigint, dto: AdminReceiveExchangeDto, adminId?: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({
+    const request = await this.exchangeRequestsRepository.findUnique({
       where: { id },
       include: { order: true, items: true },
     });
@@ -506,7 +688,7 @@ export class AdminReturnsService {
       throw new BadRequestException(this.i18n.t('errors.return_exchange_all_items_required'));
     }
 
-    const acceptedValues = request.items.map((item) => {
+    const acceptedValues = request.items.map((item: any) => {
       const input = inputItems.get(item.id.toString());
       if (!input) throw new BadRequestException(this.i18n.t('errors.return_exchange_all_items_required'));
       if (input.acceptedQuantity > item.quantity) {
@@ -519,16 +701,16 @@ export class AdminReturnsService {
         newValue: this.round(Number(item.newUnitPriceSnapshot) * input.acceptedQuantity),
       };
     });
-    const totalOldValue = this.round(acceptedValues.reduce((sum, value) => sum + value.oldValue, 0));
-    const totalNewValue = this.round(acceptedValues.reduce((sum, value) => sum + value.newValue, 0));
+    const totalOldValue = this.round(acceptedValues.reduce((sum: number, value: any) => sum + value.oldValue, 0));
+    const totalNewValue = this.round(acceptedValues.reduce((sum: number, value: any) => sum + value.newValue, 0));
     const totalPriceDifference = this.round(totalNewValue - totalOldValue);
     const replacementShippingFee = dto.replacementShippingFee ?? Number(request.suggestedReplacementShippingFee);
     const settlementAmount = this.round(totalPriceDifference + replacementShippingFee);
     const priceAdjustmentStatus = this.getPriceAdjustmentStatus(settlementAmount);
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const current = await tx.exchangeRequest.findUniqueOrThrow({ where: { id } });
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const current = await this.exchangeRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
       if (current.status !== EXCHANGE_REQUEST_STATUSES.approved) {
         throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
       }
@@ -540,37 +722,49 @@ export class AdminReturnsService {
         if (unusedReservation > 0) {
           await this.adjustStock(tx, item.newVariantId, unusedReservation, INVENTORY_REASONS.release);
         }
-        await tx.exchangeRequestItem.update({
-          where: { id: item.id },
-          data: {
-            acceptedQuantity: input.acceptedQuantity,
-            itemDisposition: input.disposition,
-            adminNote: input.note,
-            oldValue,
-            newValue,
-            priceDifference: this.round(newValue - oldValue),
+        await this.exchangeRequestsRepository.updateItem(
+          {
+            where: { id: item.id },
+            data: {
+              acceptedQuantity: input.acceptedQuantity,
+              itemDisposition: input.disposition,
+              adminNote: input.note,
+              oldValue,
+              newValue,
+              priceDifference: this.round(newValue - oldValue),
+            },
           },
-        });
+          tx,
+        );
       }
 
-      const result = await tx.exchangeRequest.update({
-        where: { id },
-        data: {
-          status: EXCHANGE_REQUEST_STATUSES.itemReceived,
-          itemReceivedAt: new Date(),
-          replacementShippingFee,
-          totalOldValue,
-          totalNewValue,
-          totalPriceDifference,
-          settlementAmount,
-          priceAdjustmentStatus,
-          shippingFeeReason: dto.shippingFeeReason,
-          adminNote: dto.note,
-          replacementExpiresAt: null,
+      const result = await this.exchangeRequestsRepository.update(
+        {
+          where: { id },
+          data: {
+            status: EXCHANGE_REQUEST_STATUSES.itemReceived,
+            itemReceivedAt: new Date(),
+            replacementShippingFee,
+            totalOldValue,
+            totalNewValue,
+            totalPriceDifference,
+            settlementAmount,
+            priceAdjustmentStatus,
+            shippingFeeReason: dto.shippingFeeReason,
+            adminNote: dto.note,
+            replacementExpiresAt: null,
+          },
+          include: { order: true, user: true, items: { include: { orderItem: true, newVariant: true } } },
         },
-        include: { order: true, user: true, items: { include: { orderItem: true, newVariant: true } } },
+        tx,
+      );
+      await this.addHistory(tx, {
+        exchangeRequestId: id,
+        previousStatus: current.status,
+        newStatus: EXCHANGE_REQUEST_STATUSES.itemReceived,
+        actorUserId: adminId,
+        reason: dto.note,
       });
-      await this.addHistory(tx, { exchangeRequestId: id, previousStatus: current.status, newStatus: EXCHANGE_REQUEST_STATUSES.itemReceived, actorUserId: adminId, reason: dto.note });
       return result;
     });
 
@@ -578,7 +772,10 @@ export class AdminReturnsService {
   }
 
   async createExchangePayment(id: bigint, dto: AdminExchangePaymentDto, adminId?: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({ where: { id }, include: { order: true, payments: true } });
+    const request = await this.exchangeRequestsRepository.findUnique({
+      where: { id },
+      include: { order: true, payments: true },
+    });
     if (!request) throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
     if (request.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresPayment) {
       throw new BadRequestException(this.i18n.t('errors.exchange_payment_not_required'));
@@ -586,31 +783,35 @@ export class AdminReturnsService {
     if (request.status !== EXCHANGE_REQUEST_STATUSES.itemReceived) {
       throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
     }
-    const activePayment = request.payments.find((payment) =>
-      !payment.refundSource &&
-      [PAYMENT_STATUSES.pending, PAYMENT_STATUSES.awaitingConfirmation, PAYMENT_STATUSES.processingPayment].includes(
-        payment.paymentStatus as never,
-      ),
+    const activePayment = request.payments.find(
+      (payment: any) =>
+        !payment.refundSource &&
+        [PAYMENT_STATUSES.pending, PAYMENT_STATUSES.awaitingConfirmation, PAYMENT_STATUSES.processingPayment].includes(
+          payment.paymentStatus as never,
+        ),
     );
     if (activePayment) {
       throw new BadRequestException(this.i18n.t('errors.exchange_payment_already_active'));
     }
     const amount = Number(request.settlementAmount);
-    const init = await this.paymentService.initiatePayment(dto.paymentMethod, `exchange_${request.id.toString()}`, amount, {
-      metadata: { exchangeRequestId: request.id.toString(), orderId: request.orderId.toString() },
-    });
-    await this.prisma.paymentTransaction.create({
-      data: {
-        orderId: request.orderId,
-        exchangeRequestId: id,
-        amount,
-        paymentMethod: dto.paymentMethod,
-        paymentStatus: init.status,
-        transactionRef: init.transactionRef,
-        gatewayResponse: init.gatewayResponse as Prisma.InputJsonValue,
-        currency: PAYMENT_CURRENCIES.sar,
-        requestedById: adminId,
+    const init = await this.paymentService.initiatePayment(
+      dto.paymentMethod,
+      `exchange_${request.id.toString()}`,
+      amount,
+      {
+        metadata: { exchangeRequestId: request.id.toString(), orderId: request.orderId.toString() },
       },
+    );
+    await this.paymentTransactionsRepository.create({
+      orderId: request.orderId,
+      exchangeRequestId: id,
+      amount,
+      paymentMethod: dto.paymentMethod,
+      paymentStatus: init.status,
+      transactionRef: init.transactionRef,
+      gatewayResponse: init.gatewayResponse as Prisma.InputJsonValue,
+      currency: PAYMENT_CURRENCIES.sar,
+      requestedById: adminId,
     });
     return {
       exchangeRequestId: request.id.toString(),
@@ -623,18 +824,18 @@ export class AdminReturnsService {
   }
 
   async verifyExchangePayment(id: bigint, dto: AdminVerifyExchangePaymentDto, adminId?: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({ where: { id } });
+    const request = await this.exchangeRequestsRepository.findUnique({ where: { id } });
     if (!request) throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
     if (request.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresPayment) {
       throw new BadRequestException(this.i18n.t('errors.exchange_payment_not_required'));
     }
-    const payment = await this.prisma.paymentTransaction.findFirst({
-      where: {
-        exchangeRequestId: id,
-        transactionRef: dto.transactionRef,
-        refundSource: null,
-        amount: request.settlementAmount,
-        paymentStatus: { in: [PAYMENT_STATUSES.pending, PAYMENT_STATUSES.awaitingConfirmation, PAYMENT_STATUSES.processingPayment] },
+    const payment = await this.paymentTransactionsRepository.findFirst({
+      exchangeRequestId: id,
+      transactionRef: dto.transactionRef,
+      refundSource: null,
+      amount: request.settlementAmount,
+      paymentStatus: {
+        in: [PAYMENT_STATUSES.pending, PAYMENT_STATUSES.awaitingConfirmation, PAYMENT_STATUSES.processingPayment],
       },
     });
     if (!payment) throw new NotFoundException(this.i18n.t('errors.pending_checkout_transaction_missing'));
@@ -644,41 +845,53 @@ export class AdminReturnsService {
       throw new BadRequestException(this.i18n.t('errors.exchange_payment_not_completed'));
     }
     await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const claimed = await tx.exchangeRequest.updateMany({
-        where: { id, priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.requiresPayment },
-        data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.paid },
-      });
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const claimed = await this.exchangeRequestsRepository.updateMany(
+        {
+          where: { id, priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.requiresPayment },
+          data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.paid },
+        },
+        tx,
+      );
       if (claimed.count !== 1) throw new BadRequestException(this.i18n.t('errors.exchange_payment_not_required'));
-      await tx.paymentTransaction.update({
-        where: { id: paymentId },
-        data: {
+      await this.paymentTransactionsRepository.update(
+        paymentId,
+        {
           paymentStatus: PAYMENT_STATUSES.completed,
           paidAt: new Date(),
           gatewayResponse: verify.gatewayResponse as Prisma.InputJsonValue,
           requestedById: adminId,
         },
-      });
+        tx,
+      );
     });
     return this.findExchange(id);
   }
 
   async retryExchangeReservation(id: bigint, adminId?: bigint) {
     await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const request = await tx.exchangeRequest.findUnique({ where: { id } });
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const request = await this.exchangeRequestsRepository.findUnique({ where: { id } }, tx);
       if (!request) throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
       if (request.status !== EXCHANGE_REQUEST_STATUSES.requiresReview) {
         throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
       }
-      await tx.exchangeRequest.update({ where: { id }, data: { status: EXCHANGE_REQUEST_STATUSES.requested } });
-      await this.addHistory(tx, { exchangeRequestId: id, previousStatus: request.status, newStatus: EXCHANGE_REQUEST_STATUSES.requested, actorUserId: adminId });
+      await this.exchangeRequestsRepository.update(
+        { where: { id }, data: { status: EXCHANGE_REQUEST_STATUSES.requested } },
+        tx,
+      );
+      await this.addHistory(tx, {
+        exchangeRequestId: id,
+        previousStatus: request.status,
+        newStatus: EXCHANGE_REQUEST_STATUSES.requested,
+        actorUserId: adminId,
+      });
     });
     return this.approveExchange(id, adminId);
   }
 
   async releaseExpiredExchangeReservations(adminId?: bigint) {
-    const expired = await this.prisma.exchangeRequest.findMany({
+    const expired = await this.exchangeRequestsRepository.findMany({
       where: {
         status: EXCHANGE_REQUEST_STATUSES.approved,
         replacementExpiresAt: { lt: new Date() },
@@ -692,30 +905,38 @@ export class AdminReturnsService {
   }
 
   async refundExchangeDifference(id: bigint, dto: AdminReturnRefundDto, adminId?: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({
+    const request = await this.exchangeRequestsRepository.findUnique({
       where: { id },
       include: { order: { include: { payments: true } }, payments: true },
     });
     if (!request) throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
     if (
       request.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresRefund &&
-      !request.payments.some((payment) => payment.paymentStatus === PAYMENT_STATUSES.requiresReview)
+      !request.payments.some((payment: any) => payment.paymentStatus === PAYMENT_STATUSES.requiresReview)
     ) {
       throw new BadRequestException(this.i18n.t('errors.exchange_refund_not_required'));
     }
     const amount = Math.abs(Number(request.settlementAmount));
-    const completedPayment = request.order.payments.find((payment) => payment.paymentStatus === PAYMENT_STATUSES.completed);
+    const completedPayment = request.order.payments.find(
+      (payment: any) => payment.paymentStatus === PAYMENT_STATUSES.completed,
+    );
     const isOnlinePayment = (ONLINE_PAYMENT_METHODS as readonly string[]).includes(request.order.paymentMethod);
     if (isOnlinePayment && !completedPayment?.transactionRef) {
       throw new BadRequestException(this.i18n.t('errors.order_completed_payment_not_found'));
     }
 
     const attempt = await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const current = await tx.exchangeRequest.findUniqueOrThrow({ where: { id }, include: { payments: true } });
-      const existing = current.payments.find((payment) =>
-        payment.refundSource === REFUND_SOURCES.exchange &&
-        [PAYMENT_STATUSES.processingPayment, PAYMENT_STATUSES.requiresReview].includes(payment.paymentStatus as never),
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const current = await this.exchangeRequestsRepository.findUniqueOrThrow(
+        { where: { id }, include: { payments: true } },
+        tx,
+      );
+      const existing = current.payments.find(
+        (payment: any) =>
+          payment.refundSource === REFUND_SOURCES.exchange &&
+          [PAYMENT_STATUSES.processingPayment, PAYMENT_STATUSES.requiresReview].includes(
+            payment.paymentStatus as never,
+          ),
       );
       if (current.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresRefund && !existing) {
         throw new BadRequestException(this.i18n.t('errors.exchange_refund_not_required'));
@@ -723,12 +944,13 @@ export class AdminReturnsService {
       await this.orderLifecycleService.assertRemainingRefundCapacityTx(tx, request.orderId, amount);
       const idempotencyKey = existing?.idempotencyKey ?? `exchange_refund_${id.toString()}`;
       return existing
-        ? tx.paymentTransaction.update({
-            where: { id: existing.id },
-            data: { paymentStatus: PAYMENT_STATUSES.processingPayment, requestedById: adminId },
-          })
-        : tx.paymentTransaction.create({
-            data: {
+        ? this.paymentTransactionsRepository.update(
+            existing.id,
+            { paymentStatus: PAYMENT_STATUSES.processingPayment, requestedById: adminId },
+            tx,
+          )
+        : this.paymentTransactionsRepository.create(
+            {
               orderId: request.orderId,
               exchangeRequestId: id,
               amount,
@@ -741,7 +963,8 @@ export class AdminReturnsService {
               idempotencyKey,
               requestedById: adminId,
             },
-          });
+            tx,
+          );
     });
 
     let gatewayResponse: unknown = { manual: true };
@@ -761,22 +984,30 @@ export class AdminReturnsService {
       }
     }
     await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      await tx.paymentTransaction.update({
-        where: { id: attempt.id },
-        data: { paymentStatus: PAYMENT_STATUSES.refunded, gatewayResponse: gatewayResponse as Prisma.InputJsonValue, paidAt: new Date() },
-      });
-      await tx.exchangeRequest.update({
-        where: { id },
-        data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.refunded, adminNote: dto.note },
-      });
+      await this.exchangeRequestsRepository.lock(id, tx);
+      await this.paymentTransactionsRepository.update(
+        attempt.id,
+        {
+          paymentStatus: PAYMENT_STATUSES.refunded,
+          gatewayResponse: gatewayResponse as Prisma.InputJsonValue,
+          paidAt: new Date(),
+        },
+        tx,
+      );
+      await this.exchangeRequestsRepository.update(
+        {
+          where: { id },
+          data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.refunded, adminNote: dto.note },
+        },
+        tx,
+      );
       await this.orderLifecycleService.syncOrderPaymentStatus(tx, request.orderId);
     });
     return this.findExchange(id);
   }
 
   async shipExchange(id: bigint, adminId?: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({ where: { id } });
+    const request = await this.exchangeRequestsRepository.findUnique({ where: { id } });
     if (!request) throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
     if (request.status !== EXCHANGE_REQUEST_STATUSES.itemReceived) {
       throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
@@ -789,19 +1020,33 @@ export class AdminReturnsService {
       throw new BadRequestException(this.i18n.t('errors.exchange_reservation_expired'));
     }
     await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const current = await tx.exchangeRequest.findUniqueOrThrow({ where: { id } });
-      if (current.status !== EXCHANGE_REQUEST_STATUSES.itemReceived || !SETTLED_PRICE_STATUSES.includes(current.priceAdjustmentStatus)) {
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const current = await this.exchangeRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
+      if (
+        current.status !== EXCHANGE_REQUEST_STATUSES.itemReceived ||
+        !SETTLED_PRICE_STATUSES.includes(current.priceAdjustmentStatus)
+      ) {
         throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
       }
-      await tx.exchangeRequest.update({ where: { id }, data: { status: EXCHANGE_REQUEST_STATUSES.replacementShipped, replacementShippedAt: new Date() } });
-      await this.addHistory(tx, { exchangeRequestId: id, previousStatus: current.status, newStatus: EXCHANGE_REQUEST_STATUSES.replacementShipped, actorUserId: adminId });
+      await this.exchangeRequestsRepository.update(
+        {
+          where: { id },
+          data: { status: EXCHANGE_REQUEST_STATUSES.replacementShipped, replacementShippedAt: new Date() },
+        },
+        tx,
+      );
+      await this.addHistory(tx, {
+        exchangeRequestId: id,
+        previousStatus: current.status,
+        newStatus: EXCHANGE_REQUEST_STATUSES.replacementShipped,
+        actorUserId: adminId,
+      });
     });
     return this.findExchange(id);
   }
 
   async completeExchange(id: bigint, adminId?: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({ where: { id } });
+    const request = await this.exchangeRequestsRepository.findUnique({ where: { id } });
     if (!request) throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
     if (request.status !== EXCHANGE_REQUEST_STATUSES.replacementShipped) {
       throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
@@ -811,19 +1056,30 @@ export class AdminReturnsService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const current = await tx.exchangeRequest.findUniqueOrThrow({ where: { id } });
-      if (current.status !== EXCHANGE_REQUEST_STATUSES.replacementShipped || !SETTLED_PRICE_STATUSES.includes(current.priceAdjustmentStatus)) {
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const current = await this.exchangeRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
+      if (
+        current.status !== EXCHANGE_REQUEST_STATUSES.replacementShipped ||
+        !SETTLED_PRICE_STATUSES.includes(current.priceAdjustmentStatus)
+      ) {
         throw new BadRequestException(this.i18n.t('errors.exchange_request_invalid_transition'));
       }
-      await tx.exchangeRequest.update({ where: { id }, data: { status: EXCHANGE_REQUEST_STATUSES.completed, completedAt: new Date() } });
-      await this.addHistory(tx, { exchangeRequestId: id, previousStatus: current.status, newStatus: EXCHANGE_REQUEST_STATUSES.completed, actorUserId: adminId });
+      await this.exchangeRequestsRepository.update(
+        { where: { id }, data: { status: EXCHANGE_REQUEST_STATUSES.completed, completedAt: new Date() } },
+        tx,
+      );
+      await this.addHistory(tx, {
+        exchangeRequestId: id,
+        previousStatus: current.status,
+        newStatus: EXCHANGE_REQUEST_STATUSES.completed,
+        actorUserId: adminId,
+      });
     });
     return this.findExchange(id);
   }
 
   async waiveExchangeAdjustment(id: bigint, dto: AdminRejectRequestDto, adminId?: bigint) {
-    const request = await this.prisma.exchangeRequest.findUnique({ where: { id } });
+    const request = await this.exchangeRequestsRepository.findUnique({ where: { id } });
     if (!request) throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
     if (
       request.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresPayment &&
@@ -833,12 +1089,18 @@ export class AdminReturnsService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const current = await tx.exchangeRequest.findUniqueOrThrow({ where: { id } });
-      if (current.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresPayment && current.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresRefund) {
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const current = await this.exchangeRequestsRepository.findUniqueOrThrow({ where: { id } }, tx);
+      if (
+        current.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresPayment &&
+        current.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresRefund
+      ) {
         throw new BadRequestException(this.i18n.t('errors.exchange_adjustment_not_required'));
       }
-      await tx.exchangeRequest.update({ where: { id }, data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.waived, adminNote: dto.note } });
+      await this.exchangeRequestsRepository.update(
+        { where: { id }, data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.waived, adminNote: dto.note } },
+        tx,
+      );
     });
     return this.findExchange(id);
   }
@@ -860,24 +1122,7 @@ export class AdminReturnsService {
   }
 
   private async adjustStock(tx: Prisma.TransactionClient, variantId: bigint, quantity: number, reason: string) {
-    await tx.productVariant.update({
-      where: { id: variantId },
-      data: { stockQuantity: { increment: quantity } },
-    });
-    await this.createInventoryLogAfterDelta(tx, variantId, quantity, reason);
-  }
-
-  private async createInventoryLogAfterDelta(tx: Prisma.TransactionClient, variantId: bigint, changeAmount: number, reason: string) {
-    const variant = await tx.productVariant.findUniqueOrThrow({ where: { id: variantId } });
-    await tx.inventoryLog.create({
-      data: {
-        variantId,
-        changeAmount,
-        previousStock: variant.stockQuantity - changeAmount,
-        newStock: variant.stockQuantity,
-        reason,
-      },
-    });
+    await this.variantsRepository.adjustStock(variantId, quantity, reason, tx);
   }
 
   private round(value: number) {
@@ -998,7 +1243,12 @@ export class AdminReturnsService {
         ? { orderId: BigInt(filters.order_id) }
         : {}),
       ...(query.search
-        ? { OR: [{ clientNote: { contains: query.search, mode: 'insensitive' as const } }, { adminNote: { contains: query.search, mode: 'insensitive' as const } }] }
+        ? {
+            OR: [
+              { clientNote: { contains: query.search, mode: 'insensitive' as const } },
+              { adminNote: { contains: query.search, mode: 'insensitive' as const } },
+            ],
+          }
         : {}),
     };
   }
@@ -1006,58 +1256,71 @@ export class AdminReturnsService {
   private requestOrderBy(query: AdminReturnExchangeQueryDto) {
     const [field, direction] = Object.entries(query.sort ?? {})[0] ?? ['createdAt', 'desc'];
     const allowed = ['createdAt', 'updatedAt', 'status'];
-    return { [allowed.includes(field) ? field : 'createdAt']: direction === 'asc' ? 'asc' : 'desc' } as Record<string, 'asc' | 'desc'>;
-  }
-
-  private async lockReturn(tx: Prisma.TransactionClient, id: bigint) {
-    await tx.$queryRaw`SELECT id FROM return_requests WHERE id = ${id} FOR UPDATE`;
-  }
-
-  private async lockExchange(tx: Prisma.TransactionClient, id: bigint) {
-    await tx.$queryRaw`SELECT id FROM exchange_requests WHERE id = ${id} FOR UPDATE`;
+    return { [allowed.includes(field) ? field : 'createdAt']: direction === 'asc' ? 'asc' : 'desc' } as Record<
+      string,
+      'asc' | 'desc'
+    >;
   }
 
   private async addHistory(
     tx: Prisma.TransactionClient,
-    input: { returnRequestId?: bigint; exchangeRequestId?: bigint; previousStatus: string; newStatus: string; actorUserId?: bigint; reason?: string },
+    input: {
+      returnRequestId?: bigint;
+      exchangeRequestId?: bigint;
+      previousStatus: string;
+      newStatus: string;
+      actorUserId?: bigint;
+      reason?: string;
+    },
   ) {
-    await tx.returnExchangeStatusHistory.create({
-      data: { ...input, actorType: 'admin' },
-    });
+    const data = { ...input, actorType: 'admin' };
+    if (input.returnRequestId) {
+      await this.returnRequestsRepository.createHistory(data, tx);
+      return;
+    }
+    await this.exchangeRequestsRepository.createHistory(data, tx);
   }
 
   private async markReturnRefundReview(id: bigint, attemptId: bigint, error: unknown) {
     await this.prisma.$transaction(async (tx) => {
-      await this.lockReturn(tx, id);
-      await tx.paymentTransaction.update({
-        where: { id: attemptId },
-        data: {
+      await this.returnRequestsRepository.lock(id, tx);
+      await this.paymentTransactionsRepository.update(
+        attemptId,
+        {
           paymentStatus: PAYMENT_STATUSES.requiresReview,
           gatewayResponse: { error: error instanceof Error ? error.message : String(error) },
         },
-      });
-      await tx.returnRequest.update({ where: { id }, data: { refundStatus: REFUND_STATUSES.requiresReview } });
+        tx,
+      );
+      await this.returnRequestsRepository.update(
+        { where: { id }, data: { refundStatus: REFUND_STATUSES.requiresReview } },
+        tx,
+      );
     });
   }
 
   private async markExchangeRefundReview(id: bigint, attemptId: bigint, error: unknown) {
     await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      await tx.paymentTransaction.update({
-        where: { id: attemptId },
-        data: {
+      await this.exchangeRequestsRepository.lock(id, tx);
+      await this.paymentTransactionsRepository.update(
+        attemptId,
+        {
           paymentStatus: PAYMENT_STATUSES.requiresReview,
           gatewayResponse: { error: error instanceof Error ? error.message : String(error) },
         },
-      });
-      await tx.exchangeRequest.update({ where: { id }, data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.requiresRefund } });
+        tx,
+      );
+      await this.exchangeRequestsRepository.update(
+        { where: { id }, data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.requiresRefund } },
+        tx,
+      );
     });
   }
 
   private async releaseExpiredExchangeReservation(id: bigint, adminId?: bigint) {
     await this.prisma.$transaction(async (tx) => {
-      await this.lockExchange(tx, id);
-      const request = await tx.exchangeRequest.findUnique({ where: { id }, include: { items: true } });
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const request = await this.exchangeRequestsRepository.findUnique({ where: { id }, include: { items: true } }, tx);
       if (
         !request ||
         request.status !== EXCHANGE_REQUEST_STATUSES.approved ||
@@ -1069,10 +1332,13 @@ export class AdminReturnsService {
       for (const item of request.items) {
         await this.adjustStock(tx, item.newVariantId, item.quantity, INVENTORY_REASONS.release);
       }
-      await tx.exchangeRequest.update({
-        where: { id },
-        data: { status: EXCHANGE_REQUEST_STATUSES.requiresReview, replacementExpiresAt: null },
-      });
+      await this.exchangeRequestsRepository.update(
+        {
+          where: { id },
+          data: { status: EXCHANGE_REQUEST_STATUSES.requiresReview, replacementExpiresAt: null },
+        },
+        tx,
+      );
       await this.addHistory(tx, {
         exchangeRequestId: id,
         previousStatus: request.status,

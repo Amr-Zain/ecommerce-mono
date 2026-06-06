@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma';
@@ -12,6 +12,16 @@ import {
   RETURN_EXCHANGE_WINDOW_DAYS,
   RETURN_REQUEST_STATUSES,
 } from '@/common/constants/return-exchange.constants';
+import {
+  EXCHANGE_REQUESTS_REPOSITORY,
+  IExchangeRequestsRepository,
+  IOrdersRepository,
+  IReturnRequestsRepository,
+  IVariantsRepository,
+  ORDERS_REPOSITORY,
+  RETURN_REQUESTS_REPOSITORY,
+  VARIANTS_REPOSITORY,
+} from '@/common/interfaces';
 import {
   CreateExchangeRequestDto,
   CreateExchangeRequestItemDto,
@@ -62,10 +72,14 @@ export class ClientReturnsService {
     private readonly prisma: PrismaService,
     private readonly pricingService: PricingService,
     private readonly i18n: I18nService<I18nTranslations>,
+    @Inject(RETURN_REQUESTS_REPOSITORY) private readonly returnRequestsRepository: IReturnRequestsRepository,
+    @Inject(EXCHANGE_REQUESTS_REPOSITORY) private readonly exchangeRequestsRepository: IExchangeRequestsRepository,
+    @Inject(ORDERS_REPOSITORY) private readonly ordersRepository: IOrdersRepository,
+    @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
   ) {}
 
   async findReturns(userId: bigint) {
-    const requests = await this.prisma.returnRequest.findMany({
+    const requests = await this.returnRequestsRepository.findMany({
       where: { userId },
       include: { order: true, items: { include: { orderItem: true } } },
       orderBy: { createdAt: 'desc' },
@@ -74,7 +88,7 @@ export class ClientReturnsService {
   }
 
   async findExchanges(userId: bigint) {
-    const requests = await this.prisma.exchangeRequest.findMany({
+    const requests = await this.exchangeRequestsRepository.findMany({
       where: { userId },
       include: { order: true, items: { include: { orderItem: true, newVariant: true } } },
       orderBy: { createdAt: 'desc' },
@@ -110,44 +124,58 @@ export class ClientReturnsService {
     const suggestedShippingRefundAmount = this.suggestedShippingRefund(dto.items, Number(order.shippingFee));
 
     const request = await this.prisma.$transaction(async (tx) => {
-      await this.lockAndAssertAvailableQuantities(tx, items.map(({ orderItem, item }) => ({ orderItem, quantity: item.quantity })));
-      const created = await tx.returnRequest.create({
-        data: {
-        orderId: order.id,
-        userId,
-        status: RETURN_REQUEST_STATUSES.requested,
-        clientNote: dto.note,
-        calculatedRefundAmount,
-        calculatedVatRefundAmount,
-        adjustedRefundAmount: calculatedRefundAmount,
-        adjustedVatRefundAmount: calculatedVatRefundAmount,
-        maxShippingRefundAmount: order.shippingFee,
-        suggestedShippingRefundAmount,
-        shippingRefundAmount: suggestedShippingRefundAmount,
-        finalRefundAmount: this.round(calculatedRefundAmount + calculatedVatRefundAmount + suggestedShippingRefundAmount),
-        items: {
-          create: items.map(({ orderItem, item, calculatedRefundAmount, calculatedVatRefundAmount }) => ({
-            orderItemId: orderItem.id,
-            oldVariantId: orderItem.variantId,
-            quantity: item.quantity,
-            acceptedQuantity: 0,
-            returnReason: item.reason,
-            clientNote: item.note,
-            itemDisposition: this.defaultDispositionForReason(item.reason),
-            oldUnitPriceSnapshot: orderItem.unitPriceSnapshot,
-            oldNetUnitPrice: orderItem.netUnitPrice,
+      await this.lockAndAssertAvailableQuantities(
+        tx,
+        items.map(({ orderItem, item }) => ({ orderItem, quantity: item.quantity })),
+      );
+      const created = await this.returnRequestsRepository.create(
+        {
+          data: {
+            orderId: order.id,
+            userId,
+            status: RETURN_REQUEST_STATUSES.requested,
+            clientNote: dto.note,
             calculatedRefundAmount,
             calculatedVatRefundAmount,
             adjustedRefundAmount: calculatedRefundAmount,
             adjustedVatRefundAmount: calculatedVatRefundAmount,
-          })),
+            maxShippingRefundAmount: order.shippingFee,
+            suggestedShippingRefundAmount,
+            shippingRefundAmount: suggestedShippingRefundAmount,
+            finalRefundAmount: this.round(
+              calculatedRefundAmount + calculatedVatRefundAmount + suggestedShippingRefundAmount,
+            ),
+            items: {
+              create: items.map(({ orderItem, item, calculatedRefundAmount, calculatedVatRefundAmount }) => ({
+                orderItemId: orderItem.id,
+                oldVariantId: orderItem.variantId,
+                quantity: item.quantity,
+                acceptedQuantity: 0,
+                returnReason: item.reason,
+                clientNote: item.note,
+                itemDisposition: this.defaultDispositionForReason(item.reason),
+                oldUnitPriceSnapshot: orderItem.unitPriceSnapshot,
+                oldNetUnitPrice: orderItem.netUnitPrice,
+                calculatedRefundAmount,
+                calculatedVatRefundAmount,
+                adjustedRefundAmount: calculatedRefundAmount,
+                adjustedVatRefundAmount: calculatedVatRefundAmount,
+              })),
+            },
+          },
+          include: { order: true, items: { include: { orderItem: true } } },
         },
+        tx,
+      );
+      await this.returnRequestsRepository.createHistory(
+        {
+          returnRequestId: created.id,
+          newStatus: RETURN_REQUEST_STATUSES.requested,
+          actorType: 'client',
+          actorUserId: userId,
         },
-        include: { order: true, items: { include: { orderItem: true } } },
-      });
-      await tx.returnExchangeStatusHistory.create({
-        data: { returnRequestId: created.id, newStatus: RETURN_REQUEST_STATUSES.requested, actorType: 'client', actorUserId: userId },
-      });
+        tx,
+      );
       return created;
     });
 
@@ -161,10 +189,9 @@ export class ClientReturnsService {
     );
     this.assertOneOrder(orderItems);
 
-    const replacementVariants = await this.prisma.productVariant.findMany({
-      where: { id: { in: dto.items.map((item) => BigInt(item.newVariantId)) }, isActive: true },
-      include: { product: true },
-    });
+    const replacementVariants = await this.variantsRepository.findActiveVariantsWithProduct(
+      dto.items.map((item) => BigInt(item.newVariantId)),
+    );
 
     const items = await Promise.all(
       dto.items.map(async (item) => {
@@ -215,49 +242,66 @@ export class ClientReturnsService {
     const totalOldValue = this.round(items.reduce((sum, item) => sum + item.oldValue, 0));
     const totalNewValue = this.round(items.reduce((sum, item) => sum + item.newValue, 0));
     const totalPriceDifference = this.round(totalNewValue - totalOldValue);
-    const suggestedReplacementShippingFee = this.suggestedReplacementShipping(dto.items, Number(orderItems[0].order.shippingFee));
+    const suggestedReplacementShippingFee = this.suggestedReplacementShipping(
+      dto.items,
+      Number(orderItems[0].order.shippingFee),
+    );
     const settlementAmount = this.round(totalPriceDifference + suggestedReplacementShippingFee);
     const priceAdjustmentStatus = this.getPriceAdjustmentStatus(settlementAmount);
 
     const request = await this.prisma.$transaction(async (tx) => {
-      await this.lockAndAssertAvailableQuantities(tx, items.map(({ orderItem, item }) => ({ orderItem, quantity: item.quantity })));
-      const created = await tx.exchangeRequest.create({
-        data: {
-        orderId: orderItems[0].order.id,
-        userId,
-        status: EXCHANGE_REQUEST_STATUSES.requested,
-        priceAdjustmentStatus,
-        totalOldValue,
-        totalNewValue,
-        totalPriceDifference,
-        suggestedReplacementShippingFee,
-        replacementShippingFee: suggestedReplacementShippingFee,
-        settlementAmount,
-        clientNote: dto.note,
-        items: {
-          create: items.map(({ orderItem, replacementVariant, item, replacementPrice, oldValue, newValue, priceDifference }) => ({
-            orderItemId: orderItem.id,
-            oldVariantId: orderItem.variantId,
-            newVariantId: replacementVariant.id,
-            quantity: item.quantity,
-            acceptedQuantity: 0,
-            exchangeReason: item.reason,
-            clientNote: item.note,
-            itemDisposition: this.defaultDispositionForReason(item.reason),
-            oldUnitPriceSnapshot: orderItem.unitPriceSnapshot,
-            oldNetUnitPrice: orderItem.netUnitPrice,
-            newUnitPriceSnapshot: replacementPrice,
-            oldValue,
-            newValue,
-            priceDifference,
-          })),
+      await this.lockAndAssertAvailableQuantities(
+        tx,
+        items.map(({ orderItem, item }) => ({ orderItem, quantity: item.quantity })),
+      );
+      const created = await this.exchangeRequestsRepository.create(
+        {
+          data: {
+            orderId: orderItems[0].order.id,
+            userId,
+            status: EXCHANGE_REQUEST_STATUSES.requested,
+            priceAdjustmentStatus,
+            totalOldValue,
+            totalNewValue,
+            totalPriceDifference,
+            suggestedReplacementShippingFee,
+            replacementShippingFee: suggestedReplacementShippingFee,
+            settlementAmount,
+            clientNote: dto.note,
+            items: {
+              create: items.map(
+                ({ orderItem, replacementVariant, item, replacementPrice, oldValue, newValue, priceDifference }) => ({
+                  orderItemId: orderItem.id,
+                  oldVariantId: orderItem.variantId,
+                  newVariantId: replacementVariant.id,
+                  quantity: item.quantity,
+                  acceptedQuantity: 0,
+                  exchangeReason: item.reason,
+                  clientNote: item.note,
+                  itemDisposition: this.defaultDispositionForReason(item.reason),
+                  oldUnitPriceSnapshot: orderItem.unitPriceSnapshot,
+                  oldNetUnitPrice: orderItem.netUnitPrice,
+                  newUnitPriceSnapshot: replacementPrice,
+                  oldValue,
+                  newValue,
+                  priceDifference,
+                }),
+              ),
+            },
+          },
+          include: { order: true, items: { include: { orderItem: true, newVariant: true } } },
         },
+        tx,
+      );
+      await this.exchangeRequestsRepository.createHistory(
+        {
+          exchangeRequestId: created.id,
+          newStatus: EXCHANGE_REQUEST_STATUSES.requested,
+          actorType: 'client',
+          actorUserId: userId,
         },
-        include: { order: true, items: { include: { orderItem: true, newVariant: true } } },
-      });
-      await tx.returnExchangeStatusHistory.create({
-        data: { exchangeRequestId: created.id, newStatus: EXCHANGE_REQUEST_STATUSES.requested, actorType: 'client', actorUserId: userId },
-      });
+        tx,
+      );
       return created;
     });
 
@@ -265,7 +309,7 @@ export class ClientReturnsService {
   }
 
   async cancelReturn(userId: bigint, id: bigint) {
-    const request = await this.prisma.returnRequest.findFirst({ where: { id, userId } });
+    const request = await this.returnRequestsRepository.findFirst({ where: { id, userId } });
     if (!request) {
       throw new NotFoundException(this.i18n.t('errors.return_request_not_found'));
     }
@@ -273,24 +317,35 @@ export class ClientReturnsService {
       throw new BadRequestException(this.i18n.t('errors.return_request_cannot_cancel'));
     }
     const updated = await this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM return_requests WHERE id = ${id} FOR UPDATE`;
-      const current = await tx.returnRequest.findFirst({ where: { id, userId } });
-      if (!current || current.status !== RETURN_REQUEST_STATUSES.requested) throw new BadRequestException(this.i18n.t('errors.return_request_cannot_cancel'));
-      const result = await tx.returnRequest.update({
-        where: { id },
-        data: { status: RETURN_REQUEST_STATUSES.cancelledByClient, cancelledAt: new Date() },
-        include: { order: true, items: { include: { orderItem: true } } },
-      });
-      await tx.returnExchangeStatusHistory.create({
-        data: { returnRequestId: id, previousStatus: current.status, newStatus: RETURN_REQUEST_STATUSES.cancelledByClient, actorType: 'client', actorUserId: userId },
-      });
+      await this.returnRequestsRepository.lock(id, tx);
+      const current = await this.returnRequestsRepository.findFirst({ where: { id, userId } }, tx);
+      if (!current || current.status !== RETURN_REQUEST_STATUSES.requested)
+        throw new BadRequestException(this.i18n.t('errors.return_request_cannot_cancel'));
+      const result = await this.returnRequestsRepository.update(
+        {
+          where: { id },
+          data: { status: RETURN_REQUEST_STATUSES.cancelledByClient, cancelledAt: new Date() },
+          include: { order: true, items: { include: { orderItem: true } } },
+        },
+        tx,
+      );
+      await this.returnRequestsRepository.createHistory(
+        {
+          returnRequestId: id,
+          previousStatus: current.status,
+          newStatus: RETURN_REQUEST_STATUSES.cancelledByClient,
+          actorType: 'client',
+          actorUserId: userId,
+        },
+        tx,
+      );
       return result;
     });
     return this.formatReturnRequest(updated);
   }
 
   async cancelExchange(userId: bigint, id: bigint) {
-    const request = await this.prisma.exchangeRequest.findFirst({ where: { id, userId } });
+    const request = await this.exchangeRequestsRepository.findFirst({ where: { id, userId } });
     if (!request) {
       throw new NotFoundException(this.i18n.t('errors.exchange_request_not_found'));
     }
@@ -298,17 +353,28 @@ export class ClientReturnsService {
       throw new BadRequestException(this.i18n.t('errors.exchange_request_cannot_cancel'));
     }
     const updated = await this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM exchange_requests WHERE id = ${id} FOR UPDATE`;
-      const current = await tx.exchangeRequest.findFirst({ where: { id, userId } });
-      if (!current || current.status !== EXCHANGE_REQUEST_STATUSES.requested) throw new BadRequestException(this.i18n.t('errors.exchange_request_cannot_cancel'));
-      const result = await tx.exchangeRequest.update({
-        where: { id },
-        data: { status: EXCHANGE_REQUEST_STATUSES.cancelledByClient, cancelledAt: new Date() },
-        include: { order: true, items: { include: { orderItem: true, newVariant: true } } },
-      });
-      await tx.returnExchangeStatusHistory.create({
-        data: { exchangeRequestId: id, previousStatus: current.status, newStatus: EXCHANGE_REQUEST_STATUSES.cancelledByClient, actorType: 'client', actorUserId: userId },
-      });
+      await this.exchangeRequestsRepository.lock(id, tx);
+      const current = await this.exchangeRequestsRepository.findFirst({ where: { id, userId } }, tx);
+      if (!current || current.status !== EXCHANGE_REQUEST_STATUSES.requested)
+        throw new BadRequestException(this.i18n.t('errors.exchange_request_cannot_cancel'));
+      const result = await this.exchangeRequestsRepository.update(
+        {
+          where: { id },
+          data: { status: EXCHANGE_REQUEST_STATUSES.cancelledByClient, cancelledAt: new Date() },
+          include: { order: true, items: { include: { orderItem: true, newVariant: true } } },
+        },
+        tx,
+      );
+      await this.exchangeRequestsRepository.createHistory(
+        {
+          exchangeRequestId: id,
+          previousStatus: current.status,
+          newStatus: EXCHANGE_REQUEST_STATUSES.cancelledByClient,
+          actorType: 'client',
+          actorUserId: userId,
+        },
+        tx,
+      );
       return result;
     });
     return this.formatExchangeRequest(updated);
@@ -320,10 +386,7 @@ export class ClientReturnsService {
       throw new BadRequestException(this.i18n.t('errors.return_exchange_duplicate_items'));
     }
 
-    const orderItems = await this.prisma.orderItem.findMany({
-      where: { id: { in: uniqueIds } },
-      include: { order: true },
-    });
+    const orderItems = await this.ordersRepository.findOrderItemsWithOrder(uniqueIds);
 
     if (orderItems.length !== uniqueIds.length) {
       throw new NotFoundException(this.i18n.t('errors.order_item_not_found'));
@@ -364,11 +427,11 @@ export class ClientReturnsService {
 
   private async assertAvailableQuantity(orderItem: OrderItemForReturnExchange, requestedQuantity: number) {
     const [returnItems, exchangeItems] = await Promise.all([
-      this.prisma.returnRequestItem.findMany({
+      this.returnRequestsRepository.findItems({
         where: { orderItemId: orderItem.id, returnRequest: { status: { in: ACTIVE_RETURN_STATUSES } } },
         select: { quantity: true },
       }),
-      this.prisma.exchangeRequestItem.findMany({
+      this.exchangeRequestsRepository.findItems({
         where: { orderItemId: orderItem.id, exchangeRequest: { status: { in: ACTIVE_EXCHANGE_STATUSES } } },
         select: { quantity: true },
       }),
@@ -385,16 +448,22 @@ export class ClientReturnsService {
     items: Array<{ orderItem: OrderItemForReturnExchange; quantity: number }>,
   ) {
     for (const { orderItem, quantity } of items.sort((a, b) => Number(a.orderItem.id - b.orderItem.id))) {
-      await tx.$queryRaw`SELECT id FROM order_items WHERE id = ${orderItem.id} FOR UPDATE`;
+      await this.ordersRepository.lockOrderItem(orderItem.id, tx);
       const [returns, exchanges] = await Promise.all([
-        tx.returnRequestItem.aggregate({
-          where: { orderItemId: orderItem.id, returnRequest: { status: { in: ACTIVE_RETURN_STATUSES } } },
-          _sum: { quantity: true },
-        }),
-        tx.exchangeRequestItem.aggregate({
-          where: { orderItemId: orderItem.id, exchangeRequest: { status: { in: ACTIVE_EXCHANGE_STATUSES } } },
-          _sum: { quantity: true },
-        }),
+        this.returnRequestsRepository.aggregateItems(
+          {
+            where: { orderItemId: orderItem.id, returnRequest: { status: { in: ACTIVE_RETURN_STATUSES } } },
+            _sum: { quantity: true },
+          },
+          tx,
+        ),
+        this.exchangeRequestsRepository.aggregateItems(
+          {
+            where: { orderItemId: orderItem.id, exchangeRequest: { status: { in: ACTIVE_EXCHANGE_STATUSES } } },
+            _sum: { quantity: true },
+          },
+          tx,
+        ),
       ]);
       const used = Number(returns._sum.quantity ?? 0) + Number(exchanges._sum.quantity ?? 0);
       if (quantity > orderItem.quantity - used) {
