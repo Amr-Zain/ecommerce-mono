@@ -1,0 +1,54 @@
+model OutboxEvent {
+  id            BigInt   @id @default(autoincrement())
+  eventId       String   @unique @map("event_id")
+  eventName     String   @map("event_name")
+  version       Int      @default(1)
+  aggregateType String   @map("aggregate_type")
+  aggregateId   String   @map("aggregate_id")
+  actor         Json?    @db.JsonB
+  payload       Json     @db.JsonB
+  occurredAt    DateTime @map("occurred_at")
+  status        String   @default("pending")
+  attempts      Int      @default(0)
+  availableAt   DateTime @default(now()) @map("available_at")
+  lockedAt      DateTime? @map("locked_at")
+  processedAt   DateTime? @map("processed_at")
+  lastError     String?  @map("last_error") @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  receipts EventConsumerReceipt[]
+
+  @@index([status, availableAt])
+  @@index([lockedAt])
+  @@index([processedAt])
+  @@map("outbox_events")
+}
+
+model EventConsumerReceipt {
+  id           BigInt   @id @default(autoincrement())
+  eventId      String   @map("event_id")
+  consumerName String   @map("consumer_name")
+  processedAt  DateTime @default(now()) @map("processed_at")
+  event        OutboxEvent @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
+
+  @@unique([eventId, consumerName])
+  @@map("event_consumer_receipts")
+}
+
+model Notification {
+  id               BigInt    @id @default(autoincrement())
+  recipientId      BigInt    @map("recipient_id")
+  recipient        User      @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  eventId          String    @map("event_id")
+  notificationType String    @map("notification_type")
+  titleKey         String    @map("title_key")
+  bodyKey          String    @map("body_key")
+  args             Json?     @db.JsonB
+  data             Json?     @db.JsonB
+  readAt           DateTime? @map("read_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@unique([eventId, recipientId, notificationType])
+  @@index([recipientId, readAt, createdAt])
+  @@map("notifications")
+}

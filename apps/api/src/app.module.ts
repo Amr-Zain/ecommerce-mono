@@ -19,6 +19,9 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { PaymentModule } from './shared/payment/payment.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { DomainEventsModule } from './common/events/domain-events.module';
+import { NotificationModule } from './shared/notifications/notification.module';
 
 @Module({
   imports: [
@@ -32,6 +35,15 @@ import { ScheduleModule } from '@nestjs/schedule';
       expandVariables: true,
     }),
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot({
+      wildcard: true,
+      delimiter: '.',
+      maxListeners: 50,
+      verboseMemoryLeak: true,
+      ignoreErrors: false,
+    }),
+    DomainEventsModule,
+    NotificationModule,
     PrismaModule,
     CommonModule,
     MediaModule,
