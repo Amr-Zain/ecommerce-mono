@@ -98,5 +98,21 @@
   "order_pending_payment_confirmation_not_found": "No pending manual payment was found that requires confirmation",
   "return_exchange_invalid_status": "Invalid return or exchange status",
   "exchange_reservation_expired": "The replacement stock reservation has expired and requires review",
-  "exchange_payment_already_active": "An active payment already exists for this exchange"
+  "exchange_payment_already_active": "An active payment already exists for this exchange",
+  "password_login_admin_only": "Access denied. Password-based login is restricted to admins.",
+  "phone_exists": "Phone already exists",
+  "email_required": "Email is required",
+  "phone_required": "Phone is required",
+  "account_inactive_or_not_found": "User account is inactive or not found",
+  "invalid_credentials": "Invalid credentials",
+  "verification_code_not_found": "No verification code found",
+  "verification_code_expired": "Verification code expired",
+  "invalid_verification_code": "Invalid verification code",
+  "account_inactive": "User account is inactive",
+  "email_verification_required": "Please verify your email before logging in",
+  "invalid_refresh_token": "Invalid refresh token",
+  "reset_code_not_found": "No reset code found",
+  "reset_code_expired": "Reset code expired",
+  "invalid_reset_code": "Invalid reset code",
+  "phone_already_verified": "Phone already verified"
 }

@@ -3,5 +3,15 @@
   "welcome": "Welcome to our application",
   "deleted_successfully": "Deleted successfully",
   "updated_successfully": "Updated successfully",
-  "created_successfully": "Created successfully"
+  "created_successfully": "Created successfully",
+  "auth_email_registration_successful": "Registration successful. Please verify your email with the code sent.",
+  "auth_phone_registration_successful": "Registration successful. Please verify your phone with the code sent.",
+  "auth_verification_code_sent_successfully": "Verification code sent successfully",
+  "auth_verification_code_sent": "Verification code sent",
+  "auth_logged_out_successfully": "Logged out successfully",
+  "auth_logged_out_all_devices": "Logged out from all devices",
+  "auth_password_reset_code_sent": "If the email exists, a reset code has been sent",
+  "auth_password_reset_successful": "Password reset successfully",
+  "auth_phone_verified_successfully": "Phone verified successfully",
+  "auth_session_revoked_successfully": "Session revoked successfully"
 }

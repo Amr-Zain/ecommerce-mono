@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../prisma';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
@@ -23,6 +22,22 @@ import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { CaseTransformer } from '../common/utils/case-transformer.util';
 import { Response } from 'express';
+import { I18nService } from 'nestjs-i18n';
+import { I18nTranslations } from '../generated/i18n.generated';
+import {
+  AUTH_CONFIG_KEYS,
+  AUTH_COOKIE,
+  AUTH_DEFAULTS,
+  AUTH_ENCODING,
+  AUTH_ENVIRONMENTS,
+  AUTH_EXPIRATION_UNITS,
+  AUTH_IDENTIFIER_TYPES,
+  AUTH_PLATFORMS,
+  AUTH_SECURITY,
+  AUTH_TOKEN_TYPES,
+  AUTH_USER_TYPES,
+  AuthConfigSecretKey,
+} from '../common/constants/auth.constants';
 
 /** Same include as local/JWT validation — single source for “user + role + permissions”. */
 export type AuthUserPayload = Prisma.UserGetPayload<{
@@ -55,11 +70,11 @@ type AuthSessionSummary = Prisma.RefreshTokenGetPayload<{
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
     @Inject(USERS_REPOSITORY) private readonly usersRepository: UsersRepository,
     private readonly refreshTokensRepository: RefreshTokensRepository,
+    private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   /**
@@ -90,8 +105,8 @@ export class AuthService {
       return null;
     }
 
-    if (user.userType !== 'admin') {
-      throw new UnauthorizedException('Access denied. Password-based login is restricted to admins.');
+    if (user.userType !== AUTH_USER_TYPES.admin) {
+      throw new UnauthorizedException(this.i18n.t('errors.password_login_admin_only'));
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -107,38 +122,41 @@ export class AuthService {
    * Register a new user
    */
   async register(registerDto: RegisterDto): Promise<{ message: string }> {
-    // Check if email already exists
-    const existingUser = await this.usersRepository.findByEmail(registerDto.email);
+    const isEmailRegistration = registerDto.type === AUTH_IDENTIFIER_TYPES.email;
+    const existingUser = isEmailRegistration
+      ? await this.usersRepository.findByEmail(registerDto.email!)
+      : await this.usersRepository.findByPhone(registerDto.phoneCode, registerDto.phone!);
 
     if (existingUser) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException(this.i18n.t(isEmailRegistration ? 'errors.email_exists' : 'errors.phone_exists'));
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-
     // Generate verification code (hardcoded to 1111 for now)
-    const verificationCode = '1111';
-    const verificationExpiry = new Date(Date.now() + 150 * 60 * 1000); // 150 minutes
+    const verificationCode = AUTH_DEFAULTS.verificationCode;
+    const verificationExpiry = new Date(Date.now() + AUTH_SECURITY.registrationVerificationExpiryMs);
 
-    // Create user
     await this.usersRepository.create({
       name: registerDto.name,
-      email: registerDto.email,
-      password: hashedPassword,
-      phone: registerDto.phone,
-      phoneCode: registerDto.phoneCode,
-      emailVerificationCode: verificationCode,
-      emailVerificationExpiry: verificationExpiry,
+      email: isEmailRegistration ? registerDto.email : undefined,
+      phone: isEmailRegistration ? undefined : registerDto.phone,
+      phoneCode: isEmailRegistration ? undefined : registerDto.phoneCode,
+      userType: AUTH_USER_TYPES.client,
+      emailVerificationCode: isEmailRegistration ? verificationCode : undefined,
+      emailVerificationExpiry: isEmailRegistration ? verificationExpiry : undefined,
+      phoneVerificationCode: isEmailRegistration ? undefined : verificationCode,
+      phoneVerificationExpiry: isEmailRegistration ? undefined : verificationExpiry,
       isEmailVerified: false,
+      isPhoneVerified: false,
       isActive: true,
     });
 
-    // TODO: Send verification email with code
-    console.log(`Email verification code for ${registerDto.email}: ${verificationCode}`);
+    const destination = isEmailRegistration ? registerDto.email : `${registerDto.phoneCode}${registerDto.phone}`;
+    console.log(`${isEmailRegistration ? 'Email' : 'Phone'} verification code for ${destination}: ${verificationCode}`);
 
     return {
-      message: 'Registration successful. Please verify your email with the code sent.',
+      message: this.i18n.t(
+        isEmailRegistration ? 'common.auth_email_registration_successful' : 'common.auth_phone_registration_successful',
+      ),
     };
   }
 
@@ -149,11 +167,11 @@ export class AuthService {
     user: AuthUserPayload,
     deviceInfo?: string,
     ipAddress?: string,
-    lang: string = 'en',
+    lang: string = AUTH_DEFAULTS.language,
   ): Promise<AuthResponseDto> {
     // For admins, verify email is verified
-    if (user.userType === 'admin' && !user.isEmailVerified) {
-      throw new UnauthorizedException('Please verify your email before logging in');
+    if (user.userType === AUTH_USER_TYPES.admin && !user.isEmailVerified) {
+      throw new UnauthorizedException(this.i18n.t('errors.email_verification_required'));
     }
 
     // Generate tokens
@@ -171,7 +189,7 @@ export class AuthService {
               id: user.role.id.toString(),
               name:
                 user.role.translations?.find((t) => t.langId === lang)?.name ||
-                user.role.translations?.find((t) => t.langId === 'en')?.name ||
+                user.role.translations?.find((t) => t.langId === AUTH_DEFAULTS.language)?.name ||
                 '',
               permissions: PermissionUtil.groupPermissionsAsStrings(user.role.permissions),
             }
@@ -189,16 +207,16 @@ export class AuthService {
     const unit = expiration.slice(-1);
     const value = parseInt(expiration.slice(0, -1), 10);
     if (isNaN(value)) {
-      return 7 * 24 * 60 * 60 * 1000; // default 7 days
+      return AUTH_SECURITY.fallbackRefreshExpirationMs;
     }
     switch (unit) {
-      case 'd':
+      case AUTH_EXPIRATION_UNITS.days:
         return value * 24 * 60 * 60 * 1000;
-      case 'h':
+      case AUTH_EXPIRATION_UNITS.hours:
         return value * 60 * 60 * 1000;
-      case 'm':
+      case AUTH_EXPIRATION_UNITS.minutes:
         return value * 60 * 1000;
-      case 's':
+      case AUTH_EXPIRATION_UNITS.seconds:
         return value * 1000;
       default:
         return value; // assume ms
@@ -214,15 +232,15 @@ export class AuthService {
     ipAddress?: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     // Generate unique token ID for refresh token
-    const tokenId = randomBytes(32).toString('hex');
+    const tokenId = randomBytes(AUTH_SECURITY.refreshTokenIdBytes).toString(AUTH_ENCODING.hex);
 
     const accessPayload: JwtPayload = {
       sub: user.id.toString(),
       email: user.email ?? undefined,
       phone: user.phone ?? undefined,
-      role: user.role?.translations?.find((t) => t.langId === 'en')?.name ?? undefined,
+      role: user.role?.translations?.find((t) => t.langId === AUTH_DEFAULTS.language)?.name ?? undefined,
       userType: user.userType ?? undefined,
-      type: 'access',
+      type: AUTH_TOKEN_TYPES.access,
     };
 
     // Refresh token payload
@@ -230,24 +248,30 @@ export class AuthService {
       sub: user.id.toString(),
       email: user.email ?? undefined,
       phone: user.phone ?? undefined,
-      type: 'refresh',
+      type: AUTH_TOKEN_TYPES.refresh,
       jti: tokenId,
     };
 
     // Sign tokens
-    const accessSecret = this.getJwtSigningSecretOrThrow('JWT_SECRET');
-    const refreshSecret = this.getJwtSigningSecretOrThrow('JWT_REFRESH_SECRET');
-    const accessExpiration = this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m');
-    const refreshExpiration = this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d');
+    const accessSecret = this.getJwtSigningSecretOrThrow(AUTH_CONFIG_KEYS.accessSecret);
+    const refreshSecret = this.getJwtSigningSecretOrThrow(AUTH_CONFIG_KEYS.refreshSecret);
+    const accessExpiration = this.configService.get<string>(
+      AUTH_CONFIG_KEYS.accessExpiration,
+      AUTH_DEFAULTS.accessExpiration,
+    );
+    const refreshExpiration = this.configService.get<string>(
+      AUTH_CONFIG_KEYS.refreshExpiration,
+      AUTH_DEFAULTS.refreshExpiration,
+    );
 
     const accessToken = this.jwtService.sign(accessPayload, {
       secret: accessSecret,
-      expiresIn: accessExpiration as unknown as '15m',
+      expiresIn: accessExpiration as unknown as number,
     });
 
     const refreshToken = this.jwtService.sign(refreshPayload, {
       secret: refreshSecret,
-      expiresIn: refreshExpiration as unknown as '7d',
+      expiresIn: refreshExpiration as unknown as number,
     });
 
     // Store refresh token in database
@@ -269,10 +293,10 @@ export class AuthService {
     const type = dto.type;
     let user: UserInterface | null = null;
 
-    if (type === 'email') {
+    if (type === AUTH_IDENTIFIER_TYPES.email) {
       const email = dto.email;
       if (!email) {
-        throw new BadRequestException('Email is required');
+        throw new BadRequestException(this.i18n.t('errors.email_required'));
       }
       user = await this.usersRepository.findByEmail(email);
 
@@ -280,16 +304,16 @@ export class AuthService {
         // Auto-register new client
         user = await this.usersRepository.create({
           email,
-          userType: 'client',
+          userType: AUTH_USER_TYPES.client,
           isActive: true,
           isEmailVerified: false,
         });
       }
     } else {
       const phone = dto.phone;
-      const phoneCode = dto.phoneCode ?? '+966';
+      const phoneCode = dto.phoneCode ?? AUTH_DEFAULTS.phoneCode;
       if (!phone) {
-        throw new BadRequestException('Phone is required');
+        throw new BadRequestException(this.i18n.t('errors.phone_required'));
       }
       user = await this.usersRepository.findByPhone(phoneCode, phone);
 
@@ -298,7 +322,7 @@ export class AuthService {
         user = await this.usersRepository.create({
           phone,
           phoneCode,
-          userType: 'client',
+          userType: AUTH_USER_TYPES.client,
           isActive: true,
           isPhoneVerified: false,
         });
@@ -306,14 +330,14 @@ export class AuthService {
     }
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('User account is inactive or not found');
+      throw new UnauthorizedException(this.i18n.t('errors.account_inactive_or_not_found'));
     }
 
     // Generate verification code
     const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
-    const verificationExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const verificationExpiry = new Date(Date.now() + AUTH_SECURITY.verificationExpiryMs);
 
-    if (type === 'email') {
+    if (type === AUTH_IDENTIFIER_TYPES.email) {
       await this.usersRepository.update(user.id, {
         emailVerificationCode: verificationCode,
         emailVerificationExpiry: verificationExpiry,
@@ -327,7 +351,7 @@ export class AuthService {
       console.log(`[OTP] Phone verification code for ${user.phoneCode ?? ''}${user.phone ?? ''}: ${verificationCode}`);
     }
 
-    return { message: 'Verification code sent successfully' };
+    return { message: this.i18n.t('common.auth_verification_code_sent_successfully') };
   }
 
   /**
@@ -337,15 +361,15 @@ export class AuthService {
     dto: VerifyOtpDto,
     deviceInfo?: string,
     ipAddress?: string,
-    lang: string = 'en',
+    lang: string = AUTH_DEFAULTS.language,
   ): Promise<AuthResponseDto> {
     const type = dto.type;
     let user: AuthUserPayload | null = null;
 
-    if (type === 'email') {
+    if (type === AUTH_IDENTIFIER_TYPES.email) {
       const email = dto.email;
       if (!email) {
-        throw new BadRequestException('Email is required');
+        throw new BadRequestException(this.i18n.t('errors.email_required'));
       }
       user = (await this.usersRepository.findOne(
         { email },
@@ -362,19 +386,19 @@ export class AuthService {
       )) as AuthUserPayload | null;
 
       if (!user) {
-        throw new UnauthorizedException('Invalid credentials');
+        throw new UnauthorizedException(this.i18n.t('errors.invalid_credentials'));
       }
 
       if (!user.emailVerificationCode || !user.emailVerificationExpiry) {
-        throw new BadRequestException('No verification code found');
+        throw new BadRequestException(this.i18n.t('errors.verification_code_not_found'));
       }
 
       if (user.emailVerificationExpiry < new Date()) {
-        throw new BadRequestException('Verification code expired');
+        throw new BadRequestException(this.i18n.t('errors.verification_code_expired'));
       }
 
       if (user.emailVerificationCode !== dto.code) {
-        throw new BadRequestException('Invalid verification code');
+        throw new BadRequestException(this.i18n.t('errors.invalid_verification_code'));
       }
 
       // Mark as verified
@@ -385,9 +409,9 @@ export class AuthService {
       });
     } else {
       const phone = dto.phone;
-      const phoneCode = dto.phoneCode ?? '+966';
+      const phoneCode = dto.phoneCode ?? AUTH_DEFAULTS.phoneCode;
       if (!phone) {
-        throw new BadRequestException('Phone is required');
+        throw new BadRequestException(this.i18n.t('errors.phone_required'));
       }
       user = (await this.usersRepository.findOne(
         { phone, phoneCode },
@@ -404,19 +428,19 @@ export class AuthService {
       )) as AuthUserPayload | null;
 
       if (!user) {
-        throw new UnauthorizedException('Invalid credentials');
+        throw new UnauthorizedException(this.i18n.t('errors.invalid_credentials'));
       }
 
       if (!user.phoneVerificationCode || !user.phoneVerificationExpiry) {
-        throw new BadRequestException('No verification code found');
+        throw new BadRequestException(this.i18n.t('errors.verification_code_not_found'));
       }
 
       if (user.phoneVerificationExpiry < new Date()) {
-        throw new BadRequestException('Verification code expired');
+        throw new BadRequestException(this.i18n.t('errors.verification_code_expired'));
       }
 
       if (user.phoneVerificationCode !== dto.code) {
-        throw new BadRequestException('Invalid verification code');
+        throw new BadRequestException(this.i18n.t('errors.invalid_verification_code'));
       }
 
       // Mark as verified
@@ -428,114 +452,11 @@ export class AuthService {
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('User account is inactive');
+      throw new UnauthorizedException(this.i18n.t('errors.account_inactive'));
     }
 
-    // Guest User Session Migration
     if (dto.guestToken) {
-      const guestUser = await this.usersRepository.findOne({ guestToken: dto.guestToken });
-
-      if (guestUser && guestUser.id !== user.id) {
-        // Perform structural migration inside database transaction
-        await this.prisma.$transaction(async (tx) => {
-          // Check relations like Address, Order, Review, etc.
-          await tx.address.updateMany({
-            where: { userId: guestUser.id },
-            data: { userId: user.id },
-          });
-
-          await tx.order.updateMany({
-            where: { userId: guestUser.id },
-            data: { userId: user.id },
-          });
-
-          await tx.review.updateMany({
-            where: { userId: guestUser.id },
-            data: { userId: user.id },
-          });
-
-          // Cart Migration
-          const guestCart = await tx.cart.findUnique({
-            where: { userId: guestUser.id },
-            include: { items: true },
-          });
-
-          if (guestCart && guestCart.items.length > 0) {
-            let userCart = await tx.cart.findUnique({
-              where: { userId: user.id },
-            });
-            if (!userCart) {
-              userCart = await tx.cart.create({
-                data: { userId: user.id },
-              });
-            }
-
-            for (const item of guestCart.items) {
-              const duplicateItem = await tx.cartItem.findUnique({
-                where: {
-                  cartId_productId_variantId: {
-                    cartId: userCart.id,
-                    productId: item.productId,
-                    variantId: item.variantId as bigint,
-                  },
-                },
-              });
-
-              if (duplicateItem) {
-                await tx.cartItem.update({
-                  where: { id: duplicateItem.id },
-                  data: { quantity: duplicateItem.quantity + item.quantity },
-                });
-                await tx.cartItem.delete({
-                  where: { id: item.id },
-                });
-              } else {
-                await tx.cartItem.update({
-                  where: { id: item.id },
-                  data: { cartId: userCart.id },
-                });
-              }
-            }
-
-            await tx.cart.delete({
-              where: { id: guestCart.id },
-            });
-          }
-
-          const guestWishlistItems = await tx.wishlistItem.findMany({
-            where: { userId: guestUser.id },
-            select: { id: true, productId: true },
-          });
-
-          for (const item of guestWishlistItems) {
-            const duplicateItem = await tx.wishlistItem.findUnique({
-              where: {
-                userId_productId: {
-                  userId: user.id,
-                  productId: item.productId,
-                },
-              },
-            });
-
-            if (duplicateItem) {
-              await tx.wishlistItem.delete({
-                where: { id: item.id },
-              });
-            } else {
-              await tx.wishlistItem.update({
-                where: { id: item.id },
-                data: { userId: user.id },
-              });
-            }
-          }
-
-          // Delete guest user
-          await tx.user.delete({
-            where: { id: guestUser.id },
-          });
-        });
-        console.log(`[GUEST MIGRATION] Migrated and deleted guest user ID: ${guestUser.id} to user ID: ${user.id}`);
-      }
+      await this.usersRepository.migrateGuestData(dto.guestToken, user.id);
     }
 
     // Generate access and refresh tokens
@@ -554,7 +475,9 @@ export class AuthService {
               id: user.role.id.toString(),
               name:
                 user.role.translations.find((t: { langId: string; name: string }) => t.langId === lang)?.name ||
-                user.role.translations.find((t: { langId: string; name: string }) => t.langId === 'en')?.name ||
+                user.role.translations.find(
+                  (t: { langId: string; name: string }) => t.langId === AUTH_DEFAULTS.language,
+                )?.name ||
                 '',
               permissions: PermissionUtil.groupPermissionsAsStrings(user.role.permissions),
             }
@@ -569,13 +492,14 @@ export class AuthService {
    * Create a guest user profile and generate tokens
    */
   async createGuest(deviceInfo?: string, ipAddress?: string): Promise<AuthResponseDto> {
-    const guestToken = 'guest_' + randomBytes(16).toString('hex');
+    const guestToken =
+      AUTH_DEFAULTS.guestTokenPrefix + randomBytes(AUTH_SECURITY.guestTokenBytes).toString(AUTH_ENCODING.hex);
 
     // Create new guest user record
     const guestUser = (await this.usersRepository.create(
       {
-        name: 'Guest User',
-        userType: 'client',
+        name: AUTH_DEFAULTS.guestName,
+        userType: AUTH_USER_TYPES.client,
         guestToken: guestToken,
         isActive: true,
         isEmailVerified: false,
@@ -601,7 +525,7 @@ export class AuthService {
       refreshToken,
       user: {
         id: guestUser.id.toString(),
-        name: guestUser.name || 'Guest User',
+        name: guestUser.name || AUTH_DEFAULTS.guestName,
         email: '',
         guestToken: guestUser.guestToken ?? undefined,
         role: undefined,
@@ -622,7 +546,7 @@ export class AuthService {
     const decoded = this.jwtService.decode<JwtPayload>(oldRefreshToken);
 
     if (!decoded?.jti) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException(this.i18n.t('errors.invalid_refresh_token'));
     }
 
     // Revoke old refresh token
@@ -642,7 +566,7 @@ export class AuthService {
       await this.refreshTokensRepository.revokeByToken(decoded.jti);
     }
 
-    return { message: 'Logged out successfully' };
+    return { message: this.i18n.t('common.auth_logged_out_successfully') };
   }
 
   /**
@@ -651,7 +575,7 @@ export class AuthService {
   async logoutAll(userId: bigint): Promise<{ message: string }> {
     await this.refreshTokensRepository.revokeAllUserTokens(userId);
 
-    return { message: 'Logged out from all devices' };
+    return { message: this.i18n.t('common.auth_logged_out_all_devices') };
   }
 
   /**
@@ -662,12 +586,12 @@ export class AuthService {
 
     if (!user) {
       // Don't reveal if user exists
-      return { message: 'If the email exists, a reset code has been sent' };
+      return { message: this.i18n.t('common.auth_password_reset_code_sent') };
     }
 
     // Generate reset code (hardcoded to 1111 for now)
-    const resetCode = '1111';
-    const resetExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const resetCode = AUTH_DEFAULTS.verificationCode;
+    const resetExpiry = new Date(Date.now() + AUTH_SECURITY.verificationExpiryMs);
 
     await this.usersRepository.update(user.id, {
       passwordResetCode: resetCode,
@@ -677,7 +601,7 @@ export class AuthService {
     // TODO: Send reset code via email
     console.log(`Password reset code for ${email}: ${resetCode}`);
 
-    return { message: 'If the email exists, a reset code has been sent' };
+    return { message: this.i18n.t('common.auth_password_reset_code_sent') };
   }
 
   /**
@@ -687,23 +611,23 @@ export class AuthService {
     const user = await this.usersRepository.findOne({ email });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(this.i18n.t('errors.user_not_found'));
     }
 
     if (!user.passwordResetCode || !user.passwordResetExpiry) {
-      throw new BadRequestException('No reset code found');
+      throw new BadRequestException(this.i18n.t('errors.reset_code_not_found'));
     }
 
     if (user.passwordResetExpiry < new Date()) {
-      throw new BadRequestException('Reset code expired');
+      throw new BadRequestException(this.i18n.t('errors.reset_code_expired'));
     }
 
     if (user.passwordResetCode !== code) {
-      throw new BadRequestException('Invalid reset code');
+      throw new BadRequestException(this.i18n.t('errors.invalid_reset_code'));
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, AUTH_SECURITY.bcryptRounds);
 
     // Update password and clear reset code
     await this.usersRepository.update(user.id, {
@@ -715,7 +639,7 @@ export class AuthService {
     // Revoke all refresh tokens
     await this.refreshTokensRepository.revokeAllUserTokens(user.id);
 
-    return { message: 'Password reset successfully' };
+    return { message: this.i18n.t('common.auth_password_reset_successful') };
   }
 
   /**
@@ -725,23 +649,23 @@ export class AuthService {
     const user = await this.usersRepository.findOne({ phone });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(this.i18n.t('errors.user_not_found'));
     }
 
     if (user.isPhoneVerified) {
-      throw new BadRequestException('Phone already verified');
+      throw new BadRequestException(this.i18n.t('errors.phone_already_verified'));
     }
 
     if (!user.phoneVerificationCode || !user.phoneVerificationExpiry) {
-      throw new BadRequestException('No verification code found');
+      throw new BadRequestException(this.i18n.t('errors.verification_code_not_found'));
     }
 
     if (user.phoneVerificationExpiry < new Date()) {
-      throw new BadRequestException('Verification code expired');
+      throw new BadRequestException(this.i18n.t('errors.verification_code_expired'));
     }
 
     if (user.phoneVerificationCode !== code) {
-      throw new BadRequestException('Invalid verification code');
+      throw new BadRequestException(this.i18n.t('errors.invalid_verification_code'));
     }
 
     // Mark phone as verified
@@ -751,7 +675,7 @@ export class AuthService {
       phoneVerificationExpiry: null,
     });
 
-    return { message: 'Phone verified successfully' };
+    return { message: this.i18n.t('common.auth_phone_verified_successfully') };
   }
 
   /**
@@ -761,16 +685,16 @@ export class AuthService {
     const user = await this.usersRepository.findOne({ phone });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(this.i18n.t('errors.user_not_found'));
     }
 
     if (user.isPhoneVerified) {
-      throw new BadRequestException('Phone already verified');
+      throw new BadRequestException(this.i18n.t('errors.phone_already_verified'));
     }
 
     // Generate verification code
-    const verificationCode = '1111';
-    const verificationExpiry = new Date(Date.now() + 15 * 60 * 1000);
+    const verificationCode = AUTH_DEFAULTS.verificationCode;
+    const verificationExpiry = new Date(Date.now() + AUTH_SECURITY.verificationExpiryMs);
 
     await this.usersRepository.update(user.id, {
       phoneVerificationCode: verificationCode,
@@ -780,7 +704,7 @@ export class AuthService {
     // TODO: Send SMS
     console.log(`Phone verification code for ${phone}: ${verificationCode}`);
 
-    return { message: 'Verification code sent' };
+    return { message: this.i18n.t('common.auth_verification_code_sent') };
   }
 
   /**
@@ -795,7 +719,7 @@ export class AuthService {
    */
   async revokeSession(userId: bigint, sessionId: bigint): Promise<{ message: string }> {
     await this.refreshTokensRepository.revokeSession(userId, sessionId);
-    return { message: 'Session revoked successfully' };
+    return { message: this.i18n.t('common.auth_session_revoked_successfully') };
   }
 
   /**
@@ -806,12 +730,12 @@ export class AuthService {
     authResult: { accessToken: string; refreshToken: string; user?: Record<string, unknown> },
     platform: string,
   ): Response {
-    if (platform === 'browser') {
-      res.cookie('refreshToken', authResult.refreshToken, {
+    if (platform === AUTH_PLATFORMS.browser) {
+      res.cookie(AUTH_COOKIE.refreshToken, authResult.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        secure: process.env.NODE_ENV === AUTH_ENVIRONMENTS.production,
+        sameSite: AUTH_COOKIE.sameSite,
+        maxAge: AUTH_SECURITY.refreshCookieMaxAgeMs,
       });
 
       const { refreshToken: _r, ...resultWithoutRefresh } = authResult;
@@ -827,10 +751,10 @@ export class AuthService {
    * Clear refresh token cookie from the client response
    */
   clearRefreshTokenCookie(res: Response) {
-    res.clearCookie('refreshToken');
+    res.clearCookie(AUTH_COOKIE.refreshToken);
   }
 
-  private getJwtSigningSecretOrThrow(envKey: 'JWT_SECRET' | 'JWT_REFRESH_SECRET'): string {
+  private getJwtSigningSecretOrThrow(envKey: AuthConfigSecretKey): string {
     const secret = this.configService.get<string>(envKey);
     if (!secret || secret.trim() === '') {
       throw new Error(`${envKey} is not configured`);

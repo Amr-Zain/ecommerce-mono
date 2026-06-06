@@ -98,5 +98,21 @@
   "order_pending_payment_confirmation_not_found": "لا توجد دفعة يدوية معلقة تتطلب التأكيد",
   "return_exchange_invalid_status": "حالة الإرجاع أو الاستبدال غير صالحة",
   "exchange_reservation_expired": "انتهت صلاحية حجز مخزون الاستبدال ويتطلب المراجعة",
-  "exchange_payment_already_active": "توجد دفعة نشطة بالفعل لهذا الاستبدال"
+  "exchange_payment_already_active": "توجد دفعة نشطة بالفعل لهذا الاستبدال",
+  "password_login_admin_only": "تم رفض الوصول. تسجيل الدخول بكلمة المرور متاح للمشرفين فقط.",
+  "phone_exists": "رقم الهاتف موجود بالفعل",
+  "email_required": "البريد الإلكتروني مطلوب",
+  "phone_required": "رقم الهاتف مطلوب",
+  "account_inactive_or_not_found": "حساب المستخدم غير نشط أو غير موجود",
+  "invalid_credentials": "بيانات تسجيل الدخول غير صحيحة",
+  "verification_code_not_found": "لم يتم العثور على رمز تحقق",
+  "verification_code_expired": "انتهت صلاحية رمز التحقق",
+  "invalid_verification_code": "رمز التحقق غير صحيح",
+  "account_inactive": "حساب المستخدم غير نشط",
+  "email_verification_required": "يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول",
+  "invalid_refresh_token": "رمز التحديث غير صالح",
+  "reset_code_not_found": "لم يتم العثور على رمز إعادة التعيين",
+  "reset_code_expired": "انتهت صلاحية رمز إعادة التعيين",
+  "invalid_reset_code": "رمز إعادة التعيين غير صحيح",
+  "phone_already_verified": "تم تأكيد رقم الهاتف بالفعل"
 }

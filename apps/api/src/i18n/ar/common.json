@@ -3,5 +3,15 @@
   "welcome": "أهلاً بك في تطبيقنا",
   "deleted_successfully": "تم الحذف بنجاح",
   "updated_successfully": "تم التعديل بنجاح",
-  "created_successfully": "تم الإضافة بنجاح"
+  "created_successfully": "تم الإضافة بنجاح",
+  "auth_email_registration_successful": "تم التسجيل بنجاح. يرجى تأكيد بريدك الإلكتروني باستخدام الرمز المرسل.",
+  "auth_phone_registration_successful": "تم التسجيل بنجاح. يرجى تأكيد رقم هاتفك باستخدام الرمز المرسل.",
+  "auth_verification_code_sent_successfully": "تم إرسال رمز التحقق بنجاح",
+  "auth_verification_code_sent": "تم إرسال رمز التحقق",
+  "auth_logged_out_successfully": "تم تسجيل الخروج بنجاح",
+  "auth_logged_out_all_devices": "تم تسجيل الخروج من جميع الأجهزة",
+  "auth_password_reset_code_sent": "إذا كان البريد الإلكتروني موجودًا، فقد تم إرسال رمز إعادة التعيين",
+  "auth_password_reset_successful": "تمت إعادة تعيين كلمة المرور بنجاح",
+  "auth_phone_verified_successfully": "تم تأكيد رقم الهاتف بنجاح",
+  "auth_session_revoked_successfully": "تم إلغاء الجلسة بنجاح"
 }

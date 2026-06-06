@@ -11,6 +11,16 @@ export type I18nTranslations = {
         "deleted_successfully": string;
         "updated_successfully": string;
         "created_successfully": string;
+        "auth_email_registration_successful": string;
+        "auth_phone_registration_successful": string;
+        "auth_verification_code_sent_successfully": string;
+        "auth_verification_code_sent": string;
+        "auth_logged_out_successfully": string;
+        "auth_logged_out_all_devices": string;
+        "auth_password_reset_code_sent": string;
+        "auth_password_reset_successful": string;
+        "auth_phone_verified_successfully": string;
+        "auth_session_revoked_successfully": string;
     };
     "errors": {
         "user_not_found": string;
@@ -113,6 +123,22 @@ export type I18nTranslations = {
         "return_exchange_invalid_status": string;
         "exchange_reservation_expired": string;
         "exchange_payment_already_active": string;
+        "password_login_admin_only": string;
+        "phone_exists": string;
+        "email_required": string;
+        "phone_required": string;
+        "account_inactive_or_not_found": string;
+        "invalid_credentials": string;
+        "verification_code_not_found": string;
+        "verification_code_expired": string;
+        "invalid_verification_code": string;
+        "account_inactive": string;
+        "email_verification_required": string;
+        "invalid_refresh_token": string;
+        "reset_code_not_found": string;
+        "reset_code_expired": string;
+        "invalid_reset_code": string;
+        "phone_already_verified": string;
     };
     "validation": {
         "NOT_EMPTY": string;
