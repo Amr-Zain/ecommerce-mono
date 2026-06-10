@@ -1,6 +1,8 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { I18nContext, I18nValidationException, I18nValidationError } from 'nestjs-i18n';
+import { Prisma } from '@prisma/client';
+import { PRISMA_ERROR_CODES } from '../constants/prisma.constants';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -20,7 +22,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let translationKey = 'errors.INTERNAL_SERVER_ERROR';
     let args: Record<string, unknown> = {};
 
-    if (exception instanceof I18nValidationException) {
+    // ─── Prisma errors (DB constraint violations) ───────────────────────
+    if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      const prismaResult = this.handlePrismaError(exception);
+      status = prismaResult.status;
+      message = prismaResult.message;
+      translationKey = prismaResult.translationKey;
+      args = prismaResult.args;
+    } else if (exception instanceof I18nValidationException) {
       status = exception.getStatus();
       translationKey = 'errors.VALIDATION_FAILED';
       message = 'Validation failed';
@@ -129,5 +138,126 @@ export class AllExceptionsFilter implements ExceptionFilter {
     });
 
     return formattedErrors;
+  }
+
+  /**
+   * Maps Prisma error codes to HTTP status + user-friendly message.
+   * Extracts field/model info from Prisma's meta for specific error messages.
+   */
+  private handlePrismaError(exception: Prisma.PrismaClientKnownRequestError): {
+    status: number;
+    message: string;
+    translationKey: string;
+    args: Record<string, unknown>;
+  } {
+    const meta = exception.meta as Record<string, unknown> | undefined;
+
+    switch (exception.code) {
+      // Foreign key constraint violation
+      case PRISMA_ERROR_CODES.foreignKeyViolation: {
+        // meta.field_name can be "cities_country_id_fkey" or undefined
+        // Also try parsing from exception.message which contains the constraint name
+        const rawField = (meta?.field_name as string) || '';
+        let field = this.extractFieldName(rawField);
+
+        // If meta didn't give us a useful field, parse from the error message
+        if (!field) {
+          const constraintMatch = exception.message.match(/constraint:\s*`([^`]+)`/);
+          if (constraintMatch) {
+            field = this.extractFieldName(constraintMatch[1]);
+          }
+        }
+
+        const model = this.extractModelName(meta?.modelName as string | undefined, exception.message);
+        const displayField = field || 'related record';
+        return {
+          status: HttpStatus.BAD_REQUEST,
+          message: `${model ? model + ': ' : ''}The ${displayField} does not exist`,
+          translationKey: 'errors.FOREIGN_KEY_VIOLATION',
+          args: { field: displayField, model },
+        };
+      }
+
+      // Record not found (update/delete on non-existent row)
+      case PRISMA_ERROR_CODES.recordNotFound: {
+        const model = (meta?.modelName as string) || '';
+        const cause = (meta?.cause as string) || 'Record not found';
+        return {
+          status: HttpStatus.NOT_FOUND,
+          message: model ? `${model} not found` : cause,
+          translationKey: 'errors.RECORD_NOT_FOUND',
+          args: { model, cause },
+        };
+      }
+
+      // Unique constraint violation
+      case PRISMA_ERROR_CODES.uniqueConstraint: {
+        const target = (meta?.target as string[]) || [];
+        const model = (meta?.modelName as string) || '';
+        const fields = target.length > 0 ? target.join(', ') : 'field';
+        return {
+          status: HttpStatus.CONFLICT,
+          message: `${model ? model + ': ' : ''}A record with this ${fields} already exists`,
+          translationKey: 'errors.UNIQUE_CONSTRAINT_VIOLATION',
+          args: { field: fields, model },
+        };
+      }
+
+      // Required relation not found (connect failed)
+      case PRISMA_ERROR_CODES.relationNotFound: {
+        const relation = (meta?.relation_name as string) || '';
+        const model = (meta?.modelName as string) || '';
+        return {
+          status: HttpStatus.BAD_REQUEST,
+          message: `${model ? model + ': ' : ''}The related ${relation || 'record'} does not exist`,
+          translationKey: 'errors.RELATION_NOT_FOUND',
+          args: { relation, model },
+        };
+      }
+
+      default:
+        this.logger.error(`Unhandled Prisma error ${exception.code}: ${exception.message}`);
+        return {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: 'Database error',
+          translationKey: 'errors.DATABASE_ERROR',
+          args: {},
+        };
+    }
+  }
+
+  /**
+   * Extracts a clean field name from Prisma's FK constraint name.
+   * "cities_country_id_fkey" → "country"
+   * "City_countryId_fkey" → "country"
+   * "countryId" → "country"
+   */
+  private extractFieldName(raw: string): string {
+    if (!raw) return '';
+    // Pattern: table_field_id_fkey (snake_case DB constraint)
+    const snakeFkeyMatch = raw.match(/^\w+?_(.+?)_fkey$/);
+    if (snakeFkeyMatch) {
+      // "cities_country_id_fkey" → "country_id" → "country"
+      const fieldPart = snakeFkeyMatch[1];
+      return fieldPart.replace(/_id$/, '').replace(/_/g, ' ');
+    }
+    // Pattern: ModelName_fieldName_fkey (camelCase)
+    const camelFkeyMatch = raw.match(/_(.+?)_fkey$/);
+    if (camelFkeyMatch) {
+      // "City_countryId_fkey" → "countryId" → "country"
+      return camelFkeyMatch[1].replace(/Id$/, '').replace(/([A-Z])/g, ' $1').trim().toLowerCase();
+    }
+    // Fallback: strip "Id" suffix
+    return raw.replace(/Id$/, '').replace(/_id$/, '').replace(/_/g, ' ');
+  }
+
+  /**
+   * Extracts model name from meta or falls back to parsing the error message.
+   */
+  private extractModelName(metaModel: string | undefined, errorMessage: string): string {
+    if (metaModel) return metaModel;
+    // Try to extract from message like "... on the model `City`"
+    const match = errorMessage.match(/model\s+`?(\w+)`?/i);
+    return match ? match[1] : '';
   }
 }

@@ -45,7 +45,7 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
     mediaService: MediaService,
     private readonly pricingService: PricingService,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, undefined);
   }
 
   protected getModel() {

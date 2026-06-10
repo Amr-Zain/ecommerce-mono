@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, ScalarFields } from '@/common/repositories/base.repository';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
@@ -19,13 +19,23 @@ export class UsersRepository extends BaseRepository<User> implements IUsersRepos
     avatar: { collection: 'avatar', single: true, allowedTypes: [MediaType.IMAGE] },
   };
 
+  protected readonly searchConfig = {
+    directFields: ['name', 'email'] satisfies ScalarFields<User>[],
+  };
+
+  protected readonly allowedIncludes = {
+    role: { select: { id: true, isActive: true, translations: true } },
+    addresses: true,
+    reviews: true,
+  };
+
   constructor(
     prisma: PrismaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
     mediaService: MediaService,
     private readonly guestMigrationRepository: GuestMigrationRepository,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, queryBuilder);
   }
 
   protected getModel() {
@@ -171,23 +181,20 @@ export class UsersRepository extends BaseRepository<User> implements IUsersRepos
     };
   }
 
-  private buildWhereClause(query: AdvancedQueryDto): Prisma.UserWhereInput {
+  protected buildWhereClause(query: AdvancedQueryDto): Prisma.UserWhereInput {
+    // Use the base buildWhereClause which handles filters + searchConfig
+    const baseWhere = super.buildWhereClause(query) as Prisma.UserWhereInput;
     const conditions: Prisma.UserWhereInput[] = [];
 
-    if (query.filters && Object.keys(query.filters).length > 0) {
-      const filterCondition = this.queryBuilder.buildFiltersCondition<Prisma.UserWhereInput>(query.filters);
-      conditions.push(filterCondition);
+    if (Object.keys(baseWhere).length > 0) {
+      conditions.push(baseWhere);
     }
 
-    if (query.search) {
-      const searchCondition = this.queryBuilder.buildSearchCondition(query.search, ['name', 'email']);
-      conditions.push(searchCondition as Prisma.UserWhereInput);
-    }
-
+    // Custom: exclude default role for admin filter
     if (query.filters?.userType === 'admin') {
       conditions.push({ roleId: { not: 1n } });
     }
 
-    return this.queryBuilder.combineWhereConditions(...conditions);
+    return this.queryBuilder!.combineWhereConditions(...conditions);
   }
 }

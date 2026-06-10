@@ -18,8 +18,8 @@ export class AttributeValuesService {
     return this.repo.findAll(query, lang);
   }
 
-  async findOne(id: number): Promise<AttributeValue | null> {
-    return this.repo.findByIdWithAllTranslations(id);
+  async findOne(id: number): Promise<AttributeValue> {
+    return this.repo.findByIdOrThrow(id, { include: { translations: true } });
   }
 
   async create(data: CreateAttributeValueDto): Promise<AttributeValue> {

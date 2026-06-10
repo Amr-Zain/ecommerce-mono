@@ -1,12 +1,12 @@
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions, TranslationFields } from '@/common/repositories/base.repository';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { Prisma, PrismaService } from '@/prisma';
 import { Injectable } from '@nestjs/common';
 import { MediaService } from '@/media/media.service';
 import { MediaType } from '@/media/enums/media-type.enum';
-import { STATIC_PAGES_REPOSITORY, IStaticPagesRepository } from '@/common/interfaces';
+import { IStaticPagesRepository } from '@/common/interfaces';
 
 type StaticPage = Prisma.StaticPageGetPayload<{
   include: {
@@ -14,30 +14,40 @@ type StaticPage = Prisma.StaticPageGetPayload<{
     sections: true;
   };
 }>;
+
 @Injectable()
 export class StaticPagesRepository extends BaseRepository<StaticPage> implements IStaticPagesRepository {
   protected readonly mediaConfig = {
     image: { collection: 'image', single: true, allowedTypes: [MediaType.IMAGE, MediaType.DOCUMENT] },
   };
 
+  protected readonly searchConfig = {
+    translationFields: ['title', 'content'] satisfies TranslationFields<StaticPage>[],
+  };
+
+  protected readonly defaultListInclude = {
+    translations: true,
+  };
+
+  protected readonly allowedIncludes = {
+    translations: true,
+    sections: { include: { translations: true } },
+  };
+
   constructor(
     prisma: PrismaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
     mediaService: MediaService,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, queryBuilder);
   }
+
   getModel() {
     return this.prisma.staticPage;
   }
 
   async getAllStaticPages(query: AdvancedQueryDto) {
-    const where = this.buildWhereClause(query);
-    return this.paginate(query, where, {
-      include: {
-        translations: true,
-      },
-    });
+    return this.findAll(query);
   }
 
   async getAllStticPagesWithAllSections(
@@ -55,6 +65,7 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
       },
     });
   }
+
   async getStaticPageByIdWithAllSections(id: number): Promise<StaticPage | null> {
     return this.findById(id, {
       include: {
@@ -63,6 +74,7 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
       },
     });
   }
+
   async createStaticPage(data: Prisma.StaticPageCreateInput): Promise<StaticPage> {
     const rawData = data as unknown as Record<string, unknown>;
     const sections = rawData['sections'] as Record<string, unknown>[];
@@ -125,6 +137,7 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
 
     return this.update(id, rawData);
   }
+
   async deleteStaticPage(id: number): Promise<StaticPage> {
     return this.delete(id);
   }
@@ -182,24 +195,5 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
         translations: true,
       },
     });
-  }
-
-  private buildWhereClause(query: AdvancedQueryDto = {}): Prisma.StaticPageWhereInput {
-    const conditions: Prisma.StaticPageWhereInput[] = [];
-    if (query.search) {
-      const searchCondition: Prisma.StaticPageWhereInput = {
-        translations: {
-          some: {
-            OR: [
-              { title: { contains: query.search, mode: 'insensitive' } },
-              { content: { contains: query.search, mode: 'insensitive' } },
-            ],
-          },
-        },
-      };
-      conditions.push(searchCondition);
-    }
-    conditions.push(this.queryBuilder.buildFiltersCondition<Prisma.StaticPageWhereInput>(query.filters!));
-    return this.queryBuilder.combineWhereConditions(...conditions);
   }
 }

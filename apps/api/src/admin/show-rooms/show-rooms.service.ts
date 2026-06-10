@@ -27,11 +27,13 @@ export class ShowRoomsService {
     return this.repo.delete(id);
   }
 
-  async getShowRoomById(id: number | bigint): Promise<ShowRoom | null> {
-    return this.repo.findById(id);
+  async getShowRoomById(id: number | bigint): Promise<ShowRoom> {
+    return this.repo.findByIdOrThrow(id);
   }
 
-  async getShowRoomByIdWithAllTranslations(id: number | bigint): Promise<ShowRoom | null> {
-    return this.repo.findByIdWithAllTranslations(id);
+  async getShowRoomByIdWithAllTranslations(id: number | bigint): Promise<ShowRoom> {
+    return this.repo.findByIdOrThrow(id, {
+      include: { country: { include: { translations: true } }, translations: true },
+    });
   }
 }

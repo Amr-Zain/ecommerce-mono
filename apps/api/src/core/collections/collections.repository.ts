@@ -4,9 +4,9 @@ import { MediaType } from '@/media/enums/media-type.enum';
 import { MediaService } from '@/media/media.service';
 import { Prisma, PrismaService } from '@/prisma';
 import { Injectable } from '@nestjs/common';
-import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions, TranslationFields } from '@/common/repositories/base.repository';
 import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
-import { COLLECTIONS_REPOSITORY, ICollectionsRepository } from '@/common/interfaces';
+import { ICollectionsRepository } from '@/common/interfaces';
 
 type Collection = Prisma.CollectionGetPayload<{
   include: {
@@ -21,12 +21,22 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
     image: { collection: 'collection', single: true, allowedTypes: [MediaType.IMAGE] },
   };
 
+  protected readonly searchConfig = {
+    translationFields: ['name'] satisfies TranslationFields<Collection>[],
+  };
+
+  protected readonly allowedIncludes = {
+    translations: true,
+    parent: { include: { translations: true } },
+    children: { include: { translations: true } },
+  };
+
   constructor(
     prisma: PrismaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
     mediaService: MediaService,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, queryBuilder);
   }
 
   getModel() {
@@ -34,7 +44,7 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
   }
 
   async findAll(query: CollectionQueryDto, langId: string = 'en', options?: QueryOptions): Promise<PaginatedResult<Collection> | Collection[]> {
-    const where = this.buildWhereClause(query, langId);
+    const where = this.buildCollectionWhereClause(query, langId);
     if (options?.select) {
       return this.paginate(query, where, { select: options.select });
     }
@@ -135,24 +145,19 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
     };
   }
 
-  private buildWhereClause(query: CollectionQueryDto, langId?: string): Prisma.CollectionWhereInput {
+  /**
+   * Custom buildWhereClause because collections have special `customFilter` logic.
+   */
+  private buildCollectionWhereClause(query: CollectionQueryDto, langId?: string): Prisma.CollectionWhereInput {
+    // Get base conditions from the generic buildWhereClause
+    const baseWhere = this.buildWhereClause(query, langId) as Prisma.CollectionWhereInput;
     const conditions: Prisma.CollectionWhereInput[] = [];
-    const filters = query.filters ?? {};
-    if (Object.keys(filters).length > 0) {
-      conditions.push(this.queryBuilder.buildFiltersCondition<Prisma.CollectionWhereInput>(filters));
-    }
-    if (query.search && langId) {
-      const searchCondition: Prisma.CollectionWhereInput = {
-        translations: {
-          some: {
-            langId,
-            OR: [{ name: { contains: query.search, mode: 'insensitive' } }],
-          },
-        },
-      };
-      conditions.push(searchCondition);
+
+    if (Object.keys(baseWhere).length > 0) {
+      conditions.push(baseWhere);
     }
 
+    // Custom hierarchy filters
     if (query.customFilter === 'collection') {
       conditions.push({ parentId: null });
     } else if (query.customFilter === 'sub_collection') {
@@ -161,6 +166,6 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
       conditions.push({ parent: { parent: { parentId: null } } });
     }
 
-    return this.queryBuilder.combineWhereConditions(...conditions);
+    return this.queryBuilder!.combineWhereConditions(...conditions);
   }
 }

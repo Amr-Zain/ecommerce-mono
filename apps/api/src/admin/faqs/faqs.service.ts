@@ -27,11 +27,11 @@ export class FaqsService {
     return this.repo.create(faq as unknown as Prisma.FaqCreateInput);
   }
 
-  async getFaqById(id: number | bigint): Promise<Faq | null> {
-    return this.repo.findById(id);
+  async getFaqById(id: number | bigint): Promise<Faq> {
+    return this.repo.findByIdOrThrow(id);
   }
 
-  async getFaqByIdWithAllTranslations(id: number | bigint): Promise<Faq | null> {
-    return this.repo.findByIdWithAllTranslations(id);
+  async getFaqByIdWithAllTranslations(id: number | bigint): Promise<Faq> {
+    return this.repo.findByIdOrThrow(id, { include: { translations: true } });
   }
 }

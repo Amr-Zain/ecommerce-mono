@@ -18,7 +18,7 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
   };
 
   constructor(prisma: PrismaService, mediaService: MediaService) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, undefined);
   }
 
   protected getModel() {

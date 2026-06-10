@@ -24,8 +24,8 @@ export class CitiesService {
     return this.CitiesRepo.findAll(query);
   }
 
-  async findOne(id: number | bigint, langId?: string): Promise<CityModel | null> {
-    return this.CitiesRepo.findByIdWithRelations(id, langId);
+  async findOne(id: number | bigint, langId?: string): Promise<CityModel> {
+    return this.CitiesRepo.findByIdWithRelationsOrThrow(id, langId);
   }
 
   deleteCity(id: number | bigint) {

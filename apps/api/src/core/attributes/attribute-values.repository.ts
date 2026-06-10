@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService } from '@/prisma';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, TranslationFields } from '@/common/repositories/base.repository';
 import { MediaService } from '@/media/media.service';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { AttributeValueQueryDto } from '@/common/dto/attribute-value-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { ATTRIBUTE_VALUES_REPOSITORY, IAttributeValuesRepository } from '@/common/interfaces';
+import { IAttributeValuesRepository } from '@/common/interfaces';
 
 type AttributeValueType = Prisma.AttributeValueGetPayload<{
   include: { translations: true };
@@ -13,12 +13,31 @@ type AttributeValueType = Prisma.AttributeValueGetPayload<{
 
 @Injectable()
 export class AttributeValuesRepository extends BaseRepository<AttributeValueType> implements IAttributeValuesRepository {
+  protected readonly searchConfig = {
+    translationFields: ['name'] satisfies TranslationFields<AttributeValueType>[],
+  };
+
+  protected readonly filterConfig = {
+    attributeId: 'bigint' as const,
+  };
+
+  protected readonly defaultListInclude = {
+    translations: {
+      where: { langId: '__langId__' },
+      take: 1,
+    },
+  };
+
+  protected readonly allowedIncludes = {
+    translations: true,
+  };
+
   constructor(
     prisma: PrismaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
     mediaService: MediaService,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, queryBuilder);
   }
 
   getModel() {
@@ -29,24 +48,7 @@ export class AttributeValuesRepository extends BaseRepository<AttributeValueType
     query: AttributeValueQueryDto,
     langId: string = 'en',
   ): Promise<PaginatedResult<AttributeValueType> | AttributeValueType[]> {
-    const conditions: Prisma.AttributeValueWhereInput[] = [];
-
-    if (query.filters?.attributeId) {
-      conditions.push({ attributeId: BigInt(query.filters.attributeId as string) });
-    }
-
-    if (query.search && langId) {
-      conditions.push({
-        translations: {
-          some: {
-            langId,
-            name: { contains: query.search, mode: 'insensitive' },
-          },
-        },
-      });
-    }
-
-    const where = this.queryBuilder.combineWhereConditions(...conditions);
+    const where = this.buildWhereClause(query, langId);
 
     return this.paginate(query, where, {
       include: {
@@ -61,9 +63,7 @@ export class AttributeValuesRepository extends BaseRepository<AttributeValueType
   async findByIdWithAllTranslations(id: number | bigint): Promise<AttributeValueType | null> {
     return this.prisma.attributeValue.findUnique({
       where: { id: BigInt(id) },
-      include: {
-        translations: true,
-      },
+      include: { translations: true },
     }) as unknown as Promise<AttributeValueType | null>;
   }
 

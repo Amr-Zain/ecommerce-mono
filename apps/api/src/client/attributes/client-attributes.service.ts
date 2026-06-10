@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { ATTRIBUTES_REPOSITORY, IAttributesRepository } from '@/common/interfaces';
 import { AttributeQueryDto } from '@/common/dto/attribute-query.dto';
 
@@ -35,6 +35,8 @@ export class ClientAttributesService {
   }
 
   async findOne(id: number) {
-    return this.attributesRepo.findByIdWithValues(id);
+    const attribute = await this.attributesRepo.findByIdWithValues(id);
+    if (!attribute) throw new NotFoundException('Attribute not found');
+    return attribute;
   }
 }

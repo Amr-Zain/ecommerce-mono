@@ -9,7 +9,7 @@ export type RefreshTokenPayload = RefreshToken;
 @Injectable()
 export class RefreshTokensRepository extends BaseRepository<RefreshTokenPayload> {
   constructor(prisma: PrismaService, mediaService: MediaService) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, undefined);
   }
 
   protected getModel() {

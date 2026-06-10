@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { STATIC_PAGES_REPOSITORY, StaticPage as StaticPageInterface } from '@/common/interfaces';
 import { StaticPagesRepository } from '@/core/static-pages/static-pages.repository';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
@@ -13,8 +13,10 @@ export class StaticPageService {
   ): Promise<StaticPageInterface[] | PaginatedResult<StaticPageInterface>> {
     return this.staticPagesRepository.getAllStticPagesWithAllSections(query);
   }
-  async getStaticPageByIdWithAllSections(id: number): Promise<StaticPageInterface | null> {
-    return this.staticPagesRepository.getStaticPageByIdWithAllSections(id);
+  async getStaticPageByIdWithAllSections(id: number): Promise<StaticPageInterface> {
+    const page = await this.staticPagesRepository.getStaticPageByIdWithAllSections(id);
+    if (!page) throw new NotFoundException('Static page not found');
+    return page;
   }
   async createStaticPage(staticPage: Prisma.StaticPageCreateInput): Promise<StaticPageInterface> {
     return this.staticPagesRepository.createStaticPage(staticPage);

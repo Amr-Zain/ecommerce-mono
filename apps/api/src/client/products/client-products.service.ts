@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { PRODUCTS_REPOSITORY, IProductsRepository } from '@/common/interfaces';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { ClientWishlistService } from '../wishlist/client-wishlist.service';
@@ -52,6 +52,7 @@ export class ClientProductsService {
 
   async findOne(id: bigint, userId?: bigint) {
     const product = await this.productsRepo.findProductById(id);
+    if (!product) throw new NotFoundException('Product not found');
     return this.wishlistService.decorateProductWithWishlist(product, userId);
   }
 }
