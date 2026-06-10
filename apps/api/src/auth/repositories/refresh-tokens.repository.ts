@@ -23,6 +23,28 @@ export class RefreshTokensRepository extends BaseRepository<RefreshTokenPayload>
     });
   }
 
+  findActiveWithUser(token: string) {
+    return this.prisma.refreshToken.findFirst({
+      where: {
+        token,
+        isRevoked: false,
+        expiresAt: { gt: new Date() },
+      },
+      include: {
+        user: {
+          include: {
+            role: {
+              include: {
+                permissions: true,
+                translations: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async revokeAllUserTokens(userId: bigint): Promise<void> {
     await this.prisma.refreshToken.updateMany({
       where: { userId, isRevoked: false },

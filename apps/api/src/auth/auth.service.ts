@@ -234,15 +234,6 @@ export class AuthService {
     // Generate unique token ID for refresh token
     const tokenId = randomBytes(AUTH_SECURITY.refreshTokenIdBytes).toString(AUTH_ENCODING.hex);
 
-    const accessPayload: JwtPayload = {
-      sub: user.id.toString(),
-      email: user.email ?? undefined,
-      phone: user.phone ?? undefined,
-      role: user.role?.translations?.find((t) => t.langId === AUTH_DEFAULTS.language)?.name ?? undefined,
-      userType: user.userType ?? undefined,
-      type: AUTH_TOKEN_TYPES.access,
-    };
-
     // Refresh token payload
     const refreshPayload: JwtPayload = {
       sub: user.id.toString(),
@@ -253,21 +244,13 @@ export class AuthService {
     };
 
     // Sign tokens
-    const accessSecret = this.getJwtSigningSecretOrThrow(AUTH_CONFIG_KEYS.accessSecret);
     const refreshSecret = this.getJwtSigningSecretOrThrow(AUTH_CONFIG_KEYS.refreshSecret);
-    const accessExpiration = this.configService.get<string>(
-      AUTH_CONFIG_KEYS.accessExpiration,
-      AUTH_DEFAULTS.accessExpiration,
-    );
     const refreshExpiration = this.configService.get<string>(
       AUTH_CONFIG_KEYS.refreshExpiration,
       AUTH_DEFAULTS.refreshExpiration,
     );
 
-    const accessToken = this.jwtService.sign(accessPayload, {
-      secret: accessSecret,
-      expiresIn: accessExpiration as unknown as number,
-    });
+    const accessToken = this.generateAccessToken(user);
 
     const refreshToken = this.jwtService.sign(refreshPayload, {
       secret: refreshSecret,
@@ -284,6 +267,62 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  private generateAccessToken(user: AuthUserPayload): string {
+    const payload: JwtPayload = {
+      sub: user.id.toString(),
+      email: user.email ?? undefined,
+      phone: user.phone ?? undefined,
+      role: user.role?.translations?.find((t) => t.langId === AUTH_DEFAULTS.language)?.name ?? undefined,
+      userType: user.userType ?? undefined,
+      type: AUTH_TOKEN_TYPES.access,
+    };
+    const secret = this.getJwtSigningSecretOrThrow(AUTH_CONFIG_KEYS.accessSecret);
+    const expiration = this.configService.get<string>(
+      AUTH_CONFIG_KEYS.accessExpiration,
+      AUTH_DEFAULTS.accessExpiration,
+    );
+
+    return this.jwtService.sign(payload, {
+      secret,
+      expiresIn: expiration as unknown as number,
+    });
+  }
+
+  private verifyRefreshToken(token: string): JwtPayload | null {
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(token, {
+        secret: this.getJwtSigningSecretOrThrow(AUTH_CONFIG_KEYS.refreshSecret),
+      });
+      return payload.type === AUTH_TOKEN_TYPES.refresh && payload.jti ? payload : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private authResult(user: AuthUserPayload, accessToken: string, refreshToken: string): AuthResponseDto {
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id.toString(),
+        name: user.name || (user.guestToken ? AUTH_DEFAULTS.guestName : ''),
+        email: user.email || '',
+        phone: user.phone || undefined,
+        guestToken: user.guestToken ?? undefined,
+        role: user.role
+          ? {
+              id: user.role.id.toString(),
+              name:
+                user.role.translations.find((translation) => translation.langId === AUTH_DEFAULTS.language)?.name || '',
+              permissions: PermissionUtil.groupPermissionsAsStrings(user.role.permissions),
+            }
+          : undefined,
+        isEmailVerified: user.isEmailVerified,
+        isPhoneVerified: user.isPhoneVerified,
+      },
+    };
   }
 
   /**
@@ -333,8 +372,7 @@ export class AuthService {
       throw new UnauthorizedException(this.i18n.t('errors.account_inactive_or_not_found'));
     }
 
-    // Generate verification code
-    const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const verificationCode = AUTH_DEFAULTS.verificationCode;
     const verificationExpiry = new Date(Date.now() + AUTH_SECURITY.verificationExpiryMs);
 
     if (type === AUTH_IDENTIFIER_TYPES.email) {
@@ -491,7 +529,21 @@ export class AuthService {
   /**
    * Create a guest user profile and generate tokens
    */
-  async createGuest(deviceInfo?: string, ipAddress?: string): Promise<AuthResponseDto> {
+  async createGuest(deviceInfo?: string, ipAddress?: string, existingRefreshToken?: string): Promise<AuthResponseDto> {
+    if (existingRefreshToken) {
+      const decoded = this.verifyRefreshToken(existingRefreshToken);
+      const existing = decoded?.jti ? await this.refreshTokensRepository.findActiveWithUser(decoded.jti) : null;
+
+      if (existing?.user.guestToken) {
+        const accessToken = this.generateAccessToken(existing.user as AuthUserPayload);
+        return this.authResult(existing.user as AuthUserPayload, accessToken, existingRefreshToken);
+      }
+
+      if (existing?.user) {
+        throw new UnauthorizedException(this.i18n.t('errors.invalid_refresh_token'));
+      }
+    }
+
     const guestToken =
       AUTH_DEFAULTS.guestTokenPrefix + randomBytes(AUTH_SECURITY.guestTokenBytes).toString(AUTH_ENCODING.hex);
 
@@ -520,28 +572,13 @@ export class AuthService {
     // Generate access and refresh tokens for guest
     const { accessToken, refreshToken } = await this.generateTokens(guestUser, deviceInfo, ipAddress);
 
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: guestUser.id.toString(),
-        name: guestUser.name || AUTH_DEFAULTS.guestName,
-        email: '',
-        guestToken: guestUser.guestToken ?? undefined,
-        role: undefined,
-        isEmailVerified: false,
-        isPhoneVerified: false,
-      },
-    };
+    return this.authResult(guestUser, accessToken, refreshToken);
   }
 
   /**
    * Refresh access token
    */
-  async refreshAccessToken(
-    user: AuthUserPayload,
-    oldRefreshToken: string,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  async refreshAccessToken(user: AuthUserPayload, oldRefreshToken: string): Promise<AuthResponseDto> {
     // Decode old refresh token to get token ID
     const decoded = this.jwtService.decode<JwtPayload>(oldRefreshToken);
 
@@ -553,7 +590,8 @@ export class AuthService {
     await this.refreshTokensRepository.revokeByToken(decoded.jti);
 
     // Generate new tokens
-    return this.generateTokens(user);
+    const { accessToken, refreshToken } = await this.generateTokens(user);
+    return this.authResult(user, accessToken, refreshToken);
   }
 
   /**

@@ -61,7 +61,8 @@ export class AuthController {
     const ipAddress = req.ip;
     const platform = (req.headers['x-platform'] as string) || 'browser';
 
-    const authResult = await this.authService.createGuest(deviceInfo, ipAddress);
+    const cookies = req.cookies as Record<string, string> | undefined;
+    const authResult = await this.authService.createGuest(deviceInfo, ipAddress, cookies?.['refreshToken']);
     return this.authService.handleAuthResponse(res, authResult, platform);
   }
 
