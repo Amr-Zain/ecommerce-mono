@@ -11,12 +11,25 @@
   },
   "Auth": {
     "loginTitle": "تسجيل الدخول",
-    "loginDescription": "استخدم بيانات الدخول التجريبية إلى أن يتم ربط الواجهة البرمجية.",
+    "loginDescription": "سجل الدخول باستخدام رمز تحقق لمرة واحدة.",
+    "registerTitle": "إنشاء حساب",
+    "registerDescription": "أنشئ حسابك ثم قم بتأكيده باستخدام رمز تحقق لمرة واحدة.",
+    "name": "الاسم",
     "email": "البريد الإلكتروني",
-    "password": "كلمة المرور",
-    "submit": "تسجيل الدخول",
-    "adminHint": "المدير: admin@example.com",
-    "customerHint": "العميل: customer@example.com",
-    "passwordHint": "كلمة المرور: password"
+    "phone": "رقم الهاتف",
+    "emailOrPhone": "البريد الإلكتروني أو رقم الهاتف",
+    "phoneCode": "رمز الدولة",
+    "detectedEmail": "سيتم استخدام القيمة كبريد إلكتروني.",
+    "detectedPhone": "سيتم استخدام القيمة كرقم هاتف.",
+    "otpCode": "رمز التحقق",
+    "sendOtp": "إرسال رمز التحقق",
+    "registerSubmit": "إنشاء حساب",
+    "alreadyRegistered": "لديك حساب بالفعل؟ سجل الدخول",
+    "createAccountLink": "إنشاء حساب جديد",
+    "verifyAndSignIn": "تحقق وسجل الدخول",
+    "changeIdentifier": "استخدام بريد إلكتروني أو هاتف آخر",
+    "pleaseWait": "يرجى الانتظار...",
+    "requestError": "تعذر إكمال الطلب. يرجى المحاولة مرة أخرى.",
+    "sessionError": "تعذر إنشاء الجلسة. يرجى المحاولة مرة أخرى."
   }
 }

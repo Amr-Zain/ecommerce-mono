@@ -11,12 +11,25 @@
   },
   "Auth": {
     "loginTitle": "Sign in",
-    "loginDescription": "Use the mock credentials while the real API is not connected.",
+    "loginDescription": "Sign in with a one-time verification code.",
+    "registerTitle": "Create account",
+    "registerDescription": "Create your account, then verify it with a one-time code.",
+    "name": "Name",
     "email": "Email",
-    "password": "Password",
-    "submit": "Sign in",
-    "adminHint": "Admin: admin@example.com",
-    "customerHint": "Customer: customer@example.com",
-    "passwordHint": "Password: password"
+    "phone": "Phone",
+    "emailOrPhone": "Email or phone number",
+    "phoneCode": "Country code",
+    "detectedEmail": "This will be used as an email address.",
+    "detectedPhone": "This will be used as a phone number.",
+    "otpCode": "Verification code",
+    "sendOtp": "Send verification code",
+    "registerSubmit": "Create account",
+    "alreadyRegistered": "Already have an account? Sign in",
+    "createAccountLink": "Create a new account",
+    "verifyAndSignIn": "Verify and sign in",
+    "changeIdentifier": "Use a different email or phone",
+    "pleaseWait": "Please wait...",
+    "requestError": "The request could not be completed. Please try again.",
+    "sessionError": "Could not create your session. Please try again."
   }
 }
