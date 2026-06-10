@@ -6,6 +6,7 @@ import { PaginationUtil } from '../utils/pagination.util';
 import { MediaService } from '../../media/media.service';
 import { MediaSlotConfig } from '../../media/media.types';
 import { MediaType } from '../../media/enums/media-type.enum';
+import { QueryBuilderService } from '../services/query-builder.service';
 
 type WhereClause = Record<string, unknown>;
 type IncludeClause = Record<string, boolean | Record<string, unknown>>;
@@ -29,12 +30,61 @@ interface QueryArgs {
   take?: number;
 }
 
+/**
+ * Describes how search should work for a relation.
+ */
+export interface RelationSearchField {
+  /** Relation name on the model, e.g. 'user' or 'product' */
+  relation: string;
+  /** Fields to search within that relation */
+  fields: string[];
+  /** If true, searches within the relation's `translations` sub-relation with langId filtering */
+  isTranslation?: boolean;
+}
+
+/**
+ * Declarative search configuration for a repository.
+ */
+export interface SearchConfig {
+  /** Fields on the translations table (searched with `some` + `langId`), e.g. ['name', 'address'] */
+  translationFields?: string[];
+  /** Fields directly on the model, e.g. ['email', 'code'] */
+  directFields?: string[];
+  /** Fields on related tables */
+  relationFields?: RelationSearchField[];
+}
+
 export abstract class BaseRepository<T extends { id: number | bigint }> {
   protected readonly mediaConfig: Record<string, MediaSlotConfig> = {};
+
+  /**
+   * Declarative search configuration. Override in subclass to enable
+   * generic `findAll` / `buildWhereClause` without writing boilerplate.
+   */
+  protected readonly searchConfig: SearchConfig = {};
+
+  /**
+   * Default include clause used by the generic `findAll` for list views.
+   * The special token `'__langId__'` will be replaced at runtime with the actual langId value.
+   * Override in subclass. Example:
+   * ```
+   * protected readonly defaultListInclude = {
+   *   translations: { where: { langId: '__langId__' }, take: 1 },
+   * };
+   * ```
+   */
+  protected readonly defaultListInclude: IncludeClause | null = null;
+
+  /**
+   * Default include clause for detail/single-record views.
+   * Override in subclass.
+   */
+  protected readonly defaultDetailInclude: IncludeClause | null = null;
 
   constructor(
     protected readonly prisma: PrismaService,
     protected readonly mediaService?: MediaService,
+    protected readonly queryBuilder?: QueryBuilderService,
   ) {}
 
   /**
@@ -275,6 +325,119 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
   async exists(where: WhereClause): Promise<boolean> {
     const count = await this.count(where);
     return count > 0;
+  }
+
+  /**
+   * Generic findAll with search, filter, pagination, and language-aware includes.
+   * Uses `searchConfig` and `defaultListInclude` to avoid boilerplate in subclasses.
+   * Override this method if your repository needs custom logic beyond the declarative config.
+   */
+  async findAll(
+    query: AdvancedQueryDto,
+    langId: string = 'en',
+    options?: QueryOptions,
+  ): Promise<PaginatedResult<T> | T[]> {
+    const where = this.buildWhereClause(query, langId);
+    if (options?.select) {
+      return this.paginate(query, where, { select: options.select });
+    }
+    if (options?.include) {
+      return this.paginate(query, where, { include: options.include });
+    }
+    const include = this.resolveInclude(this.defaultListInclude, langId);
+    return include
+      ? this.paginate(query, where, { include })
+      : this.paginate(query, where);
+  }
+
+  /**
+   * Find a single record by ID with the default detail include.
+   * Override if you need custom detail logic.
+   */
+  async findByIdWithRelations(id: number | bigint, langId: string = 'en'): Promise<T | null> {
+    const include = this.resolveInclude(this.defaultDetailInclude, langId);
+    return include ? this.findById(id, { include }) : this.findById(id);
+  }
+
+  /**
+   * Build a where clause from the query DTO using the declarative `searchConfig`.
+   * Override in subclass for custom filtering logic (e.g. custom filters like parentId checks).
+   */
+  protected buildWhereClause(query: AdvancedQueryDto, langId?: string): WhereClause {
+    if (!this.queryBuilder) return {};
+
+    const conditions: WhereClause[] = [];
+    const filters = query.filters ?? {};
+
+    if (Object.keys(filters).length > 0) {
+      conditions.push(this.queryBuilder.buildFiltersCondition<WhereClause>(filters));
+    }
+
+    if (query.search) {
+      const searchOr: WhereClause[] = [];
+
+      // Direct fields on the model
+      for (const field of this.searchConfig.directFields ?? []) {
+        searchOr.push({ [field]: { contains: query.search, mode: 'insensitive' } });
+      }
+
+      // Translation fields (most common pattern)
+      const translationFields = this.searchConfig.translationFields ?? [];
+      if (translationFields.length > 0 && langId) {
+        searchOr.push({
+          translations: {
+            some: {
+              langId,
+              OR: translationFields.map((f) => ({
+                [f]: { contains: query.search, mode: 'insensitive' },
+              })),
+            },
+          },
+        });
+      }
+
+      // Relation fields (search in related tables)
+      for (const rel of this.searchConfig.relationFields ?? []) {
+        if (rel.isTranslation) {
+          // Search within the relation's translations sub-table
+          searchOr.push({
+            [rel.relation]: {
+              translations: {
+                some: {
+                  ...(langId ? { langId } : {}),
+                  OR: rel.fields.map((f) => ({
+                    [f]: { contains: query.search, mode: 'insensitive' },
+                  })),
+                },
+              },
+            },
+          });
+        } else {
+          // Search directly on the related model's fields
+          for (const field of rel.fields) {
+            searchOr.push({
+              [rel.relation]: { [field]: { contains: query.search, mode: 'insensitive' } },
+            });
+          }
+        }
+      }
+
+      if (searchOr.length > 0) {
+        conditions.push({ OR: searchOr });
+      }
+    }
+
+    return this.queryBuilder.combineWhereConditions(...conditions);
+  }
+
+  /**
+   * Resolves an include clause, replacing `'__langId__'` tokens with the actual langId.
+   */
+  private resolveInclude(include: IncludeClause | null, langId: string): IncludeClause | null {
+    if (!include) return null;
+    const json = JSON.stringify(include);
+    if (!json.includes('__langId__')) return include;
+    return JSON.parse(json.replace(/"__langId__"/g, JSON.stringify(langId)));
   }
 
   /**

@@ -1,44 +1,44 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
-import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
-import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
-import { PaginatedResult } from '@/common/dto/pagination.dto';
+import { BaseRepository } from '@/common/repositories/base.repository';
 import { MediaService } from '@/media/media.service';
 import { MediaType } from '@/media/enums/media-type.enum';
-import { COUNTRIES_REPOSITORY, ICountriesRepository } from '@/common/interfaces';
+import { ICountriesRepository } from '@/common/interfaces';
 
 type CountryType = Prisma.CountryGetPayload<{ include: { translations: true } }>;
+
 @Injectable()
 export class CountriesRepository extends BaseRepository<CountryType> implements ICountriesRepository {
   protected readonly mediaConfig = {
     flag: { collection: 'flag', single: true, allowedTypes: [MediaType.IMAGE] },
   };
 
+  protected readonly searchConfig = {
+    translationFields: ['name', 'nationality', 'shortName'],
+  };
+
+  protected readonly defaultListInclude = {
+    translations: {
+      where: { langId: '__langId__' },
+      take: 1,
+    },
+  };
+
+  protected readonly defaultDetailInclude = {
+    translations: true,
+  };
+
   constructor(
     prisma: PrismaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
     mediaService: MediaService,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, queryBuilder);
   }
 
   getModel() {
     return this.prisma.country;
-  }
-  async findAll(query: AdvancedQueryDto, langId: string = 'en', options?: QueryOptions): Promise<PaginatedResult<CountryType> | CountryType[]> {
-    const where = this.buildWhereClause(query, langId);
-    if (options?.select) {
-      return this.paginate(query, where, { select: options.select });
-    }
-    return this.paginate(query, where, {
-      include: {
-        translations: {
-          where: { langId },
-          take: 1,
-        },
-      },
-    });
   }
 
   async createCountry(country: Prisma.CountryCreateInput): Promise<CountryType> {
@@ -49,47 +49,13 @@ export class CountriesRepository extends BaseRepository<CountryType> implements 
     return this.update(id, country);
   }
 
-  async findByIdWithRelations(id: number | bigint): Promise<CountryType | null> {
-    return this.findById(id, {
-      include: {
-        translations: true,
-      },
-    });
-  }
-
   async findByIdWithAllTranslations(id: number | bigint): Promise<CountryType | null> {
     return this.findById(id, {
-      include: {
-        translations: true,
-      },
+      include: { translations: true },
     });
   }
+
   async deleteCountry(id: number | bigint): Promise<CountryType> {
     return this.delete(id);
-  }
-  private buildWhereClause(query: AdvancedQueryDto, langId?: string): Prisma.CountryWhereInput {
-    const conditions: Prisma.CountryWhereInput[] = [];
-    const filters = query.filters ?? {};
-    if (Object.keys(filters).length > 0) {
-      conditions.push(this.queryBuilder.buildFiltersCondition<Prisma.CountryWhereInput>(filters));
-    }
-
-    if (query.search && langId) {
-      const searchCondition: Prisma.CountryWhereInput = {
-        translations: {
-          some: {
-            langId,
-            OR: [
-              { name: { contains: query.search, mode: 'insensitive' } },
-              { nationality: { contains: query.search, mode: 'insensitive' } },
-              { shortName: { contains: query.search, mode: 'insensitive' } },
-            ],
-          },
-        },
-      };
-      conditions.push(searchCondition);
-    }
-
-    return this.queryBuilder.combineWhereConditions(...conditions);
   }
 }

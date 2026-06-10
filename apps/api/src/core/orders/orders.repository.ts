@@ -13,7 +13,7 @@ import { PrismaService } from '@/prisma';
 @Injectable()
 export class OrdersRepository extends BaseRepository<Order> implements IOrdersRepository {
   constructor(prisma: PrismaService) {
-    super(prisma);
+    super(prisma, undefined, undefined);
   }
 
   protected getModel() {

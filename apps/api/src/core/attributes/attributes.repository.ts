@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService } from '@/prisma';
-import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
+import { BaseRepository } from '@/common/repositories/base.repository';
 import { MediaService } from '@/media/media.service';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
-import { AttributeQueryDto } from '@/common/dto/attribute-query.dto';
-import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { ATTRIBUTES_REPOSITORY, IAttributesRepository } from '@/common/interfaces';
+import { IAttributesRepository } from '@/common/interfaces';
 
 type AttributeType = Prisma.AttributeGetPayload<{
   include: { translations: true; values: { include: { translations: true } } };
@@ -13,50 +11,27 @@ type AttributeType = Prisma.AttributeGetPayload<{
 
 @Injectable()
 export class AttributesRepository extends BaseRepository<AttributeType> implements IAttributesRepository {
+  protected readonly searchConfig = {
+    translationFields: ['name'],
+  };
+
+  protected readonly defaultListInclude = {
+    translations: {
+      where: { langId: '__langId__' },
+      take: 1,
+    },
+  };
+
   constructor(
     prisma: PrismaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
     mediaService: MediaService,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, queryBuilder);
   }
 
   getModel() {
     return this.prisma.attribute;
-  }
-
-  async findAll(
-    query: AttributeQueryDto,
-    langId: string = 'en',
-    options?: QueryOptions,
-  ): Promise<PaginatedResult<AttributeType> | AttributeType[]> {
-    const conditions: Prisma.AttributeWhereInput[] = [];
-
-    if (query.search && langId) {
-      conditions.push({
-        translations: {
-          some: {
-            langId,
-            name: { contains: query.search, mode: 'insensitive' },
-          },
-        },
-      });
-    }
-
-    const where = this.queryBuilder.combineWhereConditions(...conditions);
-
-    if (options?.select) {
-      return this.paginate(query, where, { select: options.select });
-    }
-
-    return this.paginate(query, where, {
-      include: {
-        translations: {
-          where: { langId },
-          take: 1,
-        },
-      },
-    });
   }
 
   async findByIdWithValues(id: number | bigint): Promise<AttributeType | null> {
@@ -65,9 +40,7 @@ export class AttributesRepository extends BaseRepository<AttributeType> implemen
       include: {
         translations: true,
         values: {
-          include: {
-            translations: true,
-          },
+          include: { translations: true },
         },
       },
     }) as unknown as Promise<AttributeType | null>;

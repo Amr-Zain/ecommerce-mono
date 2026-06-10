@@ -33,12 +33,26 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
     images: { collection: 'images', single: false, allowedTypes: [MediaType.IMAGE] },
   };
 
+  /**
+   * Demonstrates relation search:
+   * - 'comment' is a direct field on the review model
+   * - 'user.name', 'user.email' are fields on the related `user` table
+   * - 'product.translations.name' is a field on the product's translations
+   */
+  protected readonly searchConfig = {
+    directFields: ['comment'],
+    relationFields: [
+      { relation: 'user', fields: ['name', 'email'] },
+      { relation: 'product', fields: ['name'], isTranslation: true },
+    ],
+  };
+
   constructor(
     prisma: PrismaService,
     mediaService: MediaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, queryBuilder);
   }
 
   protected getModel() {
@@ -150,6 +164,10 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
     } as const;
   }
 
+  /**
+   * Admin where clause uses the base buildWhereClause which now handles
+   * direct + relation search via searchConfig automatically.
+   */
   private buildAdminWhereClause(query: {
     filters?: Record<string, string | number | boolean>;
     search?: string;
@@ -162,24 +180,8 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
       }
     }
 
-    const conditions: Prisma.ReviewWhereInput[] = [];
-
-    if (Object.keys(filters).length > 0) {
-      conditions.push(this.queryBuilder.buildFiltersCondition<Prisma.ReviewWhereInput>(filters));
-    }
-
-    if (query.search) {
-      conditions.push({
-        OR: [
-          { comment: { contains: query.search, mode: 'insensitive' } },
-          { user: { name: { contains: query.search, mode: 'insensitive' } } },
-          { user: { email: { contains: query.search, mode: 'insensitive' } } },
-          { product: { translations: { some: { name: { contains: query.search, mode: 'insensitive' } } } } },
-        ],
-      });
-    }
-
-    return this.queryBuilder.combineWhereConditions(...conditions);
+    // Leverage the base buildWhereClause which uses searchConfig
+    return this.buildWhereClause({ filters, search: query.search }) as Prisma.ReviewWhereInput;
   }
 
   private buildAdminOrderBy(sort?: Record<string, 'asc' | 'desc'>): Prisma.ReviewOrderByWithRelationInput {

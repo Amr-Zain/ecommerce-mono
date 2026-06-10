@@ -5,7 +5,7 @@ import { MediaService } from '@/media/media.service';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { AttributeValueQueryDto } from '@/common/dto/attribute-value-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { ATTRIBUTE_VALUES_REPOSITORY, IAttributeValuesRepository } from '@/common/interfaces';
+import { IAttributeValuesRepository } from '@/common/interfaces';
 
 type AttributeValueType = Prisma.AttributeValueGetPayload<{
   include: { translations: true };
@@ -13,12 +13,23 @@ type AttributeValueType = Prisma.AttributeValueGetPayload<{
 
 @Injectable()
 export class AttributeValuesRepository extends BaseRepository<AttributeValueType> implements IAttributeValuesRepository {
+  protected readonly searchConfig = {
+    translationFields: ['name'],
+  };
+
+  protected readonly defaultListInclude = {
+    translations: {
+      where: { langId: '__langId__' },
+      take: 1,
+    },
+  };
+
   constructor(
     prisma: PrismaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
     mediaService: MediaService,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, queryBuilder);
   }
 
   getModel() {
@@ -31,22 +42,18 @@ export class AttributeValuesRepository extends BaseRepository<AttributeValueType
   ): Promise<PaginatedResult<AttributeValueType> | AttributeValueType[]> {
     const conditions: Prisma.AttributeValueWhereInput[] = [];
 
+    // Custom: filter by attributeId when provided
     if (query.filters?.attributeId) {
       conditions.push({ attributeId: BigInt(query.filters.attributeId as string) });
     }
 
-    if (query.search && langId) {
-      conditions.push({
-        translations: {
-          some: {
-            langId,
-            name: { contains: query.search, mode: 'insensitive' },
-          },
-        },
-      });
+    // Get base search/filter conditions
+    const baseWhere = this.buildWhereClause(query, langId) as Prisma.AttributeValueWhereInput;
+    if (Object.keys(baseWhere).length > 0) {
+      conditions.push(baseWhere);
     }
 
-    const where = this.queryBuilder.combineWhereConditions(...conditions);
+    const where = this.queryBuilder!.combineWhereConditions(...conditions);
 
     return this.paginate(query, where, {
       include: {
@@ -61,9 +68,7 @@ export class AttributeValuesRepository extends BaseRepository<AttributeValueType
   async findByIdWithAllTranslations(id: number | bigint): Promise<AttributeValueType | null> {
     return this.prisma.attributeValue.findUnique({
       where: { id: BigInt(id) },
-      include: {
-        translations: true,
-      },
+      include: { translations: true },
     }) as unknown as Promise<AttributeValueType | null>;
   }
 

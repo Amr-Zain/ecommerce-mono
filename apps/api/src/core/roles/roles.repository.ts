@@ -4,7 +4,7 @@ import { BaseRepository } from '@/common/repositories/base.repository';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { ROLES_REPOSITORY, IRolesRepository } from '@/common/interfaces';
+import { IRolesRepository } from '@/common/interfaces';
 
 type Role = Prisma.RoleGetPayload<{
   include: { permissions: true; translations: true };
@@ -12,11 +12,15 @@ type Role = Prisma.RoleGetPayload<{
 
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> implements IRolesRepository {
+  protected readonly searchConfig = {
+    translationFields: ['name'],
+  };
+
   constructor(
     prisma: PrismaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
   ) {
-    super(prisma);
+    super(prisma, undefined, queryBuilder);
   }
 
   protected getModel() {
@@ -113,21 +117,5 @@ export class RolesRepository extends BaseRepository<Role> implements IRolesRepos
         },
       },
     });
-  }
-
-  private buildWhereClause(query: AdvancedQueryDto): Prisma.RoleWhereInput {
-    const conditions: Prisma.RoleWhereInput[] = [];
-
-    if (query.filters && Object.keys(query.filters).length > 0) {
-      const filterCondition = this.queryBuilder.buildFiltersCondition<Prisma.RoleWhereInput>(query.filters);
-      conditions.push(filterCondition);
-    }
-
-    if (query.search) {
-      const searchCondition = this.queryBuilder.buildSearchCondition(query.search, ['translations.name']);
-      conditions.push(searchCondition as Prisma.RoleWhereInput);
-    }
-
-    return this.queryBuilder.combineWhereConditions(...conditions);
   }
 }

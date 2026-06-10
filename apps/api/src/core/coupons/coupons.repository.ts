@@ -7,7 +7,7 @@ import { MediaService } from '@/media/media.service';
 @Injectable()
 export class CouponsRepository extends BaseRepository<Coupon> implements ICouponsRepository {
   constructor(prisma: PrismaService, mediaService: MediaService) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, undefined);
   }
 
   protected getModel() {

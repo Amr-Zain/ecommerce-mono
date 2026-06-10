@@ -1,68 +1,55 @@
 import { Injectable } from '@nestjs/common';
 import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
 import { PrismaService, Prisma } from '@/prisma';
-import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { MediaService } from '@/media/media.service';
-import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { CITIES_REPOSITORY, ICitiesRepository } from '@/common/interfaces';
+import { ICitiesRepository } from '@/common/interfaces';
 
 type City = Prisma.CityGetPayload<{ include: { translations: true } }>;
 
 @Injectable()
 export class CitiesRepository extends BaseRepository<City> implements ICitiesRepository {
+  protected readonly searchConfig = {
+    translationFields: ['name'],
+  };
+
+  protected readonly defaultListInclude = {
+    country: {
+      include: {
+        translations: {
+          where: { langId: '__langId__' },
+        },
+      },
+    },
+    translations: {
+      where: { langId: '__langId__' },
+      take: 1,
+    },
+  };
+
+  protected readonly defaultDetailInclude = {
+    translations: true,
+    country: {
+      include: {
+        translations: {
+          where: { langId: '__langId__' },
+        },
+      },
+    },
+  };
+
   constructor(
     prisma: PrismaService,
-    private readonly queryBuilder: QueryBuilderService,
+    queryBuilder: QueryBuilderService,
     mediaService: MediaService,
   ) {
-    super(prisma, mediaService);
+    super(prisma, mediaService, queryBuilder);
   }
+
   getModel() {
     return this.prisma.city;
   }
 
-  async findAll(query: AdvancedQueryDto, langId: string = 'en', options?: QueryOptions): Promise<PaginatedResult<City> | City[]> {
-    const where = this.buildWhereClause(query, langId);
-    if (options?.select) {
-      return this.paginate(query, where, { select: options.select });
-    }
-    return this.paginate(query, where, {
-      include: {
-        country: {
-          include: {
-            translations: {
-              where: {
-                langId,
-              },
-            },
-          },
-        },
-        translations: {
-          where: {
-            langId,
-          },
-          take: 1,
-        },
-      },
-    });
-  }
-  async findByIdWithRelations(id: number | bigint, langId: string = 'en'): Promise<City | null> {
-    return this.findById(id, {
-      include: {
-        translations: true,
-        country: {
-          include: {
-            translations: {
-              where: {
-                langId,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
   async createCity(city: Prisma.CityCreateInput): Promise<City> {
     return this.create(city);
   }
@@ -73,27 +60,5 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
 
   async deleteCity(id: number | bigint): Promise<City> {
     return this.delete(id);
-  }
-
-  private buildWhereClause(query: AdvancedQueryDto, langId?: string): Prisma.CityWhereInput {
-    const conditions: Prisma.CityWhereInput[] = [];
-    const filters = query.filters ?? {};
-    if (Object.keys(filters).length > 0) {
-      conditions.push(this.queryBuilder.buildFiltersCondition<Prisma.CityWhereInput>(filters));
-    }
-
-    if (query.search && langId) {
-      const searchCondition: Prisma.CityWhereInput = {
-        translations: {
-          some: {
-            langId,
-            OR: [{ name: { contains: query.search, mode: 'insensitive' } }],
-          },
-        },
-      };
-      conditions.push(searchCondition);
-    }
-
-    return this.queryBuilder.combineWhereConditions(...conditions);
   }
 }
