@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -19,30 +20,39 @@ import {
   Ticket01Icon,
   Logout01Icon,
   Camera01Icon,
-  DocumentValidationIcon
+  DocumentValidationIcon,
 } from "@hugeicons/core-free-icons"
 
 const SIDEBAR_LINKS = [
   { name: "My account", href: "/profile", icon: UserCircleIcon },
   { name: "My Wishlist", href: "/profile/wishlist", icon: FavouriteIcon },
   { name: "My Orders", href: "/profile/orders", icon: PackageIcon },
-  { name: "Order Details", href: "/profile/orders/details", icon: DocumentValidationIcon },
+  {
+    name: "Order Details",
+    href: "/profile/orders/details",
+    icon: DocumentValidationIcon,
+  },
   { name: "My Addresses", href: "/profile/addresses", icon: Location01Icon },
   { name: "My Wallet", href: "/profile/wallet", icon: Wallet01Icon },
   // { name: "Payment", href: "/profile/payment", icon: CreditCardIcon },
   // { name: "Gift Cards", href: "/profile/gift-cards", icon: GiftIcon },
-  { name: "Return & Refunds", href: "/profile/returns", icon: ArrowLeftRightIcon },
+  {
+    name: "Return & Refunds",
+    href: "/profile/returns",
+    icon: ArrowLeftRightIcon,
+  },
   // { name: "Email Newsletter", href: "/profile/newsletter", icon: Mail01Icon },
   { name: "Support Tickets", href: "/profile/support", icon: Ticket01Icon },
 ]
 
 export function ProfileSidebar() {
   const pathname = usePathname()
+  const { data: session } = useSession()
 
   return (
-    <aside className="flex w-full flex-col gap-6 sm:w-[280px] shrink-0 rounded-xl border bg-card p-6">
+    <aside className="flex w-full shrink-0 flex-col gap-6 rounded-xl border bg-card p-6 sm:w-[280px]">
       {/* Profile Header */}
-      <div className="flex flex-col gap-4 pb-6 border-b">
+      <div className="flex flex-col gap-4 border-b pb-6">
         <div className="flex flex-col gap-2">
           <div className="relative size-16 overflow-hidden rounded-xl border bg-muted/50">
             <Image
@@ -52,14 +62,18 @@ export function ProfileSidebar() {
               className="object-cover"
             />
           </div>
-          <button className="text-xs font-semibold text-muted-foreground hover:text-foreground text-left flex items-center gap-1.5">
+          <button className="flex items-center gap-1.5 text-left text-xs font-semibold text-muted-foreground hover:text-foreground">
             <HugeiconsIcon icon={Camera01Icon} className="size-3.5" />
             Edit Profile Photo
           </button>
         </div>
         <div>
-          <h2 className="text-lg font-bold">Cristofer Torff</h2>
-          <p className="text-sm text-muted-foreground">Cri@example.com</p>
+          <h2 className="text-lg font-bold">
+            {session?.user.name || "Guest User"}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {session?.user.is_guest ? "Guest account" : session?.user.email}
+          </p>
         </div>
       </div>
 
@@ -88,9 +102,13 @@ export function ProfileSidebar() {
           )
         })}
 
-        <div className="mt-auto pt-4 border-t">
+        <div className="mt-auto border-t pt-4">
           <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground">
-            <HugeiconsIcon icon={Logout01Icon} className="size-4.5" strokeWidth={2} />
+            <HugeiconsIcon
+              icon={Logout01Icon}
+              className="size-4.5"
+              strokeWidth={2}
+            />
             Logout
           </button>
         </div>
