@@ -25,6 +25,10 @@ export class CountriesRepository extends BaseRepository<CountryType> implements 
     },
   };
 
+  protected readonly allowedIncludes = {
+    translations: true,
+  };
+
   protected readonly defaultDetailInclude = {
     translations: true,
   };

@@ -27,11 +27,11 @@ export class CountriesService {
     return this.repo.createCountry(country as Prisma.CountryCreateInput);
   }
 
-  async getCountryById(id: number | bigint): Promise<Country | null> {
-    return this.repo.findByIdWithRelations(id);
+  async getCountryById(id: number | bigint): Promise<Country> {
+    return this.repo.findByIdWithRelationsOrThrow(id);
   }
 
-  async getCountryByIdWithAllTranslations(id: number | bigint): Promise<Country | null> {
-    return this.repo.findByIdWithAllTranslations(id);
+  async getCountryByIdWithAllTranslations(id: number | bigint): Promise<Country> {
+    return this.repo.findByIdOrThrow(id, { include: { translations: true } });
   }
 }

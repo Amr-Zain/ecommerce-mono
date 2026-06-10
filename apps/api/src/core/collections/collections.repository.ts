@@ -25,6 +25,12 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
     translationFields: ['name'] satisfies TranslationFields<Collection>[],
   };
 
+  protected readonly allowedIncludes = {
+    translations: true,
+    parent: { include: { translations: true } },
+    children: { include: { translations: true } },
+  };
+
   constructor(
     prisma: PrismaService,
     queryBuilder: QueryBuilderService,

@@ -27,11 +27,11 @@ export class SlidersService {
     return this.repo.create(slider as unknown as Prisma.SliderCreateInput);
   }
 
-  async getSliderById(id: number | bigint): Promise<Slider | null> {
-    return this.repo.findById(id);
+  async getSliderById(id: number | bigint): Promise<Slider> {
+    return this.repo.findByIdOrThrow(id);
   }
 
-  async getSliderByIdWithAllTranslations(id: number | bigint): Promise<Slider | null> {
-    return this.repo.findByIdWithAllTranslations(id);
+  async getSliderByIdWithAllTranslations(id: number | bigint): Promise<Slider> {
+    return this.repo.findByIdOrThrow(id, { include: { translations: true } });
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { USERS_REPOSITORY, IUsersRepository } from '@/common/interfaces';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UpdateProfileDto, UpdateProfileImageDto } from './dto/profile.dto';
@@ -26,7 +26,7 @@ export class ProfileService {
       },
     });
     const userWithMedia = user ? await this.usersRepo.findById(userId) : null;
-    if (!userWithMedia) return null;
+    if (!userWithMedia) throw new NotFoundException('User not found');
     const { password: _, ...result } = userWithMedia as unknown as Record<string, unknown>;
     return { ...result, ...user };
   }

@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { CITIES_REPOSITORY, ICitiesRepository } from '@/common/interfaces';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 
@@ -37,6 +37,8 @@ export class ClientCitiesService {
   }
 
   async findOne(id: bigint, langId: string = 'en') {
-    return this.citiesRepo.findByIdWithRelations(id, langId);
+    const city = await this.citiesRepo.findByIdWithRelations(id, langId);
+    if (!city) throw new NotFoundException('City not found');
+    return city;
   }
 }

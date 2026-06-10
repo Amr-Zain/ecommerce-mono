@@ -29,6 +29,11 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
     translations: true,
   };
 
+  protected readonly allowedIncludes = {
+    translations: true,
+    sections: { include: { translations: true } },
+  };
+
   constructor(
     prisma: PrismaService,
     queryBuilder: QueryBuilderService,

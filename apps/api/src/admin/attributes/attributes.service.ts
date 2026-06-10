@@ -15,8 +15,10 @@ export class AttributesService {
     return this.repo.findAll(query, lang);
   }
 
-  async findOne(id: number): Promise<Attribute | null> {
-    return this.repo.findByIdWithValues(id);
+  async findOne(id: number): Promise<Attribute> {
+    return this.repo.findByIdOrThrow(id, {
+      include: { translations: true, values: { include: { translations: true } } },
+    });
   }
 
   async create(data: CreateAttributeDto): Promise<Attribute> {

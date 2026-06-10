@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { STATIC_PAGES_REPOSITORY, IStaticPagesRepository } from '@/common/interfaces';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -40,7 +40,7 @@ export class ClientStaticPagesService {
   }
 
   async findBySlug(slug: string, langId: string = 'en') {
-    return this.prisma.staticPage.findUnique({
+    const page = await this.prisma.staticPage.findUnique({
       where: { slug, isActive: true },
       select: {
         id: true,
@@ -63,5 +63,7 @@ export class ClientStaticPagesService {
         },
       },
     });
+    if (!page) throw new NotFoundException('Static page not found');
+    return page;
   }
 }

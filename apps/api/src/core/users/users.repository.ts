@@ -23,6 +23,12 @@ export class UsersRepository extends BaseRepository<User> implements IUsersRepos
     directFields: ['name', 'email'] satisfies ScalarFields<User>[],
   };
 
+  protected readonly allowedIncludes = {
+    role: { select: { id: true, isActive: true, translations: true } },
+    addresses: true,
+    reviews: true,
+  };
+
   constructor(
     prisma: PrismaService,
     queryBuilder: QueryBuilderService,

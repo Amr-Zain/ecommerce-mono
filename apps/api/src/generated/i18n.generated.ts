@@ -189,6 +189,28 @@ export type I18nTranslations = {
         "reset_code_expired": string;
         "invalid_reset_code": string;
         "phone_already_verified": string;
+        "FOREIGN_KEY_VIOLATION": string;
+        "RECORD_NOT_FOUND": string;
+        "UNIQUE_CONSTRAINT_VIOLATION": string;
+        "RELATION_NOT_FOUND": string;
+        "DATABASE_ERROR": string;
+        "VALIDATION_FAILED": string;
+        "city not found": string;
+        "country not found": string;
+        "showroom not found": string;
+        "slider not found": string;
+        "faq not found": string;
+        "attribute not found": string;
+        "attributevalue not found": string;
+        "collection not found": string;
+        "role not found": string;
+        "staticpage not found": string;
+        "review not found": string;
+        "user not found": string;
+        "coupon not found": string;
+        "order not found": string;
+        "product not found": string;
+        "productvariant not found": string;
     };
     "validation": {
         "NOT_EMPTY": string;

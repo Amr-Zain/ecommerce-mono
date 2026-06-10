@@ -16,6 +16,11 @@ export class RolesRepository extends BaseRepository<Role> implements IRolesRepos
     translationFields: ['name'] satisfies TranslationFields<Role>[],
   };
 
+  protected readonly allowedIncludes = {
+    translations: true,
+    permissions: { select: { id: true, resource: true, action: true } },
+  };
+
   constructor(
     prisma: PrismaService,
     queryBuilder: QueryBuilderService,

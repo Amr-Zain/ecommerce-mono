@@ -39,6 +39,11 @@ export class ShowRoomsRepository extends BaseRepository<ShowRoomType> implements
     translations: true,
   };
 
+  protected readonly allowedIncludes = {
+    country: { include: { translations: { where: { langId: '__langId__' } } } },
+    translations: true,
+  };
+
   constructor(
     prisma: PrismaService,
     queryBuilder: QueryBuilderService,

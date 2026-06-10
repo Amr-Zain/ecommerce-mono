@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { COLLECTIONS_REPOSITORY, ICollectionsRepository } from '@/common/interfaces';
 import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
 
@@ -47,6 +47,8 @@ export class ClientCollectionsService {
   }
 
   async findOne(id: number) {
-    return this.collectionsRepo.findOneWithChildren(id);
+    const collection = await this.collectionsRepo.findOneWithChildren(id);
+    if (!collection) throw new NotFoundException('Collection not found');
+    return collection;
   }
 }

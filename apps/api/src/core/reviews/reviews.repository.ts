@@ -47,6 +47,11 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
     ],
   };
 
+  protected readonly allowedIncludes = {
+    user: { select: { id: true, name: true, email: true } },
+    product: { include: { translations: true } },
+  };
+
   constructor(
     prisma: PrismaService,
     mediaService: MediaService,

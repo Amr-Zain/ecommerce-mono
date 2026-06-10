@@ -28,6 +28,10 @@ export class AttributeValuesRepository extends BaseRepository<AttributeValueType
     },
   };
 
+  protected readonly allowedIncludes = {
+    translations: true,
+  };
+
   constructor(
     prisma: PrismaService,
     queryBuilder: QueryBuilderService,

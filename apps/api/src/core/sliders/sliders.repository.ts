@@ -29,6 +29,10 @@ export class SlidersRepository extends BaseRepository<SliderType> implements ISl
     translations: true,
   };
 
+  protected readonly allowedIncludes = {
+    translations: true,
+  };
+
   constructor(
     prisma: PrismaService,
     queryBuilder: QueryBuilderService,

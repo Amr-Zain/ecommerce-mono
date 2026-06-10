@@ -22,6 +22,11 @@ export class AttributesRepository extends BaseRepository<AttributeType> implemen
     },
   };
 
+  protected readonly allowedIncludes = {
+    translations: true,
+    values: { include: { translations: true } },
+  };
+
   constructor(
     prisma: PrismaService,
     queryBuilder: QueryBuilderService,

@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService, Prisma } from '../../prisma';
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
@@ -286,6 +286,18 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     return record ? this.mergeMedia(record) : null;
   }
 
+  /**
+   * Find by ID or throw NotFoundException.
+   * Use this in controllers/services for GET /:id, PUT /:id, DELETE /:id endpoints.
+   */
+  async findByIdOrThrow(id: number | bigint, options?: QueryOptions): Promise<T> {
+    const record = await this.findById(id, options);
+    if (!record) {
+      throw new NotFoundException(this.modelName + ' not found');
+    }
+    return record;
+  }
+
   async findOne(where: WhereClause, options?: QueryOptions): Promise<T | null> {
     const model = this.getModel() as {
       findFirst: (args?: QueryArgs) => Promise<T | null>;
@@ -475,6 +487,17 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
   async findByIdWithRelations(id: number | bigint, langId: string = 'en'): Promise<T | null> {
     const include = this.resolveInclude(this.defaultDetailInclude, langId);
     return include ? this.findById(id, { include }) : this.findById(id);
+  }
+
+  /**
+   * Find by ID with relations or throw NotFoundException.
+   */
+  async findByIdWithRelationsOrThrow(id: number | bigint, langId: string = 'en'): Promise<T> {
+    const record = await this.findByIdWithRelations(id, langId);
+    if (!record) {
+      throw new NotFoundException(this.modelName + ' not found');
+    }
+    return record;
   }
 
   /**

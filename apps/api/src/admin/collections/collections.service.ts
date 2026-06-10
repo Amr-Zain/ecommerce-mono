@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { COLLECTIONS_REPOSITORY, Collection } from '@/common/interfaces';
 import { CollectionsRepository } from '@/core/collections/collections.repository';
 import { CreateCollectionDto } from './dto/create-collection.dto';
@@ -19,8 +19,10 @@ export class CollectionsService {
     return this.repo.findAll(query, lang);
   }
 
-  async findOne(id: number): Promise<Collection | null> {
-    return this.repo.findOneWithChildren(id);
+  async findOne(id: number): Promise<Collection> {
+    const collection = await this.repo.findOneWithChildren(id);
+    if (!collection) throw new NotFoundException('Collection not found');
+    return collection;
   }
 
   async update(id: number, updateCollectionDto: UpdateCollectionDto): Promise<Collection> {

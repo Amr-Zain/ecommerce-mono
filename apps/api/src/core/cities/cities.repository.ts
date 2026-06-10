@@ -13,7 +13,21 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
     translationFields: ['name'] satisfies TranslationFields<City>[],
   };
 
-  protected readonly defaultListInclude = {
+  // protected readonly defaultListInclude = {
+  //   country: {
+  //     include: {
+  //       translations: {
+  //         where: { langId: '__langId__' },
+  //       },
+  //     },
+  //   },
+  //   translations: {
+  //     where: { langId: '__langId__' },
+  //     take: 1,
+  //   },
+  // };
+
+  protected readonly allowedIncludes = {
     country: {
       include: {
         translations: {
@@ -21,7 +35,7 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
         },
       },
     },
-    translations: {
+    translations:  {
       where: { langId: '__langId__' },
       take: 1,
     },

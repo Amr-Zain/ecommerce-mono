@@ -24,6 +24,10 @@ export class FaqsRepository extends BaseRepository<FaqType> implements IFaqsRepo
     translations: true,
   };
 
+  protected readonly allowedIncludes = {
+    translations: true,
+  };
+
   constructor(
     prisma: PrismaService,
     queryBuilder: QueryBuilderService,

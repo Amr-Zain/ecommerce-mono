@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { COUNTRIES_REPOSITORY, ICountriesRepository } from '@/common/interfaces';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 
@@ -28,6 +28,8 @@ export class ClientCountriesService {
   }
 
   async findOne(id: bigint, langId: string = 'en') {
-    return this.countriesRepo.findByIdWithAllTranslations(id);
+    const country = await this.countriesRepo.findByIdWithAllTranslations(id);
+    if (!country) throw new NotFoundException('Country not found');
+    return country;
   }
 }
