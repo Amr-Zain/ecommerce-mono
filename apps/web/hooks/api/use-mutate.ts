@@ -16,6 +16,7 @@ import {
   type ClientRequestOptions,
   type NormalizedHttpError,
 } from "@/lib/client/http"
+import { withSessionRetry } from "@/lib/client/session-request"
 
 type MutationMethod =
   | "POST"
@@ -44,6 +45,7 @@ type UseMutateOptions<
   endpoint: string
   mutationKey: QueryKey
   method?: MutationMethod
+  ready?: boolean
   headers?: HeadersInit
   formData?: boolean
   customBaseUrl?: string
@@ -66,6 +68,7 @@ function stripMeta<TVariables>(variables: MutationVariables<TVariables>) {
   const body = { ...(variables as Record<string, unknown>) }
   delete body._endpoint
   delete body._params
+  delete body._optimistic
 
   return body as TVariables
 }
@@ -78,6 +81,7 @@ function useMutate<
   endpoint,
   mutationKey,
   method = "POST",
+  ready = true,
   headers,
   formData,
   customBaseUrl,
@@ -93,6 +97,12 @@ function useMutate<
     mutationKey,
     meta: mutationOptions?.meta,
     mutationFn: async (variables) => {
+      if (!ready) {
+        throw {
+          name: "GuestSessionNotReady",
+          message: "Session is still loading",
+        } as TError
+      }
       const payload = variables as MutationVariables<TVariables>
       const finalEndpoint =
         payload && typeof payload === "object" && payload._endpoint
@@ -102,14 +112,16 @@ function useMutate<
         payload && typeof payload === "object" ? payload._params : undefined
 
       try {
-        const data = await clientJson<TResponse>(finalEndpoint, {
-          body: stripMeta(payload) as ClientRequestBody,
-          customBaseUrl,
-          formData,
-          headers,
-          method: method.toUpperCase(),
-          params,
-        })
+        const data = await withSessionRetry(() =>
+          clientJson<TResponse>(finalEndpoint, {
+            body: stripMeta(payload) as ClientRequestBody,
+            customBaseUrl,
+            formData,
+            headers,
+            method: method.toUpperCase(),
+            params,
+          })
+        )
 
         onSuccess?.(data)
 

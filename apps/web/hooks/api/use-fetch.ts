@@ -12,6 +12,7 @@ import {
   type ClientRequestOptions,
   type NormalizedHttpError,
 } from "@/lib/client/http"
+import { withSessionRetry } from "@/lib/client/session-request"
 import { toast } from "@ecommerce/ui/components/sonner"
 
 type UseFetchOptions<
@@ -61,12 +62,14 @@ function useFetch<
           throw new Error("Endpoint is required")
         }
 
-        const data = await clientJson<TResponse>(endpoint, {
-          customBaseUrl,
-          headers,
-          method: "GET",
-          params,
-        })
+        const data = await withSessionRetry(() =>
+          clientJson<TResponse>(endpoint, {
+            customBaseUrl,
+            headers,
+            method: "GET",
+            params,
+          })
+        )
 
         onSuccess?.(data)
 

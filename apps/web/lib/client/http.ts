@@ -1,5 +1,7 @@
 "use client"
 
+import { applyApiHeaders } from "@/lib/http-headers"
+
 type QueryValue = string | number | boolean | null | undefined
 
 type JsonBody =
@@ -229,12 +231,14 @@ async function clientRequest(
     params,
     ...init
   } = options
-  const headers = new Headers(headersInput)
+  const language = document.documentElement.lang || navigator.language || "en"
+  const headers = applyApiHeaders(headersInput, language)
   const url = appendParams(resolveClientUrl(endpoint, customBaseUrl), params)
   const requestBody = prepareRequestBody(body, headers, formData)
   const response = await fetch(url, {
     ...init,
     body: requestBody,
+    credentials: init.credentials ?? "include",
     headers,
   })
 

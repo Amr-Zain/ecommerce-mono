@@ -9,6 +9,7 @@ import {
   type BackendOptions,
 } from "@/lib/server/backend"
 import type { RequestBody } from "@/lib/server/fetch"
+import { HttpError } from "@/lib/server/fetch"
 import { cacheTags } from "@/lib/server/cache-tags"
 
 type ClientApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
@@ -16,6 +17,7 @@ type ClientApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 type ClientApiRoute = {
   backendPath: string
   methods: ClientApiMethod[]
+  privateData?: boolean
   requireAuth?: boolean
   revalidate?: BackendOptions["revalidate"]
   tags?: string[]
@@ -23,7 +25,7 @@ type ClientApiRoute = {
 
 const clientApiRoutes: Record<string, ClientApiRoute> = {
   products: {
-    backendPath: "/products",
+    backendPath: "/client/products",
     methods: ["GET"],
     revalidate: 60,
     tags: [cacheTags.products],
@@ -35,7 +37,7 @@ const clientApiRoutes: Record<string, ClientApiRoute> = {
     tags: [cacheTags.products],
   },
   "products/:id": {
-    backendPath: "/products/:id",
+    backendPath: "/client/products/:id",
     methods: ["GET"],
     revalidate: 60,
     tags: [cacheTags.products],
@@ -46,16 +48,88 @@ const clientApiRoutes: Record<string, ClientApiRoute> = {
     revalidate: 300,
     tags: [cacheTags.categories],
   },
-  cart: {
-    backendPath: "/cart",
-    methods: ["GET", "POST", "PATCH", "DELETE"],
+  countries: {
+    backendPath: "/client/countries",
+    methods: ["GET"],
+    revalidate: 300,
+  },
+  cities: {
+    backendPath: "/client/cities",
+    methods: ["GET"],
+    revalidate: 300,
+  },
+  "profile/addresses": {
+    backendPath: "/client/profile/addresses",
+    methods: ["GET", "POST"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "profile/addresses/:id": {
+    backendPath: "/client/profile/addresses/:id",
+    methods: ["PUT", "DELETE"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "profile/addresses/:id/default": {
+    backendPath: "/client/profile/addresses/:id/default",
+    methods: ["PUT"],
+    privateData: true,
+    requireAuth: true,
+  },
+  orders: {
+    backendPath: "/client/orders",
+    methods: ["GET"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "orders/:id": {
+    backendPath: "/client/orders/:id",
+    methods: ["GET"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "checkout/preview": {
+    backendPath: "/client/checkout/preview",
+    methods: ["POST"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "checkout/place-order": {
+    backendPath: "/client/checkout/place-order",
+    methods: ["POST"],
+    privateData: true,
     requireAuth: true,
     tags: [cacheTags.cart],
   },
-  wishlist: {
-    backendPath: "/wishlist",
-    methods: ["GET", "POST", "DELETE"],
+  "checkout/verify-payment": {
+    backendPath: "/client/checkout/verify-payment",
+    methods: ["POST"],
+    privateData: true,
     requireAuth: true,
+    tags: [cacheTags.cart],
+  },
+  cart: {
+    backendPath: "/client/cart",
+    methods: ["GET", "DELETE"],
+    privateData: true,
+    tags: [cacheTags.cart],
+  },
+  "cart/items": {
+    backendPath: "/client/cart/items",
+    methods: ["POST"],
+    privateData: true,
+    tags: [cacheTags.cart],
+  },
+  "cart/items/:id": {
+    backendPath: "/client/cart/items/:id",
+    methods: ["PATCH", "DELETE"],
+    privateData: true,
+    tags: [cacheTags.cart],
+  },
+  wishlist: {
+    backendPath: "/client/wishlist",
+    methods: ["GET", "POST"],
+    privateData: true,
     tags: [cacheTags.wishlist],
   },
   me: {
@@ -63,6 +137,24 @@ const clientApiRoutes: Record<string, ClientApiRoute> = {
     methods: ["GET"],
     requireAuth: true,
     tags: [cacheTags.currentUser],
+  },
+  profile: {
+    backendPath: "/client/profile",
+    methods: ["GET"],
+    requireAuth: true,
+    tags: [cacheTags.currentUser],
+  },
+  "notifications/unread-count": {
+    backendPath: "/client/notifications/unread-count",
+    methods: ["GET"],
+    requireAuth: true,
+    revalidate: 0,
+  },
+  notifications: {
+    backendPath: "/client/notifications",
+    methods: ["GET"],
+    requireAuth: true,
+    revalidate: 0,
   },
 } satisfies Record<string, ClientApiRoute>
 
@@ -90,6 +182,42 @@ function matchClientApiRoute(path: string) {
       route,
     }
   }
+
+  const cartItemMatch = path.match(/^cart\/items\/([^/]+)$/)
+  if (cartItemMatch) {
+    const route = clientApiRoutes["cart/items/:id"]
+    return {
+      backendPath: route.backendPath.replace(":id", cartItemMatch[1]),
+      route,
+    }
+  }
+
+  const addressDefaultMatch = path.match(/^profile\/addresses\/([^/]+)\/default$/)
+  if (addressDefaultMatch) {
+    const route = clientApiRoutes["profile/addresses/:id/default"]
+    return {
+      backendPath: route.backendPath.replace(":id", addressDefaultMatch[1]),
+      route,
+    }
+  }
+
+  const addressMatch = path.match(/^profile\/addresses\/([^/]+)$/)
+  if (addressMatch) {
+    const route = clientApiRoutes["profile/addresses/:id"]
+    return {
+      backendPath: route.backendPath.replace(":id", addressMatch[1]),
+      route,
+    }
+  }
+
+  const orderMatch = path.match(/^orders\/([^/]+)$/)
+  if (orderMatch) {
+    const route = clientApiRoutes["orders/:id"]
+    return {
+      backendPath: route.backendPath.replace(":id", orderMatch[1]),
+      route,
+    }
+  }
 }
 
 async function proxyClientApiRequest({
@@ -111,10 +239,11 @@ async function proxyClientApiRequest({
   }
 
   const options: BackendOptions = {
-    cache: method === "GET" ? "force-cache" : "no-store",
+    cache: method === "GET" && !route.privateData ? "force-cache" : "no-store",
     query: Object.fromEntries(searchParams.entries()),
     requireAuth: route.requireAuth,
-    revalidate: method === "GET" ? route.revalidate : 0,
+    revalidate: method === "GET" && !route.privateData ? route.revalidate : 0,
+    retries: method === "GET" ? undefined : 0,
     tags: route.tags,
   }
 
@@ -127,10 +256,19 @@ async function proxyClientApiRequest({
       return error
     }
 
+    if (error instanceof HttpError) {
+      return Response.json(error.payload ?? { message: error.message }, {
+        status: error.status,
+      })
+    }
+
     const message =
       error instanceof Error ? error.message : "Backend request failed"
 
-    return Response.json({ message }, { status: 500 })
+    return Response.json(
+      { message },
+      { status: error instanceof TypeError ? 503 : 500 }
+    )
   }
 }
 

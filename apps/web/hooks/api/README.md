@@ -7,6 +7,8 @@ Use custom hooks from this folder in client components.
   strings and query keys from UI components.
 - Default endpoints call local `/api/client/...` route handlers.
 - Use `customBaseUrl` only for browser-safe public backend endpoints.
+- Requests automatically include `Accept`, `Accept-Language`,
+  `X-Platform: browser`, and browser credentials.
 
 Mutations can invalidate client cache keys:
 

@@ -1,6 +1,21 @@
 export { queryKeys } from "./query-keys"
-export { useAddToCart, useCart } from "./use-cart"
+export {
+  useAddToCart,
+  useCart,
+  useRemoveCartItem,
+  useUpdateCartItem,
+} from "./use-cart"
 export { useCategories } from "./use-categories"
+export {
+  locationName,
+  useAddresses,
+  useCheckoutPreview,
+  useCities,
+  useCountries,
+  useCreateAddress,
+  usePlaceOrder,
+  useVerifyCheckoutPayment,
+} from "./use-checkout"
 export { useCurrentUser } from "./use-current-user"
 export { useFetch } from "./use-fetch"
 export { useLoginMutation } from "./use-login-mutation"
