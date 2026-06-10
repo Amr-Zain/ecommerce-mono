@@ -32,14 +32,16 @@ Create a `.env` file in the web root:
 
 ```bash
 # Backend API base URL
-API_BASE_URL=http://localhost:3000
+API_BASE_URL=http://localhost:3030
 
 # NextAuth secret (generate with: openssl rand -base64 32)
 AUTH_SECRET=
 
-# Auth login endpoint (relative to API_BASE_URL)
-AUTH_LOGIN_ENDPOINT=auth/login
 ```
+
+Client authentication calls `/auth/send-otp` and `/auth/login-otp` from server
+actions. The verification action copies the API refresh token into an HttpOnly
+cookie, while NextAuth validates and stores only the access token.
 
 ### Running
 
@@ -51,14 +53,14 @@ Starts the dev server with Turbopack on port 3000.
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Start dev server (Turbopack) |
-| `pnpm build` | Build for production |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Lint with ESLint |
-| `pnpm format` | Format with Prettier |
-| `pnpm typecheck` | Type-check with TypeScript |
+| Command          | Description                  |
+| ---------------- | ---------------------------- |
+| `pnpm dev`       | Start dev server (Turbopack) |
+| `pnpm build`     | Build for production         |
+| `pnpm start`     | Start production server      |
+| `pnpm lint`      | Lint with ESLint             |
+| `pnpm format`    | Format with Prettier         |
+| `pnpm typecheck` | Type-check with TypeScript   |
 
 ## Project Structure
 
@@ -117,26 +119,26 @@ Uses Next.js App Router with i18n via `next-intl`.
 
 ### Pages
 
-| Path | Description |
-|---|---|
-| `/` | Home page |
-| `/auth/login` | Login |
-| `/products` | Product listing |
-| `/products/:id` | Product detail |
-| `/collections` | Collections listing |
-| `/collections/:slug` | Collection detail |
-| `/cart` | Shopping cart |
-| `/payment` | Checkout |
-| `/show-rooms` | Show rooms |
-| `/profile` | User profile |
-| `/profile/orders` | Order history |
-| `/profile/addresses` | Saved addresses |
-| `/profile/wishlist` | Wishlist |
-| `/profile/wallet` | Wallet |
-| `/profile/support` | Support tickets |
-| `/warranty` | Warranty info |
-| `/returns` | Returns policy |
-| `/privacy-policy` | Privacy policy |
+| Path                   | Description         |
+| ---------------------- | ------------------- |
+| `/`                    | Home page           |
+| `/auth/login`          | Login               |
+| `/products`            | Product listing     |
+| `/products/:id`        | Product detail      |
+| `/collections`         | Collections listing |
+| `/collections/:slug`   | Collection detail   |
+| `/cart`                | Shopping cart       |
+| `/payment`             | Checkout            |
+| `/show-rooms`          | Show rooms          |
+| `/profile`             | User profile        |
+| `/profile/orders`      | Order history       |
+| `/profile/addresses`   | Saved addresses     |
+| `/profile/wishlist`    | Wishlist            |
+| `/profile/wallet`      | Wallet              |
+| `/profile/support`     | Support tickets     |
+| `/warranty`            | Warranty info       |
+| `/returns`             | Returns policy      |
+| `/privacy-policy`      | Privacy policy      |
 | `/purchase-protection` | Purchase protection |
 
 ## Authentication
