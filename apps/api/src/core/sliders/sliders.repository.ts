@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, TranslationFields } from '@/common/repositories/base.repository';
 import { MediaService } from '@/media/media.service';
 import { MediaType } from '@/media/enums/media-type.enum';
 import { ISlidersRepository } from '@/common/interfaces';
@@ -15,7 +15,7 @@ export class SlidersRepository extends BaseRepository<SliderType> implements ISl
   };
 
   protected readonly searchConfig = {
-    translationFields: ['title'],
+    translationFields: ['title'] satisfies TranslationFields<SliderType>[],
   };
 
   protected readonly defaultListInclude = {

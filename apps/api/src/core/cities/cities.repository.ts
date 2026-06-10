@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, TranslationFields } from '@/common/repositories/base.repository';
 import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { MediaService } from '@/media/media.service';
@@ -10,7 +10,7 @@ type City = Prisma.CityGetPayload<{ include: { translations: true } }>;
 @Injectable()
 export class CitiesRepository extends BaseRepository<City> implements ICitiesRepository {
   protected readonly searchConfig = {
-    translationFields: ['name'],
+    translationFields: ['name'] satisfies TranslationFields<City>[],
   };
 
   protected readonly defaultListInclude = {

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, TranslationFields } from '@/common/repositories/base.repository';
 import { MediaService } from '@/media/media.service';
 import { IFaqsRepository } from '@/common/interfaces';
 
@@ -10,7 +10,7 @@ type FaqType = Prisma.FaqGetPayload<{ include: { translations: true } }>;
 @Injectable()
 export class FaqsRepository extends BaseRepository<FaqType> implements IFaqsRepository {
   protected readonly searchConfig = {
-    translationFields: ['question', 'answer'],
+    translationFields: ['question', 'answer'] satisfies TranslationFields<FaqType>[],
   };
 
   protected readonly defaultListInclude = {

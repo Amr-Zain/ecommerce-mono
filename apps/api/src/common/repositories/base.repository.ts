@@ -52,6 +52,20 @@ export type RelationFields<T> = {
     : never;
 }[keyof T];
 
+/**
+ * Extracts scalar field keys from the translations relation.
+ * Given a model type T that has `translations: SomeTranslationType[]`,
+ * this extracts the scalar fields of that translation type.
+ *
+ * Usage: `translationFields: ['name'] satisfies TranslationFields<City>[]`
+ */
+export type TranslationFields<T> =
+  T extends { translations: (infer U)[] }
+    ? ScalarFields<U>
+    : T extends { translations?: (infer U)[] | null }
+      ? ScalarFields<U>
+      : string;
+
 // ─── Search Config Types ──────────────────────────────────────────────────────
 
 /** Search matching mode */

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, TranslationFields } from '@/common/repositories/base.repository';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
@@ -13,7 +13,7 @@ type Role = Prisma.RoleGetPayload<{
 @Injectable()
 export class RolesRepository extends BaseRepository<Role> implements IRolesRepository {
   protected readonly searchConfig = {
-    translationFields: ['name'],
+    translationFields: ['name'] satisfies TranslationFields<Role>[],
   };
 
   constructor(

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, TranslationFields } from '@/common/repositories/base.repository';
 import { MediaService } from '@/media/media.service';
 import { MediaType } from '@/media/enums/media-type.enum';
 import { ICountriesRepository } from '@/common/interfaces';
@@ -15,7 +15,7 @@ export class CountriesRepository extends BaseRepository<CountryType> implements 
   };
 
   protected readonly searchConfig = {
-    translationFields: ['name', 'nationality', 'shortName'],
+    translationFields: ['name', 'nationality', 'shortName'] satisfies TranslationFields<CountryType>[],
   };
 
   protected readonly defaultListInclude = {

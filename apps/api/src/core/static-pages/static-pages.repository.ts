@@ -1,6 +1,6 @@
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
+import { BaseRepository, QueryOptions, TranslationFields } from '@/common/repositories/base.repository';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { Prisma, PrismaService } from '@/prisma';
 import { Injectable } from '@nestjs/common';
@@ -22,7 +22,7 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
   };
 
   protected readonly searchConfig = {
-    translationFields: ['title', 'content'],
+    translationFields: ['title', 'content'] satisfies TranslationFields<StaticPage>[],
   };
 
   protected readonly defaultListInclude = {

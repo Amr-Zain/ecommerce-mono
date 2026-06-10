@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService } from '@/prisma';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, TranslationFields } from '@/common/repositories/base.repository';
 import { MediaService } from '@/media/media.service';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { AttributeValueQueryDto } from '@/common/dto/attribute-value-query.dto';
@@ -14,7 +14,7 @@ type AttributeValueType = Prisma.AttributeValueGetPayload<{
 @Injectable()
 export class AttributeValuesRepository extends BaseRepository<AttributeValueType> implements IAttributeValuesRepository {
   protected readonly searchConfig = {
-    translationFields: ['name'],
+    translationFields: ['name'] satisfies TranslationFields<AttributeValueType>[],
   };
 
   protected readonly filterConfig = {
