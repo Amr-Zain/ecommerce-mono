@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MediaService } from '@/media/media.service';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, ScalarFields, RelationFields } from '@/common/repositories/base.repository';
 import { AdminReview, ClientReview, IReviewsRepository, ReviewOwner } from '@/common/interfaces';
 import { MediaType } from '@/media/enums/media-type.enum';
 import { Prisma } from '@prisma/client';
@@ -40,7 +40,7 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
    * - 'product.translations.name' is a field on the product's translations
    */
   protected readonly searchConfig = {
-    directFields: ['comment'],
+    directFields: ['comment'] satisfies ScalarFields<ReviewRecord>[],
     relationFields: [
       { relation: 'user', fields: ['name', 'email'] },
       { relation: 'product', fields: ['name'], isTranslation: true },

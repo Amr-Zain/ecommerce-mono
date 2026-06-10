@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, ScalarFields } from '@/common/repositories/base.repository';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
@@ -20,7 +20,7 @@ export class UsersRepository extends BaseRepository<User> implements IUsersRepos
   };
 
   protected readonly searchConfig = {
-    directFields: ['name', 'email'],
+    directFields: ['name', 'email'] satisfies ScalarFields<User>[],
   };
 
   constructor(
