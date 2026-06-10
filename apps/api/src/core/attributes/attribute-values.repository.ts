@@ -17,6 +17,10 @@ export class AttributeValuesRepository extends BaseRepository<AttributeValueType
     translationFields: ['name'],
   };
 
+  protected readonly filterConfig = {
+    attributeId: 'bigint' as const,
+  };
+
   protected readonly defaultListInclude = {
     translations: {
       where: { langId: '__langId__' },
@@ -40,20 +44,7 @@ export class AttributeValuesRepository extends BaseRepository<AttributeValueType
     query: AttributeValueQueryDto,
     langId: string = 'en',
   ): Promise<PaginatedResult<AttributeValueType> | AttributeValueType[]> {
-    const conditions: Prisma.AttributeValueWhereInput[] = [];
-
-    // Custom: filter by attributeId when provided
-    if (query.filters?.attributeId) {
-      conditions.push({ attributeId: BigInt(query.filters.attributeId as string) });
-    }
-
-    // Get base search/filter conditions
-    const baseWhere = this.buildWhereClause(query, langId) as Prisma.AttributeValueWhereInput;
-    if (Object.keys(baseWhere).length > 0) {
-      conditions.push(baseWhere);
-    }
-
-    const where = this.queryBuilder!.combineWhereConditions(...conditions);
+    const where = this.buildWhereClause(query, langId);
 
     return this.paginate(query, where, {
       include: {

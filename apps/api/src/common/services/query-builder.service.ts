@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-type FilterValue = string | number | boolean;
+type FilterValue = string | number | boolean | bigint;
 
 @Injectable()
 export class QueryBuilderService {

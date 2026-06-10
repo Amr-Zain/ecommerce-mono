@@ -4,10 +4,12 @@
 
 The `BaseRepository<T>` class eliminates repeated boilerplate across domain repositories by providing a **declarative configuration** approach for:
 
-- **Search** (direct fields, translation fields, relation fields)
-- **Filtering** (via `AdvancedQueryDto.filters`)
+- **Search** (direct fields, translation fields, relation fields — with configurable match mode)
+- **Filtering** (via `AdvancedQueryDto.filters` with automatic type coercion)
 - **Pagination** (via `AdvancedQueryDto.page` / `limit`)
-- **Language-aware includes** (token-based `langId` replacement)
+- **Sorting** (flat and nested relation sorting via dot-notation)
+- **Language-aware includes** (recursive token replacement, no JSON.stringify)
+- **Dynamic includes** (conditional includes from query params via `allowedIncludes`)
 - **Media attachment** (polymorphic media handling)
 
 Instead of writing `findAll()`, `buildWhereClause()`, and include logic in every repository, you declare **what** to search/include and the base handles the **how**.
@@ -24,7 +26,12 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
     translationFields: ['name'],
   };
 
-  // 2. Declare default includes with __langId__ token
+  // 2. Auto-coerce filter types (string '5' → BigInt(5))
+  protected readonly filterConfig = {
+    countryId: 'bigint',
+  };
+
+  // 3. Declare default includes with __langId__ token
   protected readonly defaultListInclude = {
     country: {
       include: { translations: { where: { langId: '__langId__' } } },
@@ -35,6 +42,11 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
   protected readonly defaultDetailInclude = {
     translations: true,
     country: { include: { translations: { where: { langId: '__langId__' } } } },
+  };
+
+  // 4. Allow dynamic includes from ?include=country
+  protected readonly allowedIncludes = {
+    country: { include: { translations: true } },
   };
 
   constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
@@ -51,66 +63,194 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
 
 ---
 
-## Configuration Properties
+## API Query Examples
 
-### `searchConfig: SearchConfig`
+### Basic pagination
 
-Declares how the `buildWhereClause()` method constructs search conditions when `query.search` is provided.
-
-```typescript
-export interface SearchConfig {
-  /** Fields on the model's `translations` table. Searched with: translations.some({ langId, OR: [...] }) */
-  translationFields?: string[];
-
-  /** Fields directly on the model. Searched with: { field: { contains, mode: 'insensitive' } } */
-  directFields?: string[];
-
-  /** Fields on related tables */
-  relationFields?: RelationSearchField[];
-}
-
-export interface RelationSearchField {
-  /** Relation name, e.g. 'user' or 'product' */
-  relation: string;
-  /** Fields to search within that relation */
-  fields: string[];
-  /** If true, searches within relation.translations.some({ langId, OR: [...] }) */
-  isTranslation?: boolean;
-}
+```
+GET /cities?page=1&limit=10
 ```
 
-#### Examples
+### Filtering
 
-**Simple translation search** (most common):
-```typescript
-protected readonly searchConfig = {
-  translationFields: ['name', 'description'],
-};
+```
+GET /cities?filters[countryId]=5&filters[isActive]=true
 ```
 
-**Direct model fields** (e.g. User has name/email directly):
-```typescript
-protected readonly searchConfig = {
-  directFields: ['name', 'email'],
-};
+The `filterConfig` auto-coerces `countryId` from string `"5"` to `BigInt(5)` before passing to Prisma.
+
+### Search (translation fields)
+
+```
+GET /cities?search=cairo
 ```
 
-**Relation search** (search across related tables):
+Generates:
+```prisma
+{ translations: { some: { langId: 'en', OR: [{ name: { contains: 'cairo', mode: 'insensitive' } }] } } }
+```
+
+### Search (relation fields — nested)
+
+For a `ReviewsRepository` with:
 ```typescript
 protected readonly searchConfig = {
   directFields: ['comment'],
   relationFields: [
-    { relation: 'user', fields: ['name', 'email'] },              // user.name, user.email
-    { relation: 'product', fields: ['name'], isTranslation: true }, // product.translations.name
+    { relation: 'user', fields: ['name', 'email'] },
+    { relation: 'product', fields: ['name'], isTranslation: true },
   ],
 };
 ```
 
-### `defaultListInclude: IncludeClause | null`
+```
+GET /reviews?search=john
+```
 
-The Prisma `include` clause used by the generic `findAll()` for list/paginated views.
+Generates:
+```prisma
+{
+  OR: [
+    { comment: { contains: 'john', mode: 'insensitive' } },
+    { user: { name: { contains: 'john', mode: 'insensitive' } } },
+    { user: { email: { contains: 'john', mode: 'insensitive' } } },
+    { product: { translations: { some: { langId: 'en', OR: [{ name: { contains: 'john', mode: 'insensitive' } }] } } } },
+  ]
+}
+```
 
-Use the special token `'__langId__'` — it gets replaced at runtime with the actual `langId` parameter.
+### Sorting (flat)
+
+```
+GET /cities?sort[createdAt]=desc
+```
+
+### Sorting (nested relation — dot-notation)
+
+```
+GET /cities?sort[country.name]=asc
+```
+
+Generates:
+```prisma
+orderBy: { country: { name: 'asc' } }
+```
+
+```
+GET /orders?sort[user.name]=asc
+```
+
+Generates:
+```prisma
+orderBy: { user: { name: 'asc' } }
+```
+
+Deep nesting also works:
+
+```
+GET /items?sort[product.collection.name]=asc
+```
+
+Generates:
+```prisma
+orderBy: { product: { collection: { name: 'asc' } } }
+```
+
+### Dynamic includes (conditional relations)
+
+```
+GET /cities?include=country,reviews
+```
+
+Only includes relations declared in `allowedIncludes`. Anything not declared is silently ignored (security). The dynamic includes are merged with `defaultListInclude`.
+
+### Language
+
+```
+GET /cities?page=1&limit=10
+Accept-Language: ar
+```
+
+The controller extracts `langId` from headers and passes to `findAll(query, 'ar')`. The `__langId__` tokens in includes resolve to `'ar'`, and search scopes to Arabic translations.
+
+---
+
+## Configuration Properties
+
+### `searchConfig: SearchConfig`
+
+Declares how `buildWhereClause()` constructs search conditions.
+
+```typescript
+export type SearchMode = 'contains' | 'startsWith' | 'equals';
+
+export type SearchField = string | { field: string; mode?: SearchMode };
+
+export interface SearchConfig {
+  translationFields?: SearchField[];   // fields on translations table
+  directFields?: SearchField[];        // fields directly on the model
+  relationFields?: RelationSearchField[];  // fields on related tables
+}
+
+export interface RelationSearchField {
+  relation: string;
+  fields: SearchField[];
+  isTranslation?: boolean;
+}
+```
+
+#### Search mode examples
+
+Default mode is `'contains'`. Override per-field:
+
+```typescript
+protected readonly searchConfig = {
+  directFields: [
+    'name',                                    // defaults to 'contains'
+    { field: 'code', mode: 'equals' },         // exact match only
+    { field: 'email', mode: 'startsWith' },    // prefix match
+  ],
+};
+```
+
+```
+GET /users?search=ADM
+```
+
+Generates:
+```prisma
+{
+  OR: [
+    { name: { contains: 'ADM', mode: 'insensitive' } },
+    { code: { equals: 'ADM', mode: 'insensitive' } },
+    { email: { startsWith: 'ADM', mode: 'insensitive' } },
+  ]
+}
+```
+
+### `filterConfig: FilterConfig`
+
+Declares expected types for filter fields for automatic coercion.
+
+```typescript
+export type FilterConfig = Record<string, 'string' | 'number' | 'bigint' | 'boolean'>;
+```
+
+```typescript
+protected readonly filterConfig = {
+  countryId: 'bigint',    // '5' → BigInt(5)
+  rating: 'number',       // '4' → 4
+  isActive: 'boolean',    // '1'/'true' → true
+};
+```
+
+Without `filterConfig`, string `"5"` would be passed directly to Prisma causing type mismatches on `bigint` columns.
+
+### `defaultListInclude` / `defaultDetailInclude`
+
+Prisma `include` clauses with `'__langId__'` token support.
+
+The token is replaced via **recursive object traversal** (not JSON.stringify — safe with BigInt, Date, undefined).
 
 ```typescript
 protected readonly defaultListInclude = {
@@ -121,20 +261,23 @@ protected readonly defaultListInclude = {
 };
 ```
 
-### `defaultDetailInclude: IncludeClause | null`
+### `allowedIncludes: AllowedIncludes`
 
-The Prisma `include` clause used by `findByIdWithRelations()` for single-record detail views.
+Maps query string include keys to their Prisma include structures. Enables `?include=country,reviews` without exposing arbitrary relation access.
 
 ```typescript
-protected readonly defaultDetailInclude = {
-  translations: true, // all languages for editing
-  country: { include: { translations: true } },
+protected readonly allowedIncludes = {
+  country: { include: { translations: { where: { langId: '__langId__' } } } },
+  reviews: true,
+  collection: { include: { translations: true } },
 };
 ```
 
+Only keys declared here are allowed. Unknown keys are silently dropped.
+
 ### `mediaConfig: Record<string, MediaSlotConfig>`
 
-Declares media slots (unchanged from before):
+Declares media slots:
 
 ```typescript
 protected readonly mediaConfig = {
@@ -145,11 +288,31 @@ protected readonly mediaConfig = {
 
 ---
 
+## Type Safety
+
+Use TypeScript's `satisfies` to get compile-time validation of field names:
+
+```typescript
+import { ScalarFields, RelationFields } from '@/common/repositories/base.repository';
+
+// Validates that 'name' and 'email' are actual scalar fields on User
+protected readonly searchConfig = {
+  directFields: ['name', 'email'] satisfies ScalarFields<User>[],
+  relationFields: [
+    { relation: 'role' satisfies RelationFields<User>, fields: ['name'] },
+  ],
+};
+```
+
+If you typo a field name, TypeScript will error at compile time.
+
+---
+
 ## Inherited Methods
 
 | Method | Description |
 |--------|-------------|
-| `findAll(query, langId?, options?)` | Paginated list with search/filter/includes |
+| `findAll(query, langId?, options?)` | Paginated list with search/filter/includes + dynamic includes |
 | `findByIdWithRelations(id, langId?)` | Single record with detail includes |
 | `buildWhereClause(query, langId?)` | Builds Prisma where from searchConfig (overridable) |
 | `findById(id, options?)` | Find by primary key |
@@ -176,9 +339,9 @@ The `langId` parameter flows through two mechanisms:
 translations: { some: { langId: 'ar', OR: [{ name: { contains: 'بحث' } }] } }
 ```
 
-### 2. Include Resolution (Token Replacement)
+### 2. Include Resolution (Recursive Token Replacement)
 
-`defaultListInclude` uses the `'__langId__'` token which is replaced at runtime:
+`defaultListInclude` and `allowedIncludes` use the `'__langId__'` token, replaced at runtime via a recursive object walker:
 
 ```typescript
 // Defined as:
@@ -188,18 +351,18 @@ translations: { some: { langId: 'ar', OR: [{ name: { contains: 'بحث' } }] } }
 { translations: { where: { langId: 'ar' } } }
 ```
 
-This is handled by the private `resolveInclude()` method which does a JSON string replacement.
+This uses `deepReplace()` (recursive traversal) — safe with BigInt, Date, and any non-serializable values.
 
 ---
 
 ## Overriding `buildWhereClause`
 
-For repositories with custom filtering logic beyond what `searchConfig` supports, override `buildWhereClause`:
+For repositories with custom filtering logic beyond what `searchConfig` supports:
 
 ```typescript
 // Collections: adds hierarchy-based custom filters
 protected buildWhereClause(query: CollectionQueryDto, langId?: string) {
-  const baseWhere = super.buildWhereClause(query, langId); // get standard search+filters
+  const baseWhere = super.buildWhereClause(query, langId); // standard search + filters + coercion
   const conditions = [baseWhere];
 
   if (query.customFilter === 'collection') {
@@ -247,8 +410,6 @@ async findAll(query, langId, options?) {
 ---
 
 ## Constructor Pattern
-
-The base constructor accepts three parameters:
 
 ```typescript
 constructor(
@@ -307,6 +468,7 @@ private buildWhereClause(query, langId) {
 
 ```typescript
 protected readonly searchConfig = { translationFields: ['name'] };
+protected readonly filterConfig = { countryId: 'bigint' };
 protected readonly defaultListInclude = { translations: { where: { langId: '__langId__' }, take: 1 } };
 
 // Done. findAll() and buildWhereClause() are inherited from BaseRepository.
@@ -319,11 +481,11 @@ protected readonly defaultListInclude = { translations: { where: { langId: '__la
 ```
 src/common/
 ├── repositories/
-│   └── base.repository.ts      ← Generic base with all shared logic
+│   └── base.repository.ts       ← Generic base with all shared logic
 ├── services/
-│   └── query-builder.service.ts ← Filter/search/combine utilities
+│   └── query-builder.service.ts  ← Filter/search/combine utilities
 ├── dto/
-│   └── advanced-query.dto.ts    ← Query params (page, limit, filters, sort, search)
+│   └── advanced-query.dto.ts     ← Query params (page, limit, filters, sort, search)
 └── utils/
-    └── pagination.util.ts       ← Pagination math helpers
+    └── pagination.util.ts        ← Pagination math helpers
 ```
