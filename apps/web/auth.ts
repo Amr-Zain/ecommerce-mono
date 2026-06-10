@@ -2,20 +2,19 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 
 import { authConfig } from "./auth.config"
-import { loginWithCredentials } from "./lib/server/auth-service"
+import { loginWithAccessToken } from "./lib/server/auth-service"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
     Credentials({
       credentials: {
-        email: { label: "Email", type: "text" },
-        phone: { label: "Phone", type: "text" },
-        phone_code: { label: "Phone Code", type: "text" },
-        password: { label: "Password", type: "password" },
+        accessToken: { label: "Access Token", type: "text" },
+        proof: { label: "Proof", type: "text" },
+        user: { label: "User", type: "text" },
       },
       authorize: async (credentials) => {
-        return loginWithCredentials(credentials ?? {})
+        return loginWithAccessToken(credentials ?? {})
       },
     }),
   ],

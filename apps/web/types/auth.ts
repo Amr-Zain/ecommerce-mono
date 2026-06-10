@@ -22,6 +22,7 @@ export type AuthUserFields = {
   image?: string | null
   user_type?: string
   is_active?: boolean
+  is_guest?: boolean
   is_verified?: boolean
   is_banned?: boolean
   is_suspended?: boolean
