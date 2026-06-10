@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
+import { BaseRepository } from '@/common/repositories/base.repository';
 import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { MediaService } from '@/media/media.service';
