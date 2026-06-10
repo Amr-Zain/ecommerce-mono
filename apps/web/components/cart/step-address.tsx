@@ -1,12 +1,11 @@
 "use client"
 
-import * as React from "react"
+import { ArrowLeft01Icon, CheckmarkCircle01Icon, Location01Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Location01Icon, PlusSignIcon, CheckmarkCircle01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons"
-import { Button } from "@ecommerce/ui/components/button"
+import * as React from "react"
+
 import { Badge } from "@ecommerce/ui/components/badge"
-import { Input } from "@ecommerce/ui/components/input"
-import { Textarea } from "@ecommerce/ui/components/textarea"
+import { Button } from "@ecommerce/ui/components/button"
 import {
   Dialog,
   DialogContent,
@@ -15,220 +14,159 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@ecommerce/ui/components/dialog"
-import { Separator } from "@ecommerce/ui/components/separator"
+import { Input } from "@ecommerce/ui/components/input"
+import { Textarea } from "@ecommerce/ui/components/textarea"
+import { PricingSummary, type Pricing } from "@/components/cart/step-cart"
+import {
+  locationName,
+  useAddresses,
+  useCities,
+  useCountries,
+  useCreateAddress,
+} from "@/hooks/api/use-checkout"
 import { cn } from "@/lib/utils"
-import { PricingSummary } from "@/components/cart/step-cart"
-import type { Pricing } from "@/components/cart/step-cart"
-
-type Address = {
-  id: string
-  title: string
-  name: string
-  address: string
-  isDefault: boolean
-}
-
-const MOCK_ADDRESSES: Address[] = [
-  {
-    id: "1",
-    title: "Home",
-    name: "Carlyle Hall",
-    address: "25 Union Square W,\nNew York, NY 10003, USA",
-    isDefault: true,
-  },
-  {
-    id: "2",
-    title: "Office",
-    name: "Parkside Residence",
-    address: "18 East 16th Street, Apt 7C\nNew York, NY 10003, USA",
-    isDefault: false,
-  },
-]
 
 interface AddressStepProps {
   pricing: Pricing
+  selectedId: string
+  previewPending: boolean
   onBack: () => void
   onNext: () => void
+  onSelect: (id: string) => void
 }
 
-export function AddressStep({ pricing, onBack, onNext }: AddressStepProps) {
-  const [addresses, setAddresses] = React.useState<Address[]>(MOCK_ADDRESSES)
-  const [selectedId, setSelectedId] = React.useState<string>(
-    MOCK_ADDRESSES.find((a) => a.isDefault)?.id ?? MOCK_ADDRESSES[0]?.id ?? ""
-  )
+export function AddressStep({
+  pricing,
+  selectedId,
+  previewPending,
+  onBack,
+  onNext,
+  onSelect,
+}: AddressStepProps) {
+  const addresses = useAddresses()
+  const countries = useCountries()
+  const createAddress = useCreateAddress()
   const [isAddOpen, setIsAddOpen] = React.useState(false)
-  const [formData, setFormData] = React.useState({ title: "", name: "", address: "" })
+  const [form, setForm] = React.useState({
+    address: "",
+    streetName: "",
+    buildingNumber: "",
+    countryId: "",
+    cityId: "",
+  })
+  const cities = useCities(form.countryId)
 
-  const handleAddAddress = () => {
-    const newAddress: Address = {
-      id: Date.now().toString(),
-      ...formData,
-      isDefault: false,
+  const saveAddress = () => {
+    const countryId = Number(form.countryId)
+    const cityId = Number(form.cityId)
+    if (!Number.isSafeInteger(countryId) || countryId <= 0 || !Number.isSafeInteger(cityId) || cityId <= 0) {
+      return
     }
-    setAddresses((prev) => [...prev, newAddress])
-    setSelectedId(newAddress.id)
-    setIsAddOpen(false)
-    setFormData({ title: "", name: "", address: "" })
+
+    createAddress.mutate(
+      {
+        address: form.address,
+        streetName: form.streetName || undefined,
+        buildingNumber: form.buildingNumber || undefined,
+        countryId,
+        cityId,
+        isDefault: (addresses.data?.length ?? 0) === 0,
+      },
+      {
+        onSuccess: (response) => {
+          const created = response as { data?: { id?: string } }
+          if (created.data?.id) onSelect(String(created.data.id))
+          setIsAddOpen(false)
+          setForm({ address: "", streetName: "", buildingNumber: "", countryId: "", cityId: "" })
+        },
+      }
+    )
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Address List */}
-      <div className="lg:col-span-2 space-y-4">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="space-y-4 lg:col-span-2">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-foreground">Select Delivery Address</h2>
-          <button
-            onClick={() => setIsAddOpen(true)}
-            className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
-          >
-            <HugeiconsIcon icon={PlusSignIcon} className="size-4" strokeWidth={2.5} />
+          <h2 className="text-base font-bold">Select Delivery Address</h2>
+          <button onClick={() => setIsAddOpen(true)} className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+            <HugeiconsIcon icon={PlusSignIcon} className="size-4" />
             Add New
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {addresses.map((addr) => {
-            const isSelected = addr.id === selectedId
-            return (
-              <button
-                key={addr.id}
-                onClick={() => setSelectedId(addr.id)}
-                className={cn(
-                  "relative flex flex-col items-start gap-3 rounded-2xl border-2 p-5 text-left transition-all duration-200",
-                  isSelected
-                    ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
-                    : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/30"
-                )}
-              >
-                {/* Selected checkmark */}
-                {isSelected && (
-                  <span className="absolute top-4 right-4 text-primary">
-                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-5" strokeWidth={2} />
-                  </span>
-                )}
-
-                {/* Icon + title */}
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className={cn(
-                      "flex size-9 shrink-0 items-center justify-center rounded-xl",
-                      isSelected ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    <HugeiconsIcon icon={Location01Icon} className="size-5" strokeWidth={2} />
+        {addresses.isPending ? (
+          <p className="text-sm text-muted-foreground">Loading addresses...</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {(addresses.data ?? []).map((address) => {
+              const selected = address.id === selectedId
+              return (
+                <button
+                  key={address.id}
+                  onClick={() => onSelect(address.id)}
+                  className={cn(
+                    "relative flex flex-col items-start gap-3 rounded-2xl border-2 p-5 text-left",
+                    selected ? "border-primary bg-primary/5" : "border-border bg-card"
+                  )}
+                >
+                  {selected && <HugeiconsIcon icon={CheckmarkCircle01Icon} className="absolute end-4 top-4 size-5 text-primary" />}
+                  <div className="flex items-center gap-2">
+                    <HugeiconsIcon icon={Location01Icon} className="size-5" />
+                    <span className="font-bold">{address.street_name || "Delivery Address"}</span>
+                    {address.is_default && <Badge variant="outline">Default</Badge>}
                   </div>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-bold text-sm text-foreground">{addr.title}</span>
-                    {addr.isDefault && (
-                      <Badge
-                        variant="outline"
-                        className="border-primary/40 text-primary bg-primary/10 text-[10px] font-bold rounded-full px-2 py-0"
-                      >
-                        Default
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                {/* Address detail */}
-                <div className="space-y-0.5 text-sm pl-0.5">
-                  <p className="font-semibold text-foreground">{addr.name}</p>
-                  <p className="text-muted-foreground whitespace-pre-line leading-relaxed text-xs">
-                    {addr.address}
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {[address.building_number, address.address, locationName(address.city), locationName(address.country)]
+                      .filter(Boolean)
+                      .join(", ")}
                   </p>
-                </div>
-              </button>
-            )
-          })}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
-          {/* Add new card */}
-          <button
-            onClick={() => setIsAddOpen(true)}
-            className="flex min-h-[140px] flex-col items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed bg-muted/20 p-5 text-muted-foreground transition-all hover:bg-muted/40 hover:text-foreground hover:border-muted-foreground/30"
-          >
-            <div className="flex size-9 items-center justify-center rounded-xl bg-background border shadow-sm">
-              <HugeiconsIcon icon={PlusSignIcon} className="size-4" strokeWidth={2.5} />
-            </div>
-            <span className="text-sm font-bold">Add New Address</span>
-          </button>
-        </div>
-
-        {/* Back button */}
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors mt-2"
-        >
-          <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" strokeWidth={2} />
+        <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" />
           Back to Cart
         </button>
       </div>
 
-      {/* Order Summary */}
-      <div className="lg:col-span-1">
-        <PricingSummary
-          pricing={pricing}
-          onNext={onNext}
-          actionLabel="Continue to Payment"
-          disabled={!selectedId}
-        />
-      </div>
+      <PricingSummary
+        pricing={pricing}
+        onNext={onNext}
+        actionLabel={previewPending ? "Calculating..." : "Continue to Payment"}
+        disabled={!selectedId || previewPending}
+      />
 
-      {/* Add Address Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent className="sm:max-w-[460px]">
           <DialogHeader>
-            <DialogTitle>Add New Address</DialogTitle>
-            <DialogDescription>Enter your delivery address details below.</DialogDescription>
+            <DialogTitle>Add Delivery Address</DialogTitle>
+            <DialogDescription>This address will be saved to your profile.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="space-y-1.5">
-              <label htmlFor="addr-title" className="text-sm font-medium">
-                Title
-              </label>
-              <Input
-                id="addr-title"
-                placeholder="e.g. Home, Office"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="rounded-xl"
-              />
+          <div className="grid gap-3">
+            <Textarea placeholder="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <Input placeholder="Street name" value={form.streetName} onChange={(e) => setForm({ ...form, streetName: e.target.value })} />
+              <Input placeholder="Building number" value={form.buildingNumber} onChange={(e) => setForm({ ...form, buildingNumber: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
-              <label htmlFor="addr-name" className="text-sm font-medium">
-                Full Name
-              </label>
-              <Input
-                id="addr-name"
-                placeholder="e.g. John Doe"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="rounded-xl"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="addr-address" className="text-sm font-medium">
-                Address
-              </label>
-              <Textarea
-                id="addr-address"
-                placeholder="Enter full address..."
-                className="resize-none rounded-xl"
-                rows={3}
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              />
-            </div>
+            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.countryId} onChange={(e) => setForm({ ...form, countryId: e.target.value, cityId: "" })}>
+              <option value="">Select country</option>
+              {(countries.data ?? []).map((country) => <option key={country.id} value={country.id}>{locationName(country)}</option>)}
+            </select>
+            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.cityId} disabled={!form.countryId} onChange={(e) => setForm({ ...form, cityId: e.target.value })}>
+              <option value="">Select city</option>
+              {(cities.data ?? []).map((city) => <option key={city.id} value={city.id}>{locationName(city)}</option>)}
+            </select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="rounded-xl">
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
             <Button
-              onClick={handleAddAddress}
-              disabled={!formData.title || !formData.name || !formData.address}
-              className="rounded-xl"
+              onClick={saveAddress}
+              disabled={!form.address || !form.countryId || !form.cityId || createAddress.isPending}
             >
-              Save Address
+              {createAddress.isPending ? "Saving..." : "Save Address"}
             </Button>
           </DialogFooter>
         </DialogContent>

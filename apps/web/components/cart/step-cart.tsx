@@ -25,19 +25,27 @@ export interface Pricing {
   subtotal: number
   savings: number
   shipping: number
+  discount?: number
+  vat?: number
   total: number
 }
 
 interface CartStepProps {
   items: CartItem[]
-  setItems: React.Dispatch<React.SetStateAction<CartItem[]>>
   pricing: Pricing
   onNext: () => void
+  onQuantityChange: (id: string, quantity: number) => void
+  onRemove: (id: string) => void
+  couponCode: string
+  couponApplied: boolean
+  couponPending: boolean
+  onCouponChange: (code: string) => void
+  onApplyCoupon: () => void
 }
 
 export function PricingSummary({ pricing, onNext, actionLabel = "Proceed to Checkout", disabled }: { pricing: Pricing; onNext: () => void; actionLabel?: string; disabled?: boolean }) {
   return (
-    <div className="rounded-2xl border bg-card p-6 space-y-4 sticky top-4">
+    <div className="rounded-2xl border bg-card p-6 space-y-4 sticky top-40">
       <h3 className="font-bold text-base text-foreground">Order Summary</h3>
       <Separator />
       <div className="space-y-2.5 text-sm">
@@ -45,6 +53,20 @@ export function PricingSummary({ pricing, onNext, actionLabel = "Proceed to Chec
           <span className="text-muted-foreground">Subtotal</span>
           <span className="font-semibold">${pricing.subtotal.toFixed(2)}</span>
         </div>
+        {(pricing.discount ?? 0) > 0 && (
+          <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+            <span>Coupon Discount</span>
+            <span className="font-semibold">
+              - ${pricing.discount!.toFixed(2)}
+            </span>
+          </div>
+        )}
+        {(pricing.vat ?? 0) > 0 && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">VAT</span>
+            <span className="font-semibold">${pricing.vat!.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
           <span>Your Savings</span>
           <span className="font-semibold">- ${pricing.savings.toFixed(2)}</span>
@@ -72,18 +94,25 @@ export function PricingSummary({ pricing, onNext, actionLabel = "Proceed to Chec
   )
 }
 
-export function CartStep({ items, setItems, pricing, onNext }: CartStepProps) {
-  const [coupon, setCoupon] = React.useState("")
-
+export function CartStep({
+  items,
+  pricing,
+  onNext,
+  onQuantityChange,
+  onRemove,
+  couponCode,
+  couponApplied,
+  couponPending,
+  onCouponChange,
+  onApplyCoupon,
+}: CartStepProps) {
   const updateQty = (id: string, delta: number) => {
-    setItems((prev) =>
-      prev
-        .map((item) => item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item)
-    )
+    const item = items.find((entry) => entry.id === id)
+    if (item) onQuantityChange(id, Math.max(1, item.qty + delta))
   }
 
   const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id))
+    onRemove(id)
   }
 
   return (
@@ -152,13 +181,18 @@ export function CartStep({ items, setItems, pricing, onNext }: CartStepProps) {
           </p>
           <div className="flex gap-2">
             <Input
-              value={coupon}
-              onChange={(e) => setCoupon(e.target.value)}
+              value={couponCode}
+              onChange={(e) => onCouponChange(e.target.value)}
               placeholder="Enter coupon code"
               className="h-10 rounded-xl text-sm flex-1"
             />
-            <Button variant="outline" className="h-10 rounded-xl px-5 font-bold text-sm">
-              Apply
+            <Button
+              variant="outline"
+              className="h-10 rounded-xl px-5 font-bold text-sm"
+              disabled={!couponCode.trim() || couponPending}
+              onClick={onApplyCoupon}
+            >
+              {couponPending ? "Checking..." : couponApplied ? "Applied" : "Apply"}
             </Button>
           </div>
         </div>
