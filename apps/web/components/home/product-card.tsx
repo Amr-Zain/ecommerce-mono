@@ -1,12 +1,10 @@
-import { FavouriteIcon, ShoppingCart01Icon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
 import Image from "next/image"
 
 import { Badge } from "@ecommerce/ui/components/badge"
-import { Button } from "@ecommerce/ui/components/button"
 import { cn } from "@/lib/utils"
 import type { Product } from "./data"
-import { IconButton } from "./icon-button"
+import { AddToCartButton } from "@/components/product/add-to-cart-button"
+import { WishlistButton } from "@/components/product/wishlist-button"
 
 export function ProductCard({ product }: { product: Product }) {
   return (
@@ -22,21 +20,11 @@ export function ProductCard({ product }: { product: Product }) {
             {product.badge}
           </Badge>
         ) : null}
-        <IconButton
-          label={`Save ${product.name}`}
-          className={cn(
-            "absolute end-2 top-2 size-7 bg-background/80",
-            product.favorite && "text-destructive"
-          )}
-        >
-          <HugeiconsIcon
-            icon={FavouriteIcon}
-            strokeWidth={2}
-            className={cn(
-              product.favorite && "fill-current [&_path]:fill-current"
-            )}
-          />
-        </IconButton>
+        <WishlistButton
+          productId={product.id ?? ""}
+          productName={product.name}
+          className="absolute end-2 top-2 size-7 bg-background/80"
+        />
         <Image
           src={product.image}
           alt=""
@@ -63,10 +51,18 @@ export function ProductCard({ product }: { product: Product }) {
             </span>
           ) : null}
         </div>
-        <Button className="mt-auto h-8 w-full rounded-full text-xs">
-          Add to Cart
-          <HugeiconsIcon icon={ShoppingCart01Icon} className="size-3.5" />
-        </Button>
+        <AddToCartButton
+          productId={product.id ?? ""}
+          variantId={product.firstVariationId}
+          productName={product.name}
+          price={Number(product.price.replace(/[^0-9.]/g, ""))}
+          oldPrice={
+            product.oldPrice
+              ? Number(product.oldPrice.replace(/[^0-9.]/g, ""))
+              : undefined
+          }
+          className="mt-auto h-8 w-full rounded-full text-xs"
+        />
       </div>
     </article>
   )

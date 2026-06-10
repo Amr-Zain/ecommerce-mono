@@ -5,6 +5,7 @@ import { notFound } from "next/navigation"
 
 import "../globals.css"
 import { SessionProvider } from "@/components/auth/session-provider"
+import { GuestSessionProvider } from "@/components/auth/guest-session-provider"
 import { Footer } from "@/components/home/footer"
 import { StorefrontHeader } from "@/components/home/storefront-header"
 import { TanstackQueryProvider } from "@/components/providers/tanstack-query-provider"
@@ -67,20 +68,22 @@ export default async function LocaleLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SessionProvider>
             <TanstackQueryProvider>
-              <DirectionProvider direction={direction}>
-                <ThemeProvider>
-                  <TooltipProvider>
-                    <div className="min-h-screen bg-background text-foreground">
-                      <StorefrontHeader />
-                      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-                        {children}
-                        <Footer />
-                      </main>
-                    </div>
-                  </TooltipProvider>
-                  <Toaster position="top-center" />
-                </ThemeProvider>
-              </DirectionProvider>
+              <GuestSessionProvider>
+                <DirectionProvider direction={direction}>
+                  <ThemeProvider>
+                    <TooltipProvider>
+                      <div className="min-h-screen bg-background text-foreground">
+                        <StorefrontHeader />
+                        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+                          {children}
+                          <Footer />
+                        </main>
+                      </div>
+                    </TooltipProvider>
+                    <Toaster position="top-center" />
+                  </ThemeProvider>
+                </DirectionProvider>
+              </GuestSessionProvider>
             </TanstackQueryProvider>
           </SessionProvider>
         </NextIntlClientProvider>

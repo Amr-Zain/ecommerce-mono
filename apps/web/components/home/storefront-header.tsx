@@ -1,48 +1,26 @@
 import {
   ArrowDown01Icon,
-  FavouriteIcon,
   Menu02Icon,
   Search01Icon,
-  ShoppingCart01Icon,
   Store04Icon,
-  UserCircleIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import type { ReactNode } from "react"
 import Link from "next/link"
 
-import { Avatar, AvatarFallback, AvatarBadge } from "@ecommerce/ui/components/avatar"
 import { Input } from "@ecommerce/ui/components/input"
 import { ThemeSwitch } from "@/components/shared/theme-switch"
+import { HeaderAccountControls } from "./header-account-controls"
+import { HeaderCommerceControls } from "./header-commerce-controls"
 import { IconButton } from "./icon-button"
 
-function BadgeIcon({
-  children,
-  count,
-}: {
-  children: ReactNode
-  count: number
-}) {
-  return (
-    <Avatar className="size-9 rounded-sm after:border-none">
-      <AvatarFallback className="rounded-sm bg-transparent text-foreground transition-colors hover:bg-muted">
-        {children}
-      </AvatarFallback>
-      <AvatarBadge className="bg-destructive text-destructive-foreground -top-1 -right-1 rounded-full text-[10px] font-medium transition-colors group-data-[size=default]/avatar:size-4">
-        {count}
-      </AvatarBadge>
-    </Avatar>
-  )
-}
-
-export function StorefrontHeader() {
+export async function StorefrontHeader() {
   const saleItems = Array.from({ length: 8 })
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
       <div className="bg-secondary-foreground text-secondary">
         <div className="storefront-marquee mx-auto h-8 overflow-hidden text-[11px] font-semibold">
-          <div className="flex h-full w-max animate-storefront-marquee items-center">
+          <div className="animate-storefront-marquee flex h-full w-max items-center">
             {[...saleItems, ...saleItems].map((_, index) => (
               <div
                 key={index}
@@ -58,11 +36,36 @@ export function StorefrontHeader() {
       <div className="border-b">
         <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-4 text-xs text-muted-foreground sm:px-6">
           <div className="flex items-center gap-5">
-            <Link href="/returns" className="hover:text-foreground transition-colors">Shipping & Returns</Link>
-            <Link href="/payment" className="hover:text-foreground transition-colors">Payment</Link>
-            <Link href="/warranty" className="hover:text-foreground transition-colors">Warranty</Link>
-            <Link href="/show-rooms" className="hover:text-foreground transition-colors">Show Rooms</Link>
-            <Link href="/profile/support" className="hover:text-foreground transition-colors">Contact</Link>
+            <Link
+              href="/returns"
+              className="transition-colors hover:text-foreground"
+            >
+              Shipping & Returns
+            </Link>
+            <Link
+              href="/payment"
+              className="transition-colors hover:text-foreground"
+            >
+              Payment
+            </Link>
+            <Link
+              href="/warranty"
+              className="transition-colors hover:text-foreground"
+            >
+              Warranty
+            </Link>
+            <Link
+              href="/show-rooms"
+              className="transition-colors hover:text-foreground"
+            >
+              Show Rooms
+            </Link>
+            <Link
+              href="/profile/support"
+              className="transition-colors hover:text-foreground"
+            >
+              Contact
+            </Link>
           </div>
           <div className="flex items-center gap-5">
             <button className="inline-flex items-center gap-1 text-foreground">
@@ -85,19 +88,31 @@ export function StorefrontHeader() {
           <span className="text-base font-semibold">Shopix</span>
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium lg:flex">
-          <Link href="/collections" className="inline-flex items-center gap-1 hover:text-foreground/70 transition-colors">
+          <Link
+            href="/collections"
+            className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
+          >
             Shops
             <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
           </Link>
-          <Link href="/products" className="inline-flex items-center gap-1 hover:text-foreground/70 transition-colors">
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
+          >
             Today&apos;s Deal
             <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
           </Link>
-          <Link href="/products?sort=rating-desc" className="inline-flex items-center gap-1 hover:text-foreground/70 transition-colors">
+          <Link
+            href="/products?sort=rating-desc"
+            className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
+          >
             New Arrivals
             <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
           </Link>
-          <Link href="/collections" className="inline-flex items-center gap-1 hover:text-foreground/70 transition-colors">
+          <Link
+            href="/collections"
+            className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
+          >
             Pages
             <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
           </Link>
@@ -116,23 +131,8 @@ export function StorefrontHeader() {
           </div>
         </div>
         <div className="flex items-center gap-2.5">
-          <Link href="/profile/wishlist" aria-label="Wishlist (8 items)">
-            <BadgeIcon count={8}>
-              <HugeiconsIcon icon={FavouriteIcon} strokeWidth={2} />
-            </BadgeIcon>
-          </Link>
-          <Link href="/cart" aria-label="Cart">
-            <BadgeIcon count={3}>
-              <HugeiconsIcon icon={ShoppingCart01Icon} strokeWidth={2} />
-            </BadgeIcon>
-          </Link>
-          <Link href="/profile" aria-label="Account" className="hidden sm:inline-flex">
-            <Avatar className="size-9 rounded-sm after:border-none">
-              <AvatarFallback className="rounded-sm bg-transparent text-foreground transition-colors hover:bg-muted">
-                <HugeiconsIcon icon={UserCircleIcon} strokeWidth={2} />
-              </AvatarFallback>
-            </Avatar>
-          </Link>
+          <HeaderCommerceControls />
+          <HeaderAccountControls />
           <IconButton label="Menu" className="lg:hidden">
             <HugeiconsIcon icon={Menu02Icon} strokeWidth={2} />
           </IconButton>

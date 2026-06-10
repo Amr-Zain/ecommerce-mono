@@ -5,11 +5,15 @@ import Link from "next/link"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
 
-import { CarouselContent, CarouselItem, useCarousel } from "@ecommerce/ui/components/carousel"
+import {
+  CarouselContent,
+  CarouselItem,
+  useCarousel,
+} from "@ecommerce/ui/components/carousel"
 import { Button } from "@ecommerce/ui/components/button"
 import { cn } from "@/lib/utils"
 import { AutoSlider } from "@/components/shared/auto-slider"
-import { categories } from "./data"
+import type { Category } from "./data"
 import { SectionHeader } from "./section-header"
 
 const CATEGORY_SLUGS: Record<string, string> = {
@@ -38,7 +42,11 @@ function CarouselSideControls() {
         className="pointer-events-auto size-10 rounded-full text-foreground/60 hover:text-foreground"
         aria-label="Previous category"
       >
-        <HugeiconsIcon icon={ArrowLeft01Icon} className="size-5 rtl:rotate-180" strokeWidth={2.5} />
+        <HugeiconsIcon
+          icon={ArrowLeft01Icon}
+          className="size-5 rtl:rotate-180"
+          strokeWidth={2.5}
+        />
       </Button>
       <Button
         variant="ghost"
@@ -48,27 +56,39 @@ function CarouselSideControls() {
         className="pointer-events-auto size-10 rounded-full text-foreground/60 hover:text-foreground"
         aria-label="Next category"
       >
-        <HugeiconsIcon icon={ArrowRight01Icon} className="size-5 rtl:rotate-180" strokeWidth={2.5} />
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          className="size-5 rtl:rotate-180"
+          strokeWidth={2.5}
+        />
       </Button>
     </div>
   )
 }
 
-export function CategoryStrip() {
+export function CategoryStrip({
+  categories,
+  title = "Shop by Category",
+}: {
+  categories: Category[]
+  title?: string
+}) {
+  if (categories.length === 0) return null
+
   return (
     <section className="py-10">
       <AutoSlider auto={false}>
-        <SectionHeader title="Shop by Category" viewAll />
+        <SectionHeader title={title} viewAll />
         <div className="relative">
           <CarouselContent className="-ms-3">
             {categories.map((category) => (
               <CarouselItem
-                key={category.name}
+                key={category.id ?? category.name}
                 className="basis-1/2 ps-3 sm:basis-1/3 md:basis-1/4 lg:basis-1/7"
               >
                 <Link
                   href={CATEGORY_SLUGS[category.name] ?? "/collections"}
-                  className="group flex w-full max-w-34 mx-auto flex-col items-center gap-3 rounded-full p-2 text-center transition"
+                  className="group mx-auto flex w-full max-w-34 flex-col items-center gap-3 rounded-full p-2 text-center transition"
                 >
                   <span
                     className={cn(
@@ -81,7 +101,7 @@ export function CategoryStrip() {
                       alt=""
                       width={80}
                       height={80}
-                      className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                     />
                   </span>
                   <span className="text-xs font-medium">{category.name}</span>

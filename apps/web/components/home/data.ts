@@ -6,18 +6,21 @@ import {
 import type { IconSvgElement } from "@hugeicons/react"
 
 export type Product = {
+  id?: string
   name: string
   brand: string
+  description?: string
   price: string
   oldPrice?: string
   badge?: string
   badgeTone?: "default" | "destructive"
   image: string
   imageClassName?: string
-  favorite?: boolean
+  firstVariationId?: string
 }
 
 export type Category = {
+  id?: string
   name: string
   image: string
   background: string
@@ -249,7 +252,6 @@ export const popularProducts: Product[] = [
     brand: "Layer'r Wottagirl Vanilla Twist...",
     price: "$580.00",
     oldPrice: "$670.00",
-    favorite: true,
     image:
       "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=420&q=85",
   },

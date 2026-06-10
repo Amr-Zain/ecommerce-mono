@@ -4,9 +4,9 @@ import Image from "next/image"
 
 import { Button } from "@ecommerce/ui/components/button"
 import { cn } from "@/lib/utils"
-import { heroPromos, sidePromos } from "./data"
+import { heroPromos } from "./data"
 
-type Promo = (typeof heroPromos)[number] | (typeof sidePromos)[number]
+type Promo = (typeof heroPromos)[number]
 
 function PromoCard({ promo, compact }: { promo: Promo; compact?: boolean }) {
   return (
@@ -20,7 +20,7 @@ function PromoCard({ promo, compact }: { promo: Promo; compact?: boolean }) {
       <div className={cn("relative z-10 max-w-[17rem]", compact && "max-w-48")}>
         <h2
           className={cn(
-            "font-semibold leading-tight text-foreground",
+            "leading-tight font-semibold text-foreground",
             compact ? "text-xl" : "text-3xl"
           )}
         >
@@ -48,8 +48,8 @@ function PromoCard({ promo, compact }: { promo: Promo; compact?: boolean }) {
         className={cn(
           "absolute object-cover",
           compact
-            ? "bottom-0 end-0 h-36 w-44"
-            : "bottom-0 end-0 h-56 w-full object-bottom",
+            ? "end-0 bottom-0 h-36 w-44"
+            : "end-0 bottom-0 h-56 w-full object-bottom",
           "featured" in promo &&
             promo.featured &&
             "end-8 top-4 h-44 w-52 rounded-full object-cover"
@@ -59,17 +59,16 @@ function PromoCard({ promo, compact }: { promo: Promo; compact?: boolean }) {
   )
 }
 
-export function PromoSection() {
+export function PromoSection({ promos }: { promos: Promo[] }) {
+  if (promos.length === 0) return null
+
+  const visiblePromos = promos.slice(0, 2)
+
   return (
-    <section className="grid gap-4 lg:grid-cols-[1.15fr_1.15fr_0.9fr]">
-      {heroPromos.map((promo) => (
+    <section className="grid gap-4 lg:grid-cols-2">
+      {visiblePromos.map((promo) => (
         <PromoCard key={promo.title} promo={promo} />
       ))}
-      <div className="grid gap-4">
-        {sidePromos.map((promo) => (
-          <PromoCard key={promo.title} promo={promo} compact />
-        ))}
-      </div>
     </section>
   )
 }

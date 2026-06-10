@@ -4,18 +4,21 @@ import Image from "next/image"
 
 import { Button } from "@ecommerce/ui/components/button"
 
-export function PhoneBanner() {
+export function PhoneBanner({
+  title = "Find A Showroom Near You",
+  body = "Explore our showrooms to experience our collections in person.",
+  image,
+}: {
+  title?: string
+  body?: string
+  image?: string | null
+}) {
   return (
     <section className="my-10 overflow-hidden rounded-lg bg-secondary">
       <div className="relative min-h-64 p-8 text-secondary-foreground sm:p-10">
         <div className="relative z-10 max-w-md">
-          <h2 className="text-3xl font-semibold leading-tight">
-            iPhone Performance in an Elegant Purple Finish.
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Enjoy stunning picture clarity, immersive sound, and smart features
-            designed to elevate your everyday entertainment.
-          </p>
+          <h2 className="text-3xl leading-tight font-semibold">{title}</h2>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">{body}</p>
           <Button
             size="sm"
             variant="outline"
@@ -26,11 +29,14 @@ export function PhoneBanner() {
           </Button>
         </div>
         <Image
-          src="https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=820&q=85"
+          src={
+            image ??
+            "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=820&q=85"
+          }
           alt=""
           width={820}
           height={360}
-          className="absolute bottom-0 end-0 h-full w-1/2 object-cover object-center opacity-95"
+          className="absolute end-0 bottom-0 h-full w-1/2 object-cover object-center opacity-95"
         />
       </div>
     </section>
