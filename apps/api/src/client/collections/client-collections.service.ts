@@ -17,33 +17,7 @@ export class ClientCollectionsService {
     } else if (parentId) {
       query.filters = { ...query.filters, parentId };
     }
-    return this.collectionsRepo.findAll(query, langId, {
-      select: {
-        id: true,
-        parentId: true,
-        sortOrder: true,
-        translations: {
-          where: { langId },
-          select: { name: true, langId: true },
-          take: 1,
-        },
-        children: {
-          select: {
-            id: true,
-            parentId: true,
-            sortOrder: true,
-            translations: {
-              where: { langId },
-              select: { name: true, langId: true },
-              take: 1,
-            },
-          },
-          orderBy: { sortOrder: 'asc' as const },
-        },
-        image: true,
-        _count: { select: { children: true } },
-      },
-    });
+    return this.collectionsRepo.findAll(query, langId);
   }
 
   async findOne(id: number) {

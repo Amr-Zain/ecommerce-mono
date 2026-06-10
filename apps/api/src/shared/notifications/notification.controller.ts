@@ -47,8 +47,16 @@ abstract class BaseNotificationController {
 
 @ApiContext('client')
 @Controller('client/notifications')
-export class ClientNotificationController extends BaseNotificationController {}
+export class ClientNotificationController extends BaseNotificationController {
+  constructor(notifications: NotificationService) {
+    super(notifications);
+  }
+}
 
 @ApiContext('admin')
 @Controller('admin/notifications')
-export class AdminNotificationController extends BaseNotificationController {}
+export class AdminNotificationController extends BaseNotificationController {
+  constructor(notifications: NotificationService) {
+    super(notifications);
+  }
+}

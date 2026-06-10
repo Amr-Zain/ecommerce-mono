@@ -7,6 +7,7 @@ import { DEFAULT_LANGUAGE, FALLBACK_LABELS } from '@/common/constants/commerce.c
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { Prisma } from '@prisma/client';
+import { MediaService } from '@/media/media.service';
 
 type CartTranslation = {
   langId: string;
@@ -62,6 +63,7 @@ type FormattedCartItem = {
   compareAtPrice?: number;
   originalPrice: number;
   lineTotal: number;
+  image: string | null;
   attributes: {
     attributeId: string;
     valueId: string;
@@ -79,6 +81,7 @@ export class ClientCartService {
     private readonly pricingService: PricingService,
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService<I18nTranslations>,
+    private readonly mediaService: MediaService,
   ) {}
 
   async getCart(userId: bigint, langId: string = DEFAULT_LANGUAGE) {
@@ -94,8 +97,15 @@ export class ClientCartService {
       };
     }
 
+    const images = await this.mediaService.findProductImagePaths(
+      cart.items.map((item) => ({
+        productId: item.productId,
+        variantId: item.variant?.id ?? item.product.variants?.[0]?.id,
+      })),
+    );
+
     const items = cart.items
-      .map((item: CartItemWithProduct): FormattedCartItem | null => {
+      .map((item: CartItemWithProduct, index): FormattedCartItem | null => {
         const variant = item.variant || item.product.variants?.[0];
         if (!variant) {
           return null;
@@ -148,6 +158,7 @@ export class ClientCartService {
           compareAtPrice: pricing.compareAtPrice,
           originalPrice: Number(variant.price),
           lineTotal: Number((pricing.price * item.quantity).toFixed(2)),
+          image: images[index] ?? null,
           attributes,
         };
       })
@@ -246,4 +257,5 @@ export class ClientCartService {
     await this.cartsRepo.clearCart(cart.id);
     return this.getCart(userId, langId);
   }
+
 }

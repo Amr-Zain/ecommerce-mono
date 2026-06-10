@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { BaseRepository, QueryOptions } from '@/common/repositories/base.repository';
 import { PrismaService, Prisma } from '@/prisma';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { MediaService } from '@/media/media.service';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { CITIES_REPOSITORY, ICitiesRepository } from '@/common/interfaces';
+import { ICitiesRepository } from '@/common/interfaces';
 
 type City = Prisma.CityGetPayload<{ include: { translations: true } }>;
 
@@ -22,7 +22,11 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
     return this.prisma.city;
   }
 
-  async findAll(query: AdvancedQueryDto, langId: string = 'en', options?: QueryOptions): Promise<PaginatedResult<City> | City[]> {
+  async findAll(
+    query: AdvancedQueryDto,
+    langId: string = 'en',
+    options?: QueryOptions,
+  ): Promise<PaginatedResult<City> | City[]> {
     const where = this.buildWhereClause(query, langId);
     if (options?.select) {
       return this.paginate(query, where, { select: options.select });
@@ -77,7 +81,21 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
 
   private buildWhereClause(query: AdvancedQueryDto, langId?: string): Prisma.CityWhereInput {
     const conditions: Prisma.CityWhereInput[] = [];
-    const filters = query.filters ?? {};
+    const filters = { ...(query.filters ?? {}) };
+    const countryId = filters.countryId;
+    delete filters.countryId;
+
+    if (countryId !== undefined) {
+      const validString = typeof countryId === 'string' && /^[1-9]\d*$/.test(countryId);
+      const validNumber = typeof countryId === 'number' && Number.isSafeInteger(countryId) && countryId > 0;
+
+      if (!validString && !validNumber) {
+        throw new BadRequestException('countryId must be a valid integer');
+      }
+
+      conditions.push({ countryId: BigInt(countryId) });
+    }
+
     if (Object.keys(filters).length > 0) {
       conditions.push(this.queryBuilder.buildFiltersCondition<Prisma.CityWhereInput>(filters));
     }

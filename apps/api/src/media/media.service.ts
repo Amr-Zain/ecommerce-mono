@@ -178,6 +178,69 @@ export class MediaService {
     return result;
   }
 
+  async findProductImagePaths(
+    items: Array<{ productId: bigint; variantId?: bigint | null }>,
+  ): Promise<Array<string | null>> {
+    if (items.length === 0) return [];
+
+    const productIds = [...new Set(items.map((item) => item.productId))];
+    const variantIds = [
+      ...new Set(items.map((item) => item.variantId).filter((id): id is bigint => id != null)),
+    ];
+    const media = await this.prisma.media.findMany({
+      where: {
+        OR: [
+          {
+            model: 'product',
+            modelId: { in: productIds },
+            collection: { in: ['image', 'gallery'] },
+          },
+          ...(variantIds.length > 0
+            ? [
+                {
+                  model: 'productvariant',
+                  modelId: { in: variantIds },
+                  collection: 'gallery',
+                },
+              ]
+            : []),
+        ],
+      },
+      select: {
+        model: true,
+        modelId: true,
+        collection: true,
+        isMain: true,
+        path: true,
+      },
+      orderBy: [{ isMain: 'desc' }, { createdAt: 'asc' }],
+    });
+
+    const byEntity = new Map<string, typeof media>();
+    for (const item of media) {
+      const key = `${item.model}:${item.modelId?.toString() ?? ''}`;
+      const existing = byEntity.get(key);
+      if (existing) {
+        existing.push(item);
+      } else {
+        byEntity.set(key, [item]);
+      }
+    }
+
+    return items.map(({ productId, variantId }) => {
+      const variantMedia = variantId
+        ? byEntity.get(`productvariant:${variantId.toString()}`)
+        : undefined;
+      const productMedia = byEntity.get(`product:${productId.toString()}`);
+      const preferred =
+        variantMedia?.[0] ??
+        productMedia?.find((item) => item.collection === 'image') ??
+        productMedia?.[0];
+
+      return preferred ? this.formatPath(preferred.path) : null;
+    });
+  }
+
   /**
    * Delete all media for an entity
    */

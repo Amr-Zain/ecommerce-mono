@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma';
 import { I18nTranslations } from '@/generated/i18n.generated';
+import { MediaService } from '@/media/media.service';
 
 type ProductLike = {
   id: bigint | string | number;
@@ -12,6 +13,7 @@ export class ClientWishlistService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService<I18nTranslations>,
+    private readonly mediaService: MediaService,
   ) {}
 
   async findAll(userId: bigint, langId: string = 'en') {
@@ -38,12 +40,19 @@ export class ClientWishlistService {
         },
       },
     });
+    const images = await this.mediaService.findProductImagePaths(
+      items.map((item) => ({
+        productId: item.productId,
+        variantId: item.product.variants.find((variant) => variant.isActive)?.id,
+      })),
+    );
 
-    return items.map((item) => ({
+    return items.map((item, index) => ({
       id: item.id.toString(),
       productId: item.productId.toString(),
       product: {
         ...item.product,
+        image: images[index] ?? null,
         isInWishlist: true,
       },
       createdAt: item.createdAt,
@@ -142,4 +151,5 @@ export class ClientWishlistService {
       isInWishlist: wishlistProductIds.has(BigInt(product.id).toString()),
     }));
   }
+
 }
