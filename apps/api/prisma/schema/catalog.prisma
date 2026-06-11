@@ -12,7 +12,7 @@ model Collection {
   products     Product[]
 
   @@index([parentId])
-  @@index([sortOrder])
+  @@index([isActive, sortOrder])
   @@map("collections")
 }
 
@@ -47,7 +47,7 @@ model Product {
   cartItems        CartItem[]
   wishlistItems    WishlistItem[]
 
-  @@index([collectionId])
+  @@index([collectionId, isActive])
   @@map("products")
 }
 
@@ -152,7 +152,6 @@ model VariantAttribute {
 
   @@id([productVariantId, attributeId])
   @@unique([productId, productVariantId, attributeId, valueId])
-  @@index([productVariantId])
   @@map("variant_attributes")
 }
 
@@ -166,7 +165,7 @@ model InventoryLog {
   reason        String         @map("reason") // RESTOCK, SALE, ADJUSTMENT, RETURN
   createdAt     DateTime       @default(now()) @map("created_at")
 
-  @@index([variantId])
+  @@index([variantId, createdAt(sort: Desc)])
   @@map("inventory_logs")
 }
 
@@ -180,6 +179,6 @@ model PriceHistory {
   newCompareAtPrice Decimal?       @map("new_compare_at_price") @db.Decimal(12, 2)
   createdAt         DateTime       @default(now()) @map("created_at")
 
-  @@index([variantId])
+  @@index([variantId, createdAt(sort: Desc)])
   @@map("price_history")
 }

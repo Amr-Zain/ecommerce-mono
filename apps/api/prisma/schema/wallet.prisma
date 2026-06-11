@@ -12,7 +12,6 @@ model Wallet {
   withdrawals      WalletWithdrawalRequest[]
 
   @@unique([userId, currency])
-  @@index([userId])
   @@index([status])
   @@map("wallets")
 }
@@ -41,13 +40,9 @@ model WalletTransaction {
   updatedAt       DateTime                 @default(now()) @updatedAt @map("updated_at")
   withdrawal      WalletWithdrawalRequest?
 
-  @@index([walletId])
-  @@index([userId])
-  @@index([type])
-  @@index([direction])
-  @@index([status])
+  @@index([walletId, status, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
   @@index([referenceType, referenceId])
-  @@index([createdAt])
   @@map("wallet_transactions")
 }
 

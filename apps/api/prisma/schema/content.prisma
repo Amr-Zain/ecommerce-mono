@@ -111,7 +111,6 @@ model Review {
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@unique([userId, productId])
-  @@index([userId])
-  @@index([productId])
+  @@index([productId, isActive, isVerified, createdAt(sort: Desc)])
   @@map("reviews")
 }

@@ -70,10 +70,10 @@ model User {
   walletWithdrawals       WalletWithdrawalRequest[]
   notifications           Notification[]
 
-  @@index([email])
   @@index([phone])
+  @@index([phoneCode, phone])
+  @@index([userType])
   @@index([roleId])
-  @@index([guestToken])
   @@map("users")
 }
 
@@ -88,7 +88,6 @@ model RefreshToken {
   isRevoked  Boolean  @default(false) @map("is_revoked")
   createdAt  DateTime @default(now()) @map("created_at")
 
-  @@index([userId])
-  @@index([token])
+  @@index([userId, isRevoked, createdAt(sort: Desc)])
   @@map("refresh_tokens")
 }

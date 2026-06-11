@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { ArrayMinSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
-import { I18nTranslations } from '../../generated/i18n.generated';
+import { I18nTranslations } from '../../../generated/i18n.generated';
 import { ITEM_DISPOSITIONS } from '@/common/constants/return-exchange.constants';
 import { PAYMENT_METHODS } from '@/shared/payment/payment.constants';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';

@@ -19,8 +19,6 @@ model OutboxEvent {
   receipts EventConsumerReceipt[]
 
   @@index([status, availableAt])
-  @@index([lockedAt])
-  @@index([processedAt])
   @@map("outbox_events")
 }
 

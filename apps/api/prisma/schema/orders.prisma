@@ -34,11 +34,9 @@ model Order {
   exchangeRequests        ExchangeRequest[]
   statusHistory           OrderStatusHistory[]
 
-  @@index([userId])
+  @@index([userId, status, createdAt(sort: Desc)])
   @@index([addressId])
-  @@index([status])
   @@index([paymentStatus])
-  @@index([orderNumber])
   @@map("orders")
 }
 
@@ -383,5 +381,6 @@ model Coupon {
   orders         Order[]
   reservations   CouponReservation[]
 
+  @@index([isActive, expiresAt])
   @@map("coupons")
 }
