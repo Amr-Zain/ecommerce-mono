@@ -1,7 +1,7 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { PRODUCTS_REPOSITORY, IProductsRepository } from '@/common/interfaces';
-import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { ClientWishlistService } from '../wishlist/client-wishlist.service';
+import { CatalogQueryDto } from './dto/catalog-query.dto';
 
 @Injectable()
 export class ClientProductsService {
@@ -10,49 +10,22 @@ export class ClientProductsService {
     private readonly wishlistService: ClientWishlistService,
   ) {}
 
-  async findAll(langId: string = 'en', userId?: bigint) {
-    const query: AdvancedQueryDto = {
-      paginate: false,
-      filters: { isActive: true },
-    };
-    const products = await this.productsRepo.findAll(query, langId, {
-      select: {
-        id: true,
-        hasVariants: true,
-        collectionId: true,
-        translations: {
-          where: { langId },
-          select: { name: true, description: true, langId: true },
-        },
-        variants: {
-          select: {
-            id: true,
-            price: true,
-            compareAtPrice: true,
-            stockQuantity: true,
-            discountType: true,
-            discountValue: true,
-            attributes: {
-              select: {
-                attributeId: true,
-                valueId: true,
-                attribute: { select: { id: true, translations: { where: { langId }, select: { name: true, langId: true } } } },
-                value: { select: { id: true, translations: { where: { langId }, select: { name: true, langId: true } } } },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return Array.isArray(products)
-      ? this.wishlistService.decorateProductsWithWishlist(products, userId)
-      : products;
+  async findAll(query: CatalogQueryDto, langId: string = 'en', userId?: bigint) {
+    const catalog = await this.productsRepo.findCatalog(query, langId);
+    const items = await this.wishlistService.decorateProductsWithWishlist(
+      catalog.items as Array<{ id: bigint }>,
+      userId,
+    );
+    return { ...catalog, items };
   }
 
-  async findOne(id: bigint, userId?: bigint) {
-    const product = await this.productsRepo.findProductById(id);
+  async findOne(id: bigint, langId: string = 'en') {
+    const product = await this.productsRepo.findStorefrontDetail(id, langId);
     if (!product) throw new NotFoundException('Product not found');
-    return this.wishlistService.decorateProductWithWishlist(product, userId);
+    return product;
+  }
+
+  async findRelated(id: bigint, langId: string = 'en', limit: number = 8) {
+    return this.productsRepo.findRelated(id, langId, Math.min(Math.max(limit, 1), 20));
   }
 }

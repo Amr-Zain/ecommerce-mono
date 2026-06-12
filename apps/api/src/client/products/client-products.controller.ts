@@ -1,10 +1,12 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { Public } from '@/auth/decorators/public.decorator';
 import { OptionalJwtAuthGuard } from '@/auth/guards/optional-jwt-auth.guard';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
+import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { ClientProductsService } from './client-products.service';
+import { CatalogQueryDto } from './dto/catalog-query.dto';
 
 @ApiContext('client')
 @Controller('products')
@@ -14,14 +16,25 @@ export class ClientProductsController {
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @Get()
-  findAll(@I18nLang() lang: string, @CurrentUser() user?: { id: bigint }) {
-    return this.productsService.findAll(lang, user?.id);
+  findAll(
+    @ParsedQuery(CatalogQueryDto) query: CatalogQueryDto,
+    @I18nLang() lang: string,
+    @CurrentUser() user?: { id: bigint },
+  ) {
+    return this.productsService.findAll(query, lang, user?.id);
+  }
+
+  @Public()
+  @UseGuards(OptionalJwtAuthGuard)
+  @Get(':id/related')
+  findRelated(@Param('id') id: string, @I18nLang() lang: string, @Query('limit') limit?: string) {
+    return this.productsService.findRelated(BigInt(id), lang, Number(limit) || 8);
   }
 
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user?: { id: bigint }) {
-    return this.productsService.findOne(BigInt(id), user?.id);
+  findOne(@Param('id') id: string, @I18nLang() lang: string) {
+    return this.productsService.findOne(BigInt(id), lang);
   }
 }

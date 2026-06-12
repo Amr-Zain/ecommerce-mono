@@ -19,6 +19,7 @@ export type {
   SimpleVariantSyncData,
   VariantPriceUpdate,
   ProductUpdatePlan,
+  CatalogQuery,
 } from './products.interface';
 export { PRODUCTS_REPOSITORY, VARIANTS_REPOSITORY } from './products.interface';
 export type {

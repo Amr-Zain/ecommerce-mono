@@ -84,6 +84,19 @@ export interface ProductUpdatePlan {
   variantPriceUpdates?: VariantPriceUpdate[];
 }
 
+export interface CatalogQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  collectionSlug?: string;
+  collection?: string[];
+  attributeValue?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  minDiscount?: number;
+  catalogSort?: 'newest' | 'price_asc' | 'price_desc' | 'rating_desc';
+}
+
 export const PRODUCTS_REPOSITORY = Symbol('IProductsRepository');
 
 export interface IProductsRepository {
@@ -94,6 +107,9 @@ export interface IProductsRepository {
   ): Promise<PaginatedResult<Product> | Product[]>;
   createProductWithVariants(dto: unknown): Promise<Product | null>;
   findProductById(id: number | bigint): Promise<Product | null>;
+  findStorefrontDetail(id: number | bigint, langId?: string): Promise<Record<string, unknown> | null>;
+  findRelated(id: number | bigint, langId?: string, limit?: number): Promise<Record<string, unknown>[]>;
+  findCatalog(query: CatalogQuery, langId?: string): Promise<Record<string, unknown>>;
   create(data: Record<string, unknown>, options?: Record<string, unknown>): Promise<Product>;
   executeUpdatePlan(id: number | bigint, plan: ProductUpdatePlan): Promise<Product>;
   delete(id: number | bigint): Promise<Product>;

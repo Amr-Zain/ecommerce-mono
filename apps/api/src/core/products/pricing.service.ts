@@ -32,7 +32,7 @@ export class PricingService {
       let actualPrice = rawPrice;
 
       if (discountType === DISCOUNT_TYPES.percentage) {
-        actualPrice = rawPrice - (rawPrice * (discountValue / 100));
+        actualPrice = rawPrice - rawPrice * (discountValue / 100);
       } else if (discountType === DISCOUNT_TYPES.fixed) {
         actualPrice = rawPrice - discountValue;
       }
@@ -78,14 +78,10 @@ export class PricingService {
     vatRate: number;
     totalPrice: number;
   } {
-    const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
     const netSubtotal = Math.max(0, subtotal - discountAmount);
-    
-    const { vatRate, vatAmount } = this.calculateVat(
-      netSubtotal,
-      phoneCode,
-      countryShortName,
-    );
+
+    const { vatRate, vatAmount } = this.calculateVat(netSubtotal, phoneCode, countryShortName);
 
     const rawTotal = netSubtotal + shippingFee + vatAmount;
     const totalPrice = Math.max(0, Number(rawTotal.toFixed(2)));
