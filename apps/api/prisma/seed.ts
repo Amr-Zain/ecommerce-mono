@@ -15,24 +15,28 @@ const prisma = new PrismaClient({ adapter });
 const collectionSeeds = [
   {
     id: 1001n,
+    slug: 'womens-jewellery',
     en: "Women's Jewellery",
     ar: 'مجوهرات نسائية',
     image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=85',
   },
   {
     id: 1002n,
+    slug: 'mens-jewellery',
     en: "Men's Jewellery",
     ar: 'مجوهرات رجالية',
     image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=600&q=85',
   },
   {
     id: 1003n,
+    slug: 'watches',
     en: 'Watches',
     ar: 'ساعات',
     image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=600&q=85',
   },
   {
     id: 1004n,
+    slug: 'gifts',
     en: 'Gifts',
     ar: 'هدايا',
     image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=600&q=85',
@@ -46,6 +50,19 @@ const childCollectionSeeds = [
   { id: 1104n, parentId: 1002n, en: 'Men Bracelets', ar: 'أساور رجالية' },
   { id: 1105n, parentId: 1003n, en: 'Classic Watches', ar: 'ساعات كلاسيكية' },
   { id: 1106n, parentId: 1004n, en: 'Gift Sets', ar: 'أطقم هدايا' },
+];
+
+const leafCollectionSeeds = [
+  { id: 1301n, parentId: 1101n, en: 'Pendant Necklaces', ar: 'Pendant Necklaces' },
+  { id: 1302n, parentId: 1101n, en: 'Chain Necklaces', ar: 'Chain Necklaces' },
+  { id: 1303n, parentId: 1102n, en: "Women's Rings", ar: "Women's Rings" },
+  { id: 1304n, parentId: 1102n, en: 'Earrings', ar: 'Earrings' },
+  { id: 1305n, parentId: 1103n, en: 'Signet Rings', ar: 'Signet Rings' },
+  { id: 1306n, parentId: 1104n, en: 'Chain Bracelets', ar: 'Chain Bracelets' },
+  { id: 1307n, parentId: 1105n, en: 'Metal Watches', ar: 'Metal Watches' },
+  { id: 1308n, parentId: 1105n, en: 'Leather Watches', ar: 'Leather Watches' },
+  { id: 1309n, parentId: 1106n, en: 'Jewellery Gifts', ar: 'Jewellery Gifts' },
+  { id: 1310n, parentId: 1106n, en: 'Accessory Gifts', ar: 'Accessory Gifts' },
 ];
 
 const attributeSeeds = [
@@ -182,6 +199,59 @@ const productSeeds = [
   ],
 ] as const;
 
+const variantCounts = [3, 7, 4, 6, 2, 8, 5, 3, 9, 1, 6, 4] as const;
+const variantCombinations = [
+  [1211n, 1221n],
+  [1212n, 1222n],
+  [1213n, 1223n],
+  [1211n, 1223n],
+  [1212n, 1221n],
+  [1213n, 1222n],
+  [1213n, 1221n],
+  [1211n, 1222n],
+  [1212n, 1223n],
+] as const;
+const variantGalleryImages = [
+  'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=700&q=85',
+  'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=700&q=85',
+  'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=700&q=85',
+  'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=700&q=85',
+  'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=700&q=85',
+  'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=700&q=85',
+] as const;
+const reviewSeeds = [
+  {
+    name: 'Sara Ahmed',
+    email: 'reviewer.sara@example.com',
+    rating: 5,
+    comment: 'Beautiful finish and even better in person.',
+  },
+  {
+    name: 'Omar Hassan',
+    email: 'reviewer.omar@example.com',
+    rating: 4,
+    comment: 'Excellent quality and the size was accurate.',
+  },
+  {
+    name: 'Lina Khaled',
+    email: 'reviewer.lina@example.com',
+    rating: 3,
+    comment: 'Lovely design, though delivery took longer than expected.',
+  },
+  {
+    name: 'Maya Adel',
+    email: 'reviewer.maya@example.com',
+    rating: 5,
+    comment: 'A polished piece that feels made to last.',
+  },
+  {
+    name: 'Youssef Ali',
+    email: 'reviewer.youssef@example.com',
+    rating: 4,
+    comment: 'Matches the photos and arrived carefully packed.',
+  },
+] as const;
+
 async function upsertMedia(
   uuid: string,
   model: string,
@@ -214,8 +284,8 @@ async function seedStorefront() {
   for (const [index, collection] of collectionSeeds.entries()) {
     await prisma.collection.upsert({
       where: { id: collection.id },
-      update: { isActive: true, sortOrder: index + 1 },
-      create: { id: collection.id, isActive: true, sortOrder: index + 1 },
+      update: { slug: collection.slug, isActive: true, sortOrder: index + 1 },
+      create: { id: collection.id, slug: collection.slug, isActive: true, sortOrder: index + 1 },
     });
     for (const translation of [
       { langId: 'en', name: collection.en },
@@ -236,12 +306,18 @@ async function seedStorefront() {
     );
   }
 
-  for (const [index, collection] of childCollectionSeeds.entries()) {
+  for (const [index, collection] of [...childCollectionSeeds, ...leafCollectionSeeds].entries()) {
+    const slug = collection.en
+      .toLowerCase()
+      .replace(/&/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
     await prisma.collection.upsert({
       where: { id: collection.id },
-      update: { parentId: collection.parentId, isActive: true, sortOrder: index + 1 },
+      update: { slug, parentId: collection.parentId, isActive: true, sortOrder: index + 1 },
       create: {
         id: collection.id,
+        slug,
         parentId: collection.parentId,
         isActive: true,
         sortOrder: index + 1,
@@ -294,9 +370,7 @@ async function seedStorefront() {
     }
   }
 
-  const productCollections = [1101n, 1102n, 1102n, 1101n, 1103n, 1104n, 1105n, 1105n, 1105n, 1106n, 1106n, 1106n];
-  const finishValues = [1211n, 1212n, 1213n];
-  const sizeValues = [1221n, 1222n, 1223n];
+  const productCollections = [1301n, 1303n, 1304n, 1302n, 1305n, 1306n, 1307n, 1307n, 1308n, 1310n, 1310n, 1309n];
 
   for (const [index, product] of productSeeds.entries()) {
     const [en, ar, _collectionId, price, compareAtPrice, stock, image] = product;
@@ -318,10 +392,10 @@ async function seedStorefront() {
       });
     }
     await prisma.productVariant.updateMany({
-      where: { productId: id, sku: `SEED-${id}` },
+      where: { productId: id, sku: { startsWith: `SEED-${id}` } },
       data: { isActive: false },
     });
-    for (const variantIndex of [0, 1]) {
+    for (let variantIndex = 0; variantIndex < variantCounts[index]; variantIndex++) {
       const variantPrice = price + variantIndex * 20;
       const variantStock = Math.max(1, stock - variantIndex * 3);
       const variant = await prisma.productVariant.upsert({
@@ -344,9 +418,10 @@ async function seedStorefront() {
           isActive: true,
         },
       });
+      const combination = variantCombinations[(index * 2 + variantIndex) % variantCombinations.length];
       const attributes = [
-        { attributeId: 1201n, valueId: finishValues[(index + variantIndex) % finishValues.length] },
-        { attributeId: 1202n, valueId: sizeValues[(index + variantIndex) % sizeValues.length] },
+        { attributeId: 1201n, valueId: combination[0] },
+        { attributeId: 1202n, valueId: combination[1] },
       ];
       for (const attribute of attributes) {
         await prisma.variantAttribute.upsert({
@@ -365,6 +440,22 @@ async function seedStorefront() {
           },
         });
       }
+      const variantMediaId = id * 10n + BigInt(variantIndex + 1);
+      await upsertMedia(
+        `22000000-0000-4000-8000-${variantMediaId.toString().padStart(12, '0')}`,
+        'productvariant',
+        variant.id,
+        'image',
+        variantGalleryImages[(index + variantIndex) % variantGalleryImages.length],
+      );
+      await upsertMedia(
+        `23000000-0000-4000-8000-${variantMediaId.toString().padStart(12, '0')}`,
+        'productvariant',
+        variant.id,
+        'gallery',
+        variantGalleryImages[(index + variantIndex + 1) % variantGalleryImages.length],
+        false,
+      );
       const hasInventoryLog = await prisma.inventoryLog.findFirst({
         where: { variantId: variant.id, reason: 'RESTOCK' },
         select: { id: true },
@@ -390,6 +481,61 @@ async function seedStorefront() {
       image,
       false,
     );
+  }
+
+  const reviewerPassword = await bcrypt.hash('password123', 10);
+  const reviewers = [];
+  for (const reviewer of reviewSeeds) {
+    reviewers.push(
+      await prisma.user.upsert({
+        where: { email: reviewer.email },
+        update: {
+          name: reviewer.name,
+          password: reviewerPassword,
+          userType: 'client',
+          isEmailVerified: true,
+          isActive: true,
+        },
+        create: {
+          name: reviewer.name,
+          email: reviewer.email,
+          password: reviewerPassword,
+          userType: 'client',
+          isEmailVerified: true,
+          isActive: true,
+        },
+      }),
+    );
+  }
+  for (const [productIndex] of productSeeds.entries()) {
+    const productId = BigInt(2001 + productIndex);
+    const reviewCount = 3 + (productIndex % 3);
+    for (let reviewIndex = 0; reviewIndex < reviewCount; reviewIndex++) {
+      const reviewerIndex = (productIndex + reviewIndex) % reviewers.length;
+      const reviewSeed = reviewSeeds[reviewerIndex];
+      await prisma.review.upsert({
+        where: {
+          userId_productId: {
+            userId: reviewers[reviewerIndex].id,
+            productId,
+          },
+        },
+        update: {
+          rating: reviewSeed.rating,
+          comment: reviewSeed.comment,
+          isVerified: true,
+          isActive: true,
+        },
+        create: {
+          userId: reviewers[reviewerIndex].id,
+          productId,
+          rating: reviewSeed.rating,
+          comment: reviewSeed.comment,
+          isVerified: true,
+          isActive: true,
+        },
+      });
+    }
   }
 
   const sliderSeeds = [
