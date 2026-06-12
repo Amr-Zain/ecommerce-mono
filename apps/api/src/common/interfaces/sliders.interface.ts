@@ -25,6 +25,10 @@ export interface Slider {
 export const SLIDERS_REPOSITORY = Symbol('ISlidersRepository');
 
 export interface ISlidersRepository extends IBaseRepository<Slider> {
-  findAll(query: AdvancedQueryDto, langId?: string, options?: QueryOptions): Promise<PaginatedResult<Slider> | Slider[]>;
+  findAll(
+    query: AdvancedQueryDto,
+    langId?: string,
+    options?: QueryOptions,
+  ): Promise<PaginatedResult<Slider> | Slider[]>;
   findByIdWithAllTranslations(id: number | bigint): Promise<Slider | null>;
 }

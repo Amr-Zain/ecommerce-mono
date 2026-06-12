@@ -7,12 +7,7 @@ import { OrderLifecycleModule } from '@/shared/orders/order-lifecycle.module';
 import { OrdersModule } from '@/core/orders/orders.module';
 
 @Module({
-  imports: [
-    PrismaModule,
-    PaymentModule,
-    OrderLifecycleModule,
-    OrdersModule,
-  ],
+  imports: [PrismaModule, PaymentModule, OrderLifecycleModule, OrdersModule],
   controllers: [AdminOrdersController],
   providers: [AdminOrdersService],
 })

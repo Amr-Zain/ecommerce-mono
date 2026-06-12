@@ -37,8 +37,10 @@ interface QueryArgs {
  * Used for compile-time validation of searchConfig.directFields.
  */
 export type ScalarFields<T> = {
-  [K in keyof T]: T[K] extends (number | string | boolean | bigint | Date | null | undefined)
-    ? K extends string ? K : never
+  [K in keyof T]: T[K] extends number | string | boolean | bigint | Date | null | undefined
+    ? K extends string
+      ? K
+      : never
     : never;
 }[keyof T];
 
@@ -47,8 +49,12 @@ export type ScalarFields<T> = {
  * Used for compile-time validation of searchConfig.relationFields and allowedIncludes.
  */
 export type RelationFields<T> = {
-  [K in keyof T]: T[K] extends (object | null | undefined)
-    ? T[K] extends (Date | bigint) ? never : K extends string ? K : never
+  [K in keyof T]: T[K] extends object | null | undefined
+    ? T[K] extends Date | bigint
+      ? never
+      : K extends string
+        ? K
+        : never
     : never;
 }[keyof T];
 
@@ -59,12 +65,11 @@ export type RelationFields<T> = {
  *
  * Usage: `translationFields: ['name'] satisfies TranslationFields<City>[]`
  */
-export type TranslationFields<T> =
-  T extends { translations: (infer U)[] }
+export type TranslationFields<T> = T extends { translations: (infer U)[] }
+  ? ScalarFields<U>
+  : T extends { translations?: (infer U)[] | null }
     ? ScalarFields<U>
-    : T extends { translations?: (infer U)[] | null }
-      ? ScalarFields<U>
-      : string;
+    : string;
 
 // ─── Search Config Types ──────────────────────────────────────────────────────
 
@@ -134,7 +139,6 @@ export type FilterConfig = Record<string, FilterFieldType>;
  * Example: `{ country: { include: { translations: true } }, reviews: true }`
  */
 export type AllowedIncludes = Record<string, boolean | Record<string, unknown>>;
-
 
 export abstract class BaseRepository<T extends { id: number | bigint }> {
   protected readonly mediaConfig: Record<string, MediaSlotConfig> = {};
@@ -476,9 +480,7 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
 
     // Resolve default include + dynamic includes from query.include
     const include = this.resolveFullInclude(query.include, langId);
-    return include
-      ? this.paginate(query, where, { include })
-      : this.paginate(query, where);
+    return include ? this.paginate(query, where, { include }) : this.paginate(query, where);
   }
 
   /**
@@ -589,7 +591,9 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
    * Coerces filter values based on `filterConfig` declarations.
    * Converts string '5' to BigInt(5) for bigint fields, Number for number fields, etc.
    */
-  private coerceFilters(filters: Record<string, string | number | boolean>): Record<string, string | number | boolean | bigint> {
+  private coerceFilters(
+    filters: Record<string, string | number | boolean>,
+  ): Record<string, string | number | boolean | bigint> {
     if (Object.keys(this.filterConfig).length === 0) return filters;
 
     const coerced: Record<string, string | number | boolean | bigint> = {};
@@ -602,7 +606,7 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
 
       switch (expectedType) {
         case 'bigint':
-          coerced[key] = BigInt(value as string | number);
+          coerced[key] = BigInt(value);
           break;
         case 'number':
           coerced[key] = Number(value);
@@ -761,11 +765,14 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
           }
 
           if (item.modelId === null && item.attachHash) {
-            await this.mediaService.attachTempMedia({
-              model,
-              attachHash: item.attachHash,
-              modelId: id.toString(),
-            }, tx);
+            await this.mediaService.attachTempMedia(
+              {
+                model,
+                attachHash: item.attachHash,
+                modelId: id.toString(),
+              },
+              tx,
+            );
           }
 
           // Set collection and handle isMain (only for the first hash)

@@ -42,11 +42,7 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
     },
   };
 
-  constructor(
-    prisma: PrismaService,
-    queryBuilder: QueryBuilderService,
-    mediaService: MediaService,
-  ) {
+  constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
     super(prisma, mediaService, queryBuilder);
   }
 

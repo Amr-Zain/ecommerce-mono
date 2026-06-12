@@ -44,7 +44,10 @@ export const STATIC_PAGES_REPOSITORY = Symbol('IStaticPagesRepository');
 
 export interface IStaticPagesRepository extends IBaseRepository<StaticPage> {
   getAllStaticPages(query: AdvancedQueryDto): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
-  getAllStticPagesWithAllSections(query?: AdvancedQueryDto, options?: QueryOptions): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
+  getAllStticPagesWithAllSections(
+    query?: AdvancedQueryDto,
+    options?: QueryOptions,
+  ): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
   getStaticPageByIdWithAllSections(id: number): Promise<StaticPage | null>;
   createStaticPage(data: unknown): Promise<StaticPage>;
   updateStaticPage(data: unknown, id: number): Promise<StaticPage>;

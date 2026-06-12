@@ -2,6 +2,7 @@ import { Controller, Get, Param, Patch, Query, Sse } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
+import { ParseBigIntPipe } from '@/common/pipes/parse-bigint.pipe';
 import { NotificationService } from './notification.service';
 
 abstract class BaseNotificationController {
@@ -29,14 +30,14 @@ abstract class BaseNotificationController {
     return this.notifications.unreadCount(user.id);
   }
 
-  @Patch(':id/read')
-  markRead(@CurrentUser() user: { id: bigint }, @Param('id') id: string) {
-    return this.notifications.markRead(user.id, BigInt(id));
-  }
-
   @Patch('read-all')
   markAllRead(@CurrentUser() user: { id: bigint }) {
     return this.notifications.markAllRead(user.id);
+  }
+
+  @Patch(':id/read')
+  markRead(@CurrentUser() user: { id: bigint }, @Param('id', ParseBigIntPipe) id: bigint) {
+    return this.notifications.markRead(user.id, id);
   }
 
   @Sse('stream')

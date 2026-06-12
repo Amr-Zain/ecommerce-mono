@@ -39,7 +39,7 @@ export class AdminCouponsService {
       isActive: dto.isActive ?? true,
     };
 
-    const coupon = await this.couponsRepo.create(data as any);
+    const coupon = await this.couponsRepo.create(data);
     return this.formatCoupon(coupon);
   }
 

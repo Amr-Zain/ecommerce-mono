@@ -16,7 +16,7 @@ export class OutboxEventsRepository {
         aggregateType: event.aggregateType,
         aggregateId: event.aggregateId,
         occurredAt: event.occurredAt,
-        actor: event.actor as Prisma.InputJsonValue | undefined,
+        actor: event.actor,
         payload: event.payload as Prisma.InputJsonValue,
       },
     });

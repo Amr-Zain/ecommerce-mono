@@ -535,8 +535,8 @@ export class AuthService {
       const existing = decoded?.jti ? await this.refreshTokensRepository.findActiveWithUser(decoded.jti) : null;
 
       if (existing?.user.guestToken) {
-        const accessToken = this.generateAccessToken(existing.user as AuthUserPayload);
-        return this.authResult(existing.user as AuthUserPayload, accessToken, existingRefreshToken);
+        const accessToken = this.generateAccessToken(existing.user);
+        return this.authResult(existing.user, accessToken, existingRefreshToken);
       }
 
       if (existing?.user) {

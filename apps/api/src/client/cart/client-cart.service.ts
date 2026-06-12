@@ -257,5 +257,4 @@ export class ClientCartService {
     await this.cartsRepo.clearCart(cart.id);
     return this.getCart(userId, langId);
   }
-
 }

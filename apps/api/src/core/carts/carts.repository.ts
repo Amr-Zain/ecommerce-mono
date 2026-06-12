@@ -51,7 +51,7 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
         },
       },
     });
-    return record as unknown as Cart | null;
+    return record;
   }
 
   async findOrCreateByUserId(userId: bigint): Promise<Cart> {
@@ -81,7 +81,7 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
         where: { id: existingItem.id },
         data: { quantity: existingItem.quantity + quantity },
       });
-      return updatedItem as unknown as CartItem;
+      return updatedItem;
     }
 
     const newItem = await this.prisma.cartItem.create({
@@ -92,7 +92,7 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
         quantity,
       },
     });
-    return newItem as unknown as CartItem;
+    return newItem;
   }
 
   async updateItemQuantity(cartItemId: bigint, quantity: number): Promise<CartItem> {
@@ -100,14 +100,14 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
       where: { id: cartItemId },
       data: { quantity },
     });
-    return updated as unknown as CartItem;
+    return updated;
   }
 
   async removeItem(cartItemId: bigint): Promise<CartItem> {
     const deleted = await this.prisma.cartItem.delete({
       where: { id: cartItemId },
     });
-    return deleted as unknown as CartItem;
+    return deleted;
   }
 
   async clearCart(cartId: bigint): Promise<void> {

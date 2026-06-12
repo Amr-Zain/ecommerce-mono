@@ -43,7 +43,7 @@ export class CaseTransformer {
       }
 
       const transformed: Record<string, unknown> = {};
-      const keys = Object.keys(obj as Record<string, unknown>);
+      const keys = Object.keys(obj);
       for (const key of keys) {
         transformed[this.toSnakeCase(key)] = this.transformToSnake((obj as Record<string, unknown>)[key]);
       }
@@ -77,7 +77,7 @@ export class CaseTransformer {
       }
 
       const transformed: Record<string, unknown> = {};
-      const keys = Object.keys(obj as Record<string, unknown>);
+      const keys = Object.keys(obj);
       for (const key of keys) {
         transformed[this.toCamelCase(key)] = this.transformToCamel((obj as Record<string, unknown>)[key]);
       }

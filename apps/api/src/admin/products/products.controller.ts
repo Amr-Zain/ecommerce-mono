@@ -13,18 +13,17 @@ import { UseLanguageTransform } from '@/common/decorators/transform-language-key
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
-  
+
   @Post()
   @UseLanguageTransform({ recursive: true })
   @RequirePermissions({ resource: 'products', action: 'create' })
   create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto);
   }
-  
+
   @Get()
   @RequirePermissions({ resource: 'products', action: 'list' })
-  findAll(@ParsedQuery(ProductQueryDto) query: ProductQueryDto,
-  ) {
+  findAll(@ParsedQuery(ProductQueryDto) query: ProductQueryDto) {
     return this.productsService.findAll(query);
   }
 

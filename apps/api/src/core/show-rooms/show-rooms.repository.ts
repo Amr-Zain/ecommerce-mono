@@ -6,7 +6,9 @@ import { MediaService } from '@/media/media.service';
 import { MediaType } from '@/media/enums/media-type.enum';
 import { IShowRoomsRepository } from '@/common/interfaces';
 
-type ShowRoomType = Prisma.ShowRoomGetPayload<{ include: { translations: true; country: { include: { translations: true } } } }>;
+type ShowRoomType = Prisma.ShowRoomGetPayload<{
+  include: { translations: true; country: { include: { translations: true } } };
+}>;
 
 @Injectable()
 export class ShowRoomsRepository extends BaseRepository<ShowRoomType> implements IShowRoomsRepository {
@@ -44,11 +46,7 @@ export class ShowRoomsRepository extends BaseRepository<ShowRoomType> implements
     translations: true,
   };
 
-  constructor(
-    prisma: PrismaService,
-    queryBuilder: QueryBuilderService,
-    mediaService: MediaService,
-  ) {
+  constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
     super(prisma, mediaService, queryBuilder);
   }
 

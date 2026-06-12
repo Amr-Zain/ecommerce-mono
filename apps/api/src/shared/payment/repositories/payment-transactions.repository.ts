@@ -31,10 +31,7 @@ export class PaymentTransactionsRepository implements IPaymentTransactionsReposi
     return tx.paymentTransaction.updateMany(args);
   }
 
-  async findById(
-    id: bigint,
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<PaymentTransaction | null> {
+  async findById(id: bigint, tx: Prisma.TransactionClient = this.prisma): Promise<PaymentTransaction | null> {
     return tx.paymentTransaction.findUnique({ where: { id } });
   }
 

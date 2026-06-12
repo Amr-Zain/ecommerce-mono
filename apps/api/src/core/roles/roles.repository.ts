@@ -21,10 +21,7 @@ export class RolesRepository extends BaseRepository<Role> implements IRolesRepos
     permissions: { select: { id: true, resource: true, action: true } },
   };
 
-  constructor(
-    prisma: PrismaService,
-    queryBuilder: QueryBuilderService,
-  ) {
+  constructor(prisma: PrismaService, queryBuilder: QueryBuilderService) {
     super(prisma, undefined, queryBuilder);
   }
 

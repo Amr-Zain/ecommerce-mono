@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '../../../generated/i18n.generated';
 import { ITEM_DISPOSITIONS } from '@/common/constants/return-exchange.constants';
@@ -98,7 +108,9 @@ export class AdminReturnRefundDto {
 
 export class AdminExchangePaymentDto {
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @IsIn([PAYMENT_METHODS.stripeCheckout, PAYMENT_METHODS.stripeIntent], { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
+  @IsIn([PAYMENT_METHODS.stripeCheckout, PAYMENT_METHODS.stripeIntent], {
+    message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM'),
+  })
   paymentMethod!: string;
 }
 

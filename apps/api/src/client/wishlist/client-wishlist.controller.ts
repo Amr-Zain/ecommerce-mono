@@ -16,11 +16,7 @@ export class ClientWishlistController {
   }
 
   @Post()
-  toggle(
-    @CurrentUser() user: { id: bigint },
-    @Body() dto: ToggleWishlistDto,
-    @I18nLang() lang: string,
-  ) {
+  toggle(@CurrentUser() user: { id: bigint }, @Body() dto: ToggleWishlistDto, @I18nLang() lang: string) {
     return this.wishlistService.toggle(user.id, BigInt(dto.productId), lang);
   }
 }

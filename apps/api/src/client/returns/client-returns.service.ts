@@ -23,7 +23,16 @@ import {
   VARIANTS_REPOSITORY,
 } from '@/common/interfaces';
 import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
-import { createDomainEvent, DOMAIN_EVENTS, exchangeStatusEvent, returnStatusEvent, type ReturnRequestedPayload, type ExchangeRequestedPayload, type ReturnStatusPayload, type ExchangeStatusPayload } from '@/common/events/domain-event';
+import {
+  createDomainEvent,
+  DOMAIN_EVENTS,
+  exchangeStatusEvent,
+  returnStatusEvent,
+  type ReturnRequestedPayload,
+  type ExchangeRequestedPayload,
+  type ReturnStatusPayload,
+  type ExchangeStatusPayload,
+} from '@/common/events/domain-event';
 import {
   CreateExchangeRequestDto,
   CreateExchangeRequestItemDto,

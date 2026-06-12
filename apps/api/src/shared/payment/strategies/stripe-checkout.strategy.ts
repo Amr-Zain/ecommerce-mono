@@ -98,7 +98,11 @@ export class StripeCheckoutStrategy implements PaymentStrategy {
     }
   }
 
-  async refund(transactionRef: string, amount: number, options?: { idempotencyKey?: string }): Promise<PaymentRefundResult> {
+  async refund(
+    transactionRef: string,
+    amount: number,
+    options?: { idempotencyKey?: string },
+  ): Promise<PaymentRefundResult> {
     try {
       const session = await this.stripe.checkout.sessions.retrieve(transactionRef);
       if (!session.payment_intent) {

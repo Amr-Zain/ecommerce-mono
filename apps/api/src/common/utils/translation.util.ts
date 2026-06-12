@@ -42,7 +42,7 @@ export function flattenTranslations<T extends EntityWithTranslations>(
 ): Omit<T, 'translations'> & Record<string, unknown> {
   if (!entity.translations || entity.translations.length === 0) {
     const { translations: _t, ...rest } = entity;
-    return rest as Omit<T, 'translations'> & Record<string, unknown>;
+    return rest;
   }
 
   const translation = entity.translations[0];
@@ -107,7 +107,7 @@ export function flattenAllTranslations<T extends EntityWithTranslations>(
 ): Omit<T, 'translations'> & Record<string, unknown> {
   if (!entity.translations || entity.translations.length === 0) {
     const { translations: _t, ...rest } = entity;
-    return rest as Omit<T, 'translations'> & Record<string, unknown>;
+    return rest;
   }
 
   if (entity.translations.length === 1) {

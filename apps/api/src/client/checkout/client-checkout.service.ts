@@ -823,7 +823,7 @@ export class ClientCheckoutService {
         });
       }
 
-      let shippingFee = isFreeShipping ? 0 : Number(country.shippingPrice);
+      const shippingFee = isFreeShipping ? 0 : Number(country.shippingPrice);
 
       // 5. Calculate totals (using pricing service)
       const phoneCode = country.phoneCode;

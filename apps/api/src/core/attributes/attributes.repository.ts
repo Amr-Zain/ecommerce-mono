@@ -27,11 +27,7 @@ export class AttributesRepository extends BaseRepository<AttributeType> implemen
     values: { include: { translations: true } },
   };
 
-  constructor(
-    prisma: PrismaService,
-    queryBuilder: QueryBuilderService,
-    mediaService: MediaService,
-  ) {
+  constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
     super(prisma, mediaService, queryBuilder);
   }
 
@@ -48,15 +44,15 @@ export class AttributesRepository extends BaseRepository<AttributeType> implemen
           include: { translations: true },
         },
       },
-    }) as unknown as Promise<AttributeType | null>;
+    });
   }
 
   async createAttribute(data: Prisma.AttributeCreateInput): Promise<AttributeType> {
-    return this.create(data as unknown as Record<string, unknown>);
+    return this.create(data);
   }
 
   async updateAttribute(id: number, data: Prisma.AttributeUpdateInput): Promise<AttributeType> {
-    return this.update(id, data as unknown as Record<string, unknown>);
+    return this.update(id, data);
   }
 
   async deleteAttribute(id: number | bigint): Promise<AttributeType> {

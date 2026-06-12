@@ -34,11 +34,7 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
     sections: { include: { translations: true } },
   };
 
-  constructor(
-    prisma: PrismaService,
-    queryBuilder: QueryBuilderService,
-    mediaService: MediaService,
-  ) {
+  constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
     super(prisma, mediaService, queryBuilder);
   }
 
@@ -177,7 +173,7 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
         translations: {
           upsert: translations.map((t) => ({
             where: { recordId_langId: { recordId: BigInt(id), langId: t['langId'] as string } },
-            update: t as Prisma.PageSectionTranslationUpdateInput,
+            update: t,
             create: t as Prisma.PageSectionTranslationCreateInput,
           })),
         },

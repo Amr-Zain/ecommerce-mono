@@ -9,10 +9,10 @@ import { UpdateShowRoomDto } from './dto/update-show-room.dto';
 
 @Injectable()
 export class ShowRoomsService {
-  constructor(@Inject(SHOW_ROOMS_REPOSITORY) private readonly repo: ShowRoomsRepository) { }
+  constructor(@Inject(SHOW_ROOMS_REPOSITORY) private readonly repo: ShowRoomsRepository) {}
 
   async getAllShowRooms(query: AdvancedQueryDto, locale?: string): Promise<PaginatedResult<ShowRoom> | ShowRoom[]> {
-    return this.repo.findAll(query, locale, { include: { country: true }});
+    return this.repo.findAll(query, locale, { include: { country: true } });
   }
 
   async createShowRoom(showRoom: CreateShowRoomDto): Promise<ShowRoom> {

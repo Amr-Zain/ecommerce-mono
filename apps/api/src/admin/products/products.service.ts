@@ -50,9 +50,7 @@ export class ProductsService {
         }
 
         /* Check SKU/barcode duplication within the request */
-        const skuDup = variants.some(
-          (other) => other !== v && other.sku && v.sku && other.sku === v.sku,
-        );
+        const skuDup = variants.some((other) => other !== v && other.sku && v.sku && other.sku === v.sku);
         if (skuDup) {
           throw new BadRequestException(`Duplicate SKU "${v.sku}" within the request`);
         }
@@ -139,29 +137,23 @@ export class ProductsService {
       dto.discountType !== undefined ||
       dto.discountValue !== undefined;
 
-    const productDiscountChanged =
-      dto.discountType !== undefined || dto.discountValue !== undefined;
+    const productDiscountChanged = dto.discountType !== undefined || dto.discountValue !== undefined;
 
     if (!current.hasVariants && rootFieldsChanged) {
       const firstVariant = await this.repo.findFirstVariantOfProduct(id);
 
       if (firstVariant) {
         const priceOrDiscountChanged =
-          dto.price !== undefined ||
-          dto.discountType !== undefined ||
-          dto.discountValue !== undefined;
+          dto.price !== undefined || dto.discountType !== undefined || dto.discountValue !== undefined;
 
         let newPrice = Number(firstVariant.price);
         let newCompareAtPrice: number | null = firstVariant.compareAtPrice;
 
         if (priceOrDiscountChanged) {
           const basePrice = dto.price !== undefined ? dto.price : Number(firstVariant.price);
-          const variantDiscountType =
-            dto.discountType !== undefined ? dto.discountType : firstVariant.discountType;
+          const variantDiscountType = dto.discountType !== undefined ? dto.discountType : firstVariant.discountType;
           const variantDiscountValue =
-            dto.discountValue !== undefined
-              ? (dto.discountValue ?? null)
-              : firstVariant.discountValue;
+            dto.discountValue !== undefined ? (dto.discountValue ?? null) : firstVariant.discountValue;
 
           const computed = this.pricingService.computePrice(
             basePrice,
@@ -182,12 +174,8 @@ export class ProductsService {
           sku: dto.sku !== undefined ? dto.sku : firstVariant.sku,
           barcode: dto.barcode !== undefined ? dto.barcode : firstVariant.barcode,
           costPrice: dto.costPrice !== undefined ? dto.costPrice : firstVariant.costPrice,
-          discountType:
-            dto.discountType !== undefined ? dto.discountType : firstVariant.discountType,
-          discountValue:
-            dto.discountValue !== undefined
-              ? (dto.discountValue ?? null)
-              : firstVariant.discountValue,
+          discountType: dto.discountType !== undefined ? dto.discountType : firstVariant.discountType,
+          discountValue: dto.discountValue !== undefined ? (dto.discountValue ?? null) : firstVariant.discountValue,
           oldPrice: Number(firstVariant.price),
           oldStock: Number(firstVariant.stockQuantity),
         };
@@ -197,8 +185,7 @@ export class ProductsService {
     if (current.hasVariants && productDiscountChanged) {
       const variants = await this.repo.findVariantsByProductId(id);
 
-      const newProdDiscountType =
-        dto.discountType !== undefined ? dto.discountType : current.discountType;
+      const newProdDiscountType = dto.discountType !== undefined ? dto.discountType : current.discountType;
       const newProdDiscountValue =
         dto.discountValue !== undefined ? (dto.discountValue ?? null) : current.discountValue;
 
@@ -210,14 +197,10 @@ export class ProductsService {
         }
 
         const basePrice = Number(variant.compareAtPrice ?? variant.price);
-        const computed = this.pricingService.computePrice(
-          basePrice,
-          null,
-          {
-            type: newProdDiscountType,
-            value: newProdDiscountValue ? Number(newProdDiscountValue) : null,
-          },
-        );
+        const computed = this.pricingService.computePrice(basePrice, null, {
+          type: newProdDiscountType,
+          value: newProdDiscountValue ? Number(newProdDiscountValue) : null,
+        });
 
         if (Number(variant.price) !== computed.price) {
           variantPriceUpdates.push({

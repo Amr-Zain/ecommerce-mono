@@ -38,7 +38,17 @@ import {
   VARIANTS_REPOSITORY,
 } from '@/common/interfaces';
 import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
-import { createDomainEvent, DOMAIN_EVENTS, exchangeStatusEvent, returnStatusEvent, type ReturnStatusPayload, type ExchangeStatusPayload, type ExchangeReservationExpiredPayload, type PaymentCompletedPayload, type PaymentFailedPayload } from '@/common/events/domain-event';
+import {
+  createDomainEvent,
+  DOMAIN_EVENTS,
+  exchangeStatusEvent,
+  returnStatusEvent,
+  type ReturnStatusPayload,
+  type ExchangeStatusPayload,
+  type ExchangeReservationExpiredPayload,
+  type PaymentCompletedPayload,
+  type PaymentFailedPayload,
+} from '@/common/events/domain-event';
 
 const SETTLED_PRICE_STATUSES: readonly string[] = [
   PRICE_ADJUSTMENT_STATUSES.none,
@@ -475,7 +485,7 @@ export class AdminReturnsService {
       try {
         const result = await this.paymentService.refundPayment(
           request.order.paymentMethod,
-          completedPayment!.transactionRef!,
+          completedPayment!.transactionRef,
           refundAmount,
           { idempotencyKey: attempt.idempotencyKey! },
         );
@@ -999,7 +1009,7 @@ export class AdminReturnsService {
       try {
         const result = await this.paymentService.refundPayment(
           request.order.paymentMethod,
-          completedPayment!.transactionRef!,
+          completedPayment!.transactionRef,
           amount,
           { idempotencyKey: attempt.idempotencyKey! },
         );
@@ -1343,7 +1353,7 @@ export class AdminReturnsService {
       return;
     }
     await this.exchangeRequestsRepository.createHistory(data, tx);
-    const request = await this.exchangeRequestsRepository.findUnique({ where: { id: input.exchangeRequestId! } }, tx);
+    const request = await this.exchangeRequestsRepository.findUnique({ where: { id: input.exchangeRequestId } }, tx);
     await this.domainEvents.publish(
       createDomainEvent<ExchangeStatusPayload | ExchangeReservationExpiredPayload>({
         eventName:
@@ -1351,10 +1361,10 @@ export class AdminReturnsService {
             ? DOMAIN_EVENTS.exchangeReservationExpired
             : exchangeStatusEvent(input.newStatus),
         aggregateType: 'exchange',
-        aggregateId: input.exchangeRequestId!.toString(),
+        aggregateId: input.exchangeRequestId.toString(),
         actor: { type: 'admin', userId: input.actorUserId?.toString() },
         payload: {
-          exchangeRequestId: input.exchangeRequestId!.toString(),
+          exchangeRequestId: input.exchangeRequestId.toString(),
           orderId: request?.orderId.toString() ?? '',
           userId: request?.userId.toString() ?? '',
           previousStatus: input.previousStatus,
@@ -1484,7 +1494,7 @@ export class AdminReturnsService {
           paymentId: input.paymentId.toString(),
           status: input.status,
           amount: input.amount,
-        } as any,
+        },
       }),
       tx,
     );

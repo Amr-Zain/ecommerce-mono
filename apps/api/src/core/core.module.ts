@@ -29,10 +29,6 @@ import { CartsModule } from './carts/carts.module';
     ShowRoomsModule,
     CartsModule,
   ],
-  exports: [
-    ReviewsModule,
-    ShowRoomsModule,
-    CartsModule,
-  ],
+  exports: [ReviewsModule, ShowRoomsModule, CartsModule],
 })
 export class CoreModule {}

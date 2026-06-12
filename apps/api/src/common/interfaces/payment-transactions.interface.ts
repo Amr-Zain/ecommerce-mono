@@ -21,10 +21,7 @@ export interface IPaymentTransactionsRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Prisma.BatchPayload>;
 
-  findById(
-    id: bigint,
-    tx?: Prisma.TransactionClient,
-  ): Promise<PaymentTransaction | null>;
+  findById(id: bigint, tx?: Prisma.TransactionClient): Promise<PaymentTransaction | null>;
 
   update(
     id: bigint,
@@ -32,8 +29,5 @@ export interface IPaymentTransactionsRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<PaymentTransaction>;
 
-  findMany(
-    where: Prisma.PaymentTransactionWhereInput,
-    tx?: Prisma.TransactionClient,
-  ): Promise<PaymentTransaction[]>;
+  findMany(where: Prisma.PaymentTransactionWhereInput, tx?: Prisma.TransactionClient): Promise<PaymentTransaction[]>;
 }

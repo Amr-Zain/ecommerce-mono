@@ -4,9 +4,7 @@ import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
-import {
-  PAYMENT_STATUSES,
-} from '@/shared/payment/payment.constants';
+import { PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
 import { PaymentService } from '@/shared/payment/payment.service';
 import {
   WALLET_LIMITS,

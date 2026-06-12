@@ -30,6 +30,10 @@ export interface ShowRoom {
 export const SHOW_ROOMS_REPOSITORY = Symbol('IShowRoomsRepository');
 
 export interface IShowRoomsRepository extends IBaseRepository<ShowRoom> {
-  findAll(query: AdvancedQueryDto, langId?: string, options?: QueryOptions): Promise<PaginatedResult<ShowRoom> | ShowRoom[]>;
+  findAll(
+    query: AdvancedQueryDto,
+    langId?: string,
+    options?: QueryOptions,
+  ): Promise<PaginatedResult<ShowRoom> | ShowRoom[]>;
   findByIdWithAllTranslations(id: number | bigint): Promise<ShowRoom | null>;
 }

@@ -245,7 +245,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const camelFkeyMatch = raw.match(/_(.+?)_fkey$/);
     if (camelFkeyMatch) {
       // "City_countryId_fkey" → "countryId" → "country"
-      return camelFkeyMatch[1].replace(/Id$/, '').replace(/([A-Z])/g, ' $1').trim().toLowerCase();
+      return camelFkeyMatch[1]
+        .replace(/Id$/, '')
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+        .toLowerCase();
     }
     // Fallback: strip "Id" suffix
     return raw.replace(/Id$/, '').replace(/_id$/, '').replace(/_/g, ' ');

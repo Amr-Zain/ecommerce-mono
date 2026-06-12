@@ -8,13 +8,7 @@ import { ClientCartModule } from '../cart/client-cart.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
-  imports: [
-    PrismaModule,
-    CartsModule,
-    ProductsModule,
-    PaymentModule,
-    ClientCartModule,
-  ],
+  imports: [PrismaModule, CartsModule, ProductsModule, PaymentModule, ClientCartModule],
   controllers: [ClientCheckoutController],
   providers: [ClientCheckoutService],
 })

@@ -11,20 +11,12 @@ export class ClientOrdersController {
   constructor(private readonly ordersService: ClientOrdersService) {}
 
   @Get()
-  findAll(
-    @CurrentUser() user: { id: bigint },
-    @Query() query: OrderQueryDto,
-    @I18nLang() lang: string,
-  ) {
+  findAll(@CurrentUser() user: { id: bigint }, @Query() query: OrderQueryDto, @I18nLang() lang: string) {
     return this.ordersService.findAll(user.id, query, lang);
   }
 
   @Get(':id')
-  findOne(
-    @CurrentUser() user: { id: bigint },
-    @Param('id') id: string,
-    @I18nLang() lang: string,
-  ) {
+  findOne(@CurrentUser() user: { id: bigint }, @Param('id') id: string, @I18nLang() lang: string) {
     return this.ordersService.findOne(user.id, BigInt(id), lang);
   }
 

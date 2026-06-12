@@ -1,4 +1,5 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { SSE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
@@ -16,6 +17,10 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
   constructor(private readonly reflector: Reflector) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
+    if (this.reflector.get<boolean>(SSE_METADATA, context.getHandler())) {
+      return next.handle() as Observable<Response<T>>;
+    }
+
     const request = context.switchToHttp().getRequest<Request>();
     const acceptLanguage = (request.headers['accept-language'] as string) || 'en';
     const requestedLangId = acceptLanguage.split(',')[0].split('-')[0].trim();

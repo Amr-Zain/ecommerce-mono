@@ -47,7 +47,9 @@ export class VariantsService {
         if (v.attributes && v.attributes.length > 0) {
           const sig = buildAttributeSignature(v.attributes);
           if (sig === newSig) {
-            throw new BadRequestException('A variant with this combination of attributes already exists for this product');
+            throw new BadRequestException(
+              'A variant with this combination of attributes already exists for this product',
+            );
           }
         }
       }
@@ -58,8 +60,13 @@ export class VariantsService {
 
     const computed = this.pricingService.computePrice(
       createVariantDto.price,
-      { type: createVariantDto.discountType ?? null, value: createVariantDto.discountValue ? Number(createVariantDto.discountValue) : null },
-      product ? { type: product.discountType, value: product.discountValue ? Number(product.discountValue) : null } : null
+      {
+        type: createVariantDto.discountType ?? null,
+        value: createVariantDto.discountValue ? Number(createVariantDto.discountValue) : null,
+      },
+      product
+        ? { type: product.discountType, value: product.discountValue ? Number(product.discountValue) : null }
+        : null,
     );
 
     const data: Prisma.ProductVariantCreateInput = {
@@ -116,16 +123,15 @@ export class VariantsService {
 
       const current = await this.repo.findVariantWithProductId(id);
       if (current) {
-        const existingVariants = await this.repo.findVariantsAttributesByProductExcluding(
-          current.productId,
-          id,
-        );
+        const existingVariants = await this.repo.findVariantsAttributesByProductExcluding(current.productId, id);
 
         for (const v of existingVariants) {
           if (v.attributes && v.attributes.length > 0) {
             const sig = buildAttributeSignature(v.attributes);
             if (sig === newSig) {
-              throw new BadRequestException('A variant with this combination of attributes already exists for this product');
+              throw new BadRequestException(
+                'A variant with this combination of attributes already exists for this product',
+              );
             }
           }
         }
@@ -134,9 +140,7 @@ export class VariantsService {
 
     /* 2. Compute pricing */
     const priceOrDiscountChanged =
-      dto.price !== undefined ||
-      dto.discountType !== undefined ||
-      dto.discountValue !== undefined;
+      dto.price !== undefined || dto.discountType !== undefined || dto.discountValue !== undefined;
 
     if (priceOrDiscountChanged) {
       const current = await this.repo.findVariantWithProductDiscount(id);
@@ -146,7 +150,14 @@ export class VariantsService {
           dto.price !== undefined ? Number(dto.price) : Number(current.price),
           {
             type: dto.discountType !== undefined ? dto.discountType : current.discountType,
-            value: dto.discountValue !== undefined ? (dto.discountValue === null ? null : Number(dto.discountValue)) : (current.discountValue ? Number(current.discountValue) : null),
+            value:
+              dto.discountValue !== undefined
+                ? dto.discountValue === null
+                  ? null
+                  : Number(dto.discountValue)
+                : current.discountValue
+                  ? Number(current.discountValue)
+                  : null,
           },
           {
             type: current.product.discountType,

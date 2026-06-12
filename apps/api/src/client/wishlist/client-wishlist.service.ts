@@ -151,5 +151,4 @@ export class ClientWishlistService {
       isInWishlist: wishlistProductIds.has(BigInt(product.id).toString()),
     }));
   }
-
 }

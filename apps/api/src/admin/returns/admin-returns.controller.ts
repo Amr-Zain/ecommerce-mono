@@ -106,25 +106,41 @@ export class AdminReturnsController {
 
   @Post('exchanges/:id/payment')
   @RequirePermissions({ resource: 'exchanges', action: 'update' })
-  createExchangePayment(@Param('id') id: string, @Body() dto: AdminExchangePaymentDto, @CurrentUser() user: AuthUserPayload) {
+  createExchangePayment(
+    @Param('id') id: string,
+    @Body() dto: AdminExchangePaymentDto,
+    @CurrentUser() user: AuthUserPayload,
+  ) {
     return this.returnsService.createExchangePayment(BigInt(id), dto, user.id);
   }
 
   @Post('exchanges/:id/verify-payment')
   @RequirePermissions({ resource: 'exchanges', action: 'update' })
-  verifyExchangePayment(@Param('id') id: string, @Body() dto: AdminVerifyExchangePaymentDto, @CurrentUser() user: AuthUserPayload) {
+  verifyExchangePayment(
+    @Param('id') id: string,
+    @Body() dto: AdminVerifyExchangePaymentDto,
+    @CurrentUser() user: AuthUserPayload,
+  ) {
     return this.returnsService.verifyExchangePayment(BigInt(id), dto, user.id);
   }
 
   @Post('exchanges/:id/refund-difference')
   @RequirePermissions({ resource: 'exchanges', action: 'update' })
-  refundExchangeDifference(@Param('id') id: string, @Body() dto: AdminReturnRefundDto, @CurrentUser() user: AuthUserPayload) {
+  refundExchangeDifference(
+    @Param('id') id: string,
+    @Body() dto: AdminReturnRefundDto,
+    @CurrentUser() user: AuthUserPayload,
+  ) {
     return this.returnsService.refundExchangeDifference(BigInt(id), dto, user.id);
   }
 
   @Post('exchanges/:id/waive-adjustment')
   @RequirePermissions({ resource: 'exchanges', action: 'update' })
-  waiveExchangeAdjustment(@Param('id') id: string, @Body() dto: AdminRejectRequestDto, @CurrentUser() user: AuthUserPayload) {
+  waiveExchangeAdjustment(
+    @Param('id') id: string,
+    @Body() dto: AdminRejectRequestDto,
+    @CurrentUser() user: AuthUserPayload,
+  ) {
     return this.returnsService.waiveExchangeAdjustment(BigInt(id), dto, user.id);
   }
 

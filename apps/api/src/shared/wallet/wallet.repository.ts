@@ -156,7 +156,8 @@ export class WalletRepository {
 
     if (filters.userId) conditions.push({ userId: BigInt(String(filters.userId)) });
     if (filters.status) conditions.push({ status: String(filters.status) });
-    if (filters.userEmail) conditions.push({ user: { email: { contains: String(filters.userEmail), mode: 'insensitive' } } });
+    if (filters.userEmail)
+      conditions.push({ user: { email: { contains: String(filters.userEmail), mode: 'insensitive' } } });
 
     if (query.search) {
       conditions.push({
@@ -185,7 +186,8 @@ export class WalletRepository {
     if (filters.referenceId) conditions.push({ referenceId: String(filters.referenceId) });
     if (filters.paymentMethod) conditions.push({ paymentMethod: String(filters.paymentMethod) });
     if (filters.transactionRef) conditions.push({ transactionRef: String(filters.transactionRef) });
-    if (filters.userEmail) conditions.push({ user: { email: { contains: String(filters.userEmail), mode: 'insensitive' } } });
+    if (filters.userEmail)
+      conditions.push({ user: { email: { contains: String(filters.userEmail), mode: 'insensitive' } } });
 
     const amountFilter: Prisma.DecimalFilter = {};
     if (filters.minAmount !== undefined) amountFilter.gte = Number(filters.minAmount);
@@ -217,7 +219,8 @@ export class WalletRepository {
     if (filters.walletId) conditions.push({ walletId: BigInt(String(filters.walletId)) });
     if (filters.status) conditions.push({ status: String(filters.status) });
     if (filters.method) conditions.push({ method: String(filters.method) });
-    if (filters.userEmail) conditions.push({ user: { email: { contains: String(filters.userEmail), mode: 'insensitive' } } });
+    if (filters.userEmail)
+      conditions.push({ user: { email: { contains: String(filters.userEmail), mode: 'insensitive' } } });
 
     const createdAt = this.dateFilter(filters.dateFrom, filters.dateTo);
     if (createdAt) conditions.push({ createdAt });

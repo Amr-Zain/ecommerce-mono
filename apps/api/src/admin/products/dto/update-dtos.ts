@@ -13,11 +13,7 @@ import {
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import {
-  ProductTranslationDto,
-  VariantAttributeDto,
-  MaxPercentageConstraint,
-} from '@/common/dto/product.dto';
+import { ProductTranslationDto, VariantAttributeDto, MaxPercentageConstraint } from '@/common/dto/product.dto';
 
 /* ── Update Product ─────────────────────────────────────────── */
 

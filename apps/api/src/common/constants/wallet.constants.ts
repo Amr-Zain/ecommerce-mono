@@ -64,6 +64,5 @@ export type WalletStatus = (typeof WALLET_STATUSES)[keyof typeof WALLET_STATUSES
 export type WalletTransactionType = (typeof WALLET_TRANSACTION_TYPES)[keyof typeof WALLET_TRANSACTION_TYPES];
 export type WalletTransactionDirection =
   (typeof WALLET_TRANSACTION_DIRECTIONS)[keyof typeof WALLET_TRANSACTION_DIRECTIONS];
-export type WalletTransactionStatus =
-  (typeof WALLET_TRANSACTION_STATUSES)[keyof typeof WALLET_TRANSACTION_STATUSES];
+export type WalletTransactionStatus = (typeof WALLET_TRANSACTION_STATUSES)[keyof typeof WALLET_TRANSACTION_STATUSES];
 export type WalletWithdrawalStatus = (typeof WALLET_WITHDRAWAL_STATUSES)[keyof typeof WALLET_WITHDRAWAL_STATUSES];

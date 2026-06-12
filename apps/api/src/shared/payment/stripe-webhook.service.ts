@@ -27,7 +27,12 @@ import {
   WALLET_TRANSACTION_TYPES,
 } from '@/common/constants/wallet.constants';
 import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
-import { createDomainEvent, DOMAIN_EVENTS, type OrderCreatedPayload, type PaymentCompletedPayload } from '@/common/events/domain-event';
+import {
+  createDomainEvent,
+  DOMAIN_EVENTS,
+  type OrderCreatedPayload,
+  type PaymentCompletedPayload,
+} from '@/common/events/domain-event';
 
 type StripeEvent = {
   type: string;

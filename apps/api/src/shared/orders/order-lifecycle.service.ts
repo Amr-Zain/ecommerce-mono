@@ -44,7 +44,7 @@ export class OrderLifecycleService {
     private readonly paymentTransactionsRepository: IPaymentTransactionsRepository,
     @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
     private readonly domainEvents: DomainEventPublisher,
-  ) { }
+  ) {}
 
   paymentSummary(payments: { amount: Prisma.Decimal; paymentStatus: string; refundSource?: string | null }[]) {
     const paid = this.round(
@@ -403,10 +403,10 @@ export class OrderLifecycleService {
           summary.refundedAmount > 0
             ? PAYMENT_STATUSES.refunded
             : order.payments.some(
-              (payment) =>
-                payment.paymentStatus === PAYMENT_STATUSES.pending ||
-                payment.paymentStatus === PAYMENT_STATUSES.awaitingConfirmation,
-            )
+                  (payment) =>
+                    payment.paymentStatus === PAYMENT_STATUSES.pending ||
+                    payment.paymentStatus === PAYMENT_STATUSES.awaitingConfirmation,
+                )
               ? PAYMENT_STATUSES.failed
               : order.paymentStatus,
         cancelledAt: new Date(),

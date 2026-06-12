@@ -167,27 +167,27 @@ export class ClientAddressesService {
       return tx.address.update({
         where: { id },
         data: { isDefault: true },
-      select: {
-        id: true,
-        address: true,
-        cityId: true,
-        countryId: true,
-        streetName: true,
-        buildingNumber: true,
-        isDefault: true,
-        city: {
-          select: {
-            id: true,
-            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+        select: {
+          id: true,
+          address: true,
+          cityId: true,
+          countryId: true,
+          streetName: true,
+          buildingNumber: true,
+          isDefault: true,
+          city: {
+            select: {
+              id: true,
+              translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+            },
           },
-        },
-        country: {
-          select: {
-            id: true,
-            phoneCode: true,
-            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+          country: {
+            select: {
+              id: true,
+              phoneCode: true,
+              translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+            },
           },
-        },
         },
       });
     });

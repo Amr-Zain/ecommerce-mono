@@ -28,11 +28,7 @@ export class FaqsRepository extends BaseRepository<FaqType> implements IFaqsRepo
     translations: true,
   };
 
-  constructor(
-    prisma: PrismaService,
-    queryBuilder: QueryBuilderService,
-    mediaService: MediaService,
-  ) {
+  constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
     super(prisma, mediaService, queryBuilder);
   }
 

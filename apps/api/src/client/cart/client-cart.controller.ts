@@ -16,11 +16,7 @@ export class ClientCartController {
   }
 
   @Post('items')
-  addItem(
-    @CurrentUser() user: { id: bigint },
-    @Body() dto: AddToCartDto,
-    @I18nLang() lang: string,
-  ) {
+  addItem(@CurrentUser() user: { id: bigint }, @Body() dto: AddToCartDto, @I18nLang() lang: string) {
     return this.cartService.addItem(user.id, dto, lang);
   }
 
@@ -35,11 +31,7 @@ export class ClientCartController {
   }
 
   @Delete('items/:id')
-  removeItem(
-    @CurrentUser() user: { id: bigint },
-    @Param('id') id: string,
-    @I18nLang() lang: string,
-  ) {
+  removeItem(@CurrentUser() user: { id: bigint }, @Param('id') id: string, @I18nLang() lang: string) {
     return this.cartService.removeItem(user.id, BigInt(id), lang);
   }
 

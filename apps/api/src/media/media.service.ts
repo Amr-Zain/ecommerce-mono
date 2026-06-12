@@ -149,7 +149,7 @@ export class MediaService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return items as unknown as MediaRecord[];
+    return items;
   }
 
   /**
@@ -173,7 +173,7 @@ export class MediaService {
       const key = item.modelId!.toString();
       if (!result.has(key)) result.set(key, []);
       const { modelId: _, ...mediaRecord } = item;
-      result.get(key)!.push(mediaRecord as unknown as MediaRecord);
+      result.get(key)!.push(mediaRecord);
     }
     return result;
   }
@@ -184,9 +184,7 @@ export class MediaService {
     if (items.length === 0) return [];
 
     const productIds = [...new Set(items.map((item) => item.productId))];
-    const variantIds = [
-      ...new Set(items.map((item) => item.variantId).filter((id): id is bigint => id != null)),
-    ];
+    const variantIds = [...new Set(items.map((item) => item.variantId).filter((id): id is bigint => id != null))];
     const media = await this.prisma.media.findMany({
       where: {
         OR: [
@@ -228,14 +226,10 @@ export class MediaService {
     }
 
     return items.map(({ productId, variantId }) => {
-      const variantMedia = variantId
-        ? byEntity.get(`productvariant:${variantId.toString()}`)
-        : undefined;
+      const variantMedia = variantId ? byEntity.get(`productvariant:${variantId.toString()}`) : undefined;
       const productMedia = byEntity.get(`product:${productId.toString()}`);
       const preferred =
-        variantMedia?.[0] ??
-        productMedia?.find((item) => item.collection === 'image') ??
-        productMedia?.[0];
+        variantMedia?.[0] ?? productMedia?.find((item) => item.collection === 'image') ?? productMedia?.[0];
 
       return preferred ? this.formatPath(preferred.path) : null;
     });
@@ -244,7 +238,12 @@ export class MediaService {
   /**
    * Delete all media for an entity
    */
-  async deleteByEntity(model: string, modelId: number | string | bigint, collection?: string, tx?: Prisma.TransactionClient) {
+  async deleteByEntity(
+    model: string,
+    modelId: number | string | bigint,
+    collection?: string,
+    tx?: Prisma.TransactionClient,
+  ) {
     const prisma = tx || this.prisma;
 
     const where: Prisma.MediaWhereInput = {

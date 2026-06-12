@@ -32,11 +32,7 @@ export class AdminOrdersController {
   }
 
   @Post(':id/confirm-payment')
-  confirmPayment(
-    @Param('id') id: string,
-    @CurrentUser() user: AuthUserPayload,
-    @I18nLang() lang: string,
-  ) {
+  confirmPayment(@Param('id') id: string, @CurrentUser() user: AuthUserPayload, @I18nLang() lang: string) {
     return this.ordersService.confirmPayment(BigInt(id), user, lang);
   }
 

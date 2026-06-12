@@ -29,7 +29,11 @@ export interface Country {
 export const COUNTRIES_REPOSITORY = Symbol('ICountriesRepository');
 
 export interface ICountriesRepository extends IBaseRepository<Country> {
-  findAll(query: AdvancedQueryDto, langId?: string, options?: QueryOptions): Promise<PaginatedResult<Country> | Country[]>;
+  findAll(
+    query: AdvancedQueryDto,
+    langId?: string,
+    options?: QueryOptions,
+  ): Promise<PaginatedResult<Country> | Country[]>;
   findByIdWithRelations(id: number | bigint): Promise<Country | null>;
   findByIdWithAllTranslations(id: number | bigint): Promise<Country | null>;
   createCountry(country: unknown): Promise<Country>;

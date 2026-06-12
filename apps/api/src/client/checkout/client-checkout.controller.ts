@@ -11,20 +11,12 @@ export class ClientCheckoutController {
   constructor(private readonly checkoutService: ClientCheckoutService) {}
 
   @Post('preview')
-  preview(
-    @CurrentUser() user: { id: bigint },
-    @Body() dto: CheckoutPreviewDto,
-    @I18nLang() lang: string,
-  ) {
+  preview(@CurrentUser() user: { id: bigint }, @Body() dto: CheckoutPreviewDto, @I18nLang() lang: string) {
     return this.checkoutService.previewCheckout(user.id, dto, lang);
   }
 
   @Post('place-order')
-  placeOrder(
-    @CurrentUser() user: { id: bigint },
-    @Body() dto: PlaceOrderDto,
-    @I18nLang() lang: string,
-  ) {
+  placeOrder(@CurrentUser() user: { id: bigint }, @Body() dto: PlaceOrderDto, @I18nLang() lang: string) {
     return this.checkoutService.placeOrder(user.id, dto, lang);
   }
 

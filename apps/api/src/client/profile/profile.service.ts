@@ -41,7 +41,14 @@ export class ProfileService {
   }
 
   async updateImage(userId: bigint, dto: UpdateProfileImageDto) {
-    const mediaService = (this.usersRepo as unknown as { mediaService?: { attachTempMedia: (data: unknown) => Promise<void>; deleteByEntity: (model: string, id: bigint, collection?: string) => Promise<void> } }).mediaService;
+    const mediaService = (
+      this.usersRepo as unknown as {
+        mediaService?: {
+          attachTempMedia: (data: unknown) => Promise<void>;
+          deleteByEntity: (model: string, id: bigint, collection?: string) => Promise<void>;
+        };
+      }
+    ).mediaService;
     if (dto.image) {
       if (mediaService) {
         await mediaService.deleteByEntity('user', userId, 'avatar');

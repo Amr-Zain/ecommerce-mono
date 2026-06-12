@@ -34,7 +34,7 @@ export class TransformLanguageKeysInterceptor implements NestInterceptor {
 
     if (body && typeof body === 'object' && !Array.isArray(body)) {
       if (config.recursive) {
-        request.body = this.deepTransform(body as Record<string, unknown>, config);
+        request.body = this.deepTransform(body, config);
       } else {
         request.body = this.transformLanguageKeys(body as Record<string, unknown>, config);
       }

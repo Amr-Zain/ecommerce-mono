@@ -12,7 +12,10 @@ type AttributeValueType = Prisma.AttributeValueGetPayload<{
 }>;
 
 @Injectable()
-export class AttributeValuesRepository extends BaseRepository<AttributeValueType> implements IAttributeValuesRepository {
+export class AttributeValuesRepository
+  extends BaseRepository<AttributeValueType>
+  implements IAttributeValuesRepository
+{
   protected readonly searchConfig = {
     translationFields: ['name'] satisfies TranslationFields<AttributeValueType>[],
   };
@@ -32,11 +35,7 @@ export class AttributeValuesRepository extends BaseRepository<AttributeValueType
     translations: true,
   };
 
-  constructor(
-    prisma: PrismaService,
-    queryBuilder: QueryBuilderService,
-    mediaService: MediaService,
-  ) {
+  constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
     super(prisma, mediaService, queryBuilder);
   }
 
@@ -64,15 +63,15 @@ export class AttributeValuesRepository extends BaseRepository<AttributeValueType
     return this.prisma.attributeValue.findUnique({
       where: { id: BigInt(id) },
       include: { translations: true },
-    }) as unknown as Promise<AttributeValueType | null>;
+    });
   }
 
   async createValue(data: Prisma.AttributeValueCreateInput): Promise<AttributeValueType> {
-    return this.create(data as unknown as Record<string, unknown>);
+    return this.create(data);
   }
 
   async updateValue(id: number, data: Prisma.AttributeValueUpdateInput): Promise<AttributeValueType> {
-    return this.update(id, data as unknown as Record<string, unknown>);
+    return this.update(id, data);
   }
 
   async deleteValue(id: number | bigint): Promise<AttributeValueType> {

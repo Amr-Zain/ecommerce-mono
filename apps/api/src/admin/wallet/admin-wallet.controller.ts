@@ -3,10 +3,7 @@ import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { WalletService } from '@/shared/wallet/wallet.service';
-import {
-  AdminMarkWithdrawalPaidDto,
-  AdminWithdrawalActionDto,
-} from '@/shared/wallet/dto/wallet.dto';
+import { AdminMarkWithdrawalPaidDto, AdminWithdrawalActionDto } from '@/shared/wallet/dto/wallet.dto';
 
 @ApiContext('admin')
 @Controller()
