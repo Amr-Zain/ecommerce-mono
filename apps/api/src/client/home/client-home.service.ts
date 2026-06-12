@@ -72,6 +72,7 @@ export class ClientHomeService {
   private formatCollection(collection: any) {
     return {
       id: collection.id,
+      slug: collection.slug,
       name: collection.translations?.[0]?.name ?? '',
       image: this.mediaPath(collection.image),
       sortOrder: collection.sortOrder,
@@ -116,7 +117,7 @@ export class ClientHomeService {
   private mediaPath(media: unknown): string | null {
     if (typeof media === 'string') return this.absoluteMediaPath(media);
     if (media && typeof media === 'object' && 'path' in media) {
-      return this.absoluteMediaPath(String((media as { path: unknown }).path));
+      return this.absoluteMediaPath(String(media.path));
     }
     return null;
   }

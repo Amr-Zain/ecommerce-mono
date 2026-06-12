@@ -1,5 +1,8 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { PaginationDto } from '@/common/dto/pagination.dto';
+
+export class ReviewQueryDto extends PaginationDto {}
 
 export class CreateReviewDto {
   @Type(() => Number)

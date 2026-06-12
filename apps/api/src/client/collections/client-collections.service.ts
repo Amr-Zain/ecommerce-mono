@@ -25,4 +25,14 @@ export class ClientCollectionsService {
     if (!collection) throw new NotFoundException('Collection not found');
     return collection;
   }
+
+  async findBySlug(slug: string, langId: string) {
+    const collection = await this.collectionsRepo.findBySlug(slug, langId);
+    if (!collection) throw new NotFoundException('Collection not found');
+    return collection;
+  }
+
+  tree(langId: string) {
+    return this.collectionsRepo.findActiveTree(langId);
+  }
 }

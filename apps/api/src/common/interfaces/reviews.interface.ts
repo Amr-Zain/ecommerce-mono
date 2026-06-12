@@ -1,3 +1,5 @@
+import { PaginatedResult } from '../dto/pagination.dto';
+
 export interface ClientReviewUser {
   id: bigint;
   name: string | null;
@@ -59,8 +61,17 @@ export interface IReviewsRepository {
     search?: string;
   }): Promise<unknown>;
   findAdminById(id: bigint): Promise<AdminReview | null>;
-  updateAdminReview(id: bigint, data: { isActive?: boolean; isApproved?: boolean; isVerified?: boolean }): Promise<AdminReview>;
+  updateAdminReview(
+    id: bigint,
+    data: { isActive?: boolean; isApproved?: boolean; isVerified?: boolean },
+  ): Promise<AdminReview>;
   findActiveVerifiedByProduct(productId: bigint): Promise<ClientReview[]>;
+  findActiveVerifiedByProductPaginated(
+    productId: bigint,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResult<ClientReview>>;
+  findUserReview(userId: bigint, productId: bigint): Promise<ClientReview | null>;
   createForUser(data: {
     userId: bigint;
     productId: bigint;

@@ -18,62 +18,70 @@ import { FormLabel } from '@ecommerce/ui/components/form'
 export const categoryColumns = (
   open: (type: PickedAction, row: Category) => void,
 ): ColumnDef<Category>[] => [
-    imageColumn<Category>('image', 'table.columns.image'),
-    textColumn<Category>('name', 'table.columns.name'),
-    textColumn<Category>('description', 'table.columns.description', {
-      render: (value) => (
-        <div
-          className="text-muted-foreground line-clamp-1"
-          dangerouslySetInnerHTML={{ __html: value.getValue() }}
-        />
-      ),
-    }),
-    imageNameColumn<Category>(
-      (row) =>
-        row.parent ? { image: row.parent.image, name: row.parent.name } : null,
-      'table.columns.parentCategory',
-      { placeholder: '-' }, // optional
+  imageColumn<Category>('image', 'table.columns.image'),
+  textColumn<Category>('name', 'table.columns.name'),
+  textColumn<Category>('description', 'table.columns.description', {
+    render: (value) => (
+      <div
+        className="text-muted-foreground line-clamp-1"
+        dangerouslySetInnerHTML={{ __html: value.getValue() }}
+      />
     ),
-    booleanControlColumn<Category>('is_active', 'table.status', open, 'active', false, 'categories'),
-    DateColumn<Category>('created_at', 'table.createdAt'),
-  ]
+  }),
+  imageNameColumn<Category>(
+    (row) =>
+      row.parent ? { image: row.parent.image, name: row.parent.name } : null,
+    'table.columns.parentCategory',
+    { placeholder: '-' }, // optional
+  ),
+  booleanControlColumn<Category>(
+    'is_active',
+    'table.status',
+    open,
+    'active',
+    false,
+    'categories',
+  ),
+  DateColumn<Category>('created_at', 'table.createdAt'),
+]
 
 export const categoryActions = (
   t: (key: string) => string,
   open: (type: PickedAction, row: Category) => void,
-) => [
-  {
-    label: t('actions.show'),
-    to: '/categories/show/$id',
-    params: (row: Category) => ({ id: String(row.id) }),
-    permission: 'collections',
-    action: 'show',
-    queryKey: (id: string) => categoriesQueryKeys.getCategory(id),
-  },
-  {
-    label: t('actions.editCategory'),
-    to: '/categories/edit/$id',
-    params: (row: Category) => ({ id: String(row.id) }),
-    permission: 'collections',
-    action: 'update',
-    //disabled: hasPermission('categories.edit'),
-    queryKey: (id: string) => categoriesQueryKeys.getCategory(id),
-  },
-  {
-    label: t('actions.delete'),
-    danger: true,
-    onClick: (row: Category) => open('delete', row),
-    permission: 'collections',
-    action: 'delete',
-  },
-  {
-    label: (row: Category) =>
-      t(`actions.${row.is_active ? 'deactivate' : 'activate'}`),
-    onClick: (row: Category) => open('active', row),
-    permission: 'collections',
-    action: 'update',
-  },
-] as RowAction<Category>[]
+) =>
+  [
+    {
+      label: t('actions.show'),
+      to: '/categories/show/$id',
+      params: (row: Category) => ({ id: String(row.id) }),
+      permission: 'collections',
+      action: 'show',
+      queryKey: (id: string) => categoriesQueryKeys.getCategory(id),
+    },
+    {
+      label: t('actions.editCategory'),
+      to: '/categories/edit/$id',
+      params: (row: Category) => ({ id: String(row.id) }),
+      permission: 'collections',
+      action: 'update',
+      //disabled: hasPermission('categories.edit'),
+      queryKey: (id: string) => categoriesQueryKeys.getCategory(id),
+    },
+    {
+      label: t('actions.delete'),
+      danger: true,
+      onClick: (row: Category) => open('delete', row),
+      permission: 'collections',
+      action: 'delete',
+    },
+    {
+      label: (row: Category) =>
+        t(`actions.${row.is_active ? 'deactivate' : 'activate'}`),
+      onClick: (row: Category) => open('active', row),
+      permission: 'collections',
+      action: 'update',
+    },
+  ] as RowAction<Category>[]
 
 export const getCategoryFilters = (t: (key: string) => string): Filter[] => [
   {
@@ -109,18 +117,23 @@ export const getCategoryFilters = (t: (key: string) => string): Filter[] => [
   {
     type: 'custom',
     id: 'ff',
-    jsx: <TabsBadgeCategories />
-
-  }
+    jsx: <TabsBadgeCategories />,
+  },
 ]
-
 
 export function buildCategoryFields(
   t: (k: string) => string,
-  form: ReturnType<typeof import("react-hook-form").useForm<CategoryFormData>>,
+  form: ReturnType<typeof import('react-hook-form').useForm<CategoryFormData>>,
 ): FieldProp<CategoryFormData>[] {
-  const currentParentId = form.watch('parent_id');
+  const currentParentId = form.watch('parent_id')
   return [
+    {
+      type: 'text',
+      name: 'slug',
+      label: 'Slug',
+      placeholder: 'watches',
+      span: 2,
+    },
     {
       type: 'imgUploader',
       name: 'image',
@@ -156,13 +169,19 @@ export function buildCategoryFields(
        },
      }, */
     {
-      type: 'custom' as const, label: t('Form.labels.parentCategory'),
+      type: 'custom' as const,
+      label: t('Form.labels.parentCategory'),
       name: 'parent_id',
-      customItem:
+      customItem: (
         <>
           <FormLabel>{t('Form.labels.parentCategory')}</FormLabel>
-          <NestedCategorySelect placeholder={t('Form.placeholders.parentCategory')} onSelect={(item) => form.setValue('parent_id', item.id.toString())} value={currentParentId?.toString()!} />
+          <NestedCategorySelect
+            placeholder={t('Form.placeholders.parentCategory')}
+            onSelect={(item) => form.setValue('parent_id', item.id.toString())}
+            value={currentParentId?.toString()!}
+          />
         </>
+      ),
     },
     {
       type: 'multiLangField',
@@ -175,7 +194,7 @@ export function buildCategoryFields(
       type: 'multiLangField',
       name: 'description' as any,
       inputProps: {
-        type: 'editor'
+        type: 'editor',
       },
       label: t('Form.labels.description'),
       placeholder: t('Form.placeholders.description'),

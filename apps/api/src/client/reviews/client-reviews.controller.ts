@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ClientReviewsService } from './client-reviews.service';
-import { CreateReviewDto, UpdateReviewDto } from './dto/review.dto';
+import { CreateReviewDto, ReviewQueryDto, UpdateReviewDto } from './dto/review.dto';
 
 @ApiContext('client')
 @Controller('reviews')
@@ -13,8 +13,13 @@ export class ClientReviewsController {
 
   @Public()
   @Get('products/:productId')
-  findByProduct(@Param('productId') productId: string, @I18nLang() lang?: string) {
-    return this.reviewsService.findByProduct(BigInt(productId), lang || 'en');
+  findByProduct(@Param('productId') productId: string, @Query() query: ReviewQueryDto, @I18nLang() lang?: string) {
+    return this.reviewsService.findByProduct(BigInt(productId), query, lang || 'en');
+  }
+
+  @Get('products/:productId/me')
+  findMine(@CurrentUser() user: { id: bigint }, @Param('productId') productId: string) {
+    return this.reviewsService.findMine(user.id, BigInt(productId));
   }
 
   @Post()

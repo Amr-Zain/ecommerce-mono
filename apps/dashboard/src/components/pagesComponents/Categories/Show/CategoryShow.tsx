@@ -20,7 +20,6 @@ import { useMutate } from '@/hooks/UseMutate'
 import { categoriesQueryKeys } from '@/util/queryKeysFactory'
 import { ApiResponse } from '@/types/api/http'
 import { toast } from 'sonner'
-import { useQueryClient } from '@tanstack/react-query'
 import {
     Edit,
     Plus,
@@ -78,7 +77,6 @@ export type CategoryShowData = {
 
 export function CategoryShow({ category }: { category: CategoryShowData }) {
     const { t } = useTranslation()
-    const queryClient = useQueryClient()
     const alert = useAlertModal()
     const navigate = useNavigate()
     const [editMapping, setEditMapping] = useState<ShopifyMappingData | null>(null)
@@ -98,9 +96,6 @@ export function CategoryShow({ category }: { category: CategoryShowData }) {
         },
         onSuccess: (data: ApiResponse) => {
             toast.success(data.message)
-            queryClient.invalidateQueries({
-                queryKey: categoriesQueryKeys.getCategory(String(category.id)),
-            })
         },
         onError: (_e, normalized) => toast.error(normalized.message),
     })

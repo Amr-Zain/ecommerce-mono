@@ -24,7 +24,10 @@ export class ReviewsController {
 
   @Patch(':id')
   @RequirePermissions({ resource: 'reviews', action: 'update' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() body: { isActive?: boolean; isApproved?: boolean; isVerified?: boolean }) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { isActive?: boolean; isApproved?: boolean; isVerified?: boolean },
+  ) {
     return this.reviewsService.update(BigInt(id), body);
   }
 

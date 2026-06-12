@@ -13,7 +13,7 @@ type Collection = Prisma.CollectionGetPayload<{
     translations: true;
     _count: { select: { children: true } };
   };
-}> & { hasChildren?: boolean };
+}> & { hasChildren?: boolean; children?: Collection[] };
 
 @Injectable()
 export class CollectionsRepository extends BaseRepository<Collection> implements ICollectionsRepository {
@@ -31,11 +31,7 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
     children: { include: { translations: true } },
   };
 
-  constructor(
-    prisma: PrismaService,
-    queryBuilder: QueryBuilderService,
-    mediaService: MediaService,
-  ) {
+  constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
     super(prisma, mediaService, queryBuilder);
   }
 
@@ -43,7 +39,11 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
     return this.prisma.collection;
   }
 
-  async findAll(query: CollectionQueryDto, langId: string = 'en', options?: QueryOptions): Promise<PaginatedResult<Collection> | Collection[]> {
+  async findAll(
+    query: CollectionQueryDto,
+    langId: string = 'en',
+    options?: QueryOptions,
+  ): Promise<PaginatedResult<Collection> | Collection[]> {
     const where = this.buildCollectionWhereClause(query, langId);
     if (options?.select) {
       return this.paginate(query, where, { select: options.select });
@@ -87,15 +87,102 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
   }
 
   async createCollection(data: Prisma.CollectionCreateInput): Promise<Collection> {
-    return this.create(data as unknown as Record<string, unknown>);
+    return this.create(data);
   }
 
   async updateCollection(data: Prisma.CollectionUpdateInput, id: number): Promise<Collection> {
-    return this.update(id, data as unknown as Record<string, unknown>);
+    return this.update(id, data);
   }
 
   async deleteCollection(id: number | bigint): Promise<Collection> {
     return this.delete(id);
+  }
+
+  async findBySlug(slug: string, langId: string = 'en'): Promise<Collection | null> {
+    const collection = await this.prisma.collection.findFirst({
+      where: { slug, isActive: true },
+      include: {
+        translations: { where: { langId }, take: 1 },
+        parent: { include: { translations: { where: { langId }, take: 1 } } },
+      },
+    });
+    return collection ? this.mergeMedia(collection as unknown as Collection) : null;
+  }
+
+  async findActiveDescendantIds(id: bigint): Promise<bigint[]> {
+    const collection = await this.prisma.collection.findFirst({
+      where: { id, isActive: true },
+      select: {
+        id: true,
+        children: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            children: { where: { isActive: true }, select: { id: true } },
+          },
+        },
+      },
+    });
+    if (!collection) return [];
+    return [
+      collection.id,
+      ...collection.children.flatMap((child) => [child.id, ...child.children.map((leaf) => leaf.id)]),
+    ];
+  }
+
+  async findActiveAncestors(id: bigint, langId: string = 'en'): Promise<Collection[]> {
+    const collection = await this.prisma.collection.findFirst({
+      where: { id, isActive: true },
+      include: {
+        parent: {
+          include: {
+            translations: { where: { langId }, take: 1 },
+            parent: { include: { translations: { where: { langId }, take: 1 } } },
+          },
+        },
+      },
+    });
+    if (!collection?.parent) return [];
+    return [collection.parent.parent, collection.parent].filter(Boolean) as unknown as Collection[];
+  }
+
+  async findActiveTree(langId: string = 'en'): Promise<Collection[]> {
+    const [collections, products] = await Promise.all([
+      this.prisma.collection.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+        include: { translations: { where: { langId }, take: 1 } },
+      }),
+      this.prisma.product.findMany({
+        where: { isActive: true, collectionId: { not: null } },
+        select: { id: true, collectionId: true },
+      }),
+    ]);
+    const parentById = new Map(collections.map((collection) => [collection.id.toString(), collection.parentId]));
+    const countById = new Map<string, number>();
+    for (const product of products) {
+      let collectionId = product.collectionId;
+      while (collectionId) {
+        const key = collectionId.toString();
+        countById.set(key, (countById.get(key) ?? 0) + 1);
+        collectionId = parentById.get(key) ?? null;
+      }
+    }
+    const withCounts = collections.map((collection) => ({
+      ...collection,
+      _count: { products: countById.get(collection.id.toString()) ?? 0 },
+    }));
+    const enriched = await this.mergeMedia(withCounts as unknown as Collection[]);
+    const byParent = new Map<string, Collection[]>();
+    for (const item of enriched) {
+      const key = item.parentId?.toString() ?? 'root';
+      byParent.set(key, [...(byParent.get(key) ?? []), item]);
+    }
+    const attach = (item: Collection): Collection => ({
+      ...item,
+      children: (byParent.get(item.id.toString()) ?? []).map(attach),
+    });
+    return (byParent.get('root') ?? []).map(attach);
   }
 
   /**
@@ -135,7 +222,7 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
       childrenWithMedia.children = childrenWithMedia.children.map((child) => {
         const childMedia = mediaMap.get(child.id.toString()) || [];
         const image = childMedia.find((m) => m.collection === 'collection') || null;
-        return { ...child, image } as Collection & { image: unknown };
+        return { ...child, image };
       });
     }
 

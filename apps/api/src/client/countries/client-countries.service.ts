@@ -21,7 +21,7 @@ export class ClientCountriesService {
         translations: {
           where: { langId },
           select: { name: true, langId: true },
-          take:1
+          take: 1,
         },
       },
     });

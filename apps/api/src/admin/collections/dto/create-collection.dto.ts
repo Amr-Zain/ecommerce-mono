@@ -11,9 +11,17 @@ export class CollectionTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   name!: string;
+
+  @IsOptional()
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  description?: string;
 }
 
 export class CreateCollectionDto {
+  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  slug!: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.IS_INT') })

@@ -4,9 +4,7 @@ import { ReviewQueryDto } from './dto/review-query.dto';
 
 @Injectable()
 export class ReviewsService {
-  constructor(
-    @Inject(REVIEWS_REPOSITORY) private readonly reviewsRepository: IReviewsRepository,
-  ) {}
+  constructor(@Inject(REVIEWS_REPOSITORY) private readonly reviewsRepository: IReviewsRepository) {}
 
   async findAll(query: ReviewQueryDto) {
     return this.reviewsRepository.findAllAdmin(query);

@@ -456,6 +456,11 @@ export const makeCategorySchema = (t: TFn) => {
   }
 
   return z.object({
+    slug: z
+      .string()
+      .trim()
+      .min(2)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     image: stringOrUidHashObject(t),
     sort_order: digitsOnlyString(t, labels.sortOrder, 1, 4),
     parent_id: z.union([

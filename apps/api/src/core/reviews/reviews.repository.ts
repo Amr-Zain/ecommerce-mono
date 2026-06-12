@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MediaService } from '@/media/media.service';
-import { BaseRepository, ScalarFields, RelationFields } from '@/common/repositories/base.repository';
+import { BaseRepository, ScalarFields } from '@/common/repositories/base.repository';
 import { AdminReview, ClientReview, IReviewsRepository, ReviewOwner } from '@/common/interfaces';
 import { MediaType } from '@/media/enums/media-type.enum';
 import { Prisma } from '@prisma/client';
@@ -52,11 +52,7 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
     product: { include: { translations: true } },
   };
 
-  constructor(
-    prisma: PrismaService,
-    mediaService: MediaService,
-    queryBuilder: QueryBuilderService,
-  ) {
+  constructor(prisma: PrismaService, mediaService: MediaService, queryBuilder: QueryBuilderService) {
     super(prisma, mediaService, queryBuilder);
   }
 
@@ -129,7 +125,30 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
       orderBy: { createdAt: 'desc' },
     });
 
-    return this.mergeMedia(reviews as ReviewRecord[]) as Promise<ClientReview[]>;
+    return this.mergeMedia(reviews);
+  }
+
+  async findActiveVerifiedByProductPaginated(productId: bigint, page: number, limit: number) {
+    const where = { productId, isActive: true, isVerified: true };
+    const [reviews, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where,
+        select: this.clientReviewSelect(),
+        orderBy: { createdAt: 'desc' },
+        skip: PaginationUtil.getSkip(page, limit),
+        take: limit,
+      }),
+      this.prisma.review.count({ where }),
+    ]);
+    return PaginationUtil.createResult(await this.mergeMedia(reviews), page, limit, total);
+  }
+
+  async findUserReview(userId: bigint, productId: bigint): Promise<ClientReview | null> {
+    const review = await this.prisma.review.findUnique({
+      where: { userId_productId: { userId, productId } },
+      select: this.clientReviewSelect(),
+    });
+    return review ? this.mergeMedia(review) : null;
   }
 
   async createForUser(data: {
@@ -139,7 +158,7 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
     comment?: string;
     images?: string[];
   }): Promise<ClientReview> {
-    return this.create(data, { select: this.clientReviewSelect() }) as Promise<ClientReview>;
+    return this.create(data, { select: this.clientReviewSelect() });
   }
 
   async findOwnerById(id: bigint): Promise<ReviewOwner | null> {
@@ -149,8 +168,11 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
     });
   }
 
-  async updateClientReview(id: bigint, data: { rating?: number; comment?: string; images?: string[] }): Promise<ClientReview> {
-    return this.update(id, data, { select: this.clientReviewSelect() }) as Promise<ClientReview>;
+  async updateClientReview(
+    id: bigint,
+    data: { rating?: number; comment?: string; images?: string[] },
+  ): Promise<ClientReview> {
+    return this.update(id, { ...data, isVerified: false }, { select: this.clientReviewSelect() });
   }
 
   async deleteById(id: bigint): Promise<ReviewOwner> {
@@ -186,7 +208,7 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
     }
 
     // Leverage the base buildWhereClause which uses searchConfig
-    return this.buildWhereClause({ filters, search: query.search }) as Prisma.ReviewWhereInput;
+    return this.buildWhereClause({ filters, search: query.search });
   }
 
   private buildAdminOrderBy(sort?: Record<string, 'asc' | 'desc'>): Prisma.ReviewOrderByWithRelationInput {
@@ -224,6 +246,6 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
         ...review.product,
         image: productImages[0] ?? null,
       },
-    } as AdminReview;
+    };
   }
 }

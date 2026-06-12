@@ -16,6 +16,18 @@ export class ClientCollectionsController {
   }
 
   @Public()
+  @Get('tree')
+  tree(@I18nLang() lang?: string) {
+    return this.collectionsService.tree(lang || 'en');
+  }
+
+  @Public()
+  @Get('slug/:slug')
+  findBySlug(@Param('slug') slug: string, @I18nLang() lang?: string) {
+    return this.collectionsService.findBySlug(slug, lang || 'en');
+  }
+
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.collectionsService.findOne(+id);

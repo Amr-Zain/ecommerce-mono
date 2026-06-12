@@ -22,6 +22,7 @@ export type ShopifyMapping = {
 
 export type CategoryEntity = {
   id: number
+  slug: string
   name: string
   description?: string
   image?: string | null
@@ -44,20 +45,21 @@ export default function CategoryForm({
   const { t } = useTranslation()
   const schema = makeCategorySchema(t)
 
-
   const form = useForm<CategoryFormData>({
     resolver: zodFormResolver(schema),
     defaultValues: {
       ...generateInitialValues(category),
+      slug: category?.slug || '',
       parent_id: category?.parent?.id || '',
       sort_order: category?.sort_order?.toString(),
-      shopify_mappings: category?.shopify_mappings?.map((m) => ({
-        shopify_collection_gid: m.shopify_collection_gid || '',
-        shopify_collection_name: m.shopify_collection_name || '',
-        odoo_metaobject_gid: m.odoo_metaobject_gid || '',
-        odoo_category_name: m.odoo_category_name || '',
-        is_active: m.is_active ?? true,
-      })) ?? [],
+      shopify_mappings:
+        category?.shopify_mappings?.map((m) => ({
+          shopify_collection_gid: m.shopify_collection_gid || '',
+          shopify_collection_name: m.shopify_collection_name || '',
+          odoo_metaobject_gid: m.odoo_metaobject_gid || '',
+          odoo_category_name: m.odoo_category_name || '',
+          is_active: m.is_active ?? true,
+        })) ?? [],
     },
     mode: 'onChange',
   })

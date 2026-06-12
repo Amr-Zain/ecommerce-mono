@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { COLLECTIONS_REPOSITORY } from '@/common/interfaces';
 import { CollectionsService } from './collections.service';
 
 describe('CollectionsService', () => {
@@ -6,7 +7,13 @@ describe('CollectionsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CollectionsService],
+      providers: [
+        CollectionsService,
+        {
+          provide: COLLECTIONS_REPOSITORY,
+          useValue: {},
+        },
+      ],
     }).compile();
 
     service = module.get<CollectionsService>(CollectionsService);
