@@ -27,11 +27,11 @@ const SIDEBAR_LINKS = [
   { name: "My account", href: "/profile", icon: UserCircleIcon },
   { name: "My Wishlist", href: "/profile/wishlist", icon: FavouriteIcon },
   { name: "My Orders", href: "/profile/orders", icon: PackageIcon },
-  {
-    name: "Order Details",
-    href: "/profile/orders/details",
-    icon: DocumentValidationIcon,
-  },
+  // {
+  //   name: "Order Details",
+  //   href: "/profile/orders/details",
+  //   icon: DocumentValidationIcon,
+  // },
   { name: "My Addresses", href: "/profile/addresses", icon: Location01Icon },
   { name: "My Wallet", href: "/profile/wallet", icon: Wallet01Icon },
   // { name: "Payment", href: "/profile/payment", icon: CreditCardIcon },

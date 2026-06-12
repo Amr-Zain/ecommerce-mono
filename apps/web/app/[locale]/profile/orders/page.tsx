@@ -2,24 +2,30 @@
 
 import { PackageSearchIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import Image from "next/image"
 import Link from "next/link"
 import * as React from "react"
 
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@ecommerce/ui/components/empty"
-import { useOrders } from "@/hooks/api/use-profile-commerce"
+import { CancelOrderDialog } from "@/components/orders/cancel-order-dialog"
+import { orderActions, orderStatusMessage, useOrders, type Order } from "@/hooks/api/use-profile-commerce"
 import { cn } from "@/lib/utils"
 
-const FILTERS = [
-  { label: "All", value: "" },
-  { label: "In Progress", value: "pending" },
-  { label: "Delivered", value: "delivered" },
-  { label: "Cancelled", value: "cancelled" },
-] as const
+const FILTERS = ["", "pending", "processing", "shipped", "delivered", "cancelled", "refunded"] as const
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(value))
+function OrderActions({ order }: { order: Order }) {
+  const actions = orderActions(order)
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button size="sm" variant="outline" render={<Link href={`/profile/orders/${order.id}`} />}>
+        {actions.includes("track") ? "Track Order" : "View Details"}
+      </Button>
+      {actions.includes("return_exchange") && <Button size="sm" render={<Link href={`/profile/orders/${order.id}/exchange`} />}>Return or Exchange</Button>}
+      {actions.includes("cancel") && <CancelOrderDialog orderId={order.id} size="sm" />}
+    </div>
+  )
 }
 
 export default function OrdersPage() {
@@ -28,19 +34,11 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">My Orders</h1>
-
+      <h1 className="text-2xl font-bold">My Orders</h1>
       <div className="flex flex-wrap gap-2 border-b pb-4">
-        {FILTERS.map((filter) => (
-          <button
-            key={filter.value}
-            onClick={() => setStatus(filter.value)}
-            className={cn(
-              "rounded-full border px-4 py-1.5 text-xs font-semibold",
-              status === filter.value ? "border-foreground bg-foreground text-background" : "text-muted-foreground"
-            )}
-          >
-            {filter.label}
+        {FILTERS.map((value) => (
+          <button key={value} onClick={() => setStatus(value)} className={cn("rounded-full border px-4 py-1.5 text-xs font-semibold capitalize", status === value ? "border-foreground bg-foreground text-background" : "text-muted-foreground")}>
+            {value || "All"}
           </button>
         ))}
       </div>
@@ -62,24 +60,28 @@ export default function OrdersPage() {
             <article key={order.id} className="overflow-hidden rounded-xl border bg-card">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/30 p-4">
                 <div>
-                  <p className="font-semibold">Order #{order.order_number || order.id}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(order.created_at)}</p>
+                  <Link href={`/profile/orders/${order.id}`} className="font-semibold hover:underline">Order #{order.order_number || order.id}</Link>
+                  <p className="text-xs text-muted-foreground">{new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(order.created_at))}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{order.status}</Badge>
-                  <Badge variant="outline">{order.payment_status}</Badge>
-                </div>
+                <div className="flex gap-2"><Badge variant="secondary">{order.status}</Badge><Badge variant="outline">{order.payment_status}</Badge></div>
               </div>
               <div className="space-y-3 p-4">
-                {order.items.slice(0, 3).map((item) => (
-                  <div key={item.id} className="flex justify-between gap-4 text-sm">
-                    <span>{item.product_name_snapshot} × {item.quantity}</span>
-                    <span className="font-semibold">SAR {item.net_line_total.toFixed(2)}</span>
+                <p className="text-sm text-muted-foreground">{orderStatusMessage(order)}</p>
+                {order.items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 rounded-lg border p-3">
+                    <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted">
+                      {item.image_snapshot ? <Image src={item.image_snapshot} alt={item.product_name_snapshot} fill sizes="56px" className="object-cover" /> : <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">No image</div>}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      {item.product_id ? <Link href={`/products/${item.product_id}`} className="font-medium hover:underline">{item.product_name_snapshot}</Link> : <p className="font-medium">{item.product_name_snapshot}</p>}
+                      <p className="text-xs text-muted-foreground">Quantity: {item.quantity}</p>
+                    </div>
+                    <span className="text-sm font-semibold">SAR {item.net_line_total.toFixed(2)}</span>
                   </div>
                 ))}
-                <div className="flex items-center justify-between border-t pt-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
                   <span className="font-bold">SAR {order.total_price.toFixed(2)}</span>
-                  <Button size="sm" variant="outline" render={<Link href={`/profile/orders/${order.id}`} />}>View Details</Button>
+                  <OrderActions order={order} />
                 </div>
               </div>
             </article>

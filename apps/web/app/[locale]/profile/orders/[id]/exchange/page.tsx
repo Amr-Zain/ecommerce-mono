@@ -1,351 +1,92 @@
 "use client"
 
+import { useParams, useRouter } from "next/navigation"
 import * as React from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { FavouriteIcon, MinusSignIcon, PlusSignIcon } from "@hugeicons/core-free-icons"
-import { Badge } from "@ecommerce/ui/components/badge"
+
 import { Button } from "@ecommerce/ui/components/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ecommerce/ui/components/select"
 import { Input } from "@ecommerce/ui/components/input"
 import { Textarea } from "@ecommerce/ui/components/textarea"
-import { ProductCard } from "@/components/product/product-card"
+import { useProduct } from "@/hooks/api/use-products"
+import { isReturnExchangeEligible, useCreateExchange, useCreateReturn, useOrder } from "@/hooks/api/use-profile-commerce"
 import { cn } from "@/lib/utils"
 
-const MOCK_PRODUCT = {
-  id: "XYZ-42324234",
-  name: "Bewakoof Smartwatch",
-  brand: "Bewakoof",
-  description: "A sleek rectangular smartwatch featuring a large 1.95\" HD display and a slim, lightweight design. Ideal for everyday wear, it offers essential fitness and health tracking along with smart notifications, making it a perfect blend of style and functionality for daily use.",
-  price: 225.00,
-  oldPrice: 249.00,
-  image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=400&q=80",
-  rating: 4,
-  gender: "unisex",
-  display: "amoled",
-  screen: "1.95",
-  shape: "square",
-  color: "pink",
-  badge: "Delivered"
-}
+type ProductVariant = { id: string; stock_quantity?: number; attributes?: Array<{ attribute?: { name?: string }; value?: { name?: string } }> }
 
 export default function ExchangeReturnPage() {
-  const [activeTab, setActiveTab] = React.useState<"exchange" | "return">("exchange")
-  const [reason, setReason] = React.useState("")
-  const [selectedSize, setSelectedSize] = React.useState("M")
-  const [selectedColor, setSelectedColor] = React.useState("purple")
+  const { id } = useParams<{ id: string }>()
+  const router = useRouter()
+  const order = useOrder(id)
+  const createReturn = useCreateReturn()
+  const createExchange = useCreateExchange()
+  const [mode, setMode] = React.useState<"return" | "exchange">("return")
+  const [itemId, setItemId] = React.useState("")
   const [quantity, setQuantity] = React.useState(1)
-  const [refundMethod, setRefundMethod] = React.useState("original")
+  const [reason, setReason] = React.useState("")
+  const [note, setNote] = React.useState("")
+  const [newVariantId, setNewVariantId] = React.useState("")
+  const activeItemId = itemId || order.data?.items[0]?.id || ""
+  const selectedItem = order.data?.items.find((item) => item.id === activeItemId)
+  const product = useProduct(selectedItem?.product_id)
+  const variants = (((product.data?.data as unknown as { variants?: ProductVariant[] })?.variants) ?? []).filter(
+    (variant) => variant.id !== selectedItem?.variant_id && (variant.stock_quantity ?? 1) > 0
+  )
 
+  const submit = () => {
+    if (!selectedItem || !reason.trim()) return
+    const common = { orderItemId: selectedItem.id, quantity, reason, note: note || undefined }
+    const onSuccess = () => router.push(`/profile/orders/${id}`)
+    if (mode === "return") createReturn.mutate({ items: [common], note: note || undefined }, { onSuccess })
+    else if (newVariantId) createExchange.mutate({ items: [{ ...common, newVariantId }], note: note || undefined }, { onSuccess })
+  }
+
+  if (order.isPending) return <p className="text-sm text-muted-foreground">Loading order...</p>
+  if (!order.data) return <p className="text-sm text-muted-foreground">Order not found.</p>
+  if (!isReturnExchangeEligible(order.data)) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Return or Exchange unavailable</h1>
+        <p className="text-sm text-muted-foreground">Available only for delivered orders within 14 days of delivery.</p>
+        <Button variant="outline" onClick={() => router.push(`/profile/orders/${id}`)}>Back to Order</Button>
+      </div>
+    )
+  }
+
+  const pending = createReturn.isPending || createExchange.isPending
   return (
-    <div className="space-y-8">
-      {/* Product Box */}
-      <ProductCard product={MOCK_PRODUCT} view="list" hideActions />
-
-      {/* Tabs */}
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Return or Exchange</h1>
       <div className="flex border-b">
-        <button
-          onClick={() => setActiveTab("exchange")}
-          className={cn(
-            "flex-1 pb-3 text-sm font-semibold transition-all border-b-2",
-            activeTab === "exchange"
-              ? "border-foreground text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Exchange
-        </button>
-        <button
-          onClick={() => setActiveTab("return")}
-          className={cn(
-            "flex-1 pb-3 text-sm font-semibold transition-all border-b-2",
-            activeTab === "return"
-              ? "border-foreground text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Return
-        </button>
+        {(["return", "exchange"] as const).map((value) => (
+          <button key={value} onClick={() => setMode(value)} className={cn("flex-1 border-b-2 pb-3 text-sm font-semibold capitalize", mode === value ? "border-foreground" : "border-transparent text-muted-foreground")}>{value}</button>
+        ))}
       </div>
-
-      {/* Form Content */}
-      <div className="space-y-8">
-        {/* Reason Section */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold">Why do you want to {activeTab === "exchange" ? "exchange" : "Return"} this item?</h3>
-          <div className="flex flex-wrap items-center gap-6">
-            {["Wrong size", "Defective/damaged item", "Wrong item received", "Don't like the product", "Other"].map((item) => (
-              <label key={item} className="flex items-center gap-2 cursor-pointer group">
-                <div className={cn(
-                  "size-4 rounded-full border flex items-center justify-center transition-all",
-                  reason === item ? "border-foreground border-4" : "border-muted-foreground group-hover:border-foreground"
-                )}></div>
-                <input
-                  type="radio"
-                  name="reason"
-                  value={item}
-                  checked={reason === item}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="hidden"
-                />
-                <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">{item}</span>
-              </label>
-            ))}
-          </div>
-
-          <div className="space-y-2 pt-2">
-            <label className="text-sm font-bold">Reason for {activeTab === "exchange" ? "Exchange" : "Return"}<span className="text-destructive">*</span></label>
-            <Textarea
-              placeholder={`Briefly describe the reason for ${activeTab === "exchange" ? "exchange" : "return"}`}
-              className="min-h-[100px] text-sm resize-y"
-            />
-          </div>
-        </div>
-
-        {/* Exchange Specific Sections */}
-        {activeTab === "exchange" && (
-          <>
-            {/* Sizes */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold">Available sizes</h3>
-                <Link href={"#" as any} className="text-xs font-semibold text-blue-500 hover:underline">Size Guide &gt;</Link>
-              </div>
-              <div className="flex items-center gap-3">
-                {[
-                  { size: "XS", stock: null },
-                  { size: "S", stock: "1 left" },
-                  { size: "M", stock: null },
-                  { size: "L", stock: "2 left" },
-                  { size: "XL", stock: null },
-                ].map((item) => (
-                  <div key={item.size} className="flex flex-col items-center gap-1">
-                    <button
-                      onClick={() => setSelectedSize(item.size)}
-                      className={cn(
-                        "flex size-10 items-center justify-center rounded-lg border text-sm font-semibold transition-all",
-                        selectedSize === item.size
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background text-foreground hover:bg-muted"
-                      )}
-                    >
-                      {item.size}
-                    </button>
-                    {item.stock && (
-                      <span className="text-[10px] font-semibold text-destructive">{item.stock}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Colors & Quantity */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold">Available Color</h3>
-                <div className="flex items-center gap-2">
-                  {[
-                    { id: "purple", color: "bg-purple-600" },
-                    { id: "lime", color: "bg-lime-400" },
-                    { id: "gray", color: "bg-gray-200" },
-                    { id: "pink", color: "bg-pink-200" },
-                    { id: "mint", color: "bg-emerald-200" },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setSelectedColor(item.id)}
-                      className={cn(
-                        "size-6 rounded-full transition-all ring-offset-2",
-                        item.color,
-                        selectedColor === item.id ? "ring-2 ring-foreground scale-110" : "hover:scale-110"
-                      )}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold">Choose the Quantity</h3>
-                <div className="flex items-center justify-between w-[120px] rounded-lg border p-1 h-10">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="flex size-8 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-all"
-                  >
-                    <HugeiconsIcon icon={MinusSignIcon} className="size-4" strokeWidth={2} />
-                  </button>
-                  <span className="text-sm font-bold">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="flex size-8 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground rounded-md transition-all"
-                  >
-                    <HugeiconsIcon icon={PlusSignIcon} className="size-4" strokeWidth={2} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
+      <div className="grid gap-4">
+        <label className="grid gap-2 text-sm font-semibold">Order item
+          <select className="h-10 rounded-md border bg-background px-3 font-normal" value={activeItemId} onChange={(event) => { setItemId(event.target.value); setNewVariantId("") }}>
+            {order.data.items.map((item) => <option key={item.id} value={item.id}>{item.product_name_snapshot}</option>)}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-semibold">Quantity
+          <Input type="number" min={1} max={selectedItem?.quantity ?? 1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Math.min(selectedItem?.quantity ?? 1, Number(event.target.value))))} />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold">Reason
+          <Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="wrong_size, damaged, wrong_item..." />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold">Note
+          <Textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Describe the issue" />
+        </label>
+        {mode === "exchange" && (
+          <label className="grid gap-2 text-sm font-semibold">Replacement variant
+            <select className="h-10 rounded-md border bg-background px-3 font-normal" value={newVariantId} onChange={(event) => setNewVariantId(event.target.value)}>
+              <option value="">Select replacement</option>
+              {variants.map((variant) => <option key={variant.id} value={variant.id}>{variant.attributes?.map((attribute) => attribute.value?.name).filter(Boolean).join(" / ") || `Variant ${variant.id}`}</option>)}
+            </select>
+          </label>
         )}
-
-        {/* Refund Method (Common, but position varies slightly. Added here for Return tab specifically based on screenshots, and Exchange has it at the bottom) */}
-        {activeTab === "return" && (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold">How do you want to be refunded?</h3>
-            <div className="flex flex-wrap items-center gap-6">
-              {[
-                { id: "original", label: "Original payment method" },
-                { id: "giftcard", label: "Gift card" },
-                { id: "credit", label: "Credit or Debit card" },
-              ].map((item) => (
-                <label key={item.id} className="flex items-center gap-2 cursor-pointer group">
-                  <div className={cn(
-                    "size-4 rounded-full border flex items-center justify-center transition-all",
-                    refundMethod === item.id ? "border-foreground border-4" : "border-muted-foreground group-hover:border-foreground"
-                  )}></div>
-                  <input
-                    type="radio"
-                    name="refund"
-                    value={item.id}
-                    checked={refundMethod === item.id}
-                    onChange={(e) => setRefundMethod(e.target.value)}
-                    className="hidden"
-                  />
-                  <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">{item.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Pickup Details */}
-        <div className="space-y-4 pt-4 border-t border-dashed">
-          <h3 className="text-sm font-bold">Pickup Details</h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold">Country<span className="text-destructive">*</span></label>
-              <Select defaultValue="usa">
-                <SelectTrigger className="text-xs font-medium h-10">
-                  <SelectValue placeholder="Select Country" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="usa">USA</SelectItem>
-                  <SelectItem value="uk">UK</SelectItem>
-                  <SelectItem value="ca">Canada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-xs font-semibold">Region/State<span className="text-destructive">*</span></label>
-              <Select defaultValue="ca">
-                <SelectTrigger className="text-xs font-medium h-10">
-                  <SelectValue placeholder="Select State" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ca">California</SelectItem>
-                  <SelectItem value="ny">New York</SelectItem>
-                  <SelectItem value="tx">Texas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-xs font-semibold">City<span className="text-destructive">*</span></label>
-              <Select defaultValue="la">
-                <SelectTrigger className="text-xs font-medium h-10">
-                  <SelectValue placeholder="Select City" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="la">Los Angeles</SelectItem>
-                  <SelectItem value="sf">San Francisco</SelectItem>
-                  <SelectItem value="sd">San Diego</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold">Post Code<span className="text-destructive">*</span></label>
-              <Input defaultValue="90001" className="h-10 text-xs font-medium" />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-xs font-medium text-emerald-500">Your item will be picked up within 2-3 days.</span>
-            <Button className="h-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs px-4">
-              Save changes
-            </Button>
-          </div>
-        </div>
-
-        {/* Exchange Summary */}
-        {activeTab === "exchange" && (
-          <div className="rounded-xl border p-5 space-y-3 bg-card/50">
-            <div className="flex justify-between text-xs font-medium text-muted-foreground">
-              <span>Subtotal</span>
-              <span className="text-foreground">$599.00</span>
-            </div>
-            <div className="flex justify-between text-xs font-medium text-muted-foreground">
-              <span>Discount</span>
-              <span className="text-foreground">-$50.00</span>
-            </div>
-            <div className="flex justify-between text-xs font-medium text-muted-foreground">
-              <span>Shipment cost</span>
-              <span className="text-foreground">$22.50</span>
-            </div>
-            <div className="flex justify-between text-sm font-bold text-foreground pt-3 border-t">
-              <span>Grand Total</span>
-              <span>$571.70</span>
-            </div>
-          </div>
-        )}
-
-        {/* Footer Info & Action */}
-        <div className="space-y-6 pt-2">
-          {activeTab === "exchange" ? (
-            <>
-              <p className="text-xs font-medium text-muted-foreground">
-                You'll get $00.00 refunded after your returned item is picked up and verified.
-              </p>
-              
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold">How do you want to be refunded?</h3>
-                <div className="flex flex-wrap items-center gap-6">
-                  {[
-                    { id: "original", label: "Original payment method" },
-                    { id: "giftcard", label: "Gift card" },
-                    { id: "credit", label: "Credit or Debit card" },
-                  ].map((item) => (
-                    <label key={item.id} className="flex items-center gap-2 cursor-pointer group">
-                      <div className={cn(
-                        "size-4 rounded-full border flex items-center justify-center transition-all",
-                        refundMethod === item.id ? "border-foreground border-4" : "border-muted-foreground group-hover:border-foreground"
-                      )}></div>
-                      <input
-                        type="radio"
-                        name="refund"
-                        value={item.id}
-                        checked={refundMethod === item.id}
-                        onChange={(e) => setRefundMethod(e.target.value)}
-                        className="hidden"
-                      />
-                      <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">{item.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <p className="text-xs font-medium text-muted-foreground">
-              You'll get full payment refunded after your returned item is picked up and verified.
-            </p>
-          )}
-
-          <Button className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
-            Confirm {activeTab === "exchange" ? "Exchange" : "Return"}
-          </Button>
-        </div>
       </div>
+      <Button className="w-full" onClick={submit} disabled={pending || !reason.trim() || (mode === "exchange" && !newVariantId)}>
+        {pending ? "Submitting..." : `Confirm ${mode}`}
+      </Button>
     </div>
   )
 }

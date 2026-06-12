@@ -1,7 +1,5 @@
 import * as React from "react"
 
-export const dynamic = "force-static"
-
 export default function WarrantyPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8 py-10">

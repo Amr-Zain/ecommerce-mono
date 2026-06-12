@@ -16,19 +16,6 @@ import { AutoSlider } from "@/components/shared/auto-slider"
 import type { Category } from "./data"
 import { SectionHeader } from "./section-header"
 
-const CATEGORY_SLUGS: Record<string, string> = {
-  Electronics: "/collections/electronics",
-  "Beauty Products": "/collections/beauty",
-  "Smart Watches": "/collections/electronics",
-  "Home Decor": "/collections",
-  "Kitchen Appliances": "/collections",
-  "Toys & Games": "/collections",
-  "Bags & Travel": "/collections",
-  Footwear: "/collections",
-  Audio: "/collections",
-  Fashion: "/collections",
-}
-
 function CarouselSideControls() {
   const { scrollNext, scrollPrev, canScrollNext, canScrollPrev } = useCarousel()
 
@@ -87,7 +74,7 @@ export function CategoryStrip({
                 className="basis-1/2 ps-3 sm:basis-1/3 md:basis-1/4 lg:basis-1/7"
               >
                 <Link
-                  href={CATEGORY_SLUGS[category.name] ?? "/collections"}
+                  href={category.slug ? `/collections/${category.slug}` : "/collections"}
                   className="group mx-auto flex w-full max-w-34 flex-col items-center gap-3 rounded-full p-2 text-center transition"
                 >
                   <span

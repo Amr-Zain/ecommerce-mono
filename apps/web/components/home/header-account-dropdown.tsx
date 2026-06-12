@@ -63,12 +63,12 @@ function HeaderAccountDropdown({
       <DropdownMenuTrigger
         aria-label="Account menu"
         render={
-          <button className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          <button className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring" />
         }
       >
         <Avatar className="size-9 rounded-sm">
           {image && <AvatarImage src={image} alt={name} />}
-          <AvatarFallback className="rounded-sm font-semibold">
+          <AvatarFallback className="rounded-full font-semibold">
             {initials(name)}
           </AvatarFallback>
         </Avatar>

@@ -21,6 +21,7 @@ type HomeProduct = {
 
 type HomeCollection = {
   id: string
+  slug: string
   name: string
   image?: string | null
 }
@@ -65,6 +66,7 @@ function mapProducts(products: HomeProduct[]): Product[] {
 function mapCollections(collections: HomeCollection[]): Category[] {
   return collections.map((collection, index) => ({
     id: collection.id,
+    slug: collection.slug,
     name: collection.name,
     image: collection.image ?? FALLBACK_IMAGE,
     background: index % 2 === 0 ? "bg-muted" : "bg-secondary",

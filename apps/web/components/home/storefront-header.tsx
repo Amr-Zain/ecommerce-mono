@@ -1,6 +1,5 @@
 import {
   ArrowDown01Icon,
-  Menu02Icon,
   Search01Icon,
   Store04Icon,
 } from "@hugeicons/core-free-icons"
@@ -9,12 +8,20 @@ import Link from "next/link"
 
 import { Input } from "@ecommerce/ui/components/input"
 import { ThemeSwitch } from "@/components/shared/theme-switch"
+import type { CollectionTreeItem } from "@/hooks/api/use-products"
+import { backendGet } from "@/lib/server/backend"
+import { cacheTags } from "@/lib/server/cache-tags"
 import { HeaderAccountControls } from "./header-account-controls"
 import { HeaderCommerceControls } from "./header-commerce-controls"
-import { IconButton } from "./icon-button"
+import { StorefrontNavigation } from "./storefront-navigation"
 
 export async function StorefrontHeader() {
   const saleItems = Array.from({ length: 8 })
+  const collections = await backendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
+    revalidate: 60,
+    tags: [cacheTags.categories],
+    retries: 0,
+  }).then((response) => response.data).catch(() => [])
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
@@ -88,13 +95,7 @@ export async function StorefrontHeader() {
           <span className="text-base font-semibold">Shopix</span>
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium lg:flex">
-          <Link
-            href="/collections"
-            className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
-          >
-            Shops
-            <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
-          </Link>
+          <StorefrontNavigation collections={collections} />
           <Link
             href="/products"
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
@@ -133,9 +134,7 @@ export async function StorefrontHeader() {
         <div className="flex items-center gap-2.5">
           <HeaderCommerceControls />
           <HeaderAccountControls />
-          <IconButton label="Menu" className="lg:hidden">
-            <HugeiconsIcon icon={Menu02Icon} strokeWidth={2} />
-          </IconButton>
+          <div className="lg:hidden"><StorefrontNavigation collections={collections} /></div>
         </div>
       </div>
     </header>
