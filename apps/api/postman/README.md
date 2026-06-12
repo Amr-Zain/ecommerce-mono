@@ -398,8 +398,15 @@ GET /users?paginate=0&filters[isActive]=1&sort[name]=asc
 
 ### Local Environment
 
-- `baseUrl` - http://localhost:3000
+- `baseUrl` - http://localhost:3030
 - `apiVersion` - v1
+- `productId` - Seeded storefront product ID (`2002`)
+- `variantId` - Seeded active product variant ID (`15`)
+- `collectionId` - Seeded leaf collection ID (`1303`)
+- `collectionSlug` - Seeded leaf collection slug (`women-s-rings`)
+- `attributeValueId` - Seeded attribute value ID (`1212`)
+- `reviewId` - Review ID used by update/delete requests
+- `checkoutId` - Pending checkout ID returned by Stripe place-order
 
 ## Testing Tips
 
@@ -421,7 +428,7 @@ GET /users?paginate=0&filters[isActive]=1&sort[name]=asc
 
 ### Connection Refused
 
-- Ensure the API server is running on port 3000
+- Ensure the API server is running on port 3030
 - Check if the `baseUrl` environment variable is correct
 
 ### 404 Not Found
@@ -482,17 +489,22 @@ Client endpoints use `@ApiContext('client')` which returns thin responses: only 
 
 ### Collections
 
-| Method | URL                       | Auth   | Description                  |
-| ------ | ------------------------- | ------ | ---------------------------- |
-| GET    | `/client/collections`     | Public | List active collections      |
-| GET    | `/client/collections/:id` | Public | Get collection with children |
+| Method | URL                               | Auth   | Description                                                |
+| ------ | --------------------------------- | ------ | ---------------------------------------------------------- |
+| GET    | `/client/collections`             | Public | List active collections                                    |
+| GET    | `/client/collections/tree`        | Public | Three-level hierarchy used by collection pages and menus   |
+| GET    | `/client/collections/slug/:slug`  | Public | Get active collection by slug                              |
+| GET    | `/client/collections/:id`         | Public | Get collection with children                               |
 
 ### Products
 
-| Method | URL                    | Auth   | Description                        |
-| ------ | ---------------------- | ------ | ---------------------------------- |
-| GET    | `/client/products`     | Public | List active products with variants |
-| GET    | `/client/products/:id` | Public | Get product by ID with variants    |
+| Method | URL                            | Auth   | Description                                                         |
+| ------ | ------------------------------ | ------ | ------------------------------------------------------------------- |
+| GET    | `/client/products`             | Public | Catalog listing with pagination, collection scope, filters, facets |
+| GET    | `/client/products/:id`         | Public | Storefront-safe detail with variants, media, and 3 review previews |
+| GET    | `/client/products/:id/related` | Public | Related products, excluding the current product                    |
+
+Catalog requests support repeated `collection` and `attributeValue` parameters, plus `collectionSlug`, `minPrice`, `maxPrice`, `minDiscount`, `search`, and `catalogSort`.
 
 ### Attributes
 
@@ -526,20 +538,36 @@ Client endpoints use `@ApiContext('client')` which returns thin responses: only 
 
 | Method | URL                             | Description           |
 | ------ | ------------------------------- | --------------------- |
-| GET    | `/client/addresses`             | List user's addresses |
-| POST   | `/client/addresses`             | Create address        |
-| PUT    | `/client/addresses/:id`         | Update address        |
-| DELETE | `/client/addresses/:id`         | Delete address        |
-| PUT    | `/client/addresses/:id/default` | Set default address   |
+| GET    | `/client/profile/addresses`             | List user's addresses |
+| POST   | `/client/profile/addresses`             | Create address        |
+| PUT    | `/client/profile/addresses/:id`         | Update address        |
+| DELETE | `/client/profile/addresses/:id`         | Delete address        |
+| PUT    | `/client/profile/addresses/:id/default` | Set default address   |
+
+### Wishlist (requires client JWT)
+
+| Method | URL                | Description                            |
+| ------ | ------------------ | -------------------------------------- |
+| GET    | `/client/wishlist` | List the current user's wishlist items |
+| POST   | `/client/wishlist` | Toggle a product in the wishlist       |
 
 ### Reviews
 
-| Method | URL                                   | Auth       | Description              |
-| ------ | ------------------------------------- | ---------- | ------------------------ |
-| GET    | `/client/reviews/products/:productId` | Public     | List reviews for product |
-| POST   | `/client/reviews`                     | Client JWT | Create review            |
-| PUT    | `/client/reviews/:id`                 | Client JWT | Update own review        |
-| DELETE | `/client/reviews/:id`                 | Client JWT | Delete own review        |
+| Method | URL                                      | Auth       | Description                                                |
+| ------ | ---------------------------------------- | ---------- | ---------------------------------------------------------- |
+| GET    | `/client/reviews/products/:productId`    | Public     | Paginated active verified reviews                          |
+| GET    | `/client/reviews/products/:productId/me` | Client JWT | Existing review and delivered-purchase review eligibility |
+| POST   | `/client/reviews`                        | Client JWT | Create one pending review after a delivered purchase       |
+| PUT    | `/client/reviews/:id`                    | Client JWT | Update own review and return it to pending approval        |
+| DELETE | `/client/reviews/:id`                    | Client JWT | Delete own review                                          |
+
+### Checkout (requires client JWT)
+
+| Method | URL                               | Description                                                |
+| ------ | --------------------------------- | ---------------------------------------------------------- |
+| POST   | `/client/checkout/preview`        | Preview totals, discounts, shipping, and wallet amounts    |
+| POST   | `/client/checkout/place-order`    | Create COD order or pending Stripe checkout                |
+| POST   | `/client/checkout/verify-payment` | Verify a pending Stripe checkout and create the order      |
 
 ### Orders (requires client JWT)
 
@@ -547,7 +575,6 @@ Client endpoints use `@ApiContext('client')` which returns thin responses: only 
 | ------ | --------------------------- | --------------------------------------------------------------------- |
 | GET    | `/client/orders`            | List user's orders                                                    |
 | GET    | `/client/orders/:id`        | Get order detail                                                      |
-| POST   | `/client/orders`            | Create order                                                          |
 | POST   | `/client/orders/:id/cancel` | Cancel a `pending` order, refund remaining payment, and restore stock |
 
 ### Returns (requires client JWT)

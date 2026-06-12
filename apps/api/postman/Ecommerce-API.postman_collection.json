@@ -2727,7 +2727,7 @@
           "name": "Collections",
           "item": [
             {
-              "name": "List Active Collectionss",
+              "name": "List Active Collections",
               "request": {
                 "auth": {
                   "type": "noauth"
@@ -2772,19 +2772,14 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{baseUrl}}/client/collections/1",
+                  "raw": "{{baseUrl}}/client/collections/{{collectionId}}",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "collections", "1"]
+                  "path": ["client", "collections", "{{collectionId}}"]
                 }
               }
-            }
-          ]
-        },
-        {
-          "name": "Products",
-          "item": [
+            },
             {
-              "name": "List Active Products",
+              "name": "Get Collection Tree (Mega Menu)",
               "request": {
                 "auth": {
                   "type": "noauth"
@@ -2798,7 +2793,54 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{baseUrl}}/client/products?page=1&limit=20",
+                  "raw": "{{baseUrl}}/client/collections/tree",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "collections", "tree"]
+                }
+              }
+            },
+            {
+              "name": "Get Collection by Slug",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/collections/slug/{{collectionSlug}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "collections", "slug", "{{collectionSlug}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Products",
+          "item": [
+            {
+              "name": "List Catalog Products",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/products?page=1&limit=20&collectionSlug={{collectionSlug}}&attributeValue={{attributeValueId}}&attributeValue=1222&minPrice=100&maxPrice=500&minDiscount=10&catalogSort=rating_desc",
                   "host": ["{{baseUrl}}"],
                   "path": ["client", "products"],
                   "query": [
@@ -2809,6 +2851,34 @@
                     {
                       "key": "limit",
                       "value": "20"
+                    },
+                    {
+                      "key": "collectionSlug",
+                      "value": "{{collectionSlug}}"
+                    },
+                    {
+                      "key": "attributeValue",
+                      "value": "{{attributeValueId}}"
+                    },
+                    {
+                      "key": "attributeValue",
+                      "value": "1222"
+                    },
+                    {
+                      "key": "minPrice",
+                      "value": "100"
+                    },
+                    {
+                      "key": "maxPrice",
+                      "value": "500"
+                    },
+                    {
+                      "key": "minDiscount",
+                      "value": "10"
+                    },
+                    {
+                      "key": "catalogSort",
+                      "value": "rating_desc"
                     }
                   ]
                 }
@@ -2829,9 +2899,36 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{baseUrl}}/client/products/1",
+                  "raw": "{{baseUrl}}/client/products/{{productId}}",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "products", "1"]
+                  "path": ["client", "products", "{{productId}}"]
+                }
+              }
+            },
+            {
+              "name": "Get Related Products",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/products/{{productId}}/related?limit=8",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "products", "{{productId}}", "related"],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "8"
+                    }
+                  ]
                 }
               }
             }
@@ -3037,9 +3134,9 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/client/addresses",
+                  "raw": "{{baseUrl}}/client/profile/addresses",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses"]
+                  "path": ["client", "profile", "addresses"]
                 }
               }
             },
@@ -3058,9 +3155,9 @@
                   }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/client/addresses",
+                  "raw": "{{baseUrl}}/client/profile/addresses",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses"]
+                  "path": ["client", "profile", "addresses"]
                 }
               }
             },
@@ -3079,9 +3176,9 @@
                   }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/client/addresses/1",
+                  "raw": "{{baseUrl}}/client/profile/addresses/1",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses", "1"]
+                  "path": ["client", "profile", "addresses", "1"]
                 }
               }
             },
@@ -3091,9 +3188,9 @@
                 "method": "PUT",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/client/addresses/1/default",
+                  "raw": "{{baseUrl}}/client/profile/addresses/1/default",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses", "1", "default"]
+                  "path": ["client", "profile", "addresses", "1", "default"]
                 }
               }
             },
@@ -3103,9 +3200,57 @@
                 "method": "DELETE",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/client/addresses/1",
+                  "raw": "{{baseUrl}}/client/profile/addresses/1",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "addresses", "1"]
+                  "path": ["client", "profile", "addresses", "1"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wishlist",
+          "item": [
+            {
+              "name": "Get My Wishlist",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/wishlist",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "wishlist"]
+                }
+              }
+            },
+            {
+              "name": "Toggle Product in Wishlist",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"productId\": {{productId}}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/wishlist",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "wishlist"]
                 }
               }
             }
@@ -3121,11 +3266,43 @@
                   "type": "noauth"
                 },
                 "method": "GET",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
                 "url": {
-                  "raw": "{{baseUrl}}/client/reviews/products/1",
+                  "raw": "{{baseUrl}}/client/reviews/products/{{productId}}?page=1&limit=10",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "reviews", "products", "1"]
+                  "path": ["client", "reviews", "products", "{{productId}}"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get My Review Eligibility",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/client/reviews/products/{{productId}}/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "reviews", "products", "{{productId}}", "me"]
                 }
               }
             },
@@ -3136,7 +3313,7 @@
                 "header": [],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"productId\": 1,\n  \"rating\": 5,\n  \"comment\": \"Great product!\"\n}",
+                  "raw": "{\n  \"productId\": {{productId}},\n  \"rating\": 5,\n  \"comment\": \"Great product!\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -3165,9 +3342,9 @@
                   }
                 },
                 "url": {
-                  "raw": "{{baseUrl}}/client/reviews/1",
+                  "raw": "{{baseUrl}}/client/reviews/{{reviewId}}",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "reviews", "1"]
+                  "path": ["client", "reviews", "{{reviewId}}"]
                 }
               }
             },
@@ -3177,9 +3354,9 @@
                 "method": "DELETE",
                 "header": [],
                 "url": {
-                  "raw": "{{baseUrl}}/client/reviews/1",
+                  "raw": "{{baseUrl}}/client/reviews/{{reviewId}}",
                   "host": ["{{baseUrl}}"],
-                  "path": ["client", "reviews", "1"]
+                  "path": ["client", "reviews", "{{reviewId}}"]
                 }
               }
             }
@@ -3217,7 +3394,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"productId\": 1,\n  \"variantId\": 1,\n  \"quantity\": 2\n}",
+                  "raw": "{\n  \"productId\": {{productId}},\n  \"variantId\": {{variantId}},\n  \"quantity\": 2\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -3345,6 +3522,32 @@
                   "raw": "{{baseUrl}}/client/checkout/place-order",
                   "host": ["{{baseUrl}}"],
                   "path": ["client", "checkout", "place-order"]
+                }
+              }
+            },
+            {
+              "name": "Verify Payment and Create Order",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept-Language",
+                    "value": "en"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"checkoutId\": \"{{checkoutId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/client/checkout/verify-payment",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["client", "checkout", "verify-payment"]
                 }
               }
             }
@@ -3879,7 +4082,42 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:3030",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "2002",
+      "type": "string"
+    },
+    {
+      "key": "variantId",
+      "value": "15",
+      "type": "string"
+    },
+    {
+      "key": "collectionId",
+      "value": "1303",
+      "type": "string"
+    },
+    {
+      "key": "collectionSlug",
+      "value": "women-s-rings",
+      "type": "string"
+    },
+    {
+      "key": "attributeValueId",
+      "value": "1212",
+      "type": "string"
+    },
+    {
+      "key": "reviewId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "checkoutId",
+      "value": "",
       "type": "string"
     },
     {
