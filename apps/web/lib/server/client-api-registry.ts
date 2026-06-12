@@ -42,10 +42,56 @@ const clientApiRoutes: Record<string, ClientApiRoute> = {
     revalidate: 60,
     tags: [cacheTags.products],
   },
+  "products/:id/related": {
+    backendPath: "/client/products/:id/related",
+    methods: ["GET"],
+    revalidate: 0,
+  },
+  "reviews/products/:id": {
+    backendPath: "/client/reviews/products/:id",
+    methods: ["GET"],
+    revalidate: 0,
+  },
+  "reviews/products/:id/me": {
+    backendPath: "/client/reviews/products/:id/me",
+    methods: ["GET"],
+    privateData: true,
+    requireAuth: true,
+  },
+  reviews: {
+    backendPath: "/client/reviews",
+    methods: ["POST"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "reviews/:id": {
+    backendPath: "/client/reviews/:id",
+    methods: ["PUT", "DELETE"],
+    privateData: true,
+    requireAuth: true,
+  },
   categories: {
     backendPath: "/categories",
     methods: ["GET"],
     revalidate: 300,
+    tags: [cacheTags.categories],
+  },
+  collections: {
+    backendPath: "/client/collections",
+    methods: ["GET"],
+    revalidate: 60,
+    tags: [cacheTags.categories],
+  },
+  "collections/tree": {
+    backendPath: "/client/collections/tree",
+    methods: ["GET"],
+    revalidate: 60,
+    tags: [cacheTags.categories],
+  },
+  "collections/slug/:slug": {
+    backendPath: "/client/collections/slug/:slug",
+    methods: ["GET"],
+    revalidate: 60,
     tags: [cacheTags.categories],
   },
   countries: {
@@ -85,6 +131,24 @@ const clientApiRoutes: Record<string, ClientApiRoute> = {
   "orders/:id": {
     backendPath: "/client/orders/:id",
     methods: ["GET"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "orders/:id/cancel": {
+    backendPath: "/client/orders/:id/cancel",
+    methods: ["POST"],
+    privateData: true,
+    requireAuth: true,
+  },
+  returns: {
+    backendPath: "/client/returns",
+    methods: ["POST"],
+    privateData: true,
+    requireAuth: true,
+  },
+  exchanges: {
+    backendPath: "/client/exchanges",
+    methods: ["POST"],
     privateData: true,
     requireAuth: true,
   },
@@ -156,6 +220,48 @@ const clientApiRoutes: Record<string, ClientApiRoute> = {
     requireAuth: true,
     revalidate: 0,
   },
+  "notifications/read-all": {
+    backendPath: "/client/notifications/read-all",
+    methods: ["PATCH"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "notifications/:id/read": {
+    backendPath: "/client/notifications/:id/read",
+    methods: ["PATCH"],
+    privateData: true,
+    requireAuth: true,
+  },
+  wallet: {
+    backendPath: "/client/wallet",
+    methods: ["GET"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "wallet/transactions": {
+    backendPath: "/client/wallet/transactions",
+    methods: ["GET"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "wallet/deposits": {
+    backendPath: "/client/wallet/deposits",
+    methods: ["POST"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "wallet/withdrawals": {
+    backendPath: "/client/wallet/withdrawals",
+    methods: ["GET", "POST"],
+    privateData: true,
+    requireAuth: true,
+  },
+  "wallet/withdrawals/:id/cancel": {
+    backendPath: "/client/wallet/withdrawals/:id/cancel",
+    methods: ["POST"],
+    privateData: true,
+    requireAuth: true,
+  },
 } satisfies Record<string, ClientApiRoute>
 
 function getClientApiRoute(path: string) {
@@ -183,6 +289,39 @@ function matchClientApiRoute(path: string) {
     }
   }
 
+  const productRelatedMatch = path.match(/^products\/([^/]+)\/related$/)
+  if (productRelatedMatch) {
+    const route = clientApiRoutes["products/:id/related"]
+    return { backendPath: route.backendPath.replace(":id", productRelatedMatch[1]), route }
+  }
+
+  const reviewMineMatch = path.match(/^reviews\/products\/([^/]+)\/me$/)
+  if (reviewMineMatch) {
+    const route = clientApiRoutes["reviews/products/:id/me"]
+    return { backendPath: route.backendPath.replace(":id", reviewMineMatch[1]), route }
+  }
+
+  const productReviewsMatch = path.match(/^reviews\/products\/([^/]+)$/)
+  if (productReviewsMatch) {
+    const route = clientApiRoutes["reviews/products/:id"]
+    return { backendPath: route.backendPath.replace(":id", productReviewsMatch[1]), route }
+  }
+
+  const reviewMatch = path.match(/^reviews\/([^/]+)$/)
+  if (reviewMatch) {
+    const route = clientApiRoutes["reviews/:id"]
+    return { backendPath: route.backendPath.replace(":id", reviewMatch[1]), route }
+  }
+
+  const collectionSlugMatch = path.match(/^collections\/slug\/([^/]+)$/)
+  if (collectionSlugMatch) {
+    const route = clientApiRoutes["collections/slug/:slug"]
+    return {
+      backendPath: route.backendPath.replace(":slug", collectionSlugMatch[1]),
+      route,
+    }
+  }
+
   const cartItemMatch = path.match(/^cart\/items\/([^/]+)$/)
   if (cartItemMatch) {
     const route = clientApiRoutes["cart/items/:id"]
@@ -192,7 +331,9 @@ function matchClientApiRoute(path: string) {
     }
   }
 
-  const addressDefaultMatch = path.match(/^profile\/addresses\/([^/]+)\/default$/)
+  const addressDefaultMatch = path.match(
+    /^profile\/addresses\/([^/]+)\/default$/
+  )
   if (addressDefaultMatch) {
     const route = clientApiRoutes["profile/addresses/:id/default"]
     return {
@@ -218,6 +359,35 @@ function matchClientApiRoute(path: string) {
       route,
     }
   }
+
+  const orderCancelMatch = path.match(/^orders\/([^/]+)\/cancel$/)
+  if (orderCancelMatch) {
+    const route = clientApiRoutes["orders/:id/cancel"]
+    return {
+      backendPath: route.backendPath.replace(":id", orderCancelMatch[1]),
+      route,
+    }
+  }
+
+  const withdrawalCancelMatch = path.match(
+    /^wallet\/withdrawals\/([^/]+)\/cancel$/
+  )
+  if (withdrawalCancelMatch) {
+    const route = clientApiRoutes["wallet/withdrawals/:id/cancel"]
+    return {
+      backendPath: route.backendPath.replace(":id", withdrawalCancelMatch[1]),
+      route,
+    }
+  }
+
+  const notificationReadMatch = path.match(/^notifications\/([^/]+)\/read$/)
+  if (notificationReadMatch) {
+    const route = clientApiRoutes["notifications/:id/read"]
+    return {
+      backendPath: route.backendPath.replace(":id", notificationReadMatch[1]),
+      route,
+    }
+  }
 }
 
 async function proxyClientApiRequest({
@@ -240,7 +410,7 @@ async function proxyClientApiRequest({
 
   const options: BackendOptions = {
     cache: method === "GET" && !route.privateData ? "force-cache" : "no-store",
-    query: Object.fromEntries(searchParams.entries()),
+    query: searchParamsToQuery(searchParams),
     requireAuth: route.requireAuth,
     revalidate: method === "GET" && !route.privateData ? route.revalidate : 0,
     retries: method === "GET" ? undefined : 0,
@@ -270,6 +440,15 @@ async function proxyClientApiRequest({
       { status: error instanceof TypeError ? 503 : 500 }
     )
   }
+}
+
+function searchParamsToQuery(searchParams: URLSearchParams) {
+  const query: Record<string, string | string[]> = {}
+  for (const key of new Set(searchParams.keys())) {
+    const values = searchParams.getAll(key)
+    query[key] = values.length > 1 ? values : values[0]
+  }
+  return query
 }
 
 function callBackend(

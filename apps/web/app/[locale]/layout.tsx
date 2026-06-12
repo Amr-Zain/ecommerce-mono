@@ -2,6 +2,7 @@ import { Geist, JetBrains_Mono } from "next/font/google"
 import { hasLocale, NextIntlClientProvider } from "next-intl"
 import { getMessages, setRequestLocale } from "next-intl/server"
 import { notFound } from "next/navigation"
+import { Suspense } from "react"
 
 import "../globals.css"
 import { SessionProvider } from "@/components/auth/session-provider"
@@ -73,9 +74,13 @@ export default async function LocaleLayout({
                   <ThemeProvider>
                     <TooltipProvider>
                       <div className="min-h-screen bg-background text-foreground">
-                        <StorefrontHeader />
+                        <Suspense fallback={<div className="h-32 border-b bg-background" />}>
+                          <StorefrontHeader />
+                        </Suspense>
                         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-                          {children}
+                          <Suspense fallback={<div className="min-h-[60vh]" />}>
+                            {children}
+                          </Suspense>
                           <Footer />
                         </main>
                       </div>

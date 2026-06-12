@@ -1,82 +1,78 @@
+import Link from "next/link"
+import { cacheLife, cacheTag } from "next/cache"
+import { Suspense } from "react"
+
+import {
+  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
+} from "@ecommerce/ui/components/breadcrumb"
+import { Skeleton } from "@ecommerce/ui/components/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ecommerce/ui/components/table"
 import { Benefits } from "@/components/home/benefits"
-import { popularProducts } from "@/components/home/data"
-import { ProductSection } from "@/components/home/product-section"
+import { ProductCard, type Product } from "@/components/product/product-card"
+import type { CatalogProduct, ProductDetail } from "@/hooks/api/use-products"
+import { publicBackendGet } from "@/lib/server/backend"
+import { productTag } from "@/lib/server/cache-tags"
+import { HttpError } from "@/lib/server/fetch"
 import { ProductDetails } from "./product-details"
-import { Reviews } from "./product-reviews"
+import { ProductReviews } from "./product-reviews"
 
-const initialReviews = [
-  {
-    name: "Jacob Smith",
-    date: "24 April",
-    rating: 4.5,
-    copy: "Almost compatible building no replacement needed and very pleasant with the screen. Although the could increase to make the screen's touches and customer support feels excellent.",
-  },
-  {
-    name: "Olivia Sophia",
-    date: "24 April",
-    rating: 5,
-    copy: "Almost compatible building no replacement needed and very pleasant with the screen. Although the could increase to make the screen's touches and customer support feels excellent.",
-  },
-]
+type DetailResponse = { data: ProductDetail }
+type RelatedResponse = { data: CatalogProduct[] }
 
-const variants = [
-  {
-    category: "Case Cover",
-    manufacturer: "Elysian Store Co. Ltd",
-    model: "iPhone 16 Series",
-    compatibility: "iPhone 16 / 16 Pro",
-    features: "Compatible with MagSafe",
-  },
-  {
-    category: "Slim Case Cover",
-    manufacturer: "Sagen Store Co. Ltd",
-    model: "Polycarbonate + TPU Layer",
-    compatibility: "iPhone 15 / 15 Series",
-    features: "Wireless charging friendly",
-  },
-]
-
-function Highlights() {
-  return (
-    <section className="py-10">
-      <h2 className="mb-4 text-xl font-semibold">Key Highlights</h2>
-      <div className="overflow-hidden rounded-lg border">
-        <div className="grid grid-cols-5 bg-primary text-xs font-semibold text-primary-foreground">
-          {["Category", "Manufacturer", "Product Material", "Product Compatibility", "Features"].map(
-            (heading) => (
-              <div key={heading} className="p-3 text-center">
-                {heading}
-              </div>
-            )
-          )}
-        </div>
-        {variants.map((variant) => (
-          <div
-            key={variant.model}
-            className="grid grid-cols-5 border-t text-xs text-muted-foreground"
-          >
-            <div className="p-3 text-center">{variant.category}</div>
-            <div className="p-3 text-center">{variant.manufacturer}</div>
-            <div className="p-3 text-center">{variant.model}</div>
-            <div className="p-3 text-center">{variant.compatibility}</div>
-            <div className="p-3 text-center">{variant.features}</div>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
+async function getProductDetail(id: string, locale: string) {
+  "use cache"
+  cacheLife("minutes")
+  cacheTag(productTag(id))
+  try {
+    return (await publicBackendGet<DetailResponse>(`/client/products/${id}`, {
+      headers: { "accept-language": locale },
+      retries: 0,
+    })).data
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) return null
+    throw error
+  }
 }
 
-export function ProductShow() {
-  const averageRating = Math.round((initialReviews.reduce((sum, r) => sum + r.rating, 0) / initialReviews.length) * 10) / 10
-
-  return (
-    <>
-      <ProductDetails reviewsCount={initialReviews.length} averageRating={averageRating} />
-      <Highlights />
-      <Reviews initialReviews={initialReviews} />
-      <ProductSection title="You may also like" products={popularProducts} />
-      <Benefits />
-    </>
-  )
+function mapRelated(item: CatalogProduct): Product {
+  const image = item.image || "/product-placeholder.svg"
+  return {
+    id: item.id, name: item.name, brand: item.collection?.name ?? "Shopix",
+    description: item.description, price: item.price, oldPrice: item.compare_at_price ?? undefined,
+    image, images: item.images.length ? item.images : [image], rating: item.rating,
+    gender: "", display: "", screen: "", shape: "", color: "",
+    discount: item.discount_percentage, firstVariationId: item.representative_variant.id,
+    available: item.representative_variant.available, attributes: item.representative_variant.attributes,
+  }
 }
+
+async function RelatedProducts({ id, locale }: { id: string; locale: string }) {
+  const response = await publicBackendGet<RelatedResponse>(`/client/products/${id}/related`, {
+    cache: "no-store", headers: { "accept-language": locale }, query: { limit: 8 }, retries: 0,
+  })
+  if (!response.data.length) return null
+  return <section className="space-y-5 py-10"><h2 className="text-xl font-semibold">You may also like</h2><div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{response.data.map((item) => <ProductCard key={item.id} product={mapRelated(item)} view="grid" />)}</div></section>
+}
+
+function RelatedSkeleton() {
+  return <section className="space-y-5 py-10"><Skeleton className="h-7 w-48" /><div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="aspect-[3/4] rounded-xl" />)}</div></section>
+}
+
+async function ProductShow({ id, locale }: { id: string; locale: string }) {
+  const product = await getProductDetail(id, locale)
+  if (!product) return null
+  const crumbs = [
+    ...(product.collection?.ancestors ?? []),
+    ...(product.collection ? [product.collection] : []),
+  ]
+  return <>
+    <Breadcrumb className="mb-6"><BreadcrumbList><BreadcrumbItem><BreadcrumbLink render={<Link href="/" />}>Home</BreadcrumbLink></BreadcrumbItem><BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbLink render={<Link href="/collections" />}>Collections</BreadcrumbLink></BreadcrumbItem>{crumbs.map((crumb) => <span className="contents" key={crumb.id}><BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbLink render={<Link href={`/collections/${crumb.slug}`} />}>{crumb.name}</BreadcrumbLink></BreadcrumbItem></span>)}<BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbPage>{product.name}</BreadcrumbPage></BreadcrumbItem></BreadcrumbList></Breadcrumb>
+    <ProductDetails product={product} />
+    <section className="py-10"><h2 className="mb-4 text-xl font-semibold">Variant Highlights</h2><div className="overflow-x-auto rounded-xl border"><Table><TableHeader><TableRow><TableHead>Attributes</TableHead><TableHead>SKU</TableHead><TableHead>Price</TableHead><TableHead>Availability</TableHead></TableRow></TableHeader><TableBody>{product.variants.map((variant) => <TableRow key={variant.id}><TableCell>{variant.attributes.map((item) => `${item.attribute}: ${item.value}`).join(", ") || "Standard"}</TableCell><TableCell>{variant.sku ?? "-"}</TableCell><TableCell>SAR {variant.price.toFixed(2)}</TableCell><TableCell>{variant.available ? `${variant.stock_quantity} in stock` : "Unavailable"}</TableCell></TableRow>)}</TableBody></Table></div></section>
+    <ProductReviews product={product} />
+    <Benefits />
+    <Suspense fallback={<RelatedSkeleton />}><RelatedProducts id={id} locale={locale} /></Suspense>
+  </>
+}
+
+export { getProductDetail, ProductShow }

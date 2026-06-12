@@ -1,234 +1,193 @@
 "use client"
 
-import * as React from "react"
-import Image from "next/image"
+import { Share08Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import {
-  FavouriteIcon,
-  PackageDeliveredIcon,
-  Share08Icon,
-  Shield02Icon,
-  ShoppingCart01Icon,
-} from "@hugeicons/core-free-icons"
+import Image from "next/image"
+import * as React from "react"
+
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
+import { AddToCartButton } from "@/components/product/add-to-cart-button"
+import { WishlistButton } from "@/components/product/wishlist-button"
+import type { ProductDetail } from "@/hooks/api/use-products"
 import { cn } from "@/lib/utils"
 import { Stars } from "./product-reviews"
 
-const productImages = [
-  "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=760&q=85",
-  "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=760&q=85",
-  "https://images.unsplash.com/photo-1512499617640-c2f999098c01?auto=format&fit=crop&w=760&q=85",
-  "https://images.unsplash.com/photo-1603891128711-11b4b03bb138?auto=format&fit=crop&w=760&q=85",
-]
+type Variant = ProductDetail["variants"][number]
 
-const productVariants = [
-  {
-    name: "Plain Titanium",
-    price: "$29.99",
-    oldPrice: "$39.99",
-    swatch: "bg-secondary",
-    image: productImages[0],
-  },
-  {
-    name: "Natural Blue",
-    price: "$32.99",
-    oldPrice: "$42.99",
-    swatch: "bg-muted",
-    image: productImages[1],
-  },
-  {
-    name: "Midnight Black",
-    price: "$34.99",
-    oldPrice: "$44.99",
-    swatch: "bg-primary",
-    image: productImages[2],
-  },
-  {
-    name: "Soft Lilac",
-    price: "$31.99",
-    oldPrice: "$41.99",
-    swatch: "bg-accent",
-    image: productImages[3],
-  },
-]
-
-function ProductGallery({
-  selectedImage,
-  onSelectImage,
-}: {
-  selectedImage: string
-  onSelectImage: (image: string) => void
-}) {
+function defaultVariant(variants: Variant[]) {
   return (
-    <div className="space-y-4">
-      <div className="relative grid min-h-[520px] place-items-center rounded-lg bg-muted p-6">
-        <Image
-          src={selectedImage}
-          alt=""
-          width={560}
-          height={620}
-          priority
-          className="max-h-[460px] w-full object-contain"
-        />
-      </div>
-      <div className="flex gap-3 overflow-x-auto overflow-y-hidden py-1">
-        {productImages.map((image) => (
-          <button
-            key={image}
-            type="button"
-            onClick={() => onSelectImage(image)}
-            className={cn(
-              "grid aspect-square h-20 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted p-2",
-              image === selectedImage && "ring-2 ring-ring ring-inset"
-            )}
-          >
-            <Image
-              src={image}
-              alt=""
-              width={120}
-              height={120}
-              className="max-h-full max-w-full object-contain"
-            />
-          </button>
-        ))}
-      </div>
-    </div>
+    [...variants].filter((variant) => variant.available).sort((a, b) => a.price - b.price)[0] ??
+    [...variants].sort((a, b) => a.price - b.price)[0]
   )
 }
 
-export function ProductDetails({
-  reviewsCount = 2,
-  averageRating = 4.5,
-}: {
-  reviewsCount?: number
-  averageRating?: number
-}) {
-  const [selectedVariant, setSelectedVariant] = React.useState(productVariants[0])
-  const [selectedImage, setSelectedImage] = React.useState(productVariants[0].image)
-  const [liked, setLiked] = React.useState(false)
+function variantImages(variant: Variant | undefined, productImages: string[]) {
+  return variant?.images.length ? variant.images : productImages
+}
 
-  function selectVariant(variant: (typeof productVariants)[number]) {
-    setSelectedVariant(variant)
-    setSelectedImage(variant.image)
+function ProductDetails({ product }: { product: ProductDetail }) {
+  const initial = defaultVariant(product.variants)
+  const [selected, setSelected] = React.useState(initial)
+  const [selectedImage, setSelectedImage] = React.useState(
+    variantImages(initial, product.images)[0] ?? "/product-placeholder.svg"
+  )
+  const images = React.useMemo(() => {
+    const gallery = variantImages(selected, product.images)
+    return [...new Set(gallery.length ? gallery : ["/product-placeholder.svg"])]
+  }, [product.images, selected])
+  const groups = React.useMemo(() => {
+    const map = new Map<string, { name: string; values: Map<string, string> }>()
+    for (const variant of product.variants) {
+      for (const item of variant.attributes) {
+        const group = map.get(item.attribute_id) ?? {
+          name: item.attribute,
+          values: new Map<string, string>(),
+        }
+        group.values.set(item.value_id, item.value)
+        map.set(item.attribute_id, group)
+      }
+    }
+    return map
+  }, [product.variants])
+
+  const chooseValue = (attributeId: string, valueId: string) => {
+    const currentValues = new Map(
+      (selected?.attributes ?? []).map((item) => [item.attribute_id, item.value_id])
+    )
+    const candidates = product.variants
+      .filter((variant) =>
+        variant.attributes.some(
+          (item) => item.attribute_id === attributeId && item.value_id === valueId
+        )
+      )
+      .sort((a, b) => {
+        const score = (variant: Variant) =>
+          variant.attributes.filter(
+            (item) =>
+              item.attribute_id !== attributeId &&
+              currentValues.get(item.attribute_id) === item.value_id
+          ).length
+        return (
+          Number(b.available) - Number(a.available) ||
+          score(b) - score(a) ||
+          a.price - b.price
+        )
+      })
+    const match = candidates[0]
+
+    if (match) {
+      setSelected(match)
+      setSelectedImage(
+        variantImages(match, product.images)[0] ?? "/product-placeholder.svg"
+      )
+    }
   }
+
+  const canChoose = (attributeId: string, valueId: string) => {
+    return product.variants.some((variant) =>
+      variant.attributes.some(
+        (item) => item.attribute_id === attributeId && item.value_id === valueId
+      )
+    )
+  }
+
+  if (!selected) return null
 
   return (
     <section className="grid gap-8 lg:grid-cols-[1.05fr_1fr]">
-      <ProductGallery
-        selectedImage={selectedImage}
-        onSelectImage={setSelectedImage}
-      />
+      <div className="space-y-4">
+        <div className="relative grid min-h-[520px] place-items-center overflow-hidden rounded-xl bg-muted p-6">
+          <Image src={selectedImage} alt={product.name} fill priority className="object-contain p-6" />
+        </div>
+        <div className="flex gap-3 overflow-x-auto py-1">
+          {images.map((image) => (
+            <Button
+              key={image}
+              type="button"
+              variant="outline"
+              onClick={() => setSelectedImage(image)}
+              className={cn("relative size-20 shrink-0 overflow-hidden p-0", image === selectedImage && "ring-2 ring-ring")}
+            >
+              <Image src={image} alt="" fill className="object-cover" />
+            </Button>
+          ))}
+        </div>
+      </div>
+
       <div className="space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <Badge className="mb-3 rounded-full">New</Badge>
-            <h1 className="text-3xl font-semibold leading-tight">
-              iPhone 16 Series - Back Case Cover Liquid Air
-            </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <Stars rating={averageRating} />
-              <span>{averageRating}</span>
-              <span className="font-medium text-muted-foreground">
-                {reviewsCount} {reviewsCount === 1 ? "Review" : "Reviews"}
-              </span>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {(product.tags ?? []).map((tag) => <Badge key={tag}>{tag}</Badge>)}
+            </div>
+            <h1 className="text-3xl font-semibold leading-tight">{product.name}</h1>
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <Stars rating={product.reviews.average} />
+              <span>{product.reviews.average}</span>
+              <span>{product.reviews.total} reviews</span>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex gap-1">
+            <WishlistButton productId={product.id} productName={product.name} className="rounded-full" />
             <Button
-              type="button"
-              variant={liked ? "destructive" : "ghost"}
+              variant="ghost"
               size="icon-sm"
-              aria-pressed={liked}
               className="rounded-full"
-              onClick={() => setLiked((value) => !value)}
+              onClick={() => void navigator.share?.({ title: product.name, url: window.location.href })}
             >
-              <HugeiconsIcon
-                icon={FavouriteIcon}
-                strokeWidth={2}
-                className={cn(liked && "fill-current [&_path]:fill-current")}
-              />
-            </Button>
-            <Button variant="ghost" size="icon-sm" className="rounded-full">
-              <HugeiconsIcon icon={Share08Icon} strokeWidth={2} />
+              <HugeiconsIcon icon={Share08Icon} />
             </Button>
           </div>
         </div>
 
-        <div className="space-y-1">
+        <div>
           <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-semibold">
-              {selectedVariant.price}
-            </span>
-            <span className="text-sm text-muted-foreground line-through">
-              {selectedVariant.oldPrice}
-            </span>
+            <span className="text-3xl font-semibold">SAR {selected.price.toFixed(2)}</span>
+            {selected.compare_at_price ? <span className="text-sm text-muted-foreground line-through">SAR {selected.compare_at_price.toFixed(2)}</span> : null}
           </div>
-          <p className="text-sm leading-6 text-muted-foreground">
-            The Liquid Air brings a refreshing look to your new iPhone 16. Its
-            premium design provides protection and keeps all curves.
-          </p>
+          {product.description ? <p className="mt-3 text-sm leading-6 text-muted-foreground">{product.description}</p> : null}
         </div>
 
-        <div className="rounded-lg border">
-          <div className="grid gap-3 border-b p-4 sm:grid-cols-2">
-            <div>
-              <p className="text-xs text-muted-foreground">Product Including Tax</p>
-              <p className="text-sm font-semibold">VAT included</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Color</p>
-              <p className="text-sm font-semibold">{selectedVariant.name}</p>
-            </div>
+        <div className="space-y-5 rounded-xl border p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold">Select variant</p>
+            <Badge variant="outline">{selected.sku ?? `Variant ${selected.id}`}</Badge>
           </div>
-          <div className="p-4">
-            <p className="mb-3 text-sm font-semibold">
-              Color / {selectedVariant.name}
-            </p>
-            <div className="flex items-center gap-3">
-              {productVariants.map((variant, index) => (
-                <button
-                  key={variant.name}
-                  type="button"
-                  aria-label={`Color option ${variant.name}`}
-                  onClick={() => selectVariant(variant)}
-                  className={cn(
-                    "size-8 rounded-full border ring-offset-background",
-                    variant.swatch,
-                    variant.name === selectedVariant.name &&
-                      "ring-2 ring-ring ring-offset-2"
-                  )}
-                >
-                  <span className="sr-only">
-                    {index + 1}. {variant.name}
-                  </span>
-                </button>
-              ))}
+          {[...groups].map(([attributeId, group]) => (
+            <div key={attributeId} className="space-y-2">
+              <p className="text-sm font-semibold">{group.name}</p>
+              <div className="flex flex-wrap gap-2">
+                {[...group.values].map(([valueId, value]) => {
+                  const active = selected.attributes.some((item) => item.attribute_id === attributeId && item.value_id === valueId)
+                  return (
+                    <Button key={valueId} type="button" variant={active ? "default" : "outline"} disabled={!canChoose(attributeId, valueId)} onClick={() => chooseValue(attributeId, valueId)}>
+                      {value}
+                    </Button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button className="h-10 flex-1 rounded-full">
-            Add to Cart
-            <HugeiconsIcon icon={ShoppingCart01Icon} strokeWidth={2} />
-          </Button>
-          <Button variant="outline" className="h-10 flex-1 rounded-full">
-            Buy Now
-          </Button>
+        <div className="grid gap-2 rounded-xl border p-4 text-sm sm:grid-cols-2">
+          <div><span className="text-muted-foreground">SKU</span><p className="font-semibold">{selected.sku ?? "Not available"}</p></div>
+          <div><span className="text-muted-foreground">Availability</span><p className="font-semibold">{selected.available ? `${selected.stock_quantity} in stock` : "Unavailable"}</p></div>
         </div>
 
-        <div className="grid gap-3 rounded-lg border p-4 text-sm">
-          <div className="flex items-center gap-3">
-            <HugeiconsIcon icon={PackageDeliveredIcon} strokeWidth={2} />
-            <span>Free delivery</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <HugeiconsIcon icon={Shield02Icon} strokeWidth={2} />
-            <span>Secure Checkout</span>
-          </div>
-        </div>
+        <AddToCartButton
+          productId={product.id}
+          variantId={selected.id}
+          productName={product.name}
+          price={selected.price}
+          oldPrice={selected.compare_at_price ?? undefined}
+          available={selected.available}
+          className="h-10 w-full rounded-full"
+        />
       </div>
     </section>
   )
 }
+
+export { ProductDetails }

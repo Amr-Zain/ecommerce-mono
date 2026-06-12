@@ -24,6 +24,7 @@ function AddToCartButton({
   price,
   oldPrice,
   className,
+  available = true,
 }: {
   productId: string
   variantId?: string
@@ -31,6 +32,7 @@ function AddToCartButton({
   price: number
   oldPrice?: number
   className?: string
+  available?: boolean
 }) {
   const addToCart = useAddToCart(productId)
   const cart = useCart()
@@ -40,6 +42,7 @@ function AddToCartButton({
   const numericProductId = Number(productId)
   const numericVariantId = variantId ? Number(variantId) : undefined
   const canAdd =
+    available &&
     Number.isSafeInteger(numericProductId) &&
     numericProductId > 0 &&
     (numericVariantId === undefined ||
@@ -135,7 +138,11 @@ function AddToCartButton({
         )
       }}
     >
-      {addToCart.isPending ? "Adding..." : "Add to Cart"}
+      {addToCart.isPending
+        ? "Adding..."
+        : available
+          ? "Add to Cart"
+          : "Unavailable"}
       <HugeiconsIcon
         icon={ShoppingCart01Icon}
         className="size-3.5"

@@ -51,6 +51,10 @@ async function backendGet<T>(url: string | URL, options?: BackendOptions) {
   return api.get<T>(url, await withAuthHeaders(options))
 }
 
+async function publicBackendGet<T>(url: string | URL, options?: BackendOptions) {
+  return api.get<T>(url, options)
+}
+
 async function backendPost<T>(
   url: string | URL,
   body?: ServerFetchOptions["body"],
@@ -85,6 +89,7 @@ export {
   backendPatch,
   backendPost,
   backendPut,
+  publicBackendGet,
   backendRequest,
   withAuthHeaders,
 }

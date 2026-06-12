@@ -39,6 +39,8 @@ export interface Product {
   compatibility?: string[]
   collection?: string
   firstVariationId?: string
+  available?: boolean
+  attributes?: Array<{ attribute: string; value: string }>
 }
 
 interface ProductCardProps {
@@ -47,7 +49,15 @@ interface ProductCardProps {
   hideActions?: boolean
 }
 
-function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
+function ImageSlider({
+  images,
+  alt,
+  productId,
+}: {
+  images: string[]
+  alt: string
+  productId: string
+}) {
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)
 
@@ -55,7 +65,6 @@ function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
     if (!api) return
     const onSelect = () => setCurrent(api.selectedScrollSnap())
     api.on("select", onSelect)
-    setCurrent(api.selectedScrollSnap())
     return () => {
       api.off("select", onSelect)
     }
@@ -63,13 +72,15 @@ function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
 
   if (images.length <= 1) {
     return (
-      <Image
-        src={images[0]}
-        alt={alt}
-        fill
-        sizes="(max-width: 768px) 50vw, 33vw"
-        className="object-cover"
-      />
+      <Link href={`/products/${productId}`}>
+        <Image
+          src={images[0]}
+          alt={alt}
+          fill
+          sizes="(max-width: 768px) 50vw, 33vw"
+          className="object-cover"
+        />
+      </Link>
     )
   }
 
@@ -89,7 +100,10 @@ function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
       <CarouselContent className="-ms-0 h-full">
         {images.map((src, idx) => (
           <CarouselItem key={idx} className="basis-full ps-0">
-            <div className="relative aspect-square w-full">
+            <Link
+              href={`/products/${productId}`}
+              className="relative block aspect-square w-full"
+            >
               <Image
                 src={src}
                 alt={`${alt} - ${idx + 1}`}
@@ -98,7 +112,7 @@ function ImageSlider({ images, alt }: { images: string[]; alt: string }) {
                 className="object-cover"
                 priority={idx === 0}
               />
-            </div>
+            </Link>
           </CarouselItem>
         ))}
       </CarouselContent>
@@ -155,7 +169,7 @@ export function ProductCard({
               {product.badge}
             </Badge>
           )}
-          <ImageSlider images={allImages} alt={product.name} />
+          <ImageSlider images={allImages} alt={product.name} productId={product.id} />
         </div>
 
         {/* Right: all content stacked */}
@@ -169,6 +183,13 @@ export function ProductCard({
               <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                 {product.description}
               </p>
+              {product.attributes?.length ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {product.attributes
+                    .map((item) => `${item.attribute}: ${item.value}`)
+                    .join(" · ")}
+                </p>
+              ) : null}
             </div>
             {/* Favorite button */}
             <WishlistButton
@@ -198,6 +219,7 @@ export function ProductCard({
                 productName={product.name}
                 price={product.price}
                 oldPrice={product.oldPrice}
+                available={product.available}
                 className="h-8 gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
               />
             </div>
@@ -234,7 +256,7 @@ export function ProductCard({
           iconClassName="size-4.5"
         />
 
-        <ImageSlider images={allImages} alt={product.name} />
+        <ImageSlider images={allImages} alt={product.name} productId={product.id} />
       </div>
 
       {/* Details */}
@@ -268,6 +290,7 @@ export function ProductCard({
               productName={product.name}
               price={product.price}
               oldPrice={product.oldPrice}
+              available={product.available}
               className="mt-4 h-9 w-full gap-2 rounded-lg bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
             />
           </>

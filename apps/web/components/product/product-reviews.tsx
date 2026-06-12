@@ -1,288 +1,108 @@
 "use client"
 
-import * as React from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
 import { StarIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import Link from "next/link"
+import { useSession } from "next-auth/react"
+import * as React from "react"
+
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@ecommerce/ui/components/alert-dialog"
+import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@ecommerce/ui/components/dialog"
-import { Input } from "@ecommerce/ui/components/input"
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@ecommerce/ui/components/dialog"
 import { Label } from "@ecommerce/ui/components/label"
+import { Skeleton } from "@ecommerce/ui/components/skeleton"
 import { Textarea } from "@ecommerce/ui/components/textarea"
+import {
+  useCreateReview, useDeleteReview, useProductReviewEligibility,
+  useProductReviews, useUpdateReview,
+} from "@/hooks/api/use-product-reviews"
+import type { ProductDetail, ProductReview } from "@/hooks/api/use-products"
 import { cn } from "@/lib/utils"
 
-export function Stars({ rating = 5, maxStars = 5 }: { rating?: number; maxStars?: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: maxStars }).map((_, index) => {
-        const fillPercent = Math.max(0, Math.min(100, (rating - index) * 100))
-        return (
-          <div key={index} className="relative size-4">
-            {/* Background unfilled star */}
-            <HugeiconsIcon
-              icon={StarIcon}
-              strokeWidth={2}
-              className="absolute inset-0 size-4 text-muted-foreground/30"
-            />
-            {/* Foreground filled star */}
-            {fillPercent > 0 && (
-              <div
-                className="absolute inset-0 overflow-hidden text-primary"
-                style={{ width: `${fillPercent}%` }}
-              >
-                <div className="size-4">
-                  <HugeiconsIcon
-                    icon={StarIcon}
-                    strokeWidth={2}
-                    className="size-4 fill-current [&_path]:fill-current"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
+function Stars({ rating = 0 }: { rating?: number }) {
+  return <div className="flex gap-0.5">{Array.from({ length: 5 }, (_, index) => (
+    <HugeiconsIcon key={index} icon={StarIcon} className={cn("size-4 text-muted-foreground/30", index < Math.round(rating) && "fill-current text-primary [&_path]:fill-current")} />
+  ))}</div>
 }
 
-function InteractiveStarRating({
-  rating,
-  onChange,
-}: {
-  rating: number
-  onChange: (rating: number) => void
-}) {
-  const [hoverRating, setHoverRating] = React.useState<number | null>(null)
-
-  return (
-    <div className="flex items-center gap-1.5 py-1">
-      {Array.from({ length: 5 }).map((_, index) => {
-        const starValue = index + 1
-        const active = starValue <= (hoverRating ?? rating)
-        return (
-          <button
-            key={index}
-            type="button"
-            className="text-muted-foreground/30 transition-transform hover:scale-110 focus:outline-none"
-            onClick={() => onChange(starValue)}
-            onMouseEnter={() => setHoverRating(starValue)}
-            onMouseLeave={() => setHoverRating(null)}
-          >
-            <HugeiconsIcon
-              icon={StarIcon}
-              strokeWidth={2}
-              className={cn(
-                "size-7 transition-colors",
-                active && "text-primary fill-current [&_path]:fill-current"
-              )}
-            />
-          </button>
-        )
-      })}
-    </div>
-  )
+function ReviewCard({ review }: { review: ProductReview }) {
+  return <article className="border-b pb-5 last:border-0">
+    <div className="flex justify-between gap-4"><div><Stars rating={review.rating} /><h3 className="mt-2 text-sm font-semibold">{review.user.name ?? "Customer"}</h3></div><span className="text-xs text-muted-foreground">{new Date(review.created_at).toLocaleDateString()}</span></div>
+    {review.comment ? <p className="mt-3 text-sm leading-6 text-muted-foreground">{review.comment}</p> : null}
+  </article>
 }
 
-export function Reviews({
-  initialReviews = [],
-}: {
-  initialReviews?: Array<{ name: string; date: string; rating: number; copy: string }>
-}) {
-  const [reviewsList, setReviewsList] = React.useState(initialReviews)
-  const [isWriteOpen, setIsWriteOpen] = React.useState(false)
-  const [isViewAllOpen, setIsViewAllOpen] = React.useState(false)
-
-  const [name, setName] = React.useState("")
+function ProductReviews({ product }: { product: ProductDetail }) {
+  const { data: session, status } = useSession()
+  const loggedIn = status === "authenticated" && !session?.user?.is_guest
+  const eligibility = useProductReviewEligibility(product.id, loggedIn)
+  const mine = eligibility.data?.data.review
+  const [formOpen, setFormOpen] = React.useState(false)
+  const [allOpen, setAllOpen] = React.useState(false)
+  const [deleteOpen, setDeleteOpen] = React.useState(false)
+  const [page, setPage] = React.useState(1)
   const [rating, setRating] = React.useState(5)
-  const [copy, setCopy] = React.useState("")
+  const [comment, setComment] = React.useState("")
+  const reviews = useProductReviews(product.id, page, allOpen)
+  const createReview = useCreateReview(product.id)
+  const updateReview = useUpdateReview(product.id, mine?.id)
+  const deleteReview = useDeleteReview(product.id, mine?.id)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim() || !copy.trim()) return
-    const newReview = {
-      name,
-      rating,
-      copy,
-      date: new Date().toLocaleDateString("en-US", { day: "numeric", month: "long" }),
-    }
-    setReviewsList((prev) => [newReview, ...prev])
-    setName("")
-    setRating(5)
-    setCopy("")
-    setIsWriteOpen(false)
+  const openForm = () => {
+    setRating(mine?.rating ?? 5)
+    setComment(mine?.comment ?? "")
+    setFormOpen(true)
   }
-
-  const averageRating = React.useMemo(() => {
-    if (reviewsList.length === 0) return 0
-    const sum = reviewsList.reduce((acc, r) => acc + r.rating, 0)
-    return Math.round((sum / reviewsList.length) * 10) / 10
-  }, [reviewsList])
-
-  const ratingDistribution = React.useMemo(() => {
-    const counts = [0, 0, 0, 0, 0] // 5, 4, 3, 2, 1 stars
-    reviewsList.forEach((r) => {
-      const index = 5 - Math.round(r.rating)
-      if (index >= 0 && index < 5) {
-        counts[index]++
-      }
-    })
-    return counts.map((count) =>
-      reviewsList.length > 0 ? (count / reviewsList.length) * 100 : 0
+  const submit = () => {
+    const mutation = mine ? updateReview : createReview
+    mutation.mutate(
+      mine ? { rating, comment } : { productId: Number(product.id), rating, comment },
+      { onSuccess: () => setFormOpen(false) }
     )
-  }, [reviewsList])
+  }
 
   return (
     <section className="grid gap-8 py-10 lg:grid-cols-[0.75fr_1.5fr]">
       <div>
         <h2 className="mb-4 text-xl font-semibold">Reviews</h2>
-        <div className="rounded-lg bg-muted p-6 text-center">
-          <div className="text-4xl font-semibold">{averageRating}/5</div>
-          <div className="mt-2 flex justify-center">
-            <Stars rating={averageRating} />
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Based on {reviewsList.length} verified {reviewsList.length === 1 ? "review" : "reviews"}
-          </p>
+        <div className="rounded-xl bg-muted p-6 text-center">
+          <div className="text-4xl font-semibold">{product.reviews.average}/5</div>
+          <div className="mt-2 flex justify-center"><Stars rating={product.reviews.average} /></div>
+          <p className="mt-2 text-xs text-muted-foreground">Based on {product.reviews.total} verified reviews</p>
           <div className="mt-5 space-y-2">
-            {ratingDistribution.map((value, index) => (
-              <div key={index} className="flex items-center gap-2 text-xs">
-                <span className="w-3 text-right">{5 - index}</span>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-500"
-                    style={{ width: `${value}%` }}
-                  />
-                </div>
-                <span className="w-8 text-right text-muted-foreground">
-                  {Math.round(value)}%
-                </span>
-              </div>
-            ))}
+            {[5, 4, 3, 2, 1].map((star) => {
+              const count = product.reviews.distribution[star - 1] ?? 0
+              const width = product.reviews.total ? count / product.reviews.total * 100 : 0
+              return <div key={star} className="flex items-center gap-2 text-xs"><span>{star}</span><div className="h-2 flex-1 overflow-hidden rounded-full bg-background"><div className="h-full bg-primary" style={{ width: `${width}%` }} /></div><span>{count}</span></div>
+            })}
           </div>
-          <Button
-            onClick={() => setIsWriteOpen(true)}
-            className="mt-5 h-9 px-6 rounded-full text-xs font-semibold"
-          >
-            Write Review
-          </Button>
+          <div className="mt-5 space-y-2">
+            {!loggedIn ? <Button render={<Link href="/auth/login" />} className="rounded-full">Login to review</Button> :
+              eligibility.isLoading ? <Skeleton className="mx-auto h-8 w-32" /> :
+              mine ? <><Badge variant={mine.is_verified ? "default" : "secondary"}>{mine.is_verified ? "Approved" : "Pending approval"}</Badge><div className="flex justify-center gap-2"><Button variant="outline" onClick={openForm}>Edit review</Button><Button variant="destructive" onClick={() => setDeleteOpen(true)}>Delete</Button></div></> :
+              eligibility.data?.data.can_review ? <Button onClick={openForm} className="rounded-full">Write Review</Button> :
+              <Button disabled variant="outline">Delivered purchase required</Button>}
+          </div>
         </div>
       </div>
-      <div className="space-y-5 flex flex-col justify-between">
-        <div className="space-y-5">
-          {reviewsList.slice(0, 3).map((review, i) => (
-            <article key={i} className="border-b pb-5 last:border-0 last:pb-0">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <Stars rating={review.rating} />
-                  <h3 className="mt-2 text-sm font-semibold">{review.name}</h3>
-                </div>
-                <span className="text-xs text-muted-foreground">{review.date}</span>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                {review.copy}
-              </p>
-            </article>
-          ))}
-        </div>
-        {reviewsList.length > 3 && (
-          <div className="pt-4">
-            <Button
-              variant="outline"
-              onClick={() => setIsViewAllOpen(true)}
-              className="h-9 px-6 rounded-full text-sm font-semibold"
-            >
-              View All Reviews
-            </Button>
-          </div>
-        )}
+      <div className="flex flex-col justify-between gap-5">
+        <div className="space-y-5">{product.reviews.items.length ? product.reviews.items.map((review) => <ReviewCard key={review.id} review={review} />) : <p className="text-sm text-muted-foreground">No verified reviews yet.</p>}</div>
+        {product.reviews.total > 3 ? <Button variant="outline" onClick={() => setAllOpen(true)} className="self-start">View All Reviews</Button> : null}
       </div>
 
-      {/* Write Review Dialog */}
-      <Dialog open={isWriteOpen} onOpenChange={setIsWriteOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Write a Review</DialogTitle>
-            <DialogDescription>
-              Share your experience with this product.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 py-2">
-            <div className="space-y-1">
-              <Label htmlFor="review-name">Your Name</Label>
-              <Input
-                id="review-name"
-                placeholder="e.g. John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Rating</Label>
-              <InteractiveStarRating rating={rating} onChange={setRating} />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="review-copy">Review Content</Label>
-              <Textarea
-                id="review-copy"
-                placeholder="What did you like or dislike about this product?"
-                value={copy}
-                onChange={(e) => setCopy(e.target.value)}
-                required
-                rows={4}
-              />
-            </div>
-            <DialogFooter className="mt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsWriteOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Submit Review</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <Dialog open={formOpen} onOpenChange={setFormOpen}><DialogContent><DialogHeader><DialogTitle>{mine ? "Edit review" : "Write review"}</DialogTitle><DialogDescription>Your review will be visible after admin approval.</DialogDescription></DialogHeader><div className="space-y-4"><div><Label>Rating</Label><div className="mt-2 flex gap-1">{[1,2,3,4,5].map((value) => <Button key={value} size="icon-sm" variant="ghost" onClick={() => setRating(value)}><HugeiconsIcon icon={StarIcon} className={cn(value <= rating && "fill-current text-primary [&_path]:fill-current")} /></Button>)}</div></div><div><Label htmlFor="review-comment">Review</Label><Textarea id="review-comment" value={comment} onChange={(event) => setComment(event.target.value)} /></div></div><DialogFooter><Button onClick={submit} disabled={createReview.isPending || updateReview.isPending}>Submit review</Button></DialogFooter></DialogContent></Dialog>
 
-      {/* View All Reviews Dialog */}
-      <Dialog open={isViewAllOpen} onOpenChange={setIsViewAllOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-4 border-b">
-            <DialogTitle>All Reviews ({reviewsList.length})</DialogTitle>
-            <DialogDescription>
-              See what others are saying about this product.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {reviewsList.map((review, i) => (
-              <article key={i} className="border-b last:border-0 pb-6 last:pb-0">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <Stars rating={review.rating} />
-                    <h3 className="mt-2 text-sm font-semibold">{review.name}</h3>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{review.date}</span>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                  {review.copy}
-                </p>
-              </article>
-            ))}
-          </div>
-          <DialogFooter className="p-6 border-t bg-muted/20">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsViewAllOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Dialog open={allOpen} onOpenChange={setAllOpen}><DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>All Reviews</DialogTitle><DialogDescription>{product.reviews.total} verified reviews</DialogDescription></DialogHeader><div className="space-y-5">{reviews.isLoading ? Array.from({length:3},(_,i)=><Skeleton key={i} className="h-24 w-full" />) : reviews.data?.data.items.map((review)=><ReviewCard key={review.id} review={review} />)}</div><DialogFooter><Button variant="outline" disabled={!reviews.data?.data.meta.has_previous_page} onClick={()=>setPage((value)=>value-1)}>Previous</Button><span className="self-center text-sm">Page {page}</span><Button variant="outline" disabled={!reviews.data?.data.meta.has_next_page} onClick={()=>setPage((value)=>value+1)}>Next</Button></DialogFooter></DialogContent></Dialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete review?</AlertDialogTitle><AlertDialogDescription>This permanently removes your review.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => deleteReview.mutate({}, { onSuccess: () => setDeleteOpen(false) })}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </section>
   )
 }
+
+export { ProductReviews, Stars }
