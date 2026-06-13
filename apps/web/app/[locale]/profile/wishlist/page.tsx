@@ -14,7 +14,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@ecommerce/ui/components/empty"
-import { useGuestSession } from "@/components/auth/guest-session-provider"
 import { ProductCard, type Product } from "@/components/product/product-card"
 import { useWishlist } from "@/hooks/api/use-wishlist"
 
@@ -63,11 +62,10 @@ function mapWishlistProduct(item: {
 }
 
 export default function WishlistPage() {
-  const guestSession = useGuestSession()
   const wishlist = useWishlist()
   const items = wishlist.data?.data.map(mapWishlistProduct) ?? []
 
-  if (guestSession === "loading" || wishlist.isPending) {
+  if (wishlist.isPending) {
     return (
       <div className="py-20 text-center text-muted-foreground">
         Loading wishlist...
@@ -75,11 +73,10 @@ export default function WishlistPage() {
     )
   }
 
-  if (guestSession === "error" || wishlist.isError) {
+  if (wishlist.isError) {
     return (
       <div className="py-20 text-center text-destructive">
-        Unable to load wishlist. Please refresh after the guest session is
-        ready.
+        Unable to load wishlist. Please refresh and try again.
       </div>
     )
   }

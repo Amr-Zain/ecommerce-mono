@@ -6,8 +6,9 @@ import {
   type UseMutationOptions,
 } from "@tanstack/react-query"
 import { useRouter } from "@/i18n/navigation"
-import { ROUTES } from "@/lib/routes"
 import { signOut } from "next-auth/react"
+import { loginPath } from "@/lib/return-path"
+import { withSessionRetry } from "@/lib/client/session-request"
 
 import { toast } from "@ecommerce/ui/components/sonner"
 import {
@@ -17,7 +18,6 @@ import {
   type ClientRequestOptions,
   type NormalizedHttpError,
 } from "@/lib/client/http"
-import { withSessionRetry } from "@/lib/client/session-request"
 import { clientApiEndpoint } from "@/lib/client/client-api"
 
 type MutationMethod =
@@ -50,6 +50,8 @@ type UseMutateOptions<
     | ClientRequestOptions["params"]
     | ((variables: TVariables) => ClientRequestOptions["params"])
   disableErrorToast?: boolean
+  authRequired?: boolean
+  unauthorizedReturnTo?: string
   onError?: (error: TError, normalized: NormalizedHttpError) => void
   onSuccess?: (data: TResponse) => void
   mutationOptions?: Omit<
@@ -85,6 +87,8 @@ function useMutate<
   body,
   params,
   disableErrorToast = false,
+  authRequired = false,
+  unauthorizedReturnTo,
   onError,
   onSuccess,
   mutationOptions,
@@ -98,8 +102,8 @@ function useMutate<
     mutationFn: async (variables) => {
       if (!ready) {
         throw {
-          name: "GuestSessionNotReady",
-          message: "Session is still loading",
+          name: "RequestNotReady",
+          message: "Request is not ready",
         } as TError
       }
       const finalEndpoint =
@@ -109,14 +113,16 @@ function useMutate<
       const requestBody = body ? body(variables) : stripMeta(variables)
 
       try {
-        const data = await withSessionRetry(() =>
-          clientJson<TResponse>(clientApiEndpoint(finalEndpoint), {
-            body: requestBody as ClientRequestBody,
-            formData,
-            headers,
-            method: method.toUpperCase(),
-            params: finalParams,
-          })
+        const data = await withSessionRetry(
+          () =>
+            clientJson<TResponse>(clientApiEndpoint(finalEndpoint), {
+              body: requestBody as ClientRequestBody,
+              formData,
+              headers,
+              method: method.toUpperCase(),
+              params: finalParams,
+            }),
+          authRequired
         )
 
         onSuccess?.(data)
@@ -131,9 +137,12 @@ function useMutate<
           toast.error(normalized.message)
         }
 
-        if (normalized.status === 401) {
+        if (authRequired && normalized.status === 401) {
           void signOut({ redirect: false })
-          router.replace(ROUTES.auth.login)
+          const returnTo =
+            unauthorizedReturnTo ??
+            `${window.location.pathname}${window.location.search}`
+          router.replace(loginPath(returnTo, document.documentElement.lang))
         }
 
         throw normalized as TError

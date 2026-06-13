@@ -40,8 +40,8 @@ function ReviewCard({ review }: { review: ProductReview }) {
 }
 
 function ProductReviews({ product }: { product: ProductDetail }) {
-  const { data: session, status } = useSession()
-  const loggedIn = status === "authenticated" && !session?.user?.is_guest
+  const { status } = useSession()
+  const loggedIn = status === "authenticated"
   const eligibility = useProductReviewEligibility(product.id, loggedIn)
   const mine = eligibility.data?.data.review
   const [formOpen, setFormOpen] = React.useState(false)

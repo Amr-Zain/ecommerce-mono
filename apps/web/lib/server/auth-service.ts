@@ -13,7 +13,6 @@ type SessionUser = {
   email?: string
   phone?: string
   isEmailVerified: boolean
-  isGuest?: boolean
   isPhoneVerified: boolean
 }
 
@@ -81,7 +80,6 @@ async function loginWithAccessToken(credentials: AccessTokenCredentials) {
     accessToken,
     user_type: "client",
     is_active: true,
-    is_guest: user.isGuest ?? false,
     is_verified: user.isEmailVerified || user.isPhoneVerified,
     permissions: [],
   } satisfies AuthUserFields

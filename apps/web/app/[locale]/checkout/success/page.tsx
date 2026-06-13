@@ -8,13 +8,11 @@ import { useSearchParams } from "next/navigation"
 import * as React from "react"
 
 import { Button } from "@ecommerce/ui/components/button"
-import { useGuestSession } from "@/components/auth/guest-session-provider"
 import { useVerifyCheckoutPayment } from "@/hooks/api/use-checkout"
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams()
   const checkoutId = searchParams.get("checkout_id")
-  const guestSession = useGuestSession()
   const verify = useVerifyCheckoutPayment()
   const started = React.useRef(false)
 
@@ -24,10 +22,10 @@ function CheckoutSuccessContent() {
   }, [checkoutId, verify])
 
   React.useEffect(() => {
-    if (started.current || !checkoutId || guestSession !== "ready") return
+    if (started.current || !checkoutId) return
     started.current = true
     verify.mutate({ checkoutId })
-  }, [checkoutId, guestSession, verify])
+  }, [checkoutId, verify])
 
   const result = verify.data?.data
   const completed = Boolean(result?.received || result?.order_number)

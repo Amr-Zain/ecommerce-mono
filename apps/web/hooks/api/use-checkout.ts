@@ -1,6 +1,6 @@
 "use client"
 
-import { useGuestSession } from "@/components/auth/guest-session-provider"
+import { useSession } from "next-auth/react"
 import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
@@ -98,9 +98,10 @@ function responseItems<T>(response: unknown): T[] {
 }
 
 function useAddresses() {
-  const guestSession = useGuestSession()
+  const { status } = useSession()
   return useFetch<unknown, Address[]>({
-    enabled: guestSession === "ready",
+    authRequired: true,
+    enabled: status === "authenticated",
     endpoint: clientEndpoints.addresses,
     queryKey: queryKeys.addresses(),
     select: responseItems<Address>,
@@ -130,6 +131,7 @@ function useCities(countryId?: string) {
 
 function useCreateAddress() {
   return useMutate<unknown, CreateAddressInput>({
+    authRequired: true,
     endpoint: clientEndpoints.addresses,
     mutationKey: ["addresses", "create"],
     method: "POST",
@@ -143,6 +145,8 @@ function useCreateAddress() {
 
 function useCheckoutPreview() {
   return useMutate<{ success: boolean; data: CheckoutPreview }, CheckoutPreviewInput>({
+    authRequired: true,
+    unauthorizedReturnTo: "/cart?step=address",
     endpoint: clientEndpoints.checkoutPreview,
     mutationKey: ["checkout", "preview"],
     method: "POST",
@@ -151,6 +155,8 @@ function useCheckoutPreview() {
 
 function usePlaceOrder() {
   return useMutate<{ success: boolean; data: PlaceOrderResult }, PlaceOrderInput>({
+    authRequired: true,
+    unauthorizedReturnTo: "/cart?step=address",
     endpoint: clientEndpoints.checkoutPlaceOrder,
     mutationKey: ["checkout", "place-order"],
     method: "POST",
@@ -167,6 +173,8 @@ function useVerifyCheckoutPayment() {
     { success: boolean; data: VerifyPaymentResult },
     { checkoutId: string }
   >({
+    authRequired: true,
+    unauthorizedReturnTo: "/cart?step=address",
     endpoint: clientEndpoints.checkoutVerifyPayment,
     mutationKey: ["checkout", "verify-payment"],
     method: "POST",

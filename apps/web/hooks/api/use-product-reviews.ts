@@ -39,6 +39,7 @@ function useProductReviews(productId: string, page: number, enabled = true) {
 
 function useProductReviewEligibility(productId: string, enabled = true) {
   return useFetch<ReviewEligibilityResponse>({
+    authRequired: true,
     queryKey: queryKeys.productReviewEligibility(productId),
     endpoint: clientEndpoints.productReviewEligibility(productId),
     enabled,
@@ -49,6 +50,7 @@ function useProductReviewEligibility(productId: string, enabled = true) {
 
 function useCreateReview(productId: string) {
   return useMutate({
+    authRequired: true,
     endpoint: clientEndpoints.reviews,
     mutationKey: ["reviews", "create", productId],
     method: "POST",
@@ -66,6 +68,7 @@ function useCreateReview(productId: string) {
 
 function useUpdateReview(productId: string, reviewId?: string) {
   return useMutate({
+    authRequired: true,
     endpoint: clientEndpoints.review(reviewId ?? "unknown"),
     mutationKey: ["reviews", "update", reviewId ?? "unknown"],
     method: "PUT",
@@ -84,6 +87,7 @@ function useUpdateReview(productId: string, reviewId?: string) {
 
 function useDeleteReview(productId: string, reviewId?: string) {
   return useMutate({
+    authRequired: true,
     endpoint: clientEndpoints.review(reviewId ?? "unknown"),
     mutationKey: ["reviews", "delete", reviewId ?? "unknown"],
     method: "DELETE",

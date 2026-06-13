@@ -7,6 +7,9 @@ import {
   type QueryKey,
 } from "@tanstack/react-query"
 import * as React from "react"
+import { useSession } from "next-auth/react"
+import { useQueryClient } from "@tanstack/react-query"
+import { queryKeys } from "@/hooks/api/query-keys"
 
 type MutationMeta = {
   invalidates?: QueryKey[]
@@ -40,11 +43,37 @@ function createQueryClient() {
   return queryClient
 }
 
+function CommerceSessionSync() {
+  const { data: session, status } = useSession()
+  const queryClient = useQueryClient()
+  const identity = status === "authenticated" ? session?.user.id : status
+  const previousIdentity = React.useRef(identity)
+
+  React.useEffect(() => {
+    if (previousIdentity.current === identity) return
+
+    previousIdentity.current = identity
+    void Promise.all([
+      queryClient.resetQueries({ queryKey: queryKeys.cart() }),
+      queryClient.resetQueries({ queryKey: queryKeys.notifications() }),
+      queryClient.resetQueries({
+        queryKey: queryKeys.notificationUnreadCount(),
+      }),
+      queryClient.resetQueries({ queryKey: queryKeys.wishlist() }),
+    ])
+  }, [identity, queryClient])
+
+  return null
+}
+
 function TanstackQueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(createQueryClient)
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <CommerceSessionSync />
+      {children}
+    </QueryClientProvider>
   )
 }
 

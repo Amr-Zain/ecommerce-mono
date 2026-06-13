@@ -9,6 +9,7 @@ import { Input } from "@ecommerce/ui/components/input"
 import { Label } from "@ecommerce/ui/components/label"
 import { sendOtpAction, verifyOtpAction } from "@/actions/auth"
 import type { SendOtpInput, VerifyOtpInput } from "@/hooks/api/domain"
+import { useCommerceSessionSync } from "@/hooks/api/use-commerce-session-sync"
 
 function OtpLoginForm({
   defaultIdentifier = "",
@@ -25,6 +26,7 @@ function OtpLoginForm({
 }) {
   const t = useTranslations("Auth")
   const router = useRouter()
+  const syncCommerceSession = useCommerceSessionSync()
   const [identifier, setIdentifier] = useState(defaultIdentifier)
   const [phoneCode, setPhoneCode] = useState(defaultPhoneCode)
   const [code, setCode] = useState("")
@@ -71,6 +73,7 @@ function OtpLoginForm({
       } satisfies VerifyOtpInput)
       if (!result.ok) throw new Error(result.message)
 
+      await syncCommerceSession()
       router.replace(redirectTo)
       router.refresh()
     } catch (requestError) {

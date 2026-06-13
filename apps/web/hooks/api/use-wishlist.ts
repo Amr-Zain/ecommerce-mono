@@ -2,7 +2,6 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 
-import { useGuestSession } from "@/components/auth/guest-session-provider"
 import {
   normalizeWishlistResponse,
   type ApiResponse,
@@ -15,9 +14,7 @@ import { useMutate } from "@/hooks/api/use-mutate"
 import { clientEndpoints } from "@/lib/client/client-api"
 
 function useWishlist() {
-  const guestSession = useGuestSession()
   return useFetch<unknown, ApiResponse<WishlistItem[]>>({
-    enabled: guestSession === "ready",
     queryKey: queryKeys.wishlist(),
     endpoint: clientEndpoints.wishlist,
     select: normalizeWishlistResponse,

@@ -1,18 +1,21 @@
 "use client"
 
-import { ensureGuestSessionAction } from "@/actions/auth"
+import { restoreAuthSessionAction } from "@/actions/auth"
 import { toNormalizedHttpError } from "@/lib/client/http"
 
-async function withSessionRetry<T>(request: () => Promise<T>) {
+async function withSessionRetry<T>(
+  request: () => Promise<T>,
+  authRequired = false
+) {
   try {
     return await request()
   } catch (error) {
-    if (toNormalizedHttpError(error).status !== 401) {
+    if (!authRequired || toNormalizedHttpError(error).status !== 401) {
       throw error
     }
 
-    const session = await ensureGuestSessionAction()
-    if (!session.ok) {
+    const session = await restoreAuthSessionAction()
+    if (!session.ok || !session.data.authenticated) {
       throw error
     }
 

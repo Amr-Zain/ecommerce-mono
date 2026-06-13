@@ -8,6 +8,7 @@ import { clientEndpoints } from "@/lib/client/client-api"
 
 function useCurrentUser() {
   return useFetch<EntityResponse<AuthUserFields>>({
+    authRequired: true,
     queryKey: queryKeys.currentUser(),
     endpoint: clientEndpoints.currentUser,
   })

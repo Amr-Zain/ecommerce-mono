@@ -72,6 +72,7 @@ function responseItems(response: unknown) {
 
 function useNotifications() {
   return useFetch<unknown, Notification[]>({
+    authRequired: true,
     endpoint: clientEndpoints.notifications,
     params: { limit: 50 },
     queryKey: queryKeys.notifications(),
@@ -81,6 +82,7 @@ function useNotifications() {
 
 function useNotificationUnreadCount(initialData?: number) {
   return useFetch<unknown, number>({
+    authRequired: true,
     endpoint: clientEndpoints.notificationsUnreadCount,
     initialData:
       initialData === undefined ? undefined : { data: { count: initialData } },
@@ -92,6 +94,7 @@ function useNotificationUnreadCount(initialData?: number) {
 
 function useMarkNotificationRead() {
   return useMutate<unknown, { id: string }>({
+    authRequired: true,
     endpoint: (input) => clientEndpoints.notificationRead(input.id),
     body: () => undefined,
     mutationKey: ["notifications", "read"],
@@ -109,6 +112,7 @@ function useMarkNotificationRead() {
 
 function useMarkAllNotificationsRead() {
   return useMutate<unknown, Record<string, never>>({
+    authRequired: true,
     endpoint: clientEndpoints.notificationsReadAll,
     mutationKey: ["notifications", "read-all"],
     method: "PATCH",

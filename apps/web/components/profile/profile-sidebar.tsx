@@ -69,11 +69,9 @@ export function ProfileSidebar() {
         </div>
         <div>
           <h2 className="text-lg font-bold">
-            {session?.user.name || "Guest User"}
+            {session?.user.name || "User"}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {session?.user.is_guest ? "Guest account" : session?.user.email}
-          </p>
+          <p className="text-sm text-muted-foreground">{session?.user.email}</p>
         </div>
       </div>
 

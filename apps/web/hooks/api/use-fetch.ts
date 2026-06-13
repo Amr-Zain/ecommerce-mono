@@ -15,6 +15,9 @@ import {
 import { withSessionRetry } from "@/lib/client/session-request"
 import { toast } from "@ecommerce/ui/components/sonner"
 import { clientApiEndpoint } from "@/lib/client/client-api"
+import { signOut } from "next-auth/react"
+import { useRouter } from "@/i18n/navigation"
+import { loginPath } from "@/lib/return-path"
 
 type UseFetchOptions<
   TResponse = unknown,
@@ -31,6 +34,7 @@ type UseFetchOptions<
   onError?: (error: TError) => void
   onSuccess?: (data: TResponse) => void
   disableErrorToast?: boolean
+  authRequired?: boolean
   headers?: HeadersInit
 }
 
@@ -47,9 +51,12 @@ function useFetch<
   onError,
   onSuccess,
   disableErrorToast = false,
+  authRequired = false,
   headers,
   ...options
 }: UseFetchOptions<TResponse, TData, TError>) {
+  const router = useRouter()
+
   return useQuery<TResponse, TError, TData>({
     ...options,
     queryKey,
@@ -66,7 +73,8 @@ function useFetch<
             headers,
             method: "GET",
             params,
-          })
+          }),
+          authRequired
         )
 
         onSuccess?.(data)
@@ -79,6 +87,11 @@ function useFetch<
 
         if (!disableErrorToast) {
           toast.error(normalized.message)
+        }
+        if (authRequired && normalized.status === 401) {
+          void signOut({ redirect: false })
+          const returnTo = `${window.location.pathname}${window.location.search}`
+          router.replace(loginPath(returnTo, document.documentElement.lang))
         }
 
         throw normalized as TError

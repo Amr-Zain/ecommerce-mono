@@ -12,6 +12,7 @@ import { ROUTES } from "@/lib/routes"
 import * as React from "react"
 
 import { logoutAction } from "@/actions/auth"
+import { useCommerceSessionSync } from "@/hooks/api/use-commerce-session-sync"
 import {
   Avatar,
   AvatarFallback,
@@ -46,12 +47,14 @@ function HeaderAccountDropdown({
   name: string
 }) {
   const router = useRouter()
+  const syncCommerceSession = useCommerceSessionSync()
   const [loggingOut, startLogout] = React.useTransition()
 
   const logout = () => {
     startLogout(async () => {
       const result = await logoutAction("/")
       if (result.ok) {
+        await syncCommerceSession()
         router.replace(result.data.redirectTo)
         router.refresh()
       }

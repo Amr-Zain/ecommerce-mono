@@ -10,6 +10,7 @@ import {
 import type { Locale } from "@/i18n/routing"
 import { ROUTES } from "@/lib/routes"
 import { OtpLoginForm } from "@/components/auth/otp-login-form"
+import { safeReturnPath } from "@/lib/return-path"
 
 export default async function LoginPage({
   params,
@@ -20,6 +21,7 @@ export default async function LoginPage({
     identifier?: string
     otpSent?: string
     phoneCode?: string
+    returnTo?: string
   }>
 }) {
   const { locale } = await params
@@ -44,7 +46,10 @@ export default async function LoginPage({
             registerPath={
               locale === "ar" ? `/ar${ROUTES.auth.register}` : ROUTES.auth.register
             }
-            redirectTo={locale === "ar" ? "/ar" : ROUTES.home}
+            redirectTo={safeReturnPath(
+              query.returnTo,
+              locale === "ar" ? "/ar" : ROUTES.home
+            )}
           />
         </CardContent>
       </Card>

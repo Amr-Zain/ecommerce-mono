@@ -2,7 +2,6 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 
-import { useGuestSession } from "@/components/auth/guest-session-provider"
 import {
   normalizeCartResponse,
   type AddToCartInput,
@@ -23,9 +22,7 @@ function getOptimisticCart(queryClient: ReturnType<typeof useQueryClient>) {
 }
 
 function useCart() {
-  const guestSession = useGuestSession()
   return useFetch<unknown, ApiResponse<Cart>>({
-    enabled: guestSession === "ready",
     queryKey: queryKeys.cart(),
     endpoint: clientEndpoints.cart,
     select: normalizeCartResponse,

@@ -10,7 +10,13 @@ function useLoginMutation() {
   return useMutation({
     mutationKey: ["auth", "login"],
     meta: {
-      invalidates: [queryKeys.currentUser()],
+      invalidates: [
+        queryKeys.cart(),
+        queryKeys.currentUser(),
+        queryKeys.notifications(),
+        queryKeys.notificationUnreadCount(),
+        queryKeys.wishlist(),
+      ],
     },
     mutationFn: (variables: LoginInput) =>
       signIn("credentials", {

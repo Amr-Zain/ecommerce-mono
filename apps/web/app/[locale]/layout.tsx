@@ -6,7 +6,6 @@ import { Suspense } from "react"
 
 import "../globals.css"
 import { SessionProvider } from "@/components/auth/session-provider"
-import { GuestSessionProvider } from "@/components/auth/guest-session-provider"
 import { Footer } from "@/components/home/footer"
 import { StorefrontHeader } from "@/components/home/storefront-header"
 import { TanstackQueryProvider } from "@/components/providers/tanstack-query-provider"
@@ -69,7 +68,6 @@ export default async function LocaleLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SessionProvider>
             <TanstackQueryProvider>
-              <GuestSessionProvider>
                 <DirectionProvider direction={direction}>
                   <ThemeProvider>
                     <TooltipProvider>
@@ -81,14 +79,15 @@ export default async function LocaleLayout({
                           <Suspense fallback={<div className="min-h-[60vh]" />}>
                             {children}
                           </Suspense>
-                          <Footer />
+                          <Suspense fallback={<div className="h-48" />}>
+                            <Footer />
+                          </Suspense>
                         </main>
                       </div>
                     </TooltipProvider>
                     <Toaster position="top-center" />
                   </ThemeProvider>
                 </DirectionProvider>
-              </GuestSessionProvider>
             </TanstackQueryProvider>
           </SessionProvider>
         </NextIntlClientProvider>

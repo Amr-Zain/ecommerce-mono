@@ -1,6 +1,9 @@
 "use client"
 
 import * as React from "react"
+import { Login01Icon, ShoppingCart01Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { useSearchParams } from "next/navigation"
 import { AddressStep } from "@/components/cart/step-address"
 import { CartEmpty } from "@/components/cart/cart-empty"
 import { CartStepper } from "@/components/cart/cart-stepper"
@@ -11,7 +14,9 @@ import {
   useRemoveCartItem,
   useUpdateCartItem,
 } from "@/hooks/api/use-cart"
-import { useGuestSession } from "@/components/auth/guest-session-provider"
+import { useSession } from "next-auth/react"
+import { useRouter } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import {
   useAddresses,
   useCheckoutPreview,
@@ -19,6 +24,20 @@ import {
   type CheckoutPreview,
   type PlaceOrderResult,
 } from "@/hooks/api/use-checkout"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@ecommerce/ui/components/dialog"
+import { Button } from "@ecommerce/ui/components/button"
+import { Skeleton } from "@ecommerce/ui/components/skeleton"
+import { Link } from "@/i18n/navigation"
+import { loginPath } from "@/lib/return-path"
+import { StatePanel } from "@/components/shared/state-panel"
+import { useTranslations } from "next-intl"
 
 export type Step = "cart" | "address" | "payment"
 
@@ -26,19 +45,43 @@ const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=300&q=80"
 
 export default function CartPage() {
-  const [step, setStep] = React.useState<Step>("cart")
+  const t = useTranslations("Experience")
+  const searchParams = useSearchParams()
+  const requestedStep = searchParams.get("step")
+  const step: Step =
+    requestedStep === "address" || requestedStep === "payment"
+      ? requestedStep
+      : "cart"
+  const [loginOpen, setLoginOpen] = React.useState(false)
   const [couponCode, setCouponCode] = React.useState("")
   const [appliedCoupon, setAppliedCoupon] = React.useState("")
   const [selectedAddressId, setSelectedAddressId] = React.useState<string>()
   const [preview, setPreview] = React.useState<CheckoutPreview>()
   const [orderResult, setOrderResult] = React.useState<PlaceOrderResult>()
-  const guestSession = useGuestSession()
+  const { status } = useSession()
+  const router = useRouter()
   const cart = useCart()
   const addresses = useAddresses()
   const checkoutPreview = useCheckoutPreview()
   const placeOrder = usePlaceOrder()
   const updateItem = useUpdateCartItem()
   const removeItem = useRemoveCartItem()
+  const setStep = React.useCallback(
+    (nextStep: Step) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (nextStep === "cart") params.delete("step")
+      else params.set("step", nextStep)
+      router.replace(params.size ? `/cart?${params}` : "/cart")
+    },
+    [router, searchParams]
+  )
+  const requireLogin = () => setLoginOpen(true)
+
+  React.useEffect(() => {
+    if (status === "unauthenticated" && step !== "cart") {
+      setStep("cart")
+    }
+  }, [setStep, status, step])
   const items =
     cart.data?.data.items.map((item) => ({
       id: item.id,
@@ -74,11 +117,23 @@ export default function CartPage() {
     addresses.data?.[0]?.id ??
     ""
 
+  const beginCheckout = () => {
+    if (status !== "authenticated") {
+      requireLogin()
+      return
+    }
+    setStep("address")
+  }
+
   const loadPreview = (
     addressId: string,
     coupon = appliedCoupon,
     onSuccess?: () => void
   ) => {
+    if (status !== "authenticated") {
+      requireLogin()
+      return
+    }
     if (!addressId) return
     checkoutPreview.mutate(
       {
@@ -97,6 +152,10 @@ export default function CartPage() {
   const applyCoupon = () => {
     const code = couponCode.trim()
     if (!code) return
+    if (status !== "authenticated") {
+      requireLogin()
+      return
+    }
     if (!effectiveAddressId) {
       setAppliedCoupon(code)
       setStep("address")
@@ -122,6 +181,10 @@ export default function CartPage() {
     paymentMethod: "cod" | "bank_transfer" | "stripe_checkout",
     notes?: string
   ) => {
+    if (status !== "authenticated") {
+      requireLogin()
+      return
+    }
     placeOrder.mutate(
       {
         addressId: Number(effectiveAddressId),
@@ -142,19 +205,29 @@ export default function CartPage() {
     )
   }
 
-  if (guestSession === "loading" || cart.isPending) {
+  if (cart.isPending) {
     return (
-      <div className="py-20 text-center text-muted-foreground">
-        Loading cart...
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
+          {Array.from({ length: 3 }, (_, index) => (
+            <Skeleton key={index} className="h-36 rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-80 rounded-2xl" />
       </div>
     )
   }
 
-  if (guestSession === "error" || cart.isError) {
+  if (cart.isError) {
     return (
-      <div className="py-20 text-center text-destructive">
-        Unable to load cart. Please refresh after the guest session is ready.
-      </div>
+      <StatePanel
+        icon={<HugeiconsIcon icon={ShoppingCart01Icon} className="size-9" />}
+        title={t("cartLoadTitle")}
+        description={t("cartLoadDescription")}
+        action={{ label: t("tryAgain"), onClick: () => void cart.refetch() }}
+        secondaryHref={ROUTES.collections.root}
+        secondaryLabel="Continue shopping"
+      />
     )
   }
 
@@ -178,7 +251,7 @@ export default function CartPage() {
               <CartStep
                 items={items}
                 pricing={pricing}
-                onNext={() => setStep("address")}
+                onNext={beginCheckout}
                 couponCode={couponCode}
                 couponApplied={Boolean(appliedCoupon)}
                 couponPending={checkoutPreview.isPending}
@@ -226,9 +299,42 @@ export default function CartPage() {
                 onPlaceOrder={submitOrder}
               />
             )}
+            {(checkoutPreview.error || placeOrder.error) && (
+              <p
+                role="alert"
+                className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+              >
+                {(checkoutPreview.error ?? placeOrder.error)?.message}
+              </p>
+            )}
           </div>
         )}
       </div>
+      <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <HugeiconsIcon icon={Login01Icon} className="size-6" />
+            </div>
+            <DialogTitle>{t("checkoutLoginTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("checkoutLoginDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLoginOpen(false)}>
+              {t("keepShopping")}
+            </Button>
+            <Button
+              render={
+                <Link href={loginPath("/cart?step=address")} />
+              }
+            >
+              {t("signInContinue")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

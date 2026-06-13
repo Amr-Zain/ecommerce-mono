@@ -48,6 +48,7 @@ function responseItems<T>(response: unknown): T[] {
 
 function useWallet() {
   return useFetch<unknown, Wallet | null>({
+    authRequired: true,
     endpoint: clientEndpoints.wallet,
     queryKey: queryKeys.wallet(),
     select: (response) => ((response as { data?: Wallet })?.data ?? null),
@@ -56,6 +57,7 @@ function useWallet() {
 
 function useWalletTransactions() {
   return useFetch<unknown, WalletTransaction[]>({
+    authRequired: true,
     endpoint: clientEndpoints.walletTransactions,
     params: { limit: 50 },
     queryKey: queryKeys.walletTransactions(),
@@ -65,6 +67,7 @@ function useWalletTransactions() {
 
 function useWalletWithdrawals() {
   return useFetch<unknown, WalletWithdrawal[]>({
+    authRequired: true,
     endpoint: clientEndpoints.walletWithdrawals,
     params: { limit: 50 },
     queryKey: queryKeys.walletWithdrawals(),
@@ -74,6 +77,7 @@ function useWalletWithdrawals() {
 
 function useCreateWalletDeposit() {
   return useMutate<{ success: boolean; data: DepositResult }, { amount: number; paymentMethod: string }>({
+    authRequired: true,
     endpoint: clientEndpoints.walletDeposits,
     mutationKey: ["wallet", "deposit"],
     method: "POST",
@@ -82,6 +86,7 @@ function useCreateWalletDeposit() {
 
 function useCreateWalletWithdrawal() {
   return useMutate<unknown, { amount: number; method: string; details: Record<string, unknown>; note?: string }>({
+    authRequired: true,
     endpoint: clientEndpoints.walletWithdrawals,
     mutationKey: ["wallet", "withdrawal"],
     method: "POST",
@@ -91,6 +96,7 @@ function useCreateWalletWithdrawal() {
 
 function useCancelWalletWithdrawal(id: string) {
   return useMutate<unknown, Record<string, never>>({
+    authRequired: true,
     endpoint: clientEndpoints.walletWithdrawalCancel(id),
     mutationKey: ["wallet", "withdrawal", "cancel", id],
     method: "POST",

@@ -31,5 +31,22 @@
     "pleaseWait": "يرجى الانتظار...",
     "requestError": "تعذر إكمال الطلب. يرجى المحاولة مرة أخرى.",
     "sessionError": "تعذر إنشاء الجلسة. يرجى المحاولة مرة أخرى."
+  },
+  "Experience": {
+    "checkoutLoginTitle": "سجل الدخول لمتابعة الدفع",
+    "checkoutLoginDescription": "سلة التسوق محفوظة. سجل الدخول لاختيار عنوان التوصيل وإكمال الطلب.",
+    "keepShopping": "متابعة التسوق",
+    "signInContinue": "تسجيل الدخول والمتابعة",
+    "tryAgain": "حاول مرة أخرى",
+    "returnHome": "العودة للرئيسية",
+    "pageNotFound": "الصفحة غير موجودة",
+    "somethingWrong": "حدث خطأ ما",
+    "showroomsEmpty": "لا توجد معارض متاحة حالياً"
+    ,"cartLoadTitle": "تعذر تحميل سلة التسوق"
+    ,"cartLoadDescription": "عناصرك ما زالت محفوظة. تحقق من الاتصال وحاول تحميل السلة مرة أخرى."
+    ,"errorDescription": "تعذر إكمال تحميل هذه الصفحة. حاول مرة أخرى أو عد إلى المتجر."
+    ,"notFoundDescription": "ربما تم نقل الصفحة أو أن العنصر الذي تبحث عنه لم يعد متاحاً."
+    ,"showroomsEmptyDescription": "نجهز مواقع جديدة. تسوق عبر الإنترنت وتحقق مرة أخرى قريباً."
+    ,"browseCollections": "تصفح المجموعات"
   }
 }

@@ -95,6 +95,7 @@ function responseItems<T>(response: unknown): T[] {
 
 function useOrders(status?: string) {
   return useFetch<unknown, Order[]>({
+    authRequired: true,
     endpoint: clientEndpoints.orders,
     params: status ? { status } : undefined,
     queryKey: queryKeys.orders(status),
@@ -104,6 +105,7 @@ function useOrders(status?: string) {
 
 function useOrder(id?: string) {
   return useFetch<unknown, Order | null>({
+    authRequired: true,
     endpoint: id ? clientEndpoints.order(id) : null,
     enabled: Boolean(id),
     queryKey: queryKeys.order(id),
@@ -113,6 +115,7 @@ function useOrder(id?: string) {
 
 function useCreateReturn() {
   return useMutate<unknown, Record<string, unknown>>({
+    authRequired: true,
     endpoint: clientEndpoints.returns,
     mutationKey: ["returns", "create"],
     method: "POST",
@@ -122,6 +125,7 @@ function useCreateReturn() {
 
 function useCreateExchange() {
   return useMutate<unknown, Record<string, unknown>>({
+    authRequired: true,
     endpoint: clientEndpoints.exchanges,
     mutationKey: ["exchanges", "create"],
     method: "POST",
@@ -131,6 +135,7 @@ function useCreateExchange() {
 
 function useCancelOrder(id?: string) {
   return useMutate<unknown, { reason?: string }>({
+    authRequired: true,
     endpoint: id ? clientEndpoints.orderCancel(id) : clientEndpoints.orders,
     mutationKey: ["orders", "cancel", id ?? ""],
     method: "POST",
@@ -146,6 +151,7 @@ type AddressIdInput = { id: string }
 
 function useUpdateAddress() {
   return useMutate<unknown, AddressMutationInput>({
+    authRequired: true,
     endpoint: (input) => clientEndpoints.address(input.id),
     body: (input) => {
       const { id, ...address } = input
@@ -160,6 +166,7 @@ function useUpdateAddress() {
 
 function useDeleteAddress() {
   return useMutate<unknown, AddressIdInput>({
+    authRequired: true,
     endpoint: (input) => clientEndpoints.address(input.id),
     body: () => undefined,
     mutationKey: ["addresses", "delete"],
@@ -170,6 +177,7 @@ function useDeleteAddress() {
 
 function useSetDefaultAddress() {
   return useMutate<unknown, AddressIdInput>({
+    authRequired: true,
     endpoint: (input) => clientEndpoints.addressDefault(input.id),
     body: () => undefined,
     mutationKey: ["addresses", "default"],

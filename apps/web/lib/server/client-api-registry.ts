@@ -16,8 +16,12 @@ import {
 } from "@/lib/server/cache-tags"
 import type { RequestBody } from "@/lib/server/fetch"
 import { HttpError } from "@/lib/server/fetch"
+import { randomBytes } from "crypto"
+import { cookies } from "next/headers"
 
 type ClientApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+const ANONYMOUS_TOKEN_COOKIE = "anonymousSessionToken"
+const ANONYMOUS_TOKEN_MAX_AGE_SECONDS = 30 * 24 * 60 * 60
 
 type PublicCachePolicy = {
   matches: (path: string) => boolean
@@ -116,6 +120,24 @@ async function proxyClientApiRequest({
     retries: method === "GET" ? undefined : 0,
     revalidate: publicPolicy?.revalidate ?? 0,
     tags: publicPolicy?.tags(normalizedPath),
+  }
+
+  if (/^(?:cart|wishlist)(?:\/|$)/.test(normalizedPath)) {
+    const cookieStore = await cookies()
+    let token = cookieStore.get(ANONYMOUS_TOKEN_COOKIE)?.value
+    if (!token && method !== "GET") {
+      token = randomBytes(32).toString("base64url")
+      cookieStore.set(ANONYMOUS_TOKEN_COOKIE, token, {
+        httpOnly: true,
+        maxAge: ANONYMOUS_TOKEN_MAX_AGE_SECONDS,
+        path: "/",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      })
+    }
+    if (token) {
+      options.headers = { ...options.headers, "x-anonymous-session-token": token }
+    }
   }
 
   try {

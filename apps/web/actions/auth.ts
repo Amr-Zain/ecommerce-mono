@@ -7,7 +7,11 @@ import { auth, signIn, signOut } from "@/auth"
 import { actionError, actionSuccess } from "@/lib/server/action-result"
 import { backendPost, backendRequest } from "@/lib/server/backend"
 import { createAuthProof } from "@/lib/server/auth-proof"
-import { cacheTags, revalidateCacheTags } from "@/lib/server/cache-tags"
+import {
+  cacheTags,
+  invalidateCacheTags,
+  revalidateCacheTags,
+} from "@/lib/server/cache-tags"
 import { HttpError } from "@/lib/server/fetch"
 import type {
   LoginInput,
@@ -25,12 +29,11 @@ type AuthResponse = {
     phone?: string
     is_email_verified: boolean
     is_phone_verified: boolean
-    guest_token?: string
   }
 }
 
 const REFRESH_TOKEN_COOKIE = "refreshToken"
-const GUEST_TOKEN_COOKIE = "guestToken"
+const ANONYMOUS_TOKEN_COOKIE = "anonymousSessionToken"
 const REFRESH_TOKEN_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
 const ACCESS_TOKEN_REFRESH_WINDOW_MS = 60_000
 
@@ -65,18 +68,6 @@ async function storeAuthCookies(response: Response, data: AuthResponse) {
     maxAge: REFRESH_TOKEN_MAX_AGE_SECONDS,
     path: "/",
   })
-  if (data.user.guest_token) {
-    cookieStore.set(GUEST_TOKEN_COOKIE, data.user.guest_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: REFRESH_TOKEN_MAX_AGE_SECONDS,
-      path: "/",
-    })
-  } else {
-    cookieStore.delete(GUEST_TOKEN_COOKIE)
-  }
-
   await createSession({
     accessToken: data.access_token,
     user: {
@@ -85,22 +76,9 @@ async function storeAuthCookies(response: Response, data: AuthResponse) {
       email: data.user.email,
       phone: data.user.phone,
       isEmailVerified: data.user.is_email_verified,
-      isGuest: Boolean(data.user.guest_token),
       isPhoneVerified: data.user.is_phone_verified,
     },
   })
-}
-
-async function createGuestSession() {
-  const response = await backendRequest("/auth/create-guest", {
-    body: {},
-    cache: "no-store",
-    includeCookies: true,
-    method: "POST",
-    retries: 0,
-  })
-  const data = (await response.json()) as AuthResponse
-  await storeAuthCookies(response, data)
 }
 
 function hasValidAccessToken(accessToken?: string) {
@@ -122,11 +100,11 @@ function hasValidAccessToken(accessToken?: string) {
   }
 }
 
-async function ensureGuestSessionAction() {
+async function restoreAuthSessionAction() {
   try {
     const session = await auth()
     if (hasValidAccessToken(session?.accessToken)) {
-      return actionSuccess(null, "Session ready")
+      return actionSuccess({ authenticated: true }, "Session ready")
     }
 
     const cookieStore = await cookies()
@@ -143,19 +121,16 @@ async function ensureGuestSessionAction() {
           response,
           (await response.json()) as AuthResponse
         )
-        return actionSuccess(null, "Session restored")
+        return actionSuccess({ authenticated: true }, "Session restored")
       } catch (error) {
         if (!(error instanceof HttpError) || error.status !== 401) {
           throw error
         }
 
         cookieStore.delete(REFRESH_TOKEN_COOKIE)
-        cookieStore.delete(GUEST_TOKEN_COOKIE)
       }
     }
-
-    await createGuestSession()
-    return actionSuccess(null, "Guest session created")
+    return actionSuccess({ authenticated: false }, "Anonymous session ready")
   } catch (error) {
     return actionError(error)
   }
@@ -193,17 +168,20 @@ async function registerAction(input: RegisterInput) {
 async function verifyOtpAction(input: VerifyOtpInput) {
   try {
     const cookieStore = await cookies()
-    const guestToken = cookieStore.get(GUEST_TOKEN_COOKIE)?.value
+    const anonymousToken = cookieStore.get(ANONYMOUS_TOKEN_COOKIE)?.value
     const response = await backendRequest("/auth/login-otp", {
-      body: { ...input, guestToken },
+      body: input,
       cache: "no-store",
+      headers: anonymousToken
+        ? { "x-anonymous-session-token": anonymousToken }
+        : undefined,
       method: "POST",
       retries: 0,
     })
     const data = (await response.json()) as AuthResponse
     await storeAuthCookies(response, data)
-    cookieStore.delete(GUEST_TOKEN_COOKIE)
-    revalidateCacheTags([cacheTags.cart, cacheTags.wishlist])
+    cookieStore.delete(ANONYMOUS_TOKEN_COOKIE)
+    invalidateCacheTags([cacheTags.cart, cacheTags.wishlist])
 
     return actionSuccess(null, "Signed in")
   } catch (error) {
@@ -236,18 +214,14 @@ async function logoutAction(redirectTo = "/") {
   }
 
   await signOut({ redirect: false })
-  await createGuestSession()
-  revalidateCacheTags([
-    cacheTags.cart,
-    cacheTags.currentUser,
-    cacheTags.wishlist,
-  ])
+  invalidateCacheTags([cacheTags.cart, cacheTags.wishlist])
+  revalidateCacheTags([cacheTags.currentUser])
 
   return actionSuccess({ redirectTo }, "Signed out")
 }
 
 export {
-  ensureGuestSessionAction,
+  restoreAuthSessionAction,
   logoutAction,
   registerAction,
   sendOtpAction,

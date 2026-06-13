@@ -31,5 +31,22 @@
     "pleaseWait": "Please wait...",
     "requestError": "The request could not be completed. Please try again.",
     "sessionError": "Could not create your session. Please try again."
+  },
+  "Experience": {
+    "checkoutLoginTitle": "Sign in to continue checkout",
+    "checkoutLoginDescription": "Your cart is saved. Sign in to choose a delivery address and complete your order.",
+    "keepShopping": "Keep shopping",
+    "signInContinue": "Sign in to continue",
+    "tryAgain": "Try again",
+    "returnHome": "Return home",
+    "pageNotFound": "Page not found",
+    "somethingWrong": "Something went wrong",
+    "showroomsEmpty": "No showrooms available yet"
+    ,"cartLoadTitle": "We couldn't load your cart"
+    ,"cartLoadDescription": "Your items are still safe. Check your connection and try loading the cart again."
+    ,"errorDescription": "We couldn't finish loading this page. Try again, or return to the storefront."
+    ,"notFoundDescription": "The page may have moved, or the item you are looking for is no longer available."
+    ,"showroomsEmptyDescription": "We are preparing new locations. Shop online now and check back soon."
+    ,"browseCollections": "Browse collections"
   }
 }

@@ -158,7 +158,6 @@ type LoginInput = {
     email?: string
     phone?: string
     isEmailVerified: boolean
-    isGuest?: boolean
     isPhoneVerified: boolean
   }
 }

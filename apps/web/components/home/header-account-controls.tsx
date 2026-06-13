@@ -47,10 +47,7 @@ async function getAccountData(accessToken: string) {
 
 async function HeaderAccountControls() {
   const session = await auth()
-  const loggedIn =
-    Boolean(session?.accessToken) &&
-    Boolean(session?.user) &&
-    !session?.user.is_guest
+  const loggedIn = Boolean(session?.accessToken) && Boolean(session?.user)
 
   if (!loggedIn || !session?.accessToken || !session.user) {
     return (

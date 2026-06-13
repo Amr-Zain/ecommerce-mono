@@ -1,6 +1,6 @@
 import "server-only"
 
-import { revalidateTag } from "next/cache"
+import { revalidateTag, updateTag } from "next/cache"
 
 const cacheTags = {
   cart: "cart",
@@ -29,5 +29,19 @@ function revalidateCacheTags(
   }
 }
 
-export { cacheTags, productTag, revalidateCacheTag, revalidateCacheTags }
+function invalidateCacheTags(
+  tags: Array<CacheTag | ReturnType<typeof productTag>>
+) {
+  for (const tag of tags) {
+    updateTag(tag)
+  }
+}
+
+export {
+  cacheTags,
+  invalidateCacheTags,
+  productTag,
+  revalidateCacheTag,
+  revalidateCacheTags,
+}
 export type { CacheTag }
