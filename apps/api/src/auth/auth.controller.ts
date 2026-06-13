@@ -50,19 +50,12 @@ export class AuthController {
     const ipAddress = req.ip;
     const platform = (req.headers['x-platform'] as string) || 'browser';
 
-    const authResult = await this.authService.verifyOtp(verifyOtpDto, deviceInfo, ipAddress);
-    return this.authService.handleAuthResponse(res, authResult, platform);
-  }
-
-  @Public()
-  @Post('create-guest')
-  async createGuest(@Req() req: Request, @Res() res: Response) {
-    const deviceInfo = req.headers['user-agent'];
-    const ipAddress = req.ip;
-    const platform = (req.headers['x-platform'] as string) || 'browser';
-
-    const cookies = req.cookies as Record<string, string> | undefined;
-    const authResult = await this.authService.createGuest(deviceInfo, ipAddress, cookies?.['refreshToken']);
+    const authResult = await this.authService.verifyOtp(
+      verifyOtpDto,
+      deviceInfo,
+      ipAddress,
+      req.header('x-anonymous-session-token'),
+    );
     return this.authService.handleAuthResponse(res, authResult, platform);
   }
 
@@ -79,7 +72,13 @@ export class AuthController {
       throw new UnauthorizedException('User not authenticated');
     }
 
-    const authResult = await this.authService.login(req.user as AuthUserPayload, deviceInfo, ipAddress, lang);
+    const authResult = await this.authService.login(
+      req.user as AuthUserPayload,
+      deviceInfo,
+      ipAddress,
+      lang,
+      req.header('x-anonymous-session-token'),
+    );
     return this.authService.handleAuthResponse(res, authResult, platform);
   }
 

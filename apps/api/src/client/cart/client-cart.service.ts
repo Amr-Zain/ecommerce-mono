@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException, BadRequestException } from '@nes
 import { CARTS_REPOSITORY, ICartsRepository } from '@/common/interfaces/carts.interface';
 import { PricingService } from '@/core/products/pricing.service';
 import { AddToCartDto, UpdateCartItemDto } from './dto/cart.dto';
+import { CommerceIdentity } from '@/auth/interfaces/commerce-identity.interface';
 import { PrismaService } from '@/prisma';
 import { DEFAULT_LANGUAGE, FALLBACK_LABELS } from '@/common/constants/commerce.constants';
 import { I18nService } from 'nestjs-i18n';
@@ -49,7 +50,7 @@ type CartItemWithProduct = {
 
 type CartWithProducts = {
   id: bigint;
-  userId: bigint;
+  userId: bigint | null;
   items?: CartItemWithProduct[];
 };
 
@@ -85,13 +86,16 @@ export class ClientCartService {
     private readonly mediaService: MediaService,
   ) {}
 
-  async getCart(userId: bigint, langId: string = DEFAULT_LANGUAGE) {
-    const cart = (await this.cartsRepo.findOrCreateByUserId(userId)) as unknown as CartWithProducts;
+  async getCart(identity: CommerceIdentity, langId: string = DEFAULT_LANGUAGE) {
+    if (identity.type === 'none') {
+      return { id: null, userId: null, items: [], subtotal: 0, itemCount: 0 };
+    }
+    const cart = (await this.cartsRepo.findOrCreateByOwner(identity)) as unknown as CartWithProducts;
 
     if (!cart.items || cart.items.length === 0) {
       return {
         id: cart.id.toString(),
-        userId: cart.userId.toString(),
+        userId: cart.userId?.toString() ?? null,
         items: [],
         subtotal: 0,
         itemCount: 0,
@@ -171,15 +175,15 @@ export class ClientCartService {
 
     return {
       id: cart.id.toString(),
-      userId: cart.userId.toString(),
+      userId: cart.userId?.toString() ?? null,
       items,
       subtotal: Number(subtotal.toFixed(2)),
       itemCount,
     };
   }
 
-  async addItem(userId: bigint, dto: AddToCartDto, langId: string = DEFAULT_LANGUAGE) {
-    const cart = await this.cartsRepo.findOrCreateByUserId(userId);
+  async addItem(identity: CommerceIdentity, dto: AddToCartDto, langId: string = DEFAULT_LANGUAGE) {
+    const cart = await this.cartsRepo.findOrCreateByOwner(identity);
 
     // Resolve the variant — either specific or default first active variant
     let resolvedVariant: CartVariant | null;
@@ -208,11 +212,11 @@ export class ClientCartService {
 
     await this.cartsRepo.addItem(cart.id, BigInt(dto.productId), BigInt(resolvedVariant.id), dto.quantity);
 
-    return this.getCart(userId, langId);
+    return this.getCart(identity, langId);
   }
 
-  async updateItemQuantity(userId: bigint, itemId: bigint, dto: UpdateCartItemDto, langId: string = DEFAULT_LANGUAGE) {
-    const cart = await this.cartsRepo.findOrCreateByUserId(userId);
+  async updateItemQuantity(identity: CommerceIdentity, itemId: bigint, dto: UpdateCartItemDto, langId: string = DEFAULT_LANGUAGE) {
+    const cart = await this.cartsRepo.findOrCreateByOwner(identity);
 
     // Check if item belongs to user's cart
     const item = await this.prisma.cartItem.findFirst({
@@ -236,11 +240,11 @@ export class ClientCartService {
     }
 
     await this.cartsRepo.updateItemQuantity(itemId, dto.quantity);
-    return this.getCart(userId, langId);
+    return this.getCart(identity, langId);
   }
 
-  async removeItem(userId: bigint, itemId: bigint, langId: string = DEFAULT_LANGUAGE) {
-    const cart = await this.cartsRepo.findOrCreateByUserId(userId);
+  async removeItem(identity: CommerceIdentity, itemId: bigint, langId: string = DEFAULT_LANGUAGE) {
+    const cart = await this.cartsRepo.findOrCreateByOwner(identity);
 
     const item = await this.prisma.cartItem.findFirst({
       where: { id: itemId, cartId: cart.id },
@@ -251,12 +255,12 @@ export class ClientCartService {
     }
 
     await this.cartsRepo.removeItem(itemId);
-    return this.getCart(userId, langId);
+    return this.getCart(identity, langId);
   }
 
-  async clearCart(userId: bigint, langId: string = DEFAULT_LANGUAGE) {
-    const cart = await this.cartsRepo.findOrCreateByUserId(userId);
+  async clearCart(identity: CommerceIdentity, langId: string = DEFAULT_LANGUAGE) {
+    const cart = await this.cartsRepo.findOrCreateByOwner(identity);
     await this.cartsRepo.clearCart(cart.id);
-    return this.getCart(userId, langId);
+    return this.getCart(identity, langId);
   }
 }

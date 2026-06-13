@@ -232,7 +232,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"email\",\n  \"email\": \"john.doe@example.com\",\n  \"code\": \"1111\",\n  \"guestToken\": \"\"\n}",
+              "raw": "{\n  \"type\": \"email\",\n  \"email\": \"john.doe@example.com\",\n  \"code\": \"1111\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -243,47 +243,6 @@
               "raw": "{{baseUrl}}/auth/login-otp",
               "host": ["{{baseUrl}}"],
               "path": ["auth", "login-otp"]
-            }
-          }
-        },
-        {
-          "name": "Create Guest",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if (pm.response.code === 201 || pm.response.code === 200) {",
-                  "    const response = pm.response.json();",
-                  "    const data = response.data || response;",
-                  "    if (data.accessToken) {",
-                  "        pm.environment.set(\"accessToken\", data.accessToken);",
-                  "    }",
-                  "    if (data.refreshToken) {",
-                  "        pm.environment.set(\"refreshToken\", data.refreshToken);",
-                  "    }",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "noauth"
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "x-platform",
-                "value": "browser",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/create-guest",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "create-guest"]
             }
           }
         },

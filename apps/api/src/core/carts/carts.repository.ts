@@ -3,6 +3,7 @@ import { PrismaService } from '@/prisma';
 import { BaseRepository } from '@/common/repositories/base.repository';
 import { Cart, CartItem, ICartsRepository } from '@/common/interfaces/carts.interface';
 import { MediaService } from '@/media/media.service';
+import { CommerceIdentity } from '@/auth/interfaces/commerce-identity.interface';
 
 @Injectable()
 export class CartsRepository extends BaseRepository<Cart> implements ICartsRepository {
@@ -14,9 +15,10 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
     return this.prisma.cart;
   }
 
-  async findByUserId(userId: bigint): Promise<Cart | null> {
+  async findByOwner(identity: CommerceIdentity): Promise<Cart | null> {
+    if (identity.type === 'none') return null;
     const record = await this.prisma.cart.findUnique({
-      where: { userId },
+      where: identity.type === 'user' ? { userId: identity.userId } : { anonymousSessionId: identity.sessionId },
       include: {
         items: {
           orderBy: { createdAt: 'asc' },
@@ -55,13 +57,16 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
     return record;
   }
 
-  async findOrCreateByUserId(userId: bigint): Promise<Cart> {
-    let cart = await this.findByUserId(userId);
+  async findOrCreateByOwner(identity: CommerceIdentity): Promise<Cart> {
+    if (identity.type === 'none') {
+      throw new Error('Cannot create a cart without a commerce identity');
+    }
+    let cart = await this.findByOwner(identity);
     if (!cart) {
       const newCart = await this.prisma.cart.create({
-        data: { userId },
+        data: identity.type === 'user' ? { userId: identity.userId } : { anonymousSessionId: identity.sessionId },
       });
-      cart = await this.findByUserId(newCart.userId);
+      cart = await this.findByOwner(identity);
     }
     return cart!;
   }

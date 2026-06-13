@@ -3,6 +3,8 @@ import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { MediaService } from '@/media/media.service';
+import { CommerceIdentity } from '@/auth/interfaces/commerce-identity.interface';
+import { ClientWishlistRepository } from './client-wishlist.repository';
 
 type ProductLike = {
   id: bigint | string | number;
@@ -14,32 +16,12 @@ export class ClientWishlistService {
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly mediaService: MediaService,
+    private readonly wishlistRepository: ClientWishlistRepository,
   ) {}
 
-  async findAll(userId: bigint, langId: string = 'en') {
-    const items = await this.prisma.wishlistItem.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        product: {
-          include: {
-            translations: {
-              where: { langId },
-              take: 1,
-            },
-            variants: {
-              select: {
-                id: true,
-                price: true,
-                compareAtPrice: true,
-                stockQuantity: true,
-                isActive: true,
-              },
-            },
-          },
-        },
-      },
-    });
+  async findAll(identity: CommerceIdentity, langId: string = 'en') {
+    if (identity.type === 'none') return [];
+    const items = await this.wishlistRepository.findAll(identity, langId);
     const images = await this.mediaService.findProductImagePaths(
       items.map((item) => ({
         productId: item.productId,
@@ -59,7 +41,10 @@ export class ClientWishlistService {
     }));
   }
 
-  async toggle(userId: bigint, productId: bigint, langId: string = 'en') {
+  async toggle(identity: CommerceIdentity, productId: bigint, langId: string = 'en') {
+    if (identity.type === 'none') {
+      throw new BadRequestException('Anonymous session is required');
+    }
     const product = await this.prisma.product.findFirst({
       where: { id: productId },
       select: { id: true, isActive: true },
@@ -73,29 +58,16 @@ export class ClientWishlistService {
       throw new BadRequestException(this.i18n.t('errors.product_inactive'));
     }
 
-    const existing = await this.prisma.wishlistItem.findUnique({
-      where: {
-        userId_productId: {
-          userId,
-          productId,
-        },
-      },
-      select: { id: true },
-    });
+    const existing = await this.wishlistRepository.findProduct(identity, productId);
 
     if (existing) {
-      await this.prisma.wishlistItem.delete({ where: { id: existing.id } });
-      return this.findAll(userId, langId);
+      await this.wishlistRepository.delete(existing.id);
+      return this.findAll(identity, langId);
     }
 
-    await this.prisma.wishlistItem.create({
-      data: {
-        userId,
-        productId,
-      },
-    });
+    await this.wishlistRepository.create(identity, productId);
 
-    return this.findAll(userId, langId);
+    return this.findAll(identity, langId);
   }
 
   async decorateProductWithWishlist<TProduct extends ProductLike | null>(
@@ -151,4 +123,5 @@ export class ClientWishlistService {
       isInWishlist: wishlistProductIds.has(BigInt(product.id).toString()),
     }));
   }
+
 }

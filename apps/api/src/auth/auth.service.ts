@@ -24,6 +24,7 @@ import { CaseTransformer } from '../common/utils/case-transformer.util';
 import { Response } from 'express';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../generated/i18n.generated';
+import { AnonymousSessionService } from './services/anonymous-session.service';
 import {
   AUTH_CONFIG_KEYS,
   AUTH_COOKIE,
@@ -75,6 +76,7 @@ export class AuthService {
     @Inject(USERS_REPOSITORY) private readonly usersRepository: UsersRepository,
     private readonly refreshTokensRepository: RefreshTokensRepository,
     private readonly i18n: I18nService<I18nTranslations>,
+    private readonly anonymousSessions: AnonymousSessionService,
   ) {}
 
   /**
@@ -168,6 +170,7 @@ export class AuthService {
     deviceInfo?: string,
     ipAddress?: string,
     lang: string = AUTH_DEFAULTS.language,
+    anonymousToken?: string,
   ): Promise<AuthResponseDto> {
     // For admins, verify email is verified
     if (user.userType === AUTH_USER_TYPES.admin && !user.isEmailVerified) {
@@ -176,6 +179,7 @@ export class AuthService {
 
     // Generate tokens
     const { accessToken, refreshToken } = await this.generateTokens(user, deviceInfo, ipAddress);
+    await this.anonymousSessions.claim(anonymousToken, user.id);
 
     return {
       accessToken,
@@ -290,27 +294,15 @@ export class AuthService {
     });
   }
 
-  private verifyRefreshToken(token: string): JwtPayload | null {
-    try {
-      const payload = this.jwtService.verify<JwtPayload>(token, {
-        secret: this.getJwtSigningSecretOrThrow(AUTH_CONFIG_KEYS.refreshSecret),
-      });
-      return payload.type === AUTH_TOKEN_TYPES.refresh && payload.jti ? payload : null;
-    } catch {
-      return null;
-    }
-  }
-
   private authResult(user: AuthUserPayload, accessToken: string, refreshToken: string): AuthResponseDto {
     return {
       accessToken,
       refreshToken,
       user: {
         id: user.id.toString(),
-        name: user.name || (user.guestToken ? AUTH_DEFAULTS.guestName : ''),
+        name: user.name || '',
         email: user.email || '',
         phone: user.phone || undefined,
-        guestToken: user.guestToken ?? undefined,
         role: user.role
           ? {
               id: user.role.id.toString(),
@@ -399,6 +391,7 @@ export class AuthService {
     dto: VerifyOtpDto,
     deviceInfo?: string,
     ipAddress?: string,
+    anonymousToken?: string,
     lang: string = AUTH_DEFAULTS.language,
   ): Promise<AuthResponseDto> {
     const type = dto.type;
@@ -493,12 +486,9 @@ export class AuthService {
       throw new UnauthorizedException(this.i18n.t('errors.account_inactive'));
     }
 
-    if (dto.guestToken) {
-      await this.usersRepository.migrateGuestData(dto.guestToken, user.id);
-    }
-
     // Generate access and refresh tokens
     const { accessToken, refreshToken } = await this.generateTokens(user, deviceInfo, ipAddress);
+    await this.anonymousSessions.claim(anonymousToken, user.id);
 
     return {
       accessToken,
@@ -524,55 +514,6 @@ export class AuthService {
         isPhoneVerified: user.isPhoneVerified,
       },
     };
-  }
-
-  /**
-   * Create a guest user profile and generate tokens
-   */
-  async createGuest(deviceInfo?: string, ipAddress?: string, existingRefreshToken?: string): Promise<AuthResponseDto> {
-    if (existingRefreshToken) {
-      const decoded = this.verifyRefreshToken(existingRefreshToken);
-      const existing = decoded?.jti ? await this.refreshTokensRepository.findActiveWithUser(decoded.jti) : null;
-
-      if (existing?.user.guestToken) {
-        const accessToken = this.generateAccessToken(existing.user);
-        return this.authResult(existing.user, accessToken, existingRefreshToken);
-      }
-
-      if (existing?.user) {
-        throw new UnauthorizedException(this.i18n.t('errors.invalid_refresh_token'));
-      }
-    }
-
-    const guestToken =
-      AUTH_DEFAULTS.guestTokenPrefix + randomBytes(AUTH_SECURITY.guestTokenBytes).toString(AUTH_ENCODING.hex);
-
-    // Create new guest user record
-    const guestUser = (await this.usersRepository.create(
-      {
-        name: AUTH_DEFAULTS.guestName,
-        userType: AUTH_USER_TYPES.client,
-        guestToken: guestToken,
-        isActive: true,
-        isEmailVerified: false,
-        isPhoneVerified: false,
-      },
-      {
-        include: {
-          role: {
-            include: {
-              permissions: true,
-              translations: true,
-            },
-          },
-        },
-      },
-    )) as AuthUserPayload;
-
-    // Generate access and refresh tokens for guest
-    const { accessToken, refreshToken } = await this.generateTokens(guestUser, deviceInfo, ipAddress);
-
-    return this.authResult(guestUser, accessToken, refreshToken);
   }
 
   /**

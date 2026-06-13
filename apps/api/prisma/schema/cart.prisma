@@ -1,10 +1,12 @@
 model Cart {
-  id        BigInt     @id @default(autoincrement())
-  userId    BigInt     @unique @map("user_id")
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at")
-  items     CartItem[]
+  id                 BigInt            @id @default(autoincrement())
+  userId             BigInt?           @unique @map("user_id")
+  user               User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anonymousSessionId String?           @unique @map("anonymous_session_id")
+  anonymousSession   AnonymousSession? @relation(fields: [anonymousSessionId], references: [id], onDelete: Cascade)
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at")
+  items              CartItem[]
 
   @@map("carts")
 }
@@ -27,16 +29,20 @@ model CartItem {
 }
 
 model WishlistItem {
-  id        BigInt   @id @default(autoincrement())
-  userId    BigInt   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId BigInt   @map("product_id")
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  id                 BigInt            @id @default(autoincrement())
+  userId             BigInt?           @map("user_id")
+  user               User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anonymousSessionId String?           @map("anonymous_session_id")
+  anonymousSession   AnonymousSession? @relation(fields: [anonymousSessionId], references: [id], onDelete: Cascade)
+  productId          BigInt            @map("product_id")
+  product            Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at")
 
   @@unique([userId, productId])
+  @@unique([anonymousSessionId, productId])
   @@index([userId])
+  @@index([anonymousSessionId])
   @@index([productId])
   @@map("wishlist_items")
 }

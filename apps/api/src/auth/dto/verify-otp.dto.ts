@@ -23,7 +23,4 @@ export class VerifyOtpDto {
   @Length(4, 4, { message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   code!: string;
 
-  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @IsOptional()
-  guestToken?: string;
 }

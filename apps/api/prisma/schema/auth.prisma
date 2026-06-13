@@ -35,12 +35,11 @@ model Permission {
 
 model User {
   id                      BigInt                    @id @default(autoincrement())
-  name                    String?                   @default("guest")
+  name                    String?
   email                   String?                   @unique
   roleId                  BigInt?                   @map("role")
   role                    Role?                     @relation(fields: [roleId], references: [id], onDelete: SetNull)
   userType                String?                   @default("client") @map("user_type")
-  guestToken              String?                   @unique @map("guest_token")
   password                String?
   gender                  String?
   phone                   String?
@@ -75,6 +74,19 @@ model User {
   @@index([userType])
   @@index([roleId])
   @@map("users")
+}
+
+model AnonymousSession {
+  id            String         @id @default(uuid())
+  tokenHash     String         @unique @map("token_hash")
+  expiresAt     DateTime       @map("expires_at")
+  lastActiveAt  DateTime       @default(now()) @map("last_active_at")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  cart          Cart?
+  wishlistItems WishlistItem[]
+
+  @@index([expiresAt])
+  @@map("anonymous_sessions")
 }
 
 model RefreshToken {

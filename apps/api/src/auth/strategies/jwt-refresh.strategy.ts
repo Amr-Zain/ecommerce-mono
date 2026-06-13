@@ -18,7 +18,6 @@ interface EnrichedRefreshToken {
     phone: string | null;
     phoneCode: string | null;
     userType: string;
-    guestToken: string | null;
     isEmailVerified: boolean;
     isPhoneVerified: boolean;
     role?: {

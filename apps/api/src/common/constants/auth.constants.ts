@@ -30,21 +30,15 @@ export const AUTH_DEFAULTS = {
   accessExpiration: '15m',
   refreshExpiration: '7d',
   verificationCode: '1111',
-  guestName: 'Guest User',
-  guestTokenPrefix: 'guest_',
 } as const;
 
 export const AUTH_SECURITY = {
   bcryptRounds: 10,
-  guestTokenBytes: 16,
   refreshTokenIdBytes: 32,
   verificationExpiryMs: 15 * 60 * 1000,
   registrationVerificationExpiryMs: 150 * 60 * 1000,
   refreshCookieMaxAgeMs: 7 * 24 * 60 * 60 * 1000,
   fallbackRefreshExpirationMs: 7 * 24 * 60 * 60 * 1000,
-  guestMigrationMaxWaitMs: 5 * 1000,
-  guestMigrationTimeoutMs: 10 * 1000,
-  guestMigrationMaxRetries: 3,
 } as const;
 
 export const AUTH_COOKIE = {

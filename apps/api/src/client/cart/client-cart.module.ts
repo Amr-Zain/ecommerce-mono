@@ -4,9 +4,10 @@ import { ClientCartService } from './client-cart.service';
 import { CartsModule } from '@/core/carts/carts.module';
 import { ProductsModule } from '@/core/products/products.module';
 import { PrismaModule } from '@/prisma/prisma.module';
+import { AuthModule } from '@/auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, CartsModule, ProductsModule],
+  imports: [PrismaModule, CartsModule, ProductsModule, AuthModule],
   controllers: [ClientCartController],
   providers: [ClientCartService],
   exports: [ClientCartService],

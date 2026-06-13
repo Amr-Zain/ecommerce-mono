@@ -41,7 +41,7 @@ export type {
 export { STATIC_PAGES_REPOSITORY } from './static-pages.interface';
 export type { RoleTranslation, Permission, Role, IRolesRepository } from './roles.interface';
 export { ROLES_REPOSITORY } from './roles.interface';
-export type { Address, User, GuestMigrationResult, IUsersRepository } from './users.interface';
+export type { Address, User, IUsersRepository } from './users.interface';
 export { USERS_REPOSITORY } from './users.interface';
 export type {
   AdminReview,

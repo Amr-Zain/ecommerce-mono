@@ -14,6 +14,8 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { RefreshTokensRepository } from './repositories/refresh-tokens.repository';
 import { MediaModule } from '../media/media.module';
 import { UsersModule as CoreUsersModule } from '@/core/users/users.module';
+import { AnonymousSessionService } from './services/anonymous-session.service';
+import { AnonymousSessionsRepository } from './repositories/anonymous-sessions.repository';
 
 @Module({
   imports: [
@@ -40,7 +42,9 @@ import { UsersModule as CoreUsersModule } from '@/core/users/users.module';
     OptionalJwtAuthGuard,
     PermissionDiscoveryService,
     RefreshTokensRepository,
+    AnonymousSessionService,
+    AnonymousSessionsRepository,
   ],
-  exports: [AuthService, RefreshTokensRepository, OptionalJwtAuthGuard],
+  exports: [AuthService, RefreshTokensRepository, OptionalJwtAuthGuard, AnonymousSessionService],
 })
 export class AuthModule {}

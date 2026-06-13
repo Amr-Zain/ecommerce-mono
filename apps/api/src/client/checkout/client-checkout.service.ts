@@ -257,7 +257,7 @@ export class ClientCheckoutService {
   }
 
   async previewCheckout(userId: bigint, dto: CheckoutPreviewDto, langId: string = DEFAULT_LANGUAGE) {
-    const cart = await this.cartService.getCart(userId, langId);
+    const cart = await this.cartService.getCart({ type: 'user', userId }, langId);
     if (cart.items.length === 0) {
       throw new BadRequestException(this.i18n.t('errors.checkout_empty_cart'));
     }
