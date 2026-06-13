@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 
 import { Button } from "@ecommerce/ui/components/button"
 
@@ -21,7 +22,7 @@ export function SectionHeader({
       </h2>
       <div className="flex items-center gap-2">
         {viewAll ? (
-          <Link href={viewAllHref ?? "/collections"}>
+          <Link href={viewAllHref ?? ROUTES.collections.root}>
             <Button variant="ghost" size="sm" className="text-xs">
               View All
             </Button>

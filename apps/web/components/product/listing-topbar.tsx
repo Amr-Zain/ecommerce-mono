@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
+import { Link, usePathname, useRouter } from "@/i18n/navigation"
+import { useSearchParams } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ecommerce/ui/components/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@ecommerce/ui/components/popover"
 import { Checkbox } from "@ecommerce/ui/components/checkbox"

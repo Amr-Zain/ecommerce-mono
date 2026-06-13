@@ -14,6 +14,7 @@ import {
 } from "@/lib/client/http"
 import { withSessionRetry } from "@/lib/client/session-request"
 import { toast } from "@ecommerce/ui/components/sonner"
+import { clientApiEndpoint } from "@/lib/client/client-api"
 
 type UseFetchOptions<
   TResponse = unknown,
@@ -29,7 +30,6 @@ type UseFetchOptions<
   select?: (data: TResponse) => TData
   onError?: (error: TError) => void
   onSuccess?: (data: TResponse) => void
-  customBaseUrl?: string
   disableErrorToast?: boolean
   headers?: HeadersInit
 }
@@ -46,7 +46,6 @@ function useFetch<
   select,
   onError,
   onSuccess,
-  customBaseUrl,
   disableErrorToast = false,
   headers,
   ...options
@@ -63,8 +62,7 @@ function useFetch<
         }
 
         const data = await withSessionRetry(() =>
-          clientJson<TResponse>(endpoint, {
-            customBaseUrl,
+          clientJson<TResponse>(clientApiEndpoint(endpoint), {
             headers,
             method: "GET",
             params,

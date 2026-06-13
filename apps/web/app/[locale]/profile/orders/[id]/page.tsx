@@ -3,7 +3,8 @@
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import Image from "next/image"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { useParams } from "next/navigation"
 
 import { Badge } from "@ecommerce/ui/components/badge"
@@ -29,7 +30,7 @@ export default function OrderDetailsPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
-        <Link href="/profile/orders" className="flex size-8 items-center justify-center rounded-full bg-muted"><HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" /></Link>
+        <Link href={ROUTES.profile.orders.root} className="flex size-8 items-center justify-center rounded-full bg-muted"><HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" /></Link>
         <div><h1 className="text-2xl font-bold">Order #{data.order_number || data.id}</h1><p className="text-xs text-muted-foreground">{date(data.created_at)}</p></div>
         <Badge className="ms-auto">{data.status}</Badge>
       </div>
@@ -47,7 +48,7 @@ export default function OrderDetailsPage() {
               {item.image_snapshot ? <Image src={item.image_snapshot} alt={item.product_name_snapshot} fill sizes="96px" className="object-cover" /> : <div className="flex size-full items-center justify-center text-xs text-muted-foreground">No image</div>}
             </div>
             <div className="min-w-0 flex-1">
-              {item.product_id ? <Link href={`/products/${item.product_id}`} className="font-semibold hover:underline">{item.product_name_snapshot}</Link> : <h2 className="font-semibold">{item.product_name_snapshot}</h2>}
+              {item.product_id ? <Link href={ROUTES.products.detail(item.product_id)} className="font-semibold hover:underline">{item.product_name_snapshot}</Link> : <h2 className="font-semibold">{item.product_name_snapshot}</h2>}
               <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
               {item.variant_info_snapshot && <p className="text-xs text-muted-foreground">{Object.values(item.variant_info_snapshot).join(" · ")}</p>}
             </div>
@@ -77,7 +78,7 @@ export default function OrderDetailsPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        {actions.includes("return_exchange") && <Button render={<Link href={`/profile/orders/${data.id}/exchange`} />}>Return or Exchange</Button>}
+        {actions.includes("return_exchange") && <Button render={<Link href={ROUTES.profile.orders.exchange(data.id)} />}>Return or Exchange</Button>}
         {actions.includes("cancel") && <CancelOrderDialog orderId={data.id} />}
         {actions.includes("track") && <Badge variant="outline">Order is {data.status}</Badge>}
       </div>

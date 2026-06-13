@@ -58,6 +58,7 @@ type FormattedCartItem = {
   productId: string;
   variantId: string;
   quantity: number;
+  stockQuantity: number;
   productName: string;
   price: number;
   compareAtPrice?: number;
@@ -153,6 +154,7 @@ export class ClientCartService {
           productId: item.productId.toString(),
           variantId: variant.id.toString(),
           quantity: item.quantity,
+          stockQuantity: variant.stockQuantity,
           productName: nameTranslation,
           price: pricing.price,
           compareAtPrice: pricing.compareAtPrice,

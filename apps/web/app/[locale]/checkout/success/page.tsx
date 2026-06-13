@@ -2,7 +2,8 @@
 
 import { CheckmarkCircle01Icon, Loading03Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { useSearchParams } from "next/navigation"
 import * as React from "react"
 
@@ -61,10 +62,10 @@ function CheckoutSuccessContent() {
         </Button>
       )}
       <div className="flex gap-3">
-        <Button variant="outline" render={<Link href="/profile/orders" />}>
+        <Button variant="outline" render={<Link href={ROUTES.profile.orders.root} />}>
           My Orders
         </Button>
-        <Button render={<Link href="/collections" />}>Continue Shopping</Button>
+        <Button render={<Link href={ROUTES.collections.root} />}>Continue Shopping</Button>
       </div>
     </div>
   )

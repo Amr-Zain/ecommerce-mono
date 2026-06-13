@@ -7,7 +7,7 @@ import type { Category, ListResponse } from "@/hooks/api/domain"
 function useCategories() {
   return useFetch<ListResponse<Category>>({
     queryKey: queryKeys.categories(),
-    endpoint: "/api/client/categories",
+    endpoint: "collections",
   })
 }
 

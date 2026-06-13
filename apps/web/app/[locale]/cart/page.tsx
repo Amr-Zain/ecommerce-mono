@@ -48,6 +48,7 @@ export default function CartPage() {
       oldPrice: item.compareAtPrice ?? item.originalPrice,
       image: item.image ?? FALLBACK_IMAGE,
       qty: item.quantity,
+      stock: item.stockQuantity,
       size: item.attributes[0]?.value ?? "",
       color: item.attributes[1]?.value ?? "",
     })) ?? []
@@ -191,13 +192,13 @@ export default function CartPage() {
                 onApplyCoupon={applyCoupon}
                 onQuantityChange={(id, quantity) =>
                   updateItem.mutate({
-                    _endpoint: `/api/client/cart/items/${id}`,
+                    id,
                     quantity,
                   })
                 }
                 onRemove={(id) =>
                   removeItem.mutate({
-                    _endpoint: `/api/client/cart/items/${id}`,
+                    id,
                   })
                 }
               />

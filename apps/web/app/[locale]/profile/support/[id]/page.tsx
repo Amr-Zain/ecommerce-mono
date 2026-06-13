@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { useParams } from "next/navigation"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
@@ -120,7 +121,7 @@ export default function TicketDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <p className="text-lg font-semibold text-foreground">Ticket not found</p>
-        <Link href="/profile/support" className="mt-4 text-sm text-primary hover:underline">
+        <Link href={ROUTES.profile.support.root} className="mt-4 text-sm text-primary hover:underline">
           Back to tickets
         </Link>
       </div>
@@ -133,7 +134,7 @@ export default function TicketDetailPage() {
       <div className="flex items-center justify-between border-b pb-4">
         <div className="flex items-center gap-3">
           <Link
-            href="/profile/support"
+            href={ROUTES.profile.support.root}
             className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" strokeWidth={2.5} />

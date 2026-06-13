@@ -3,6 +3,7 @@
 import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
+import { clientEndpoints } from "@/lib/client/client-api"
 
 type OrderItem = {
   id: string
@@ -94,7 +95,7 @@ function responseItems<T>(response: unknown): T[] {
 
 function useOrders(status?: string) {
   return useFetch<unknown, Order[]>({
-    endpoint: "/api/client/orders",
+    endpoint: clientEndpoints.orders,
     params: status ? { status } : undefined,
     queryKey: queryKeys.orders(status),
     select: responseItems<Order>,
@@ -103,7 +104,7 @@ function useOrders(status?: string) {
 
 function useOrder(id?: string) {
   return useFetch<unknown, Order | null>({
-    endpoint: id ? `/api/client/orders/${id}` : null,
+    endpoint: id ? clientEndpoints.order(id) : null,
     enabled: Boolean(id),
     queryKey: queryKeys.order(id),
     select: (response) => ((response as { data?: Order })?.data ?? null),
@@ -112,7 +113,7 @@ function useOrder(id?: string) {
 
 function useCreateReturn() {
   return useMutate<unknown, Record<string, unknown>>({
-    endpoint: "/api/client/returns",
+    endpoint: clientEndpoints.returns,
     mutationKey: ["returns", "create"],
     method: "POST",
     mutationOptions: { meta: { invalidates: [queryKeys.orders()] } },
@@ -121,7 +122,7 @@ function useCreateReturn() {
 
 function useCreateExchange() {
   return useMutate<unknown, Record<string, unknown>>({
-    endpoint: "/api/client/exchanges",
+    endpoint: clientEndpoints.exchanges,
     mutationKey: ["exchanges", "create"],
     method: "POST",
     mutationOptions: { meta: { invalidates: [queryKeys.orders()] } },
@@ -130,7 +131,7 @@ function useCreateExchange() {
 
 function useCancelOrder(id?: string) {
   return useMutate<unknown, { reason?: string }>({
-    endpoint: id ? `/api/client/orders/${id}/cancel` : "/api/client/orders",
+    endpoint: id ? clientEndpoints.orderCancel(id) : clientEndpoints.orders,
     mutationKey: ["orders", "cancel", id ?? ""],
     method: "POST",
     ready: Boolean(id),
@@ -140,9 +141,17 @@ function useCancelOrder(id?: string) {
   })
 }
 
+type AddressMutationInput = { id: string } & Record<string, unknown>
+type AddressIdInput = { id: string }
+
 function useUpdateAddress() {
-  return useMutate<unknown, Record<string, unknown>>({
-    endpoint: "/api/client/profile/addresses",
+  return useMutate<unknown, AddressMutationInput>({
+    endpoint: (input) => clientEndpoints.address(input.id),
+    body: (input) => {
+      const { id, ...address } = input
+      void id
+      return address
+    },
     mutationKey: ["addresses", "update"],
     method: "PUT",
     mutationOptions: { meta: { invalidates: [queryKeys.addresses()] } },
@@ -150,8 +159,9 @@ function useUpdateAddress() {
 }
 
 function useDeleteAddress() {
-  return useMutate<unknown, { _endpoint: string }>({
-    endpoint: "/api/client/profile/addresses",
+  return useMutate<unknown, AddressIdInput>({
+    endpoint: (input) => clientEndpoints.address(input.id),
+    body: () => undefined,
     mutationKey: ["addresses", "delete"],
     method: "DELETE",
     mutationOptions: { meta: { invalidates: [queryKeys.addresses()] } },
@@ -159,8 +169,9 @@ function useDeleteAddress() {
 }
 
 function useSetDefaultAddress() {
-  return useMutate<unknown, { _endpoint: string }>({
-    endpoint: "/api/client/profile/addresses",
+  return useMutate<unknown, AddressIdInput>({
+    endpoint: (input) => clientEndpoints.addressDefault(input.id),
+    body: () => undefined,
     mutationKey: ["addresses", "default"],
     method: "PUT",
     mutationOptions: { meta: { invalidates: [queryKeys.addresses()] } },

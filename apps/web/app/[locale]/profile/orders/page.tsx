@@ -3,7 +3,8 @@
 import { PackageSearchIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import Image from "next/image"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import * as React from "react"
 
 import { Badge } from "@ecommerce/ui/components/badge"
@@ -19,10 +20,10 @@ function OrderActions({ order }: { order: Order }) {
   const actions = orderActions(order)
   return (
     <div className="flex flex-wrap gap-2">
-      <Button size="sm" variant="outline" render={<Link href={`/profile/orders/${order.id}`} />}>
+      <Button size="sm" variant="outline" render={<Link href={ROUTES.profile.orders.detail(order.id)} />}>
         {actions.includes("track") ? "Track Order" : "View Details"}
       </Button>
-      {actions.includes("return_exchange") && <Button size="sm" render={<Link href={`/profile/orders/${order.id}/exchange`} />}>Return or Exchange</Button>}
+      {actions.includes("return_exchange") && <Button size="sm" render={<Link href={ROUTES.profile.orders.exchange(order.id)} />}>Return or Exchange</Button>}
       {actions.includes("cancel") && <CancelOrderDialog orderId={order.id} size="sm" />}
     </div>
   )
@@ -52,7 +53,7 @@ export default function OrdersPage() {
             <EmptyTitle>No orders found</EmptyTitle>
             <EmptyDescription>Your placed orders will appear here.</EmptyDescription>
           </EmptyHeader>
-          <EmptyContent><Button render={<Link href="/collections" />}>Start Shopping</Button></EmptyContent>
+          <EmptyContent><Button render={<Link href={ROUTES.collections.root} />}>Start Shopping</Button></EmptyContent>
         </Empty>
       ) : (
         <div className="space-y-4">
@@ -60,7 +61,7 @@ export default function OrdersPage() {
             <article key={order.id} className="overflow-hidden rounded-xl border bg-card">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/30 p-4">
                 <div>
-                  <Link href={`/profile/orders/${order.id}`} className="font-semibold hover:underline">Order #{order.order_number || order.id}</Link>
+                  <Link href={ROUTES.profile.orders.detail(order.id)} className="font-semibold hover:underline">Order #{order.order_number || order.id}</Link>
                   <p className="text-xs text-muted-foreground">{new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(order.created_at))}</p>
                 </div>
                 <div className="flex gap-2"><Badge variant="secondary">{order.status}</Badge><Badge variant="outline">{order.payment_status}</Badge></div>
@@ -73,7 +74,7 @@ export default function OrdersPage() {
                       {item.image_snapshot ? <Image src={item.image_snapshot} alt={item.product_name_snapshot} fill sizes="56px" className="object-cover" /> : <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">No image</div>}
                     </div>
                     <div className="min-w-0 flex-1">
-                      {item.product_id ? <Link href={`/products/${item.product_id}`} className="font-medium hover:underline">{item.product_name_snapshot}</Link> : <p className="font-medium">{item.product_name_snapshot}</p>}
+                      {item.product_id ? <Link href={ROUTES.products.detail(item.product_id)} className="font-medium hover:underline">{item.product_name_snapshot}</Link> : <p className="font-medium">{item.product_name_snapshot}</p>}
                       <p className="text-xs text-muted-foreground">Quantity: {item.quantity}</p>
                     </div>
                     <span className="text-sm font-semibold">SAR {item.net_line_total.toFixed(2)}</span>

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { CustomerService01Icon } from "@hugeicons/core-free-icons"
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia, EmptyContent } from "@ecommerce/ui/components/empty"

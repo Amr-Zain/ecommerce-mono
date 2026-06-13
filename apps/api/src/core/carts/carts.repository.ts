@@ -19,6 +19,7 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
       where: { userId },
       include: {
         items: {
+          orderBy: { createdAt: 'asc' },
           include: {
             product: {
               include: {

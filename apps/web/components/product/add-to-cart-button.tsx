@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  Delete02Icon,
   MinusSignIcon,
   PlusSignIcon,
   ShoppingCart01Icon,
@@ -56,20 +57,30 @@ function AddToCartButton({
   const changeQuantity = (quantity: number) => {
     if (!cartItem || submitting.current) return
     submitting.current = true
-    const mutation = quantity <= 0 ? removeItem : updateItem
-    const variables =
-      quantity <= 0
-        ? { _endpoint: `/api/client/cart/items/${cartItem.id}` }
-        : {
-            _endpoint: `/api/client/cart/items/${cartItem.id}`,
-            quantity,
-          }
-
-    mutation.mutate(variables as never, {
-      onSettled: () => {
-        submitting.current = false
+    updateItem.mutate(
+      {
+        id: cartItem.id,
+        quantity,
       },
-    })
+      {
+        onSettled: () => {
+          submitting.current = false
+        },
+      }
+    )
+  }
+
+  const deleteFromCart = () => {
+    if (!cartItem || submitting.current) return
+    submitting.current = true
+    removeItem.mutate(
+      { id: cartItem.id },
+      {
+        onSettled: () => {
+          submitting.current = false
+        },
+      }
+    )
   }
 
   if (cartItem) {
@@ -78,35 +89,49 @@ function AddToCartButton({
 
     return (
       <div
-        className={cn(
-          "flex h-9 items-center justify-between gap-2 rounded-lg border bg-background px-1",
-          className
-        )}
+        className="flex h-9 items-center gap-1"
         onClick={(event) => {
           event.preventDefault()
           event.stopPropagation()
         }}
       >
+        <div
+          className={cn(
+            "flex h-full flex-1 items-center justify-between gap-2 rounded-lg border bg-background px-1",
+            className
+          )}
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            disabled={pending || cartItem.quantity <= 1}
+            onClick={() => changeQuantity(cartItem.quantity - 1)}
+          >
+            <HugeiconsIcon icon={MinusSignIcon} className="size-3.5" />
+          </Button>
+          <span className="min-w-5 text-center text-sm font-semibold">
+            {cartItem.quantity}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            disabled={pending || cartItem.quantity >= cartItem.stockQuantity}
+            onClick={() => changeQuantity(cartItem.quantity + 1)}
+          >
+            <HugeiconsIcon icon={PlusSignIcon} className="size-3.5" />
+          </Button>
+        </div>
         <Button
           type="button"
-          variant="ghost"
-          size="icon-sm"
+          variant="destructive"
+          aria-label={`Remove ${productName} from cart`}
           disabled={pending}
-          onClick={() => changeQuantity(cartItem.quantity - 1)}
+          onClick={deleteFromCart}
+          className={'mt-4 h-full' }
         >
-          <HugeiconsIcon icon={MinusSignIcon} className="size-3.5" />
-        </Button>
-        <span className="min-w-5 text-center text-sm font-semibold">
-          {cartItem.quantity}
-        </span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          disabled={pending}
-          onClick={() => changeQuantity(cartItem.quantity + 1)}
-        >
-          <HugeiconsIcon icon={PlusSignIcon} className="size-3.5" />
+          <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
         </Button>
       </div>
     )
@@ -145,7 +170,7 @@ function AddToCartButton({
           : "Unavailable"}
       <HugeiconsIcon
         icon={ShoppingCart01Icon}
-        className="size-3.5"
+        className="size-4"
         strokeWidth={2}
       />
     </Button>

@@ -2,7 +2,8 @@
 
 import { Notification01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 
 import {
   Avatar,
@@ -26,7 +27,7 @@ function HeaderNotificationLink({
 
   return (
     <Link
-      href="/profile/notifications"
+      href={ROUTES.profile.notifications}
       aria-label={`Notifications (${unreadCount} unread)`}
     >
       <Avatar className="size-9 rounded-sm after:border-none">

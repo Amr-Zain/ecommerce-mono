@@ -1,6 +1,7 @@
 import { Login01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 
 import { auth } from "@/auth"
 import { Button } from "@ecommerce/ui/components/button"
@@ -53,7 +54,7 @@ async function HeaderAccountControls() {
 
   if (!loggedIn || !session?.accessToken || !session.user) {
     return (
-      <Button render={<Link href="/auth/login" />} size="sm">
+      <Button render={<Link href={ROUTES.auth.login} />} size="sm">
         <HugeiconsIcon icon={Login01Icon} />
         Login
       </Button>

@@ -22,6 +22,7 @@ type CartItem = {
   productId: string
   variantId: string
   quantity: number
+  stockQuantity: number
   productName: string
   price: number
   compareAtPrice?: number
@@ -63,6 +64,7 @@ function normalizeCartResponse(response: unknown): ApiResponse<Cart> {
       productId: String(item.productId ?? item.product_id ?? ""),
       variantId: String(item.variantId ?? item.variant_id ?? ""),
       quantity: numberValue(item.quantity),
+      stockQuantity: numberValue(item.stockQuantity ?? item.stock_quantity),
       productName: String(item.productName ?? item.product_name ?? "Product"),
       price: numberValue(item.price),
       compareAtPrice:

@@ -17,6 +17,7 @@ type CartItem = {
   oldPrice: number
   image: string
   qty: number
+  stock: number
   size: string
   color: string
 }
@@ -108,7 +109,8 @@ export function CartStep({
 }: CartStepProps) {
   const updateQty = (id: string, delta: number) => {
     const item = items.find((entry) => entry.id === id)
-    if (item) onQuantityChange(id, Math.max(1, item.qty + delta))
+    if (item)
+      onQuantityChange(id, Math.min(item.stock, Math.max(1, item.qty + delta)))
   }
 
   const removeItem = (id: string) => {
@@ -163,7 +165,13 @@ export function CartStep({
                   <span className="w-7 text-center text-sm font-bold">{item.qty}</span>
                   <button
                     onClick={() => updateQty(item.id, 1)}
-                    className="flex size-6 items-center justify-center rounded-full hover:bg-muted transition-colors text-foreground"
+                    disabled={item.qty >= item.stock}
+                    className="flex size-6 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label={
+                      item.qty >= item.stock
+                        ? "Maximum available stock reached"
+                        : "Increase quantity"
+                    }
                   >
                     <HugeiconsIcon icon={PlusSignIcon} className="size-3" strokeWidth={2.5} />
                   </button>

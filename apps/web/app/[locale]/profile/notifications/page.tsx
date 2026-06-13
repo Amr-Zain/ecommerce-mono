@@ -2,7 +2,7 @@
 
 import { Notification01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
 
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
@@ -35,7 +35,7 @@ function NotificationRow({ notification }: { notification: Notification }) {
 
     if (isUnread) {
       markRead.mutate(
-        { _endpoint: `/api/client/notifications/${notification.id}/read` },
+        { id: notification.id },
         { onSettled: () => router.push(href) }
       )
       return
@@ -80,7 +80,7 @@ function NotificationRow({ notification }: { notification: Notification }) {
                 disabled={markRead.isPending}
                 onClick={() =>
                   markRead.mutate({
-                    _endpoint: `/api/client/notifications/${notification.id}/read`,
+                    id: notification.id,
                   })
                 }
               >

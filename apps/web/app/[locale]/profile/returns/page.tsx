@@ -7,7 +7,8 @@ import { FavouriteIcon, StarIcon, InformationCircleIcon, Copy01Icon, Exchange01I
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia, EmptyContent } from "@ecommerce/ui/components/empty"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { cn } from "@/lib/utils"
 
 export default function ReturnsPage() {
@@ -30,7 +31,7 @@ export default function ReturnsPage() {
           </EmptyHeader>
           <EmptyContent>
             <Button className="mt-4 rounded-xl px-8 h-11 bg-primary hover:bg-primary/90">
-              <Link href="/profile/orders">View My Orders</Link>
+              <Link href={ROUTES.profile.orders.root}>View My Orders</Link>
             </Button>
           </EmptyContent>
         </Empty>

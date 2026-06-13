@@ -1,4 +1,5 @@
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 
 import { ProductCard, type Product } from "@/components/product/product-card"
 import {
@@ -10,7 +11,7 @@ import type {
   CatalogResponse,
   CollectionTreeItem,
 } from "@/hooks/api/use-products"
-import { backendGet } from "@/lib/server/backend"
+import { backendGet, publicBackendGet } from "@/lib/server/backend"
 import { cacheTags } from "@/lib/server/cache-tags"
 import { cn } from "@/lib/utils"
 
@@ -79,7 +80,7 @@ async function CatalogListing({
     }),
     collectionSlug
       ? Promise.resolve([])
-      : backendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
+      : publicBackendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
           revalidate: 60,
           tags: [cacheTags.categories],
           retries: 0,
@@ -88,14 +89,14 @@ async function CatalogListing({
   const data = response.data
   const view = searchParams.view === "list" ? "list" : "grid"
   const pathname = collectionSlug
-    ? `/collections/${collectionSlug}`
-    : "/products"
+    ? ROUTES.collections.bySlug(collectionSlug)
+    : ROUTES.products.root
   const breadcrumbs = [
-    { label: "Home", href: "/" },
-    ...(collectionSlug ? [{ label: "Collections", href: "/collections" }] : []),
+    { label: "Home", href: ROUTES.home },
+    ...(collectionSlug ? [{ label: "Collections", href: ROUTES.collections.root }] : []),
     ...(data.collection?.ancestors.map((ancestor) => ({
       label: ancestor.name,
-      href: `/collections/${ancestor.slug}`,
+      href: ROUTES.collections.bySlug(ancestor.slug),
     })) ?? []),
     { label: data.collection?.name ?? "All Products" },
   ]

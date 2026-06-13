@@ -7,8 +7,8 @@ import {
   UserCircleIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import * as React from "react"
 
 import { logoutAction } from "@/actions/auth"
@@ -79,15 +79,15 @@ function HeaderAccountDropdown({
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem render={<Link href="/profile" />}>
+          <DropdownMenuItem render={<Link href={ROUTES.profile.root} />}>
             <HugeiconsIcon icon={UserCircleIcon} />
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/profile/orders" />}>
+          <DropdownMenuItem render={<Link href={ROUTES.profile.orders.root} />}>
             <HugeiconsIcon icon={PackageIcon} />
             My Orders
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/profile/addresses" />}>
+          <DropdownMenuItem render={<Link href={ROUTES.profile.addresses} />}>
             <HugeiconsIcon icon={Location01Icon} />
             My Addresses
           </DropdownMenuItem>

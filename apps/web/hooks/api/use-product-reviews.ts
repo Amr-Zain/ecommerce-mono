@@ -4,6 +4,7 @@ import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
 import type { ProductReview } from "@/hooks/api/use-products"
+import { clientEndpoints } from "@/lib/client/client-api"
 
 type ReviewsResponse = {
   data: {
@@ -30,7 +31,7 @@ type ReviewEligibilityResponse = {
 function useProductReviews(productId: string, page: number, enabled = true) {
   return useFetch<ReviewsResponse>({
     queryKey: queryKeys.productReviews(productId, page),
-    endpoint: `/api/client/reviews/products/${productId}`,
+    endpoint: clientEndpoints.productReviews(productId),
     params: { page, limit: 10 },
     enabled,
   })
@@ -39,7 +40,7 @@ function useProductReviews(productId: string, page: number, enabled = true) {
 function useProductReviewEligibility(productId: string, enabled = true) {
   return useFetch<ReviewEligibilityResponse>({
     queryKey: queryKeys.productReviewEligibility(productId),
-    endpoint: `/api/client/reviews/products/${productId}/me`,
+    endpoint: clientEndpoints.productReviewEligibility(productId),
     enabled,
     disableErrorToast: true,
     retry: false,
@@ -48,7 +49,7 @@ function useProductReviewEligibility(productId: string, enabled = true) {
 
 function useCreateReview(productId: string) {
   return useMutate({
-    endpoint: "/api/client/reviews",
+    endpoint: clientEndpoints.reviews,
     mutationKey: ["reviews", "create", productId],
     method: "POST",
     mutationOptions: {
@@ -65,7 +66,7 @@ function useCreateReview(productId: string) {
 
 function useUpdateReview(productId: string, reviewId?: string) {
   return useMutate({
-    endpoint: reviewId ? `/api/client/reviews/${reviewId}` : "/api/client/reviews/unknown",
+    endpoint: clientEndpoints.review(reviewId ?? "unknown"),
     mutationKey: ["reviews", "update", reviewId ?? "unknown"],
     method: "PUT",
     ready: Boolean(reviewId),
@@ -83,7 +84,7 @@ function useUpdateReview(productId: string, reviewId?: string) {
 
 function useDeleteReview(productId: string, reviewId?: string) {
   return useMutate({
-    endpoint: reviewId ? `/api/client/reviews/${reviewId}` : "/api/client/reviews/unknown",
+    endpoint: clientEndpoints.review(reviewId ?? "unknown"),
     mutationKey: ["reviews", "delete", reviewId ?? "unknown"],
     method: "DELETE",
     ready: Boolean(reviewId),

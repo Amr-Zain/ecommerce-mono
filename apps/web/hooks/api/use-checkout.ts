@@ -4,6 +4,7 @@ import { useGuestSession } from "@/components/auth/guest-session-provider"
 import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
+import { clientEndpoints } from "@/lib/client/client-api"
 
 type Translation = { name?: string }
 
@@ -100,7 +101,7 @@ function useAddresses() {
   const guestSession = useGuestSession()
   return useFetch<unknown, Address[]>({
     enabled: guestSession === "ready",
-    endpoint: "/api/client/profile/addresses",
+    endpoint: clientEndpoints.addresses,
     queryKey: queryKeys.addresses(),
     select: responseItems<Address>,
   })
@@ -108,7 +109,7 @@ function useAddresses() {
 
 function useCountries() {
   return useFetch<unknown, Location[]>({
-    endpoint: "/api/client/countries",
+    endpoint: clientEndpoints.countries,
     queryKey: queryKeys.countries(),
     select: responseItems<Location>,
   })
@@ -117,7 +118,7 @@ function useCountries() {
 function useCities(countryId?: string) {
   return useFetch<unknown, Location[]>({
     enabled: Boolean(countryId),
-    endpoint: "/api/client/cities",
+    endpoint: clientEndpoints.cities,
     params: { countryId },
     queryKey: queryKeys.cities(countryId),
     select: (response) =>
@@ -129,7 +130,7 @@ function useCities(countryId?: string) {
 
 function useCreateAddress() {
   return useMutate<unknown, CreateAddressInput>({
-    endpoint: "/api/client/profile/addresses",
+    endpoint: clientEndpoints.addresses,
     mutationKey: ["addresses", "create"],
     method: "POST",
     mutationOptions: {
@@ -142,7 +143,7 @@ function useCreateAddress() {
 
 function useCheckoutPreview() {
   return useMutate<{ success: boolean; data: CheckoutPreview }, CheckoutPreviewInput>({
-    endpoint: "/api/client/checkout/preview",
+    endpoint: clientEndpoints.checkoutPreview,
     mutationKey: ["checkout", "preview"],
     method: "POST",
   })
@@ -150,7 +151,7 @@ function useCheckoutPreview() {
 
 function usePlaceOrder() {
   return useMutate<{ success: boolean; data: PlaceOrderResult }, PlaceOrderInput>({
-    endpoint: "/api/client/checkout/place-order",
+    endpoint: clientEndpoints.checkoutPlaceOrder,
     mutationKey: ["checkout", "place-order"],
     method: "POST",
     mutationOptions: {
@@ -166,7 +167,7 @@ function useVerifyCheckoutPayment() {
     { success: boolean; data: VerifyPaymentResult },
     { checkoutId: string }
   >({
-    endpoint: "/api/client/checkout/verify-payment",
+    endpoint: clientEndpoints.checkoutVerifyPayment,
     mutationKey: ["checkout", "verify-payment"],
     method: "POST",
     mutationOptions: {

@@ -12,13 +12,22 @@ import {
 import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
+import { clientEndpoints } from "@/lib/client/client-api"
+
+function getOptimisticCart(queryClient: ReturnType<typeof useQueryClient>) {
+  const raw = queryClient.getQueryData(queryKeys.cart())
+  return {
+    raw,
+    cart: raw === undefined ? undefined : normalizeCartResponse(raw),
+  }
+}
 
 function useCart() {
   const guestSession = useGuestSession()
   return useFetch<unknown, ApiResponse<Cart>>({
     enabled: guestSession === "ready",
     queryKey: queryKeys.cart(),
-    endpoint: "/api/client/cart",
+    endpoint: clientEndpoints.cart,
     select: normalizeCartResponse,
   })
 }
@@ -27,7 +36,7 @@ function useAddToCart(productId?: string) {
   const queryClient = useQueryClient()
 
   return useMutate<unknown, AddToCartInput>({
-    endpoint: "/api/client/cart/items",
+    endpoint: clientEndpoints.cartItems,
     mutationKey: ["cart", "add", productId ?? "unknown"],
     method: "POST",
     mutationOptions: {
@@ -36,9 +45,8 @@ function useAddToCart(productId?: string) {
       },
       onMutate: async (input) => {
         await queryClient.cancelQueries({ queryKey: queryKeys.cart() })
-        const previous = queryClient.getQueryData<ApiResponse<Cart>>(
-          queryKeys.cart()
-        )
+        const { raw: previousRaw, cart: previous } =
+          getOptimisticCart(queryClient)
         const optimistic = input._optimistic
         if (previous && optimistic) {
           const existing = previous.data.items.find(
@@ -63,6 +71,7 @@ function useAddToCart(productId?: string) {
                   productId: String(input.productId),
                   variantId: String(input.variantId ?? ""),
                   quantity: input.quantity,
+                  stockQuantity: Number.MAX_SAFE_INTEGER,
                   productName: optimistic.name,
                   price: optimistic.price,
                   compareAtPrice: optimistic.oldPrice,
@@ -83,14 +92,14 @@ function useAddToCart(productId?: string) {
             },
           })
         }
-        return { previous, hadPrevious: previous !== undefined }
+        return { previousRaw, hadPrevious: previousRaw !== undefined }
       },
       onError: (_error, _input, context) => {
         const rollback = context as
-          | { previous?: ApiResponse<Cart>; hadPrevious?: boolean }
+          | { previousRaw?: unknown; hadPrevious?: boolean }
           | undefined
         if (rollback?.hadPrevious) {
-          queryClient.setQueryData(queryKeys.cart(), rollback.previous)
+          queryClient.setQueryData(queryKeys.cart(), rollback.previousRaw)
         } else {
           queryClient.removeQueries({ queryKey: queryKeys.cart() })
         }
@@ -101,11 +110,15 @@ function useAddToCart(productId?: string) {
   })
 }
 
+type UpdateCartItemInput = { id: string; quantity: number }
+type RemoveCartItemInput = { id: string }
+
 function useUpdateCartItem() {
   const queryClient = useQueryClient()
 
-  return useMutate<unknown, { quantity: number; _endpoint: string }>({
-    endpoint: "/api/client/cart/items",
+  return useMutate<unknown, UpdateCartItemInput>({
+    endpoint: (input) => clientEndpoints.cartItem(input.id),
+    body: ({ quantity }) => ({ quantity }),
     mutationKey: ["cart", "update"],
     method: "PATCH",
     mutationOptions: {
@@ -114,13 +127,11 @@ function useUpdateCartItem() {
       },
       onMutate: async (input) => {
         await queryClient.cancelQueries({ queryKey: queryKeys.cart() })
-        const previous = queryClient.getQueryData<ApiResponse<Cart>>(
-          queryKeys.cart()
-        )
-        const id = input._endpoint.split("/").at(-1)
-        if (previous && id) {
+        const { raw: previousRaw, cart: previous } =
+          getOptimisticCart(queryClient)
+        if (previous) {
           const items = previous.data.items.map((item) =>
-            item.id === id
+            item.id === input.id
               ? {
                   ...item,
                   quantity: input.quantity,
@@ -140,14 +151,14 @@ function useUpdateCartItem() {
             },
           })
         }
-        return { previous, hadPrevious: previous !== undefined }
+        return { previousRaw, hadPrevious: previousRaw !== undefined }
       },
       onError: (_error, _input, context) => {
         const rollback = context as
-          | { previous?: ApiResponse<Cart>; hadPrevious?: boolean }
+          | { previousRaw?: unknown; hadPrevious?: boolean }
           | undefined
         if (rollback?.hadPrevious) {
-          queryClient.setQueryData(queryKeys.cart(), rollback.previous)
+          queryClient.setQueryData(queryKeys.cart(), rollback.previousRaw)
         } else {
           queryClient.removeQueries({ queryKey: queryKeys.cart() })
         }
@@ -161,8 +172,9 @@ function useUpdateCartItem() {
 function useRemoveCartItem() {
   const queryClient = useQueryClient()
 
-  return useMutate<unknown, { _endpoint: string }>({
-    endpoint: "/api/client/cart/items",
+  return useMutate<unknown, RemoveCartItemInput>({
+    endpoint: (input) => clientEndpoints.cartItem(input.id),
+    body: () => undefined,
     mutationKey: ["cart", "remove"],
     method: "DELETE",
     mutationOptions: {
@@ -171,12 +183,10 @@ function useRemoveCartItem() {
       },
       onMutate: async (input) => {
         await queryClient.cancelQueries({ queryKey: queryKeys.cart() })
-        const previous = queryClient.getQueryData<ApiResponse<Cart>>(
-          queryKeys.cart()
-        )
-        const id = input._endpoint.split("/").at(-1)
-        if (previous && id) {
-          const items = previous.data.items.filter((item) => item.id !== id)
+        const { raw: previousRaw, cart: previous } =
+          getOptimisticCart(queryClient)
+        if (previous) {
+          const items = previous.data.items.filter((item) => item.id !== input.id)
           queryClient.setQueryData<ApiResponse<Cart>>(queryKeys.cart(), {
             ...previous,
             data: {
@@ -189,14 +199,14 @@ function useRemoveCartItem() {
             },
           })
         }
-        return { previous, hadPrevious: previous !== undefined }
+        return { previousRaw, hadPrevious: previousRaw !== undefined }
       },
       onError: (_error, _input, context) => {
         const rollback = context as
-          | { previous?: ApiResponse<Cart>; hadPrevious?: boolean }
+          | { previousRaw?: unknown; hadPrevious?: boolean }
           | undefined
         if (rollback?.hadPrevious) {
-          queryClient.setQueryData(queryKeys.cart(), rollback.previous)
+          queryClient.setQueryData(queryKeys.cart(), rollback.previousRaw)
         } else {
           queryClient.removeQueries({ queryKey: queryKeys.cart() })
         }

@@ -5,7 +5,8 @@ import {
   type QueryKey,
   type UseMutationOptions,
 } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { signOut } from "next-auth/react"
 
 import { toast } from "@ecommerce/ui/components/sonner"
@@ -17,6 +18,7 @@ import {
   type NormalizedHttpError,
 } from "@/lib/client/http"
 import { withSessionRetry } from "@/lib/client/session-request"
+import { clientApiEndpoint } from "@/lib/client/client-api"
 
 type MutationMethod =
   | "POST"
@@ -32,23 +34,21 @@ type MutationMeta = {
   invalidates?: QueryKey[]
 }
 
-type MutationVariables<TVariables> = TVariables & {
-  _endpoint?: string
-  _params?: ClientRequestOptions["params"]
-}
-
 type UseMutateOptions<
   TResponse = unknown,
   TVariables = ClientRequestBody,
   TError = NormalizedHttpError,
 > = {
-  endpoint: string
+  endpoint: string | ((variables: TVariables) => string)
   mutationKey: QueryKey
   method?: MutationMethod
   ready?: boolean
   headers?: HeadersInit
   formData?: boolean
-  customBaseUrl?: string
+  body?: (variables: TVariables) => ClientRequestBody | undefined
+  params?:
+    | ClientRequestOptions["params"]
+    | ((variables: TVariables) => ClientRequestOptions["params"])
   disableErrorToast?: boolean
   onError?: (error: TError, normalized: NormalizedHttpError) => void
   onSuccess?: (data: TResponse) => void
@@ -60,14 +60,12 @@ type UseMutateOptions<
   }
 }
 
-function stripMeta<TVariables>(variables: MutationVariables<TVariables>) {
+function stripMeta<TVariables>(variables: TVariables) {
   if (!variables || typeof variables !== "object") {
     return variables as TVariables
   }
 
   const body = { ...(variables as Record<string, unknown>) }
-  delete body._endpoint
-  delete body._params
   delete body._optimistic
 
   return body as TVariables
@@ -84,7 +82,8 @@ function useMutate<
   ready = true,
   headers,
   formData,
-  customBaseUrl,
+  body,
+  params,
   disableErrorToast = false,
   onError,
   onSuccess,
@@ -103,23 +102,20 @@ function useMutate<
           message: "Session is still loading",
         } as TError
       }
-      const payload = variables as MutationVariables<TVariables>
       const finalEndpoint =
-        payload && typeof payload === "object" && payload._endpoint
-          ? payload._endpoint
-          : endpoint
-      const params =
-        payload && typeof payload === "object" ? payload._params : undefined
+        typeof endpoint === "function" ? endpoint(variables) : endpoint
+      const finalParams =
+        typeof params === "function" ? params(variables) : params
+      const requestBody = body ? body(variables) : stripMeta(variables)
 
       try {
         const data = await withSessionRetry(() =>
-          clientJson<TResponse>(finalEndpoint, {
-            body: stripMeta(payload) as ClientRequestBody,
-            customBaseUrl,
+          clientJson<TResponse>(clientApiEndpoint(finalEndpoint), {
+            body: requestBody as ClientRequestBody,
             formData,
             headers,
             method: method.toUpperCase(),
-            params,
+            params: finalParams,
           })
         )
 
@@ -137,7 +133,7 @@ function useMutate<
 
         if (normalized.status === 401) {
           void signOut({ redirect: false })
-          router.replace("/auth/login")
+          router.replace(ROUTES.auth.login)
         }
 
         throw normalized as TError

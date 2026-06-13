@@ -2,7 +2,8 @@
 
 import { FavouriteIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 
 import { Button } from "@ecommerce/ui/components/button"
 import {
@@ -108,7 +109,7 @@ export default function WishlistPage() {
           </EmptyHeader>
           <EmptyContent>
             <Button
-              render={<Link href="/collections" />}
+              render={<Link href={ROUTES.collections.root} />}
               className="mt-4 h-11 rounded-xl bg-primary px-8 hover:bg-primary/90"
             >
               Continue Shopping

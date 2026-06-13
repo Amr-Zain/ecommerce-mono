@@ -1,4 +1,5 @@
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 
 import { Button } from "@ecommerce/ui/components/button"
 
@@ -13,10 +14,10 @@ export default function CheckoutCancelPage() {
         </p>
       </div>
       <div className="flex gap-3">
-        <Button variant="outline" render={<Link href="/cart" />}>
+        <Button variant="outline" render={<Link href={ROUTES.cart} />}>
           Return to Cart
         </Button>
-        <Button render={<Link href="/collections" />}>Continue Shopping</Button>
+        <Button render={<Link href={ROUTES.collections.root} />}>Continue Shopping</Button>
       </div>
     </div>
   )

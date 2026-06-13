@@ -9,6 +9,7 @@ import {
 } from "@ecommerce/ui/components/card"
 import { RegisterForm } from "@/components/auth/register-form"
 import type { Locale } from "@/i18n/routing"
+import { ROUTES } from "@/lib/routes"
 
 export default async function RegisterPage({
   params,
@@ -19,7 +20,7 @@ export default async function RegisterPage({
   setRequestLocale(locale)
 
   const t = await getTranslations("Auth")
-  const loginPath = locale === "ar" ? "/ar/auth/login" : "/auth/login"
+  const loginPath = locale === "ar" ? `/ar${ROUTES.auth.login}` : ROUTES.auth.login
 
   return (
     <main className="flex min-h-svh items-center justify-center p-6">

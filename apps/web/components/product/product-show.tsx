@@ -1,4 +1,5 @@
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { cacheLife, cacheTag } from "next/cache"
 import { Suspense } from "react"
 
@@ -66,7 +67,7 @@ async function ProductShow({ id, locale }: { id: string; locale: string }) {
     ...(product.collection ? [product.collection] : []),
   ]
   return <>
-    <Breadcrumb className="mb-6"><BreadcrumbList><BreadcrumbItem><BreadcrumbLink render={<Link href="/" />}>Home</BreadcrumbLink></BreadcrumbItem><BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbLink render={<Link href="/collections" />}>Collections</BreadcrumbLink></BreadcrumbItem>{crumbs.map((crumb) => <span className="contents" key={crumb.id}><BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbLink render={<Link href={`/collections/${crumb.slug}`} />}>{crumb.name}</BreadcrumbLink></BreadcrumbItem></span>)}<BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbPage>{product.name}</BreadcrumbPage></BreadcrumbItem></BreadcrumbList></Breadcrumb>
+    <Breadcrumb className="mb-6"><BreadcrumbList><BreadcrumbItem><BreadcrumbLink render={<Link href={ROUTES.home} />}>Home</BreadcrumbLink></BreadcrumbItem><BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbLink render={<Link href={ROUTES.collections.root} />}>Collections</BreadcrumbLink></BreadcrumbItem>{crumbs.map((crumb) => <span className="contents" key={crumb.id}><BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbLink render={<Link href={ROUTES.collections.bySlug(crumb.slug)} />}>{crumb.name}</BreadcrumbLink></BreadcrumbItem></span>)}<BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbPage>{product.name}</BreadcrumbPage></BreadcrumbItem></BreadcrumbList></Breadcrumb>
     <ProductDetails product={product} />
     <section className="py-10"><h2 className="mb-4 text-xl font-semibold">Variant Highlights</h2><div className="overflow-x-auto rounded-xl border"><Table><TableHeader><TableRow><TableHead>Attributes</TableHead><TableHead>SKU</TableHead><TableHead>Price</TableHead><TableHead>Availability</TableHead></TableRow></TableHeader><TableBody>{product.variants.map((variant) => <TableRow key={variant.id}><TableCell>{variant.attributes.map((item) => `${item.attribute}: ${item.value}`).join(", ") || "Standard"}</TableCell><TableCell>{variant.sku ?? "-"}</TableCell><TableCell>SAR {variant.price.toFixed(2)}</TableCell><TableCell>{variant.available ? `${variant.stock_quantity} in stock` : "Unavailable"}</TableCell></TableRow>)}</TableBody></Table></div></section>
     <ProductReviews product={product} />

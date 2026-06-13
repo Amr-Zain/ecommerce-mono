@@ -2,7 +2,8 @@
 
 import { StarIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { useSession } from "next-auth/react"
 import * as React from "react"
 
@@ -83,7 +84,7 @@ function ProductReviews({ product }: { product: ProductDetail }) {
             })}
           </div>
           <div className="mt-5 space-y-2">
-            {!loggedIn ? <Button render={<Link href="/auth/login" />} className="rounded-full">Login to review</Button> :
+            {!loggedIn ? <Button render={<Link href={ROUTES.auth.login} />} className="rounded-full">Login to review</Button> :
               eligibility.isLoading ? <Skeleton className="mx-auto h-8 w-32" /> :
               mine ? <><Badge variant={mine.is_verified ? "default" : "secondary"}>{mine.is_verified ? "Approved" : "Pending approval"}</Badge><div className="flex justify-center gap-2"><Button variant="outline" onClick={openForm}>Edit review</Button><Button variant="destructive" onClick={() => setDeleteOpen(true)}>Delete</Button></div></> :
               eligibility.data?.data.can_review ? <Button onClick={openForm} className="rounded-full">Write Review</Button> :

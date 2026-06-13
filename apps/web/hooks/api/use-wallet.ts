@@ -3,6 +3,7 @@
 import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
+import { clientEndpoints } from "@/lib/client/client-api"
 
 type Wallet = {
   id: string
@@ -47,7 +48,7 @@ function responseItems<T>(response: unknown): T[] {
 
 function useWallet() {
   return useFetch<unknown, Wallet | null>({
-    endpoint: "/api/client/wallet",
+    endpoint: clientEndpoints.wallet,
     queryKey: queryKeys.wallet(),
     select: (response) => ((response as { data?: Wallet })?.data ?? null),
   })
@@ -55,7 +56,7 @@ function useWallet() {
 
 function useWalletTransactions() {
   return useFetch<unknown, WalletTransaction[]>({
-    endpoint: "/api/client/wallet/transactions",
+    endpoint: clientEndpoints.walletTransactions,
     params: { limit: 50 },
     queryKey: queryKeys.walletTransactions(),
     select: responseItems<WalletTransaction>,
@@ -64,7 +65,7 @@ function useWalletTransactions() {
 
 function useWalletWithdrawals() {
   return useFetch<unknown, WalletWithdrawal[]>({
-    endpoint: "/api/client/wallet/withdrawals",
+    endpoint: clientEndpoints.walletWithdrawals,
     params: { limit: 50 },
     queryKey: queryKeys.walletWithdrawals(),
     select: responseItems<WalletWithdrawal>,
@@ -73,7 +74,7 @@ function useWalletWithdrawals() {
 
 function useCreateWalletDeposit() {
   return useMutate<{ success: boolean; data: DepositResult }, { amount: number; paymentMethod: string }>({
-    endpoint: "/api/client/wallet/deposits",
+    endpoint: clientEndpoints.walletDeposits,
     mutationKey: ["wallet", "deposit"],
     method: "POST",
   })
@@ -81,7 +82,7 @@ function useCreateWalletDeposit() {
 
 function useCreateWalletWithdrawal() {
   return useMutate<unknown, { amount: number; method: string; details: Record<string, unknown>; note?: string }>({
-    endpoint: "/api/client/wallet/withdrawals",
+    endpoint: clientEndpoints.walletWithdrawals,
     mutationKey: ["wallet", "withdrawal"],
     method: "POST",
     mutationOptions: { meta: { invalidates: [queryKeys.wallet(), queryKeys.walletTransactions(), queryKeys.walletWithdrawals()] } },
@@ -90,7 +91,7 @@ function useCreateWalletWithdrawal() {
 
 function useCancelWalletWithdrawal(id: string) {
   return useMutate<unknown, Record<string, never>>({
-    endpoint: `/api/client/wallet/withdrawals/${id}/cancel`,
+    endpoint: clientEndpoints.walletWithdrawalCancel(id),
     mutationKey: ["wallet", "withdrawal", "cancel", id],
     method: "POST",
     mutationOptions: { meta: { invalidates: [queryKeys.wallet(), queryKeys.walletTransactions(), queryKeys.walletWithdrawals()] } },

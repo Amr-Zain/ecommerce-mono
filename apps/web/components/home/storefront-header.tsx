@@ -4,12 +4,13 @@ import {
   Store04Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 
 import { Input } from "@ecommerce/ui/components/input"
 import { ThemeSwitch } from "@/components/shared/theme-switch"
 import type { CollectionTreeItem } from "@/hooks/api/use-products"
-import { backendGet } from "@/lib/server/backend"
+import { publicBackendGet } from "@/lib/server/backend"
 import { cacheTags } from "@/lib/server/cache-tags"
 import { HeaderAccountControls } from "./header-account-controls"
 import { HeaderCommerceControls } from "./header-commerce-controls"
@@ -17,7 +18,7 @@ import { StorefrontNavigation } from "./storefront-navigation"
 
 export async function StorefrontHeader() {
   const saleItems = Array.from({ length: 8 })
-  const collections = await backendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
+  const collections = await publicBackendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
     revalidate: 60,
     tags: [cacheTags.categories],
     retries: 0,
@@ -44,31 +45,31 @@ export async function StorefrontHeader() {
         <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-4 text-xs text-muted-foreground sm:px-6">
           <div className="flex items-center gap-5">
             <Link
-              href="/returns"
+              href={ROUTES.static.returns}
               className="transition-colors hover:text-foreground"
             >
               Shipping & Returns
             </Link>
             <Link
-              href="/payment"
+              href={ROUTES.static.payment}
               className="transition-colors hover:text-foreground"
             >
               Payment
             </Link>
             <Link
-              href="/warranty"
+              href={ROUTES.static.warranty}
               className="transition-colors hover:text-foreground"
             >
               Warranty
             </Link>
             <Link
-              href="/show-rooms"
+              href={ROUTES.static.showRooms}
               className="transition-colors hover:text-foreground"
             >
               Show Rooms
             </Link>
             <Link
-              href="/profile/support"
+              href={ROUTES.profile.support.root}
               className="transition-colors hover:text-foreground"
             >
               Contact
@@ -88,7 +89,7 @@ export async function StorefrontHeader() {
         </div>
       </div>
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
-        <Link href="/" className="flex min-w-32 items-center gap-2">
+        <Link href={ROUTES.home} className="flex min-w-32 items-center gap-2">
           <div className="grid size-8 place-items-center rounded-full bg-foreground text-background">
             <HugeiconsIcon icon={Store04Icon} strokeWidth={2} />
           </div>
@@ -97,25 +98,30 @@ export async function StorefrontHeader() {
         <nav className="hidden items-center gap-5 text-sm font-medium lg:flex">
           <StorefrontNavigation collections={collections} />
           <Link
-            href="/products"
+            href={ROUTES.products.root}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
           >
             Today&apos;s Deal
-            <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
           </Link>
           <Link
-            href="/products?sort=rating-desc"
+            href={`${ROUTES.products.root}?sort=rating-desc`}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
           >
             New Arrivals
-            <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
           </Link>
           <Link
-            href="/collections"
+            href={`${ROUTES.products.root}?sort=rating-desc`}
+            className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
+          >
+            New Arrivals
+            {/* <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" /> */}
+          </Link>
+          <Link
+            href={ROUTES.collections.root}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
           >
             Pages
-            <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
+            {/* <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" /> */}
           </Link>
         </nav>
         <div className="ms-auto hidden w-full max-w-xs items-center md:flex">

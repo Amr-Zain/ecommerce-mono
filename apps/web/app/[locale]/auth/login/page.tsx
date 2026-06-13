@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@ecommerce/ui/components/card"
 import type { Locale } from "@/i18n/routing"
+import { ROUTES } from "@/lib/routes"
 import { OtpLoginForm } from "@/components/auth/otp-login-form"
 
 export default async function LoginPage({
@@ -41,9 +42,9 @@ export default async function LoginPage({
             defaultOtpSent={query.otpSent === "true"}
             defaultPhoneCode={query.phoneCode}
             registerPath={
-              locale === "ar" ? "/ar/auth/register" : "/auth/register"
+              locale === "ar" ? `/ar${ROUTES.auth.register}` : ROUTES.auth.register
             }
-            redirectTo={locale === "ar" ? "/ar" : "/"}
+            redirectTo={locale === "ar" ? "/ar" : ROUTES.home}
           />
         </CardContent>
       </Card>

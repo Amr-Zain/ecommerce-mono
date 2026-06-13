@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia, EmptyContent } from "@ecommerce/ui/components/empty"
 import { Button } from "@ecommerce/ui/components/button"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -22,7 +23,7 @@ export function CartEmpty() {
         </EmptyHeader>
         <EmptyContent className="mt-6">
           <Button className="rounded-xl px-8 h-12 text-sm font-bold bg-primary hover:bg-primary/90 w-full sm:w-auto">
-            <Link href="/collections">Start Shopping</Link>
+            <Link href={ROUTES.collections.root}>Start Shopping</Link>
           </Button>
         </EmptyContent>
       </Empty>

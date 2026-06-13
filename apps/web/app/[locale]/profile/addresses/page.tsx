@@ -60,7 +60,7 @@ export default function AddressesPage() {
     const onSuccess = () => setOpen(false)
 
     if (editing) {
-      updateAddress.mutate({ ...payload, _endpoint: `/api/client/profile/addresses/${editing.id}` }, { onSuccess })
+      updateAddress.mutate({ ...payload, id: editing.id }, { onSuccess })
     } else {
       createAddress.mutate({ ...payload, isDefault: (addresses.data?.length ?? 0) === 0 }, { onSuccess })
     }
@@ -102,14 +102,14 @@ export default function AddressesPage() {
                 <button
                   onClick={() => {
                     if (window.confirm("Delete this address?")) {
-                      deleteAddress.mutate({ _endpoint: `/api/client/profile/addresses/${address.id}` })
+                      deleteAddress.mutate({ id: address.id })
                     }
                   }}
                 >
                   Remove
                 </button>
                 {!address.is_default && (
-                  <button className="ms-auto" onClick={() => setDefaultAddress.mutate({ _endpoint: `/api/client/profile/addresses/${address.id}/default` })}>
+                  <button className="ms-auto" onClick={() => setDefaultAddress.mutate({ id: address.id })}>
                     Set as default
                   </button>
                 )}

@@ -1,0 +1,55 @@
+"use client"
+
+const CLIENT_API_BASE = "/api/client"
+
+function clientApiEndpoint(endpoint: string) {
+  if (/^https?:\/\//i.test(endpoint)) {
+    throw new Error("Client API hooks must use relative BFF endpoints")
+  }
+
+  if (endpoint.startsWith(CLIENT_API_BASE)) {
+    return endpoint
+  }
+
+  return `${CLIENT_API_BASE}/${endpoint.replace(/^\/+/, "")}`
+}
+
+const clientEndpoints = {
+  addresses: "profile/addresses",
+  address: (id: string) => `profile/addresses/${id}`,
+  addressDefault: (id: string) => `profile/addresses/${id}/default`,
+  cart: "cart",
+  cartItems: "cart/items",
+  cartItem: (id: string) => `cart/items/${id}`,
+  checkoutPlaceOrder: "checkout/place-order",
+  checkoutPreview: "checkout/preview",
+  checkoutVerifyPayment: "checkout/verify-payment",
+  cities: "cities",
+  collectionsTree: "collections/tree",
+  countries: "countries",
+  currentUser: "profile",
+  exchanges: "exchanges",
+  notificationRead: (id: string) => `notifications/${id}/read`,
+  notifications: "notifications",
+  notificationsReadAll: "notifications/read-all",
+  notificationsStream: "notifications/stream",
+  notificationsUnreadCount: "notifications/unread-count",
+  order: (id: string) => `orders/${id}`,
+  orderCancel: (id: string) => `orders/${id}/cancel`,
+  orders: "orders",
+  product: (id: string) => `products/${id}`,
+  productReviewEligibility: (id: string) => `reviews/products/${id}/me`,
+  productReviews: (id: string) => `reviews/products/${id}`,
+  products: "products",
+  review: (id: string) => `reviews/${id}`,
+  reviews: "reviews",
+  returns: "returns",
+  wallet: "wallet",
+  walletDeposits: "wallet/deposits",
+  walletTransactions: "wallet/transactions",
+  walletWithdrawalCancel: (id: string) => `wallet/withdrawals/${id}/cancel`,
+  walletWithdrawals: "wallet/withdrawals",
+  wishlist: "wishlist",
+} as const
+
+export { clientApiEndpoint, clientEndpoints }

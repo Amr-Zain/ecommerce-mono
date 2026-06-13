@@ -1,4 +1,4 @@
-import { backendGet } from "@/lib/server/backend"
+import { publicBackendGet } from "@/lib/server/backend"
 import { Benefits } from "./benefits"
 import { CategoryStrip } from "./category-strip"
 import { type Category, type Product } from "./data"
@@ -75,7 +75,7 @@ function mapCollections(collections: HomeCollection[]): Category[] {
 
 async function getHomeData() {
   try {
-    return await backendGet<HomeResponse>("/client/home", {
+    return await publicBackendGet<HomeResponse>("/client/home", {
       revalidate: 60,
       retries: 0,
     })

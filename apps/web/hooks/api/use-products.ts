@@ -3,6 +3,7 @@
 import { useFetch } from "@/hooks/api/use-fetch"
 import { queryKeys } from "@/hooks/api/query-keys"
 import type { EntityResponse, Product } from "@/hooks/api/domain"
+import { clientEndpoints } from "@/lib/client/client-api"
 
 type CatalogAttributeValue = {
   id: string
@@ -64,7 +65,7 @@ type CollectionTreeItem = {
   slug: string
   name: string
   description?: string | null
-  image?: { path?: string } | string | null
+  image?: string | null
   children?: CollectionTreeItem[]
   _count?: { products?: number }
 }
@@ -120,7 +121,7 @@ function useProducts(
 ) {
   return useFetch<CatalogResponse>({
     queryKey: queryKeys.products(params),
-    endpoint: "/api/client/products",
+    endpoint: clientEndpoints.products,
     params,
   })
 }
@@ -128,14 +129,14 @@ function useProducts(
 function useCollectionTree() {
   return useFetch<{ data: CollectionTreeItem[] }>({
     queryKey: queryKeys.collectionTree(),
-    endpoint: "/api/client/collections/tree",
+    endpoint: clientEndpoints.collectionsTree,
   })
 }
 
 function useProduct(id: string | null | undefined) {
   return useFetch<EntityResponse<Product>>({
     queryKey: queryKeys.product(id ?? ""),
-    endpoint: id ? `/api/client/products/${id}` : null,
+    endpoint: id ? clientEndpoints.product(id) : null,
     enabled: Boolean(id),
   })
 }

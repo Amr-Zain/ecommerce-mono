@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, usePathname } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
@@ -24,25 +24,25 @@ import {
 } from "@hugeicons/core-free-icons"
 
 const SIDEBAR_LINKS = [
-  { name: "My account", href: "/profile", icon: UserCircleIcon },
-  { name: "My Wishlist", href: "/profile/wishlist", icon: FavouriteIcon },
-  { name: "My Orders", href: "/profile/orders", icon: PackageIcon },
+  { name: "My account", href: ROUTES.profile.root, icon: UserCircleIcon },
+  { name: "My Wishlist", href: ROUTES.profile.wishlist, icon: FavouriteIcon },
+  { name: "My Orders", href: ROUTES.profile.orders.root, icon: PackageIcon },
   // {
   //   name: "Order Details",
   //   href: "/profile/orders/details",
   //   icon: DocumentValidationIcon,
   // },
-  { name: "My Addresses", href: "/profile/addresses", icon: Location01Icon },
-  { name: "My Wallet", href: "/profile/wallet", icon: Wallet01Icon },
+  { name: "My Addresses", href: ROUTES.profile.addresses, icon: Location01Icon },
+  { name: "My Wallet", href: ROUTES.profile.wallet, icon: Wallet01Icon },
   // { name: "Payment", href: "/profile/payment", icon: CreditCardIcon },
   // { name: "Gift Cards", href: "/profile/gift-cards", icon: GiftIcon },
   {
     name: "Return & Refunds",
-    href: "/profile/returns",
+    href: ROUTES.profile.returns,
     icon: ArrowLeftRightIcon,
   },
   // { name: "Email Newsletter", href: "/profile/newsletter", icon: Mail01Icon },
-  { name: "Support Tickets", href: "/profile/support", icon: Ticket01Icon },
+  { name: "Support Tickets", href: ROUTES.profile.support.root, icon: Ticket01Icon },
 ]
 
 export function ProfileSidebar() {

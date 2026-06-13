@@ -1,6 +1,8 @@
 "use client"
 
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
+import { useRouter } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import * as React from "react"
 
 import { Button } from "@ecommerce/ui/components/button"
@@ -34,7 +36,7 @@ export default function ExchangeReturnPage() {
   const submit = () => {
     if (!selectedItem || !reason.trim()) return
     const common = { orderItemId: selectedItem.id, quantity, reason, note: note || undefined }
-    const onSuccess = () => router.push(`/profile/orders/${id}`)
+    const onSuccess = () => router.push(ROUTES.profile.orders.detail(id))
     if (mode === "return") createReturn.mutate({ items: [common], note: note || undefined }, { onSuccess })
     else if (newVariantId) createExchange.mutate({ items: [{ ...common, newVariantId }], note: note || undefined }, { onSuccess })
   }
@@ -46,7 +48,7 @@ export default function ExchangeReturnPage() {
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Return or Exchange unavailable</h1>
         <p className="text-sm text-muted-foreground">Available only for delivered orders within 14 days of delivery.</p>
-        <Button variant="outline" onClick={() => router.push(`/profile/orders/${id}`)}>Back to Order</Button>
+        <Button variant="outline" onClick={() => router.push(ROUTES.profile.orders.detail(id))}>Back to Order</Button>
       </div>
     )
   }

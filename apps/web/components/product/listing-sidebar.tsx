@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
+import { usePathname, useRouter } from "@/i18n/navigation"
 import { Checkbox } from "@ecommerce/ui/components/checkbox"
 import { Slider } from "@ecommerce/ui/components/slider"
 import { RadioGroup } from "@ecommerce/ui/components/radio-group"

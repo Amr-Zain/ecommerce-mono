@@ -2,7 +2,8 @@
 
 import { ArrowLeft01Icon, BankIcon, CheckmarkCircle01Icon, CreditCardIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import * as React from "react"
 
 import { Button } from "@ecommerce/ui/components/button"
@@ -41,8 +42,8 @@ function SuccessScreen({ result }: { result: PlaceOrderResult }) {
           </div>
         )}
         <div className="flex w-full gap-3">
-          <Button variant="outline" render={<Link href="/profile/orders" />} className="flex-1">My Orders</Button>
-          <Button render={<Link href="/collections" />} className="flex-1">Continue Shopping</Button>
+          <Button variant="outline" render={<Link href={ROUTES.profile.orders.root} />} className="flex-1">My Orders</Button>
+          <Button render={<Link href={ROUTES.collections.root} />} className="flex-1">Continue Shopping</Button>
         </div>
       </div>
     </div>

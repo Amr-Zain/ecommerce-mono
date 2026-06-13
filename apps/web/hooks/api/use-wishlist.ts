@@ -12,13 +12,14 @@ import {
 import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
+import { clientEndpoints } from "@/lib/client/client-api"
 
 function useWishlist() {
   const guestSession = useGuestSession()
   return useFetch<unknown, ApiResponse<WishlistItem[]>>({
     enabled: guestSession === "ready",
     queryKey: queryKeys.wishlist(),
-    endpoint: "/api/client/wishlist",
+    endpoint: clientEndpoints.wishlist,
     select: normalizeWishlistResponse,
   })
 }
@@ -27,7 +28,7 @@ function useToggleWishlist(productId?: string) {
   const queryClient = useQueryClient()
 
   return useMutate<unknown, ToggleWishlistInput>({
-    endpoint: "/api/client/wishlist",
+    endpoint: clientEndpoints.wishlist,
     mutationKey: ["wishlist", "toggle", productId ?? "unknown"],
     method: "POST",
     mutationOptions: {
@@ -36,9 +37,11 @@ function useToggleWishlist(productId?: string) {
       },
       onMutate: async (input) => {
         await queryClient.cancelQueries({ queryKey: queryKeys.wishlist() })
-        const previous = queryClient.getQueryData<ApiResponse<WishlistItem[]>>(
-          queryKeys.wishlist()
-        )
+        const previousRaw = queryClient.getQueryData(queryKeys.wishlist())
+        const previous =
+          previousRaw === undefined
+            ? undefined
+            : normalizeWishlistResponse(previousRaw)
         const productId = String(input.productId)
         const exists = previous?.data.some(
           (item) => item.productId === productId
@@ -57,17 +60,17 @@ function useToggleWishlist(productId?: string) {
           queryKeys.wishlist(),
           { success: true, data: items ?? [] }
         )
-        return { previous, hadPrevious: previous !== undefined }
+        return { previousRaw, hadPrevious: previousRaw !== undefined }
       },
       onError: (_error, _input, context) => {
         const rollback = context as
           | {
-              previous?: ApiResponse<WishlistItem[]>
+              previousRaw?: unknown
               hadPrevious?: boolean
             }
           | undefined
         if (rollback?.hadPrevious) {
-          queryClient.setQueryData(queryKeys.wishlist(), rollback.previous)
+          queryClient.setQueryData(queryKeys.wishlist(), rollback.previousRaw)
         } else {
           queryClient.removeQueries({ queryKey: queryKeys.wishlist() })
         }

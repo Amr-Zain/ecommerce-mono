@@ -2,7 +2,8 @@
 
 import { FavouriteIcon, ShoppingCart01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import type { ReactNode } from "react"
 
 import {
@@ -43,14 +44,14 @@ function HeaderCommerceControls() {
   return (
     <>
       <Link
-        href="/profile/wishlist"
+        href={ROUTES.profile.wishlist}
         aria-label={`Wishlist (${wishlistCount} items)`}
       >
         <BadgeIcon count={wishlistCount}>
           <HugeiconsIcon icon={FavouriteIcon} strokeWidth={2} />
         </BadgeIcon>
       </Link>
-      <Link href="/cart" aria-label={`Cart (${cartCount} items)`}>
+      <Link href={ROUTES.cart} aria-label={`Cart (${cartCount} items)`}>
         <BadgeIcon count={cartCount}>
           <HugeiconsIcon icon={ShoppingCart01Icon} strokeWidth={2} />
         </BadgeIcon>

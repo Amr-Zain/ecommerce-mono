@@ -6,6 +6,8 @@ import * as React from "react"
 import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
+import { ROUTES } from "@/lib/routes"
+import { clientApiEndpoint, clientEndpoints } from "@/lib/client/client-api"
 
 type Notification = {
   id: string
@@ -70,7 +72,7 @@ function responseItems(response: unknown) {
 
 function useNotifications() {
   return useFetch<unknown, Notification[]>({
-    endpoint: "/api/client/notifications",
+    endpoint: clientEndpoints.notifications,
     params: { limit: 50 },
     queryKey: queryKeys.notifications(),
     select: responseItems,
@@ -79,7 +81,7 @@ function useNotifications() {
 
 function useNotificationUnreadCount(initialData?: number) {
   return useFetch<unknown, number>({
-    endpoint: "/api/client/notifications/unread-count",
+    endpoint: clientEndpoints.notificationsUnreadCount,
     initialData:
       initialData === undefined ? undefined : { data: { count: initialData } },
     queryKey: queryKeys.notificationUnreadCount(),
@@ -89,8 +91,9 @@ function useNotificationUnreadCount(initialData?: number) {
 }
 
 function useMarkNotificationRead() {
-  return useMutate<unknown, { _endpoint: string }>({
-    endpoint: "/api/client/notifications",
+  return useMutate<unknown, { id: string }>({
+    endpoint: (input) => clientEndpoints.notificationRead(input.id),
+    body: () => undefined,
     mutationKey: ["notifications", "read"],
     method: "PATCH",
     mutationOptions: {
@@ -106,7 +109,7 @@ function useMarkNotificationRead() {
 
 function useMarkAllNotificationsRead() {
   return useMutate<unknown, Record<string, never>>({
-    endpoint: "/api/client/notifications/read-all",
+    endpoint: clientEndpoints.notificationsReadAll,
     mutationKey: ["notifications", "read-all"],
     method: "PATCH",
     mutationOptions: {
@@ -125,7 +128,9 @@ function useNotificationStream(enabled = true) {
 
   React.useEffect(() => {
     if (!enabled) return
-    const source = new EventSource("/api/client/notifications/stream")
+    const source = new EventSource(
+      clientApiEndpoint(clientEndpoints.notificationsStream)
+    )
     const refresh = () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.notifications() })
       void queryClient.invalidateQueries({ queryKey: queryKeys.notificationUnreadCount() })
@@ -148,15 +153,15 @@ function notificationHref(notification: Notification) {
 
   switch (entity?.type) {
     case "order":
-      return entity.id ? `/profile/orders/${entity.id}` : "/profile/orders"
+      return entity.id ? ROUTES.profile.orders.detail(entity.id) : ROUTES.profile.orders.root
     case "return":
     case "exchange":
-      return orderId ? `/profile/orders/${orderId}` : "/profile/returns"
+      return orderId ? ROUTES.profile.orders.detail(orderId) : ROUTES.profile.returns
     case "payment":
-      return orderId ? `/profile/orders/${orderId}` : "/profile/wallet"
+      return orderId ? ROUTES.profile.orders.detail(orderId) : ROUTES.profile.wallet
     case "wallet":
     case "withdrawal":
-      return "/profile/wallet"
+      return ROUTES.profile.wallet
     default:
       return null
   }

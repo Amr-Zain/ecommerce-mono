@@ -1,7 +1,8 @@
 "use client"
 
 import Image from "next/image"
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
 
@@ -74,7 +75,7 @@ export function CategoryStrip({
                 className="basis-1/2 ps-3 sm:basis-1/3 md:basis-1/4 lg:basis-1/7"
               >
                 <Link
-                  href={category.slug ? `/collections/${category.slug}` : "/collections"}
+                  href={category.slug ? ROUTES.collections.bySlug(category.slug) : ROUTES.collections.root}
                   className="group mx-auto flex w-full max-w-34 flex-col items-center gap-3 rounded-full p-2 text-center transition"
                 >
                   <span

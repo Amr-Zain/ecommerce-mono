@@ -22,7 +22,6 @@ type ClientRequestBody =
 type ClientRequestOptions = Omit<RequestInit, "body"> & {
   body?: ClientRequestBody
   params?: Record<string, QueryValue | QueryValue[]>
-  customBaseUrl?: string
   headers?: HeadersInit
 }
 
@@ -65,13 +64,9 @@ function appendParams(url: URL, params?: ClientRequestOptions["params"]) {
   return url
 }
 
-function resolveClientUrl(endpoint: string, customBaseUrl?: string) {
+function resolveClientUrl(endpoint: string) {
   if (/^https?:\/\//i.test(endpoint)) {
     return new URL(endpoint)
-  }
-
-  if (customBaseUrl) {
-    return new URL(endpoint, customBaseUrl)
   }
 
   return new URL(endpoint, window.location.origin)
@@ -225,7 +220,6 @@ async function clientRequest(
 ) {
   const {
     body,
-    customBaseUrl,
     formData,
     headers: headersInput,
     params,
@@ -233,7 +227,7 @@ async function clientRequest(
   } = options
   const language = document.documentElement.lang || navigator.language || "en"
   const headers = applyApiHeaders(headersInput, language)
-  const url = appendParams(resolveClientUrl(endpoint, customBaseUrl), params)
+  const url = appendParams(resolveClientUrl(endpoint), params)
   const requestBody = prepareRequestBody(body, headers, formData)
   const response = await fetch(url, {
     ...init,
