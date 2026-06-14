@@ -8,7 +8,7 @@ import {
 import { PickedAction } from '@/hooks/useStatusMutations'
 import { Filter, RowAction } from '@/types/components/table'
 import { FieldProp } from '@/types/components/form'
-import { earningRulesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { EarningRule } from '@/types/api/earningRules'
 
 export const earningRuleColumns = (
@@ -57,7 +57,7 @@ export const earningRuleActions = (
             params: (row: EarningRule) => ({ id: String(row.id) }),
             permission: 'earning-rules',
             action: 'update',
-            queryKey: (id: string) => earningRulesQueryKeys.getEarningRule(id),
+            queryKey: (id: string) => queryKeys.earningRules.getEarningRule(id),
         },
         /*  {
              label: t('actions.delete'),
@@ -122,9 +122,8 @@ export const buildEarningRuleFields = (
             inputProps: {
                 maxFiles: 1,
                 acceptedFileTypes: ['image/*'],
-                apiEndpoint: '/media/upload',
-                model: 'image',
-                baseUrl: import.meta.env.VITE_BASE_URL_API,
+                model: 'earningrule',
+                collection: 'image',
             },
         },
         {

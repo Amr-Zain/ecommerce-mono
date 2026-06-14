@@ -10,8 +10,7 @@ import {
 } from '@/components/features/sharedColumns'
 import { PickedAction } from '@/hooks/useStatusMutations'
 import { Filter, RowAction } from '@/types/components/table'
-import { countriesQueryKeys, showRoomsQueryKeys } from '@/util/queryKeysFactory'
-
+import { queryKeys } from '@/util/queryKeysFactory'
 export const buildShowRoomFields = (
   t: (k: string) => string,
   setCurrentPhoneLimit: (value: number | null) => void,
@@ -26,8 +25,8 @@ export const buildShowRoomFields = (
       inputProps: {
         maxFiles: 1,
         acceptedFileTypes: ['image/*'],
-        collection: 'show-rooms',
         model: 'showroom',
+        collection: 'image',
       },
     },
     {
@@ -66,7 +65,7 @@ export const buildShowRoomFields = (
             value: String(c.id),
           })),
 
-        queryKey: countriesQueryKeys.filterd({ paginate: false }),
+        queryKey: queryKeys.countries.filterd({ paginate: false }),
         placeholder: t('Form.placeholders.country'),
       },
     },
@@ -159,7 +158,7 @@ export const showRoomActions = (
     params: (row: ShowRoom) => ({ id: String(row.id) }),
     permission: 'show-rooms',
     action: 'update',
-    queryKey: (id: string) => showRoomsQueryKeys.getShowRoom(id),
+    queryKey: (id: string) => queryKeys.showRooms.getShowRoom(id),
   },
   {
     label: t('actions.delete'),

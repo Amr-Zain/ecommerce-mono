@@ -1,5 +1,5 @@
 import { ColumnDef } from '@tanstack/react-table'
-import { pagesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { booleanControlColumn, createdAtColumn, imageColumn, textColumn, textDesc } from '@/components/features/sharedColumns'
 import { FieldProp } from '@/types/components/form'
 import { StaticPageFormData } from '@/lib/schema'
@@ -52,7 +52,7 @@ export const pageActions = (
       label: t('actions.edit'),
       to: '/static-pages/edit/$id',
       params: (row: StaticPage) => ({ id: String(row.id) }),
-      queryKey: (id: string) => pagesQueryKeys.getPage(id),
+      queryKey: (id: string) => queryKeys.pages.getPage(id),
       permission: 'static-pages',
       action: 'update'
     },
@@ -60,7 +60,7 @@ export const pageActions = (
       label: t('actions.show'),
       to: '/static-pages/show/$id',
       params: (row: StaticPage) => ({ id: String(row.id) }),
-      queryKey: (id: string) => pagesQueryKeys.getPage(id),
+      queryKey: (id: string) => queryKeys.pages.getPage(id),
       permission: 'static-pages',
       action: 'show'
     },
@@ -126,9 +126,8 @@ export const staticPageFields = (t: any): FieldProp<StaticPageFormData>[] => [
     inputProps: {
       maxFiles: 1,
       acceptedFileTypes: ['image/*'],
-      apiEndpoint: '/media/upload',
-      model: 'image',
-      baseUrl: import.meta.env.VITE_BASE_URL_API,
+      model: 'staticpage',
+      collection: 'image',
     },
   },
   {

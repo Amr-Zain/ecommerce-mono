@@ -9,8 +9,7 @@ import { PickedAction } from '@/hooks/useStatusMutations'
 import { Filter, RowAction } from '@/types/components/table'
 import { FieldProp } from '@/types/components/form'
 import { Reward } from '@/types/api/earningRules'
-import { rewardsQueryKeys } from '@/util/queryKeysFactory'
-
+import { queryKeys } from '@/util/queryKeysFactory'
 /* ---------- TABLE COLUMNS ---------- */
 
 export const rewardColumns = (
@@ -53,7 +52,7 @@ export const rewardActions = (
         params: (row: Reward) => ({ id: String(row.id) }),
         permission: 'rewards',
         action: 'update',
-        queryKey: (id: string) => rewardsQueryKeys.getReward(id),
+        queryKey: (id: string) => queryKeys.rewards.getReward(id),
     },
     {
         label: t('actions.delete'),
@@ -126,9 +125,8 @@ export const buildRewardFields = (
             inputProps: {
                 maxFiles: 1,
                 acceptedFileTypes: ['image/*'],
-                apiEndpoint: '/media/upload',
-                model: 'image',
-                baseUrl: import.meta.env.VITE_BASE_URL_API,
+                model: 'reward',
+                collection: 'image',
             },
         },
         {

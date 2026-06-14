@@ -8,8 +8,7 @@ import {
 import { PickedAction } from '@/hooks/useStatusMutations'
 import { Filter, RowAction } from '@/types/components/table'
 import { FieldProp } from '@/types/components/form'
-import { tiersQueryKeys } from '@/util/queryKeysFactory'
-
+import { queryKeys } from '@/util/queryKeysFactory'
 /* ---------- TYPES ---------- */
 
 export type Tier = {
@@ -70,7 +69,7 @@ export const tierActions = (
         params: (row: Tier) => ({ id: String(row.id) }),
         permission: 'tiers',
         action: 'update',
-        queryKey: (id: string) => tiersQueryKeys.getTier(id),
+        queryKey: (id: string) => queryKeys.tiers.getTier(id),
     },
     {
         label: t('actions.delete'),
@@ -124,9 +123,8 @@ export const buildTierFields = (
             inputProps: {
                 maxFiles: 1,
                 acceptedFileTypes: ['image/*'],
-                apiEndpoint: '/media/upload',
-                model: 'image',
-                baseUrl: import.meta.env.VITE_BASE_URL_API,
+                model: 'tier',
+                collection: 'icon',
             },
         },
         {

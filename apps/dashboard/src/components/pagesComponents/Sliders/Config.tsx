@@ -6,7 +6,7 @@ import {
   textColumn,
 } from '@/components/features/sharedColumns'
 import { PickedAction } from '@/hooks/useStatusMutations'
-import { productsQueryKeys, slidersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Filter, RowAction } from '@/types/components/table'
 import { FieldProp } from '@/types/components/form'
 import { SliderFormData } from '@/lib/schema'
@@ -83,7 +83,7 @@ export const sliderActions = (
       params: (row: Slider) => ({ id: String(row.id) }),
       permission: 'sliders',
       action: 'update',
-      queryKey: (id: string) => slidersQueryKeys.getSlider(id),
+      queryKey: (id: string) => queryKeys.sliders.getSlider(id),
     },
     {
       label: t('actions.delete'),
@@ -147,10 +147,9 @@ export function buildSliderFields(
       inputProps: {
         maxFiles: 1,
         acceptedFileTypes: ['video/*', 'image/*'],
-        apiEndpoint: '/media/upload',
         model: 'slider',
+        collection: 'slide',
         modelId,
-        baseUrl: import.meta.env.VITE_BASE_URL_API,
         maxSize: 10,
       },
     },
@@ -215,7 +214,7 @@ export function buildSliderFields(
             label: p.name,
             value: String(p.id),
           })),
-        queryKey: productsQueryKeys.all(),
+        queryKey: queryKeys.products.all(),
         placeholder: t('Form.placeholders.products'),
         multiple: true,
       },

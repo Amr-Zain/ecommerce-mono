@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { Filter, RowAction } from '@/types/components/table'
-import { countriesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import {
   booleanControlColumn,
   createdAtColumn,
@@ -72,7 +72,7 @@ export const countryActions = (
       params: (row: CountryDetails) => ({ id: row.id.toString() }),
       permission: 'countries',
       action: 'update',
-      queryKey: (id: string) => countriesQueryKeys.getCountry(id),
+      queryKey: (id: string) => queryKeys.countries.getCountry(id),
     },
     {
       label: t('actions.show'),
@@ -80,7 +80,7 @@ export const countryActions = (
       params: (row: CountryDetails) => ({ id: row.id.toString() }),
       permission: 'countries',
       action: 'show',
-      queryKey: (id: string) => countriesQueryKeys.getCountry(id),
+      queryKey: (id: string) => queryKeys.countries.getCountry(id),
     },
     {
       label: t('actions.delete'),
@@ -108,9 +108,8 @@ export const fieldsBuilder = (t: any): FieldProp<CountryFormData>[] => [
     inputProps: {
       maxFiles: 1,
       acceptedFileTypes: ['image/*'],
-      apiEndpoint: '/media/upload',
       model: 'country',
-      baseUrl: import.meta.env.VITE_BASE_URL_API,
+      collection: 'flag',
     },
   },
   {

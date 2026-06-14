@@ -170,10 +170,8 @@ export const buildSupervisorFields = (
       inputProps: {
         maxFiles: 1,
         acceptedFileTypes: ['image/*'],
-        apiEndpoint: '/media/upload',
         model: 'user',
-        baseUrl: import.meta.env.VITE_BASE_URL_API,
-
+        collection: 'avatar',
       },
       span: 2,
     },

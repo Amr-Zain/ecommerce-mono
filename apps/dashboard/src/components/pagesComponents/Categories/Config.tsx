@@ -7,7 +7,7 @@ import {
   textColumn,
 } from '@/components/features/sharedColumns'
 import { PickedAction } from '@/hooks/useStatusMutations'
-import { categoriesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Filter, RowAction } from '@/types/components/table'
 import { FieldProp } from '@/types/components/form'
 import { CategoryFormData } from '@/lib/schema'
@@ -56,7 +56,7 @@ export const categoryActions = (
       params: (row: Category) => ({ id: String(row.id) }),
       permission: 'collections',
       action: 'show',
-      queryKey: (id: string) => categoriesQueryKeys.getCategory(id),
+      queryKey: (id: string) => queryKeys.categories.getCategory(id),
     },
     {
       label: t('actions.editCategory'),
@@ -65,7 +65,7 @@ export const categoryActions = (
       permission: 'collections',
       action: 'update',
       //disabled: hasPermission('categories.edit'),
-      queryKey: (id: string) => categoriesQueryKeys.getCategory(id),
+      queryKey: (id: string) => queryKeys.categories.getCategory(id),
     },
     {
       label: t('actions.delete'),
@@ -142,9 +142,8 @@ export function buildCategoryFields(
       inputProps: {
         maxFiles: 1,
         acceptedFileTypes: ['image/*'],
-        apiEndpoint: '/media/upload',
         model: 'collection',
-        baseUrl: import.meta.env.VITE_BASE_URL_API,
+        collection: 'image',
       },
     },
     {
