@@ -5,7 +5,6 @@ import {
   QueryKey,
   UseSuspenseQueryOptions,
 } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
 import axiosInstance from '@/services/instance'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -32,6 +31,8 @@ interface UseFetchProps<
   params?: AnyObj
   suspense?: boolean
   customBaseUrl?: string
+  /** Show an error toast automatically on fetch failure. Defaults to true. Has no effect when suspense=true (errors surface via ErrorBoundary). */
+  showToast?: boolean
 }
 
 function useFetch<TResponse = unknown, TData = TResponse, TError = unknown>({
@@ -45,9 +46,9 @@ function useFetch<TResponse = unknown, TData = TResponse, TError = unknown>({
   params,
   suspense = false,
   customBaseUrl,
+  showToast = false,
   ...props
 }: UseFetchProps<TResponse, TData, TError>) {
-  const { t } = useTranslation()
   const isRTL = i18n.language.startsWith('ar')
   const router = useNavigate()
   const baseURL = customBaseUrl
@@ -56,12 +57,8 @@ function useFetch<TResponse = unknown, TData = TResponse, TError = unknown>({
       ? import.meta.env.VITE_BASE_GENERAL_URL
       : import.meta.env.VITE_BASE_URL
 
-  const paginationParams = {
-    // page: params?.page || 1,
-  } as AnyObj
+  const paginationParams = {} as AnyObj
   if (params?.page) paginationParams.page = params.page
-
-
 
   const queryFn = async (): Promise<TResponse> => {
     try {
@@ -72,20 +69,23 @@ function useFetch<TResponse = unknown, TData = TResponse, TError = unknown>({
       })
 
       if ((res.data as AnyObj)?.error) {
-        throw new Error((res.data as AnyObj).message || t('no_data'))
+        throw new Error((res.data as AnyObj).message || 'No data')
       }
 
       onSuccess?.(res.data)
       return res.data
     } catch (err: any) {
+      // Call custom error handler first (without toasting — let it decide)
       originalOnError?.(err)
 
-      if (!suspense) {
+      // Auto-toast only if enabled and NOT in suspense mode
+      // (suspense errors are caught by ErrorBoundary, not here)
+      if (showToast && !suspense) {
         toast.error(err?.response?.data?.message || err.message)
       }
 
       if (err?.response?.status === 401) {
-        useAuthStore.getState().clearUser();
+        useAuthStore.getState().clearUser()
         router({ to: '/auth/login' })
       }
       throw err
@@ -115,4 +115,3 @@ function useFetch<TResponse = unknown, TData = TResponse, TError = unknown>({
 }
 
 export default useFetch
-
