@@ -2,7 +2,7 @@ import SmsProviders from '@/components/pagesComponents/SmsProviders'
 import { RouterContext } from '@/main'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { smsProvidersQueryKeys, smsSessionsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { TableLoader } from '@/components/common/table/TableLoader'
 import { routePermission } from '@/lib/utils'
@@ -38,14 +38,14 @@ export const Route = createFileRoute('/_main/sms-providers/')({
         if (currentTab === 'providers') {
             queryClient.ensureQueryData(
                 prefetchOptions({
-                    queryKey: smsProvidersQueryKeys.all(),
+                    queryKey: queryKeys.smsProviders.all(),
                     endpoint,
                 }),
             )
         } else {
             queryClient.ensureQueryData(
                 prefetchOptions({
-                    queryKey: smsSessionsQueryKeys.filterd({ ...search, paginate: '1' }),
+                    queryKey: queryKeys.smsSessions.filterd({ ...search, paginate: '1' }),
                     endpoint: 'sms-sessions',
                 }),
             )

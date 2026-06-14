@@ -4,7 +4,7 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { createFileRoute } from '@tanstack/react-router'
 import useFetch from '@/hooks/UseFetch'
 import AdminNotifications from '@/components/pagesComponents/AdminNotifications'
-import { adminNotificationsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { AdminNotificationEntity } from '@/components/pagesComponents/AdminNotifications/Config'
 import { cleanObject, searchParamsValidate } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
@@ -33,7 +33,7 @@ export const Route = createFileRoute('/_main/admin-notifications/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: adminNotificationsQueryKeys.filterd(search),
+        queryKey: queryKeys.adminNotifications.filterd(search),
         endpoint,
         params: search,
       }),
@@ -44,7 +44,7 @@ export const Route = createFileRoute('/_main/admin-notifications/')({
 function Index() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<AdminNotificationEntity[], 'admin-notifications'>>({
-    queryKey: adminNotificationsQueryKeys.filterd(search),
+    queryKey: queryKeys.adminNotifications.filterd(search),
     endpoint,
     suspense: true,
     params: { ...search },

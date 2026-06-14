@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { couponsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { TableLoader } from '@/components/common/table/TableLoader'
@@ -38,7 +38,7 @@ export const Route = createFileRoute('/_main/coupons/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: couponsQueryKeys.filterd(search),
+        queryKey: queryKeys.coupons.filterd(search),
         endpoint,
         params: search,
       }),
@@ -49,7 +49,7 @@ export const Route = createFileRoute('/_main/coupons/')({
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Coupon[], 'coupons'>>({
-    queryKey: couponsQueryKeys.filterd(search),
+    queryKey: queryKeys.coupons.filterd(search),
     endpoint,
     suspense: true,
     params: search,

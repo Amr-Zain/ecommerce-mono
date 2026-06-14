@@ -5,7 +5,7 @@ import type { RouterContext } from '@/main'
 import { ApiResponseBase } from '@/types/api/http'
 import { Supervisor } from '@/types/api/user'
 import { prefetchOptions } from '@/util/preFetcher'
-import { supervisorsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 import { routePermission } from '@/lib/utils'
@@ -21,7 +21,7 @@ export const Route = createFileRoute('/_main/supervisors/edit/$id')({
     const endpoint = `supervisors/${params.id}`
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: supervisorsQueryKeys.get(params.id),
+        queryKey: queryKeys.supervisors.get(params.id),
         endpoint,
       }),
     )
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/_main/supervisors/edit/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<Supervisor>, Supervisor>({
-    queryKey: supervisorsQueryKeys.get(id),
+    queryKey: queryKeys.supervisors.get(id),
     endpoint: `supervisors/${id}`,
     suspense: true,
     select: (data) => data.data as unknown as Supervisor,

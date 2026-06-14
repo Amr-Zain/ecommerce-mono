@@ -2,7 +2,7 @@ import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import useFetch from '@/hooks/UseFetch'
 import { ApiResponseBase } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
-import { reviewsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Review } from '@/types/api/reviews'
 import { prefetchOptions } from '@/util/preFetcher'
 import { RouterContext } from '@/main'
@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_main/reviews/show/$id')({
         const endpoint = `reviews/${params.id}`
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: reviewsQueryKeys.getReview(params.id),
+                queryKey: queryKeys.reviews.getReview(params.id),
                 endpoint: endpoint,
             }),
         )
@@ -33,7 +33,7 @@ export const Route = createFileRoute('/_main/reviews/show/$id')({
 function RouteComponent() {
     const { id } = Route.useParams()
     const { data } = useFetch<ApiResponseBase<Review>>({
-        queryKey: reviewsQueryKeys.getReview(id),
+        queryKey: queryKeys.reviews.getReview(id),
         endpoint: `reviews/${id}`,
         suspense: true,
     })

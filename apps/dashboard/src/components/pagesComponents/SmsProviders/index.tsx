@@ -5,7 +5,7 @@ import { useAlertModal } from '@/stores/useAlertModal'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
 import { getModalTitle } from '@/util/helpers'
-import { smsProvidersQueryKeys, smsSessionsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { smsProviderColumns, SmsProviderEntity } from './Config'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@ecommerce/ui/components/dialog'
 import { SmsProviderForm } from './Form'
@@ -24,12 +24,12 @@ const SmsProviders = () => {
     const currentTab = searchParams.tab || 'providers'
 
     const { data: providersData, isLoading: providersLoading } = useFetch<ApiResponseBase<SmsProviderEntity[]>>({
-        queryKey: smsProvidersQueryKeys.all(),
+        queryKey: queryKeys.smsProviders.all(),
         endpoint: 'sms-providers',
     })
 
     const { data: sessionsData, isLoading: sessionsLoading } = useFetch<ApiResponse<SmsSession[], 'sms_sessions'>>({
-        queryKey: smsSessionsQueryKeys.filterd({ ...searchParams, paginate: '1' }),
+        queryKey: queryKeys.smsSessions.filterd({ ...searchParams, paginate: '1' }),
         endpoint: 'sms-sessions',
         params: { ...searchParams, paginate: '1' },
     })
@@ -46,8 +46,8 @@ const SmsProviders = () => {
             String(currentId),
             'active',
             'sms-providers',
-            smsProvidersQueryKeys.getSmsProvider(currentId),
-            [smsProvidersQueryKeys.all()],
+            queryKeys.smsProviders.getSmsProvider(currentId),
+            [queryKeys.smsProviders.all()],
         )
 
     useEffect(() => {
@@ -103,7 +103,7 @@ const SmsProviders = () => {
                                         id={selected.row.id}
                                         onSuccess={() => {
                                             setSelected(null)
-                                            queryClient.invalidateQueries({ queryKey: smsProvidersQueryKeys.all() })
+                                            queryClient.invalidateQueries({ queryKey: queryKeys.smsProviders.all() })
                                         }}
                                     />
                                 )}
@@ -117,14 +117,13 @@ const SmsProviders = () => {
                     <DataTable
                         data={sessionsData?.data?.sms_sessions || []}
                         columns={smsSessionColumns(t)}
-                        enableUrlState
                         rowUrl={(row) => `/sms-providers/sessions/${row.id}`}
                         filters={[
                             {
                                 id: 'filters[provider]',
                                 title: t('menu.smsProviders'),
                                 endpoint: 'sms-providers',
-                                queryKey: smsProvidersQueryKeys.all(),
+                                queryKey: queryKeys.smsProviders.all(),
                                 select: (res: any) => res.data.map((item: any) => ({ label: item.name, value: item.identifier })),
                                 multiple: false,
                             },

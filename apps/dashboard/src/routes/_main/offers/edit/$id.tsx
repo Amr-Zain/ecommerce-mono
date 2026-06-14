@@ -4,7 +4,7 @@ import useFetch from '@/hooks/UseFetch'
 import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { prefetchOptions } from '@/util/preFetcher'
-import { offersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 import { routePermission } from '@/lib/utils'
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_main/offers/edit/$id')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: offersQueryKeys.getOffer(id),
+        queryKey: queryKeys.offers.getOffer(id),
         endpoint: `offers/${id}`,
       }),
     )
@@ -30,7 +30,7 @@ function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponse<{ offer: OfferEntity }, 'offer'>>({
     endpoint: `offers/${id}`,
-    queryKey: offersQueryKeys.getOffer(id),
+    queryKey: queryKeys.offers.getOffer(id),
   })
 
   return (

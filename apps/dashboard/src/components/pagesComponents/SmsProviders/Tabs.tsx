@@ -3,7 +3,7 @@ import { Badge } from '@ecommerce/ui/components/badge'
 import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
 import type { TabItem } from '@/components/ui/AnimatedTabs'
 import useFetch from '@/hooks/UseFetch'
-import { smsProvidersQueryKeys, smsSessionsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ApiResponse, ApiResponseBase } from '@/types/api/http'
@@ -16,12 +16,12 @@ const SmsProvidersTabs = () => {
     const currentTab = searchParams.tab || 'providers'
 
     const { data: providersData, isPending: providersPending } = useFetch<ApiResponseBase<any[]>>({
-        queryKey: smsProvidersQueryKeys.all(),
+        queryKey: queryKeys.smsProviders.all(),
         endpoint: 'sms-providers',
     })
 
     const { data: sessionsData, isPending: sessionsPending } = useFetch<ApiResponse<any>>({
-        queryKey: smsSessionsQueryKeys.filterd({ paginate: '1' }),
+        queryKey: queryKeys.smsSessions.filterd({ paginate: '1' }),
         endpoint: 'sms-sessions',
         params: { paginate: '1' },
     })

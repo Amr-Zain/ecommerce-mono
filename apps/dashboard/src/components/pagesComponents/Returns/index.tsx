@@ -12,7 +12,7 @@ import {
   AdminReturnRefundPayload,
   ReturnRequest,
 } from '@/types/api/order'
-import { ordersQueryKeys, returnsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { getReturnFilters, returnActions, ReturnAction, returnColumns } from './Config'
 
 type ReturnActionPayload =
@@ -42,13 +42,13 @@ const Returns = ({ data }: { data: ReturnListResponse }) => {
       ),
     onSuccess: (res) => {
       toast.success(res.data.message || t('status_changed_successfully'))
-      queryClient.invalidateQueries({ queryKey: returnsQueryKeys.all() })
-      queryClient.invalidateQueries({ queryKey: ordersQueryKeys.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.returns.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all() })
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || error.message)
-      queryClient.invalidateQueries({ queryKey: returnsQueryKeys.all() })
-      queryClient.invalidateQueries({ queryKey: ordersQueryKeys.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.returns.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all() })
     },
   })
 
@@ -64,7 +64,6 @@ const Returns = ({ data }: { data: ReturnListResponse }) => {
   return (
     <DataTable
       data={data.data.items ?? []}
-      meta={data.data.meta}
       columns={returnColumns(t)}
       searchKey="search"
       filters={getReturnFilters(t)}
@@ -73,7 +72,6 @@ const Returns = ({ data }: { data: ReturnListResponse }) => {
         menuLabel: t('actions.entity'),
       })}
       resizable
-      enableUrlState
     />
   )
 }

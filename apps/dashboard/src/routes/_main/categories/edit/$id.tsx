@@ -4,7 +4,7 @@ import useFetch from '@/hooks/UseFetch'
 import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { prefetchOptions } from '@/util/preFetcher'
-import { categoriesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 import { routePermission } from '@/lib/utils'
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_main/categories/edit/$id')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: categoriesQueryKeys.getCategory(params.id),
+        queryKey: queryKeys.categories.getCategory(params.id),
         endpoint: `collections/${params.id}`,
       }),
     )
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/_main/categories/edit/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponse<CategoryResponse>, CategoryResponse>({
-    queryKey: categoriesQueryKeys.getCategory(id),
+    queryKey: queryKeys.categories.getCategory(id),
     endpoint: `collections/${id}`,
     suspense: true,
     select: (res) => res.data as unknown as CategoryResponse,

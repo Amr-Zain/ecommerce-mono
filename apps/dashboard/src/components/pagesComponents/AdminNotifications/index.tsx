@@ -9,8 +9,7 @@ import { RowActions } from '@/components/common/table/RowActions'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
-import { adminNotificationsQueryKeys } from '@/util/queryKeysFactory'
-
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Button } from '@ecommerce/ui/components/button'
 import { Plus } from 'lucide-react'
 
@@ -24,9 +23,7 @@ const AdminNotifications = ({
     const alert = useAlertModal()
 
     const rows = (data as any).data?.data || []
-    const meta = (data as any).data?.meta
-
-    const [isFormOpen, setIsFormOpen] = useState(false)
+    const meta = (data as any).data?.meta    const [isFormOpen, setIsFormOpen] = useState(false)
     const isRTL = i18n.dir(i18n.language) === 'rtl'
 
     const [selected, setSelected] = useState<{
@@ -41,8 +38,8 @@ const AdminNotifications = ({
             id,
             'delete',
             'admin-notifications',
-            adminNotificationsQueryKeys.get(id),
-            [adminNotificationsQueryKeys.all()],
+            queryKeys.adminNotifications.get(id),
+            [queryKeys.adminNotifications.all()],
         )
 
     useEffect(() => {
@@ -75,7 +72,6 @@ const AdminNotifications = ({
                 pagination
                 meta={meta}
                 resizable
-                enableUrlState
                 actions={RowActions<AdminNotificationEntity>({
                     actions: [
                         {

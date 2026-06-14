@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { dashboardQueryKeys, productsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { Product } from '@/types/api/product'
@@ -38,7 +38,7 @@ export const Route = createFileRoute('/_main/products/')({
     // Prefetch product data
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: productsQueryKeys.filterd(search),
+        queryKey: queryKeys.products.filterd(search),
         endpoint,
         params: search,
       }),
@@ -47,7 +47,7 @@ export const Route = createFileRoute('/_main/products/')({
     // Prefetch dashboard stats for product cards
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: dashboardQueryKeys.statistics(),
+        queryKey: queryKeys.dashboard.statistics(),
         endpoint: 'dashboard/home'
       })
     )
@@ -57,7 +57,7 @@ export const Route = createFileRoute('/_main/products/')({
 function ProductsTable() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Product>>({
-    queryKey: productsQueryKeys.filterd(search),
+    queryKey: queryKeys.products.filterd(search),
     endpoint,
     suspense: true,
     params: search,

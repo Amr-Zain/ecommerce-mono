@@ -26,9 +26,10 @@ const serializeColumnVisibility = (visibility: VisibilityState): string[] =>
     .map(([c]) => c)
 
 export function DataTable<TData, TValue>({
-  data,
+  apiResponse,
+  data: dataProp,
   columns,
-  meta,
+  meta: metaProp,
   filters = [],
   searchKey,
   pagination = true,
@@ -40,10 +41,30 @@ export function DataTable<TData, TValue>({
   resizable = false,
   exports,
   onRowSelectionChange,
-  enableUrlState = false,
   className,
   rowUrl,
-}: DataTableProps<TData, TValue> & { meta?: Meta }) {
+}: DataTableProps<TData, TValue>) {
+  // Derive data and meta: apiResponse takes precedence over legacy data/meta props
+  const data: TData[] = apiResponse
+    ? ((apiResponse as any)?.data?.items ?? [])
+    : (dataProp ?? [])
+  const meta: Meta | undefined = apiResponse
+    ? ((apiResponse as any)?.data?.meta ?? undefined)
+    : metaProp
+
+  // Derive initial pagination from meta so callers never have to pass it
+  const derivedInitialState = {
+    ...initialState,
+    pagination: meta
+      ? {
+          pageIndex: Math.max(0, (meta.current_page ?? meta.page ?? 1) - 1),
+          pageSize: meta.per_page ?? meta.limit ?? pageSizeOptions[0],
+        }
+      : { pageIndex: 0, pageSize: pageSizeOptions[0] },
+  }
+
+  // enableUrlState is always true
+  const enableUrlState = true
 
   const {
     sorting,
@@ -66,7 +87,7 @@ export function DataTable<TData, TValue>({
     enableUrlState,
     pageSizeOptions,
     meta,
-    initialState,
+    initialState: derivedInitialState,
   })
 
   const finalColumns = useDataTableColumns({

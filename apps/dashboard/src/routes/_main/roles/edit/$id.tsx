@@ -6,7 +6,7 @@ import useFetch from '@/hooks/UseFetch'
 import { RouterContext } from '@/main'
 import { ApiResponseBase } from '@/types/api/http'
 import { prefetchOptions } from '@/util/preFetcher'
-import { rolesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 const endpoint = `roles`
 
@@ -29,7 +29,7 @@ export const Route = createFileRoute('/_main/roles/edit/$id')({
     const id = params.id
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: rolesQueryKeys.get(id),
+        queryKey: queryKeys.roles.get(id),
         endpoint: `${endpoint}/${id}`,
       }),
     )
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/_main/roles/edit/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<Role>, Role>({
-    queryKey: rolesQueryKeys.get(id),
+    queryKey: queryKeys.roles.get(id),
     endpoint: `${endpoint}/${id}`,
     suspense: true,
     select: (data) => data.data as unknown as Role,

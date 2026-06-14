@@ -3,7 +3,7 @@ import ProductForm from '@/components/pagesComponents/Products/Form'
 import useFetch from '@/hooks/UseFetch'
 import { ApiResponse, ApiResponseBase } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
-import { productsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Product } from '@/types/api/product'
 
 import { routePermission } from '@/lib/utils'
@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_main/products/edit/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<Product>>({
-    queryKey: productsQueryKeys.getProduct(id),
+    queryKey: queryKeys.products.getProduct(id),
     endpoint: `products/${id}`,
     suspense: true,
   })

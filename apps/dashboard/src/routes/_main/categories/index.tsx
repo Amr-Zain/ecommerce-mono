@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { categoriesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Category } from '@/types/api/faq'
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
@@ -37,7 +37,7 @@ export const Route = createFileRoute('/_main/categories/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: categoriesQueryKeys.filterd(search),
+        queryKey: queryKeys.categories.filterd(search),
         endpoint,
         params: search,
       }),
@@ -48,7 +48,7 @@ export const Route = createFileRoute('/_main/categories/')({
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Category[], 'categories'>>({
-    queryKey: categoriesQueryKeys.filterd({ ...search, paginate: '1' }),
+    queryKey: queryKeys.categories.filterd({ ...search, paginate: '1' }),
     endpoint,
     suspense: true,
     params: search,

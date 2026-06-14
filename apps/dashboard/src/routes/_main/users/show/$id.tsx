@@ -1,6 +1,6 @@
 import { RouterContext } from '@/main'
 import { prefetchOptions } from '@/util/preFetcher'
-import { userQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 import useFetch from '@/hooks/UseFetch'
 import { ApiResponseBase } from '@/types/api/http'
@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_main/users/show/$id')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: userQueryKeys.getUser(id),
+        queryKey: queryKeys.user.getUser(id),
         endpoint: endpoint(id),
       }),
     )
@@ -34,7 +34,7 @@ export const Route = createFileRoute('/_main/users/show/$id')({
 function UserShowRoute() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<UserShowType>>({
-    queryKey: userQueryKeys.getUser(id),
+    queryKey: queryKeys.user.getUser(id),
     endpoint: endpoint(id),
     suspense: true,
   })

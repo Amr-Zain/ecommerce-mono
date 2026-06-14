@@ -1,7 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { City, Country } from '@/types/api/country'
 import { Filter, RowAction } from '@/types/components/table'
-import { citiesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { booleanControlColumn, createdAtColumn, textColumn } from '@/components/features/sharedColumns'
 import { FieldProp } from '@/types/components/form'
 import { CityFormData } from '@/lib/schema'
@@ -30,7 +30,7 @@ export const actions = (
     params: (row: City) => ({ id: String(row.id) }),
     permission: 'cities',
     action: 'update',
-    queryKey: (id: string) => citiesQueryKeys.getCity(id),
+    queryKey: (id: string) => queryKeys.cities.getCity(id),
   },
   {
     label: t('actions.delete'),

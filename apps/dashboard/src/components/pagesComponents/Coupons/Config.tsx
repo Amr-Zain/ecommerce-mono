@@ -5,7 +5,7 @@ import {
   textColumn,
 } from '@/components/features/sharedColumns'
 import { PickedAction } from '@/hooks/useStatusMutations'
-import { couponsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Filter, RowAction } from '@/types/components/table'
 import { FieldProp } from '@/types/components/form'
 import {
@@ -68,7 +68,7 @@ export const couponActions = (
       params: (row: Coupon) => ({ id: String(row.id) }),
       permission: 'coupons',
       action: 'update',
-      queryKey: (id: string) => couponsQueryKeys.getCoupon(id),
+      queryKey: (id: string) => queryKeys.coupons.getCoupon(id),
     },
     {
       label: t('actions.delete'),

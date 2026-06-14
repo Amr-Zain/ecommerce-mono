@@ -24,16 +24,8 @@ const Orders = ({
       searchKey="search"
       filters={getOrderFilters(t)}
       pagination={!!data.data.meta}
-      meta={data.data.meta}
       rowUrl={(row) => `/orders/show/${row.id}`}
-      initialState={{
-        pagination: {
-          pageIndex: data.data.meta?.current_page ? data.data.meta.current_page - 1 : 0,
-          pageSize: data.data.meta?.per_page || 10,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

@@ -2,7 +2,7 @@ import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import useFetch from '@/hooks/UseFetch'
 import { ApiResponseBase } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
-import { paymentSessionsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { prefetchOptions } from '@/util/preFetcher'
 import { RouterContext } from '@/main'
 import PaymentSessionShow from '@/components/pagesComponents/PaymentGateways/Show/PaymentSessionShow'
@@ -25,7 +25,7 @@ export const Route = createFileRoute('/_main/payment-gateways/sessions/$id')({
         const { queryClient } = context as RouterContext
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: paymentSessionsQueryKeys.getPaymentSession(params.id),
+                queryKey: queryKeys.paymentSessions.getPaymentSession(params.id),
                 endpoint: `payment-sessions/${params.id}`,
             }),
         )
@@ -35,7 +35,7 @@ export const Route = createFileRoute('/_main/payment-gateways/sessions/$id')({
 function RouteComponent() {
     const { id } = Route.useParams()
     const { data } = useFetch<ApiResponseBase<PaymentSession>>({
-        queryKey: paymentSessionsQueryKeys.getPaymentSession(id),
+        queryKey: queryKeys.paymentSessions.getPaymentSession(id),
         endpoint: `payment-sessions/${id}`,
         suspense: true,
     })

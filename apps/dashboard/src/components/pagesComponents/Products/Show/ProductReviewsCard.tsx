@@ -18,7 +18,7 @@ import { DataTable } from '@/components/common/table/AppTable'
 import { ColumnDef } from '@tanstack/react-table'
 import { textColumn, DateColumn } from '@/components/features/sharedColumns'
 import useFetch from '@/hooks/UseFetch'
-import { reviewsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import type { ApiResponse } from '@/types/api/http'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useAlertModal } from '@/stores/useAlertModal'
@@ -154,8 +154,8 @@ export function ProductReviewsCard({ productId }: Props) {
             currentId,
             'active',
             'reviews',
-            reviewsQueryKeys.getReview(currentId),
-            [reviewsQueryKeys.all()],
+            queryKeys.reviews.getReview(currentId),
+            [queryKeys.reviews.all()],
         )
 
     const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -163,8 +163,8 @@ export function ProductReviewsCard({ productId }: Props) {
             currentId,
             'delete',
             'reviews',
-            reviewsQueryKeys.getReview(currentId),
-            [reviewsQueryKeys.all()],
+            queryKeys.reviews.getReview(currentId),
+            [queryKeys.reviews.all()],
         )
 
     const { mutateAsync: changeApproved, isPending: approvedPending } =
@@ -172,8 +172,8 @@ export function ProductReviewsCard({ productId }: Props) {
             currentId,
             'active', // We reuse 'active' to get PUT method
             'reviews',
-            reviewsQueryKeys.getReview(currentId),
-            [reviewsQueryKeys.all()]
+            queryKeys.reviews.getReview(currentId),
+            [queryKeys.reviews.all()]
         )
 
     React.useEffect(() => {
@@ -196,7 +196,7 @@ export function ProductReviewsCard({ productId }: Props) {
             } else if (type === 'is_approved') {
                 await changeApproved({ is_approved: !row.is_approved })
             }
-            queryClient.invalidateQueries({ queryKey: reviewsQueryKeys.all() })
+            queryClient.invalidateQueries({ queryKey: queryKeys.reviews.all() })
             alert.setIsOpen(false)
         }
 
@@ -214,7 +214,7 @@ export function ProductReviewsCard({ productId }: Props) {
 
 
     const { data: reviewsData, isPending } = useFetch<ApiResponse<ReviewEntity[], 'reviews'>>({
-        queryKey: reviewsQueryKeys.filterd({ 'filters[product_id]': String(productId) }),
+        queryKey: queryKeys.reviews.filterd({ 'filters[product_id]': String(productId) }),
         endpoint: 'reviews?paginate=1',
         params: { 'filters[product_id]': productId },
     })

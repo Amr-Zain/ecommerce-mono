@@ -2,7 +2,7 @@ import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import useFetch from '@/hooks/UseFetch'
 import { ApiResponseBase } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
-import { ordersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { OrderDetail } from '@/types/api/order'
 import { prefetchOptions } from '@/util/preFetcher'
 import { RouterContext } from '@/main'
@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_main/orders/show/$id')({
     const endpoint = `orders/${params.id}`
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: ordersQueryKeys.getOrder(params.id),
+        queryKey: queryKeys.orders.getOrder(params.id),
         endpoint: endpoint,
       }),
     )
@@ -33,7 +33,7 @@ export const Route = createFileRoute('/_main/orders/show/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<OrderDetail>>({
-    queryKey: ordersQueryKeys.getOrder(id),
+    queryKey: queryKeys.orders.getOrder(id),
     endpoint: `orders/${id}`,
     suspense: true,
   })

@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { showRoomsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { ShowRoom } from '@/types/api/showRoom'
 import { searchParamsValidate } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
@@ -30,7 +30,7 @@ export const Route = createFileRoute('/_main/show-rooms/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: showRoomsQueryKeys.filterd(search),
+        queryKey: queryKeys.showRooms.filterd(search),
         endpoint,
         params: search,
       }),
@@ -41,7 +41,7 @@ export const Route = createFileRoute('/_main/show-rooms/')({
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<ShowRoom[], 'show_rooms'>>({
-    queryKey: showRoomsQueryKeys.filterd(search),
+    queryKey: queryKeys.showRooms.filterd(search),
     endpoint,
     suspense: true,
     params: search,

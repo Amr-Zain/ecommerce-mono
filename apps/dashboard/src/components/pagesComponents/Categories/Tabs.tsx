@@ -7,8 +7,7 @@ import { Badge } from '@ecommerce/ui/components/badge'
 import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
 import type { TabItem } from '@/components/ui/AnimatedTabs'
 import useFetch from '@/hooks/UseFetch'
-import { categoriesQueryKeys } from '@/util/queryKeysFactory'
-
+import { queryKeys } from '@/util/queryKeysFactory'
 const endpoint = 'collections?paginate=1'
 
 const TabsBadgeCategories = () => {
@@ -21,7 +20,7 @@ const TabsBadgeCategories = () => {
   const { data: collection, isPending: collectionPending } = useFetch<
     ApiResponse<Category[]>
   >({
-    queryKey: categoriesQueryKeys.filterd({ custom_filter: 'collection',paginate: '1' }),
+    queryKey: queryKeys.categories.filterd({ custom_filter: 'collection',paginate: '1' }),
     endpoint,
     params: { custom_filter: 'collection' },
     select: (data) => data.data.meta?.total as any,
@@ -30,7 +29,7 @@ const TabsBadgeCategories = () => {
   const { data: subCollection, isPending: subCollectionPending } = useFetch<
     ApiResponse<number>
   >({
-    queryKey: categoriesQueryKeys.filterd({ custom_filter: 'sub_collection', paginate: '1' }),
+    queryKey: queryKeys.categories.filterd({ custom_filter: 'sub_collection', paginate: '1' }),
     endpoint,
     params: { custom_filter: 'sub_collection' },
     select: (data) => data.data.meta?.total as any,
@@ -38,7 +37,7 @@ const TabsBadgeCategories = () => {
 
   const { data: subSubCollection, isPending: subSubCollectionPending } =
     useFetch<ApiResponse<number>>({
-      queryKey: categoriesQueryKeys.filterd({
+      queryKey: queryKeys.categories.filterd({
         custom_filter: 'sub_sub_collection', paginate: '1' 
       }),
       endpoint,

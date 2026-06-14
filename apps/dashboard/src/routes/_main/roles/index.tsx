@@ -3,7 +3,7 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { createFileRoute } from '@tanstack/react-router'
 import useFetch from '@/hooks/UseFetch'
 import RolesTable from '@/components/pagesComponents/Roles'
-import { rolesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Role } from '@/components/pagesComponents/Roles/Config'
 import { RouterContext } from '@/main'
 import { searchParamsValidate } from '@/types/api/general'
@@ -30,7 +30,7 @@ export const Route = createFileRoute('/_main/roles/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: rolesQueryKeys.filterd(search),
+        queryKey: queryKeys.roles.filterd(search),
         endpoint,
         params: search,
       }),
@@ -42,7 +42,7 @@ function Index() {
   const search = Route.useLoaderDeps().search
 
   const { data } = useFetch<ApiResponseBase<Role[]>>({
-    queryKey: rolesQueryKeys.filterd(search),
+    queryKey: queryKeys.roles.filterd(search),
     endpoint,
     suspense: true,
     params: search,

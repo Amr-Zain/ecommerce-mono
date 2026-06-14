@@ -12,7 +12,7 @@ import {
   showRoomColumns,
   getShowRoomFilters,
 } from './Config'
-import { showRoomsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { HasPermission } from '@/components/common/HasPermission'
@@ -37,8 +37,8 @@ const ShowRooms = ({
       currentId,
       'active',
       'show-rooms',
-      showRoomsQueryKeys.getShowRoom(currentId),
-      [showRoomsQueryKeys.filterd(search)],
+      queryKeys.showRooms.getShowRoom(currentId),
+      [queryKeys.showRooms.filterd(search)],
     )
 
   const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -46,8 +46,8 @@ const ShowRooms = ({
       currentId,
       'delete',
       'show-rooms',
-      showRoomsQueryKeys.getShowRoom(currentId),
-      [showRoomsQueryKeys.filterd(search)],
+      queryKeys.showRooms.getShowRoom(currentId),
+      [queryKeys.showRooms.filterd(search)],
     )
 
   useEffect(() => {
@@ -88,20 +88,12 @@ const ShowRooms = ({
       searchKey="search"
       filters={getShowRoomFilters(t)}
       pagination
-      meta={data.data.meta!}
       actions={RowActions({
         actions: showRoomActions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: (data.data.meta?.current_page ?? 1) - 1,
-          pageSize: data.data.meta?.per_page ?? 10,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

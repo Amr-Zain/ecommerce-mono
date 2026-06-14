@@ -4,7 +4,7 @@ import useFetch from '@/hooks/UseFetch'
 import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { prefetchOptions } from '@/util/preFetcher'
-import { slidersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 type SliderResponse = any
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_main/sliders/edit/$id')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: slidersQueryKeys.getSlider(params.id),
+        queryKey: queryKeys.sliders.getSlider(params.id),
         endpoint: `sliders/${params.id}`,
       }),
     )
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/_main/sliders/edit/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponse<SliderResponse>, SliderResponse>({
-    queryKey: slidersQueryKeys.getSlider(id),
+    queryKey: queryKeys.sliders.getSlider(id),
     endpoint: `sliders/${id}`,
     suspense: true,
     select: (res) => res.data as unknown as SliderResponse,

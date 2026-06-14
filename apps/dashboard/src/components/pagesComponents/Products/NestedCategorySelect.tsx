@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { ChevronRight, ChevronDown, LoaderCircleIcon } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ecommerce/ui/components/select"
-import { categoriesQueryKeys } from "@/util/queryKeysFactory"
+import { queryKeys } from '@/util/queryKeysFactory'
 import useFetch from "@/hooks/UseFetch"
 import type { ApiResponseBase } from "@/types/api/http"
 import { Avatar, AvatarFallback, AvatarImage } from "@ecommerce/ui/components/avatar"
@@ -45,7 +45,7 @@ function NestedItem({ item, level, onSelect }: NestedItemProps) {
     const { data: children, isPending } = useFetch<
         Category[]
     >({
-        queryKey: categoriesQueryKeys.filterd({ "filters[parentId]": item.id.toString() }),
+        queryKey: queryKeys.categories.filterd({ "filters[parentId]": item.id.toString() }),
         endpoint,
         params: { "filters[parentId]": item.id.toString() },
         select: (data: any) => (data?.data?.items || data?.data || []).map((item: Category) => ({ ...item, value: item.id })) as any,
@@ -109,7 +109,7 @@ export function NestedCategorySelect({ onSelect, placeholder = "Select a categor
     const { data: collection, isPending: isCollectionPending } = useFetch<
         Category[]
     >({
-        queryKey: categoriesQueryKeys.filterd({ custom_filter: 'collection', ffdls: '1' }),
+        queryKey: queryKeys.categories.filterd({ custom_filter: 'collection', ffdls: '1' }),
         endpoint,
         params: { custom_filter: 'collection' },
         select: (data: any) => (data?.data?.items || data?.data || []).map((item: Category) => ({ ...item, value: item.id })) as any,
@@ -121,7 +121,7 @@ export function NestedCategorySelect({ onSelect, placeholder = "Select a categor
     const { data: initialCategoryData, isPending: isInitialFetchPending } = useFetch<
         Category
     >({
-        queryKey: categoriesQueryKeys.getCategory(initialCategoryId ?? ''),
+        queryKey: queryKeys.categories.getCategory(initialCategoryId ?? ''),
         endpoint: `${endpoint}/${initialCategoryId}`,
         enabled: shouldFetchInitial,
         select: (data: any) => {

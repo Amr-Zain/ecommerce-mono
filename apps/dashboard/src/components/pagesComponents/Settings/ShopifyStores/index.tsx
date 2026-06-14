@@ -7,7 +7,7 @@ import { shopifyStoreColumns, getShopifyStoreFilters, shopifyStoreActions } from
 import { RowActions } from '@/components/common/table/RowActions'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
-import { shopifyStoresQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { ShopifyStore } from '@/types/api/shopify-store'
 import { getModalTitle } from '@/util/helpers'
@@ -39,8 +39,8 @@ const ShopifyStores = ({ data }: { data: ShopifyStoresApi }) => {
             currentId,
             'active',
             'shopify-stores',
-            shopifyStoresQueryKeys.getStore(currentId),
-            [shopifyStoresQueryKeys.filterd(search)],
+            queryKeys.shopifyStores.getStore(currentId),
+            [queryKeys.shopifyStores.filterd(search)],
         )
 
     const { mutateAsync: ChangeDeleteMutate, isPending: deletePending } =
@@ -48,8 +48,8 @@ const ShopifyStores = ({ data }: { data: ShopifyStoresApi }) => {
             currentId,
             'delete',
             'shopify-stores',
-            shopifyStoresQueryKeys.getStore(currentId),
-            [shopifyStoresQueryKeys.filterd(search)],
+            queryKeys.shopifyStores.getStore(currentId),
+            [queryKeys.shopifyStores.filterd(search)],
         )
 
     useEffect(() => {
@@ -97,20 +97,12 @@ const ShopifyStores = ({ data }: { data: ShopifyStoresApi }) => {
             filters={getShopifyStoreFilters(t)}
             rowUrl={(row) => `/settings/shopify-stores/show/${row.id}`}
             pagination={false}
-            meta={(data as any).data?.meta}
-            initialState={{
-                pagination: {
-                    pageIndex: ((data as any).data?.meta?.current_page || 1) - 1,
-                    pageSize: (data as any).data?.meta?.per_page || 10,
-                },
-            }}
             actions={RowActions({
                 actions: shopifyStoreActions(t, openAlert),
                 menuLabel: t('actions.entity'),
             })}
             toolbar={customToolbar}
             resizable
-            enableUrlState
         />
     )
 }

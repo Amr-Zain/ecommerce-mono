@@ -4,7 +4,7 @@ import { DataTable } from '@/components/common/table/AppTable'
 import { useSearch } from '@tanstack/react-router'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
-import { notificationsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { Notification, NotificationsResponse } from '@/routes/_main/settings/notifications'
@@ -38,10 +38,10 @@ const NotificationsTable = ({
 
   const { refetch: toggleRead, isFetching } = useFetch({
     endpoint: `notifications/${currentId}`,
-    queryKey: notificationsQueryKeys.getNotification(currentId),
+    queryKey: queryKeys.notifications.getNotification(currentId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: notificationsQueryKeys.all,
+        queryKey: queryKeys.notifications.all,
       })
     },
     customBaseUrl: import.meta.env.VITE_BASE_URL_API,
@@ -53,8 +53,8 @@ const NotificationsTable = ({
       currentId,
       'delete',
       'notifications',
-      notificationsQueryKeys.getNotification(currentId),
-      [notificationsQueryKeys.filterd(search)],
+      queryKeys.notifications.getNotification(currentId),
+      [queryKeys.notifications.filterd(search)],
       import.meta.env.VITE_BASE_URL_API,
     )
 
@@ -104,13 +104,12 @@ const NotificationsTable = ({
         const handleMarkAsRead = async (id: string | number) => {
           try {
             await axiosInstance.get(`${import.meta.env.VITE_BASE_URL_API}/notifications/${id}`)
-            queryClient.invalidateQueries({ queryKey: notificationsQueryKeys.all })
+            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all })
           } catch (err: any) {
             toast.error(err.message || t('errors.somethingWentWrong'))
           }
         }
         if (!row.is_read) handleMarkAsRead(row.id)
-        // read the not by run the show notifcation
         if (type.includes('order')) return `/orders/show/${targetId}`
         if (type.includes('user') || type.includes('tier_upgrade')) return `/users/show/${targetId}`
         if (type.includes('product')) return `/products/show/${targetId}`
@@ -119,14 +118,7 @@ const NotificationsTable = ({
 
         return null
       }}
-      initialState={{
-        pagination: {
-          pageIndex: data.data[`${userType}_notifications`].meta.current_page - 1 || 0,
-          pageSize: data.data[`${userType}_notifications`].meta.per_page || 10,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

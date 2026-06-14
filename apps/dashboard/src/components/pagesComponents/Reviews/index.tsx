@@ -7,7 +7,7 @@ import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useSearch, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { getModalTitle } from '@/util/helpers'
-import { reviewsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { reviewActions, reviewColumns, getReviewFilters, ReviewEntity } from './Config'
 export type { ReviewEntity } from './Config'
 
@@ -34,8 +34,8 @@ const Reviews = ({
             currentId,
             'active',
             'reviews',
-            reviewsQueryKeys.getReview(currentId),
-            [reviewsQueryKeys.filterd(search)],
+            queryKeys.reviews.getReview(currentId),
+            [queryKeys.reviews.filterd(search)],
         )
 
     const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -43,8 +43,8 @@ const Reviews = ({
             currentId,
             'delete',
             'reviews',
-            reviewsQueryKeys.getReview(currentId),
-            [reviewsQueryKeys.filterd(search)],
+            queryKeys.reviews.getReview(currentId),
+            [queryKeys.reviews.filterd(search)],
         )
 
     // Using 'active' type but for approval. endpoint will be reviews/{id}. method PUT.
@@ -56,8 +56,8 @@ const Reviews = ({
             currentId,
             'active', // We reuse 'active' to get PUT method
             'reviews',
-            reviewsQueryKeys.getReview(currentId),
-            [reviewsQueryKeys.filterd(search)]
+            queryKeys.reviews.getReview(currentId),
+            [queryKeys.reviews.filterd(search)]
         )
 
 
@@ -98,25 +98,17 @@ const Reviews = ({
 
     return (
         <DataTable
-            data={data.data.items}
+            apiResponse={data}
             columns={reviewColumns(t, openAlert)}
             searchKey="search"
             filters={getReviewFilters(t)}
             pagination={!!data.data.meta}
-            meta={data.data.meta}
             rowUrl={(row) => `/reviews/show/${row.id}`}
             actions={RowActions({
                 actions: reviewActions(t, openAlert, navigate),
                 menuLabel: t('actions.entity'),
             })}
-            initialState={{
-                pagination: {
-                    pageIndex: data.data.meta?.page ? data.data.meta.page - 1 : 0,
-                    pageSize: data.data.meta?.limit || 10,
-                },
-            }}
             resizable
-            enableUrlState
         />
     )
 }

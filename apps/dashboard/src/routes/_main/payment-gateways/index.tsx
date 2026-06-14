@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponseBase } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { dashboardQueryKeys, paymentGatewaysQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { TableLoader } from '@/components/common/table/TableLoader'
 import { PaymentGatewayEntity } from '@/components/pagesComponents/PaymentGateways/Config'
@@ -48,7 +48,7 @@ export const Route = createFileRoute('/_main/payment-gateways/')({
         // Prefetch payment gateways data
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: paymentGatewaysQueryKeys.all(),
+                queryKey: queryKeys.paymentGateways.all(),
                 endpoint,
             }),
         )
@@ -56,7 +56,7 @@ export const Route = createFileRoute('/_main/payment-gateways/')({
         // Prefetch dashboard stats for cards
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: dashboardQueryKeys.statistics(),
+                queryKey: queryKeys.dashboard.statistics(),
                 endpoint: 'dashboard/home'
             })
         )

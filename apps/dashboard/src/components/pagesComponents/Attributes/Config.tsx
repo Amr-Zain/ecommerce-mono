@@ -6,7 +6,7 @@ import {
 } from '@/components/features/sharedColumns'
 import { FieldProp } from '@/types/components/form'
 import { PickedAction } from '@/hooks/useStatusMutations'
-import { attributeQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { AttributeFormData } from '@/lib/schema'
 import { RowAction } from '@/types/components/table'
 import { ValueDetails, ValueItem } from './Values/Config'
@@ -72,7 +72,7 @@ export const attributeColumns = (
 //     params: (row: Attribute) => ({ id: String(row.id) }),
 //     permission: 'attributes',
 //     action: 'show',
-//     queryKey: (id: string) => attributeQueryKeys.getAttribute(id),
+//     queryKey: (id: string) => queryKeys.attributes.getAttribute(id),
 //   },
 //   {
 //     label: t('actions.editAttribute'),
@@ -80,7 +80,7 @@ export const attributeColumns = (
 //     params: (row: Attribute) => ({ id: String(row.id) }),
 //     permission: 'attributes',
 //     action: 'update',
-//     queryKey: (id: string) => attributeQueryKeys.getAttribute(id),
+//     queryKey: (id: string) => queryKeys.attributes.getAttribute(id),
 //   },
 //   {
 //     label: t('actions.delete'),

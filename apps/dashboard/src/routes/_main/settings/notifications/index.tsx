@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse, ApiResponseBase } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { notificationsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { TableLoader } from '@/components/common/table/TableLoader'
@@ -77,7 +77,7 @@ export const Route = createFileRoute('/_main/settings/notifications/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: notificationsQueryKeys.filterd(search),
+        queryKey: queryKeys.notifications.filterd(search),
         endpoint,
         params: search,
         customBaseUrl: import.meta.env.VITE_BASE_URL_API,
@@ -91,7 +91,7 @@ function RouteComponent() {
   const { data } = useFetch<
     ApiResponseBase<NotificationsResponse>
   >({
-    queryKey: notificationsQueryKeys.filterd(search),
+    queryKey: queryKeys.notifications.filterd(search),
     endpoint,
     suspense: true,
     params: search,

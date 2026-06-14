@@ -12,7 +12,7 @@ import {
     getTierFilters,
     Tier,
 } from './Config'
-import { tiersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { HasPermission } from '@/components/common/HasPermission'
@@ -38,8 +38,8 @@ export default function Tiers({
             id,
             'active',
             'tiers',
-            tiersQueryKeys.getTier(id),
-            [tiersQueryKeys.all()],
+            queryKeys.tiers.getTier(id),
+            [queryKeys.tiers.all()],
         )
 
     const { mutateAsync: deleteTier, isPending: pendingDelete } =
@@ -47,8 +47,8 @@ export default function Tiers({
             id,
             'delete',
             'tiers',
-            tiersQueryKeys.getTier(id),
-            [tiersQueryKeys.all()],
+            queryKeys.tiers.getTier(id),
+            [queryKeys.tiers.all()],
         )
 
     useEffect(() => {
@@ -96,7 +96,6 @@ export default function Tiers({
             })}
             toolbar={toolbar}
             resizable
-            enableUrlState
         />
     )
 }

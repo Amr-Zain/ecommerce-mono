@@ -8,7 +8,7 @@ import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useEffect, useState } from 'react'
 import { actions, filters, roleColumns, Role } from './Config'
 import { useAlertModal } from '@/stores/useAlertModal'
-import { rolesQueryKeys } from '@/util/queryKeysFactory' // add these in your factory similar to supervisors*
+import { queryKeys } from '@/util/queryKeysFactory'
 import { TFn } from '@/lib/schema/validation'
 import { getModalTitle } from '@/util/helpers'
 import { HasPermission } from '@/components/common/HasPermission'
@@ -22,10 +22,7 @@ const RolesTable = ({
   const alert = useAlertModal()
   const search = useSearch({ from: '/_main/roles/' })
 
-  const rows = (data as any).data || []
-  const meta = (data as any).data?.meta
-
-  const [selected, setSelected] = useState<{
+  const rows = (data as any).data || []  const [selected, setSelected] = useState<{
     id: string
     type: PickedAction
     isActive?: boolean
@@ -37,16 +34,16 @@ const RolesTable = ({
     currentId,
     'active',
     'roles',
-    rolesQueryKeys.get(currentId),
-    [rolesQueryKeys.filterd(search)],
+    queryKeys.roles.get(currentId),
+    [queryKeys.roles.filterd(search)],
   )
 
   const { mutateAsync: deleteRole, isPending: pDelete } = useStatusMutation(
     currentId,
     'delete',
     'roles',
-    rolesQueryKeys.get(currentId),
-    [rolesQueryKeys.filterd(search)],
+    queryKeys.roles.get(currentId),
+    [queryKeys.roles.filterd(search)],
   )
 
   useEffect(() => {
@@ -96,21 +93,13 @@ const RolesTable = ({
       searchKey="search"
       rowUrl={(row)=>`/roles/show/${row.id}`}
       filters={filters(t)}
-      pagination
-      meta={meta}
+      pagination={false}
       actions={RowActions({
         actions: actions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: ((meta?.current_page || 1) - 1) as number,
-          pageSize: (meta?.per_page || 15) as number,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

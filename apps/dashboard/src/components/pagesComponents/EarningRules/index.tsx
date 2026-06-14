@@ -11,7 +11,7 @@ import {
     earningRuleColumns,
     getEarningRuleFilters,
 } from './Config'
-import { earningRulesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { EarningRule } from '@/types/api/earningRules'
@@ -37,8 +37,8 @@ export default function EarningRulesList({
             id,
             'active',
             'earning-rules',
-            earningRulesQueryKeys.getEarningRule(id),
-            [earningRulesQueryKeys.all()],
+            queryKeys.earningRules.getEarningRule(id),
+            [queryKeys.earningRules.all()],
         )
 
     const { mutateAsync: deleteRule, isPending: pendingDelete } =
@@ -46,8 +46,8 @@ export default function EarningRulesList({
             id,
             'delete',
             'earning-rules',
-            earningRulesQueryKeys.getEarningRule(id),
-            [earningRulesQueryKeys.all()],
+            queryKeys.earningRules.getEarningRule(id),
+            [queryKeys.earningRules.all()],
         )
 
     useEffect(() => {
@@ -82,18 +82,10 @@ export default function EarningRulesList({
             searchKey="search"
             filters={getEarningRuleFilters(t)}
             pagination
-            meta={data.data.meta!}
             actions={RowActions({
                 actions: earningRuleActions(t, open),
                 menuLabel: t('actions.entity'),
             })}
-            initialState={{
-                pagination: {
-                    pageIndex: (data.data.meta?.current_page ?? 1) - 1,
-                    pageSize: data.data.meta?.per_page ?? 10,
-                },
-            }}
-            enableUrlState
         />
     )
 }

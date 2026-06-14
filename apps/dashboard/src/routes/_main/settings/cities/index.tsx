@@ -7,7 +7,7 @@ import { City } from '@/types/api/country'
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { ApiResponse } from '@/types/api/http'
 import { prefetchOptions } from '@/util/preFetcher'
-import { citiesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 import { routePermission } from '@/lib/utils'
@@ -36,7 +36,7 @@ export const Route = createFileRoute('/_main/settings/cities/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: citiesQueryKeys.filterd(search),
+        queryKey: queryKeys.cities.filterd(search),
         endpoint,
         params: search,
       }),
@@ -48,7 +48,7 @@ export const Route = createFileRoute('/_main/settings/cities/')({
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<City[], 'cities'>>({
-    queryKey: citiesQueryKeys.filterd(search),
+    queryKey: queryKeys.cities.filterd(search),
     endpoint,
     suspense: true,
     params: search,

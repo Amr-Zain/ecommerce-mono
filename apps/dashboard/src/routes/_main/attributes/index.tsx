@@ -7,7 +7,7 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { type Attribute } from '@/components/pagesComponents/Attributes/Config'
-import { attributeQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { routePermission } from '@/lib/utils'
 
 const endpoint = 'attributes?paginate=1'
@@ -26,7 +26,7 @@ export const Route = createFileRoute('/_main/attributes/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: attributeQueryKeys.filterd(search),
+        queryKey: queryKeys.attributes.filterd(search),
         endpoint,
         params: search,
       }),
@@ -37,7 +37,7 @@ export const Route = createFileRoute('/_main/attributes/')({
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Attribute>>({
-    queryKey: attributeQueryKeys.filterd(search),
+    queryKey: queryKeys.attributes.filterd(search),
     endpoint,
     suspense: true,
     params: search,

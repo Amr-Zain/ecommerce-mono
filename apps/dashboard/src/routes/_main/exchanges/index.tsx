@@ -8,7 +8,7 @@ import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { ApiResponseBase, Meta } from '@/types/api/http'
 import { ExchangeRequest } from '@/types/api/order'
 import { prefetchOptions } from '@/util/preFetcher'
-import { exchangesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 const endpoint = 'exchanges'
@@ -36,7 +36,7 @@ export const Route = createFileRoute('/_main/exchanges/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: exchangesQueryKeys.filterd(search),
+        queryKey: queryKeys.exchanges.filterd(search),
         endpoint,
         params: search,
       }),
@@ -47,7 +47,7 @@ export const Route = createFileRoute('/_main/exchanges/')({
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponseBase<{ items: ExchangeRequest[]; meta?: Meta }>>({
-    queryKey: exchangesQueryKeys.filterd(search),
+    queryKey: queryKeys.exchanges.filterd(search),
     endpoint,
     suspense: true,
     params: search,

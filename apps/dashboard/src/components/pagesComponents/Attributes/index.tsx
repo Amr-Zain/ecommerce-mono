@@ -14,7 +14,7 @@ import {
 } from './Config'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
-import { attributeQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { HasPermission } from '@/components/common/HasPermission'
 
 const Attributes = ({
@@ -39,8 +39,8 @@ const Attributes = ({
       currentId,
       'active',
       'attributes',
-      attributeQueryKeys.getAttribute(currentId),
-      [attributeQueryKeys.filterd(search)],
+      queryKeys.attributes.getAttribute(currentId),
+      [queryKeys.attributes.filterd(search)],
     )
 
   const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -48,8 +48,8 @@ const Attributes = ({
       currentId,
       'delete',
       'attributes',
-      attributeQueryKeys.getAttribute(currentId),
-      [ attributeQueryKeys.all()],
+      queryKeys.attributes.getAttribute(currentId),
+      [ queryKeys.attributes.all()],
     )
 
   useEffect(() => {
@@ -85,26 +85,18 @@ const Attributes = ({
 
   return (
     <DataTable
-      data={data.data.items}
+      apiResponse={data}
       columns={attributeColumns(openAlert)}
       searchKey="search"
       rowUrl={(row) => `/attributes/show/${row.id}`}
       filters={getAttributeFilters(t)}
       pagination
-      meta={data.data.meta!}
       // actions={RowActions({
       //   actions: attributeActions(t, openAlert),
       //   menuLabel: t('actions.entity'),
       // })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: (data.data.meta?.page ?? 1) - 1,
-          pageSize: data.data.meta?.total_pages ?? 10,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

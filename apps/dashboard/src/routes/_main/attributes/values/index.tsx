@@ -9,8 +9,7 @@ import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import {
   type ValueItem,
 } from '@/components/pagesComponents/Attributes/Values/Config'
-import { attributeValueQueryKeys } from '@/util/queryKeysFactory'
-
+import { queryKeys } from '@/util/queryKeysFactory'
 import { routePermission } from '@/lib/utils'
 
 const endpoint = 'values?paginate=1'
@@ -30,7 +29,7 @@ export const Route = createFileRoute('/_main/attributes/values/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: attributeValueQueryKeys.filtered(search),
+        queryKey: queryKeys.attributeValues.filtered(search),
         endpoint,
         params: search,
       }),
@@ -41,7 +40,7 @@ export const Route = createFileRoute('/_main/attributes/values/')({
 function RouteComponent() {
   const search = Route.useSearch()
   const { data } = useFetch<ApiResponse<ValueItem[], 'values'>>({
-    queryKey: attributeValueQueryKeys.filtered(search),
+    queryKey: queryKeys.attributeValues.filtered(search),
     endpoint,
     suspense: true,
     params: search,

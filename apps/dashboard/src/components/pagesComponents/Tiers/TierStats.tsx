@@ -3,7 +3,8 @@ import { Gift, Users } from "lucide-react";
 import { motion, Variants } from "motion/react";
 import { StatsCard } from "@/components/common/charts/StatsCard";
 import useFetch from "@/hooks/UseFetch";
-import { dashboardQueryKeys } from "@/util/queryKeysFactory";
+import { queryKeys } from '@/util/queryKeysFactory'
+;
 import { ApiResponseBase } from "@/types/api/http";
 import { DashboardStatistics } from "@/types/api/dashboard";
 import { Card, CardContent, CardHeader } from "@ecommerce/ui/components/card";
@@ -17,7 +18,7 @@ const itemVariants: Variants = {
 export function TierStats() {
     const { t } = useTranslation();
     const { data: statsResponse } = useFetch<ApiResponseBase<DashboardStatistics>>({
-        queryKey: dashboardQueryKeys.statistics(),
+        queryKey: queryKeys.dashboard.statistics(),
         endpoint: 'dashboard/home',
         suspense: true,
     });

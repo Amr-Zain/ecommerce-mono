@@ -6,10 +6,7 @@ import {
 } from '@/components/features/sharedColumns'
 import { FieldProp } from '@/types/components/form'
 import { PickedAction } from '@/hooks/useStatusMutations'
-import {
-  attributeQueryKeys,
-  attributeValueQueryKeys,
-} from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { RowAction } from '@/types/components/table'
 import { ValueFormData } from '@/lib/schema'
 
@@ -63,7 +60,7 @@ export const valueActions = (
       params: (row: ValueItem) => ({ id: String(row.id) }),
       permission: 'values',
       action: 'update',
-      queryKey: (id: string) => attributeValueQueryKeys.getValue(id),
+      queryKey: (id: string) => queryKeys.attributeValues.getValue(id),
     },
     {
       label: t('actions.delete'),
@@ -92,7 +89,7 @@ export const buildValueFields = (
       inputProps: {
         endpoint: 'attributes?paginate=0',
         placeholder: t('Form.placeholders.attribute'),
-        queryKey: attributeQueryKeys.all(),
+        queryKey: queryKeys.attributes.all(),
         select: (data) =>
           (data.data as unknown as ValueItem[]).map((c) => ({
             label: c.name,
@@ -125,7 +122,7 @@ export const getValueFilters = (t: (key: string) => string) => [
     title: t('menu.attributes'),
     multiple: false,
     endpoint: 'attributes?paginate=0',
-    queryKey: attributeQueryKeys.all(),
+    queryKey: queryKeys.attributes.all(),
     select: (data: any) =>
       (data.data as unknown as ValueItem[]).map((c) => ({
         label: c.name,

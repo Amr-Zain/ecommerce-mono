@@ -5,7 +5,7 @@ import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useEffect, useState } from 'react'
 import { userColumns, getUserFilters, UserEntity } from './Config'
 import { useAlertModal } from '@/stores/useAlertModal'
-import { userQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { getModalTitle } from '@/util/helpers'
 import { useSearch } from '@tanstack/react-router'
 
@@ -18,9 +18,6 @@ const Users = ({
     const alert = useAlertModal()
     const search = useSearch({ from: '/_main/users/' })
 
-    const rows = data.data?.items || []
-    const meta = data.data?.meta
-
     const [selected, setSelected] = useState<{
         id: string
         type: PickedAction | 'ban'
@@ -32,8 +29,8 @@ const Users = ({
         currentId,
         selected?.type === 'ban' ? 'ban' : 'active',
         'clients',
-        userQueryKeys.getUser(currentId),
-        [userQueryKeys.filterd(search)],
+        queryKeys.user.getUser(currentId),
+        [queryKeys.user.filterd(search)],
     )
 
     useEffect(() => {
@@ -69,15 +66,13 @@ const Users = ({
 
     return (
         <DataTable
-            data={rows}
+            apiResponse={data}
             columns={userColumns(openAlert, t)}
             searchKey="search"
             filters={getUserFilters(t)}
             pagination
             rowUrl={(row: UserEntity) => `/users/show/${row.id}`}
-            meta={meta}
             resizable
-            enableUrlState
         />
     )
 }

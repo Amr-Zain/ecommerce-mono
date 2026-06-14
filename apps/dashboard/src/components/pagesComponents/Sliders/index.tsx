@@ -7,7 +7,7 @@ import { useSearch, Link } from '@tanstack/react-router'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
 import { sliderActions, sliderColumns, getSliderFilters } from './Config'
-import { slidersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { HasPermission } from '@/components/common/HasPermission'
@@ -55,8 +55,8 @@ const Sliders = ({
       currentId,
       'active',
       'sliders',
-      slidersQueryKeys.getSlider(currentId),
-      [slidersQueryKeys.filterd(search)],
+      queryKeys.sliders.getSlider(currentId),
+      [queryKeys.sliders.filterd(search)],
     )
 
   const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -64,8 +64,8 @@ const Sliders = ({
       currentId,
       'delete',
       'sliders',
-      slidersQueryKeys.getSlider(currentId),
-      [slidersQueryKeys.filterd(search)],
+      queryKeys.sliders.getSlider(currentId),
+      [queryKeys.sliders.filterd(search)],
     )
 
   useEffect(() => {
@@ -104,25 +104,17 @@ const Sliders = ({
 
   return (
     <DataTable
-      data={data.data.items}
+      apiResponse={data}
       columns={sliderColumns(openAlert,t)}
       searchKey="search"
       filters={getSliderFilters(t)}
       pagination
-      meta={data.data.meta!}
       actions={RowActions({
         actions: sliderActions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: (data.data.meta!.page ?? 1) - 1,
-          pageSize: data.data.meta!.limit || 10,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

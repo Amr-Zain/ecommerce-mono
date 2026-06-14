@@ -11,7 +11,7 @@ import {
     rewardColumns,
     getRewardFilters,
 } from './Config'
-import { rewardsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { Reward } from '@/types/api/earningRules'
@@ -38,8 +38,8 @@ export default function Rewards({
             id,
             'active',
             'rewards',
-            rewardsQueryKeys.getReward(id),
-            [rewardsQueryKeys.all()],
+            queryKeys.rewards.getReward(id),
+            [queryKeys.rewards.all()],
         )
 
     const { mutateAsync: deleteReward, isPending: pendingDelete } =
@@ -47,8 +47,8 @@ export default function Rewards({
             id,
             'delete',
             'rewards',
-            rewardsQueryKeys.getReward(id),
-            [rewardsQueryKeys.all()],
+            queryKeys.rewards.getReward(id),
+            [queryKeys.rewards.all()],
         )
 
     useEffect(() => {
@@ -90,20 +90,12 @@ export default function Rewards({
             searchKey="search"
             filters={getRewardFilters(t)}
             pagination
-            meta={data.data.meta!}
             actions={RowActions({
                 actions: rewardActions(t, open),
                 menuLabel: t('actions.entity'),
             })}
             toolbar={toolbar}
-            initialState={{
-                pagination: {
-                    pageIndex: (data.data.meta?.current_page ?? 1) - 1,
-                    pageSize: data.data.meta?.per_page ?? 10,
-                },
-            }}
             resizable
-            enableUrlState
         />
     )
 }

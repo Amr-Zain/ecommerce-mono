@@ -8,7 +8,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { Button } from "@ecommerce/ui/components/button";
 import { useStatusMutation } from "@/hooks/useStatusMutations";
-import { reviewsQueryKeys } from "@/util/queryKeysFactory";
+import { queryKeys } from '@/util/queryKeysFactory'
+;
 import { useAlertModal } from "@/stores/useAlertModal";
 import { getModalTitle } from "@/util/helpers";
 
@@ -26,24 +27,24 @@ export default function ReviewShow({ review }: ReviewShowProps) {
         reviewId,
         'active',
         'reviews',
-        reviewsQueryKeys.getReview(reviewId),
-        [reviewsQueryKeys.all()]
+        queryKeys.reviews.getReview(reviewId),
+        [queryKeys.reviews.all()]
     );
 
     const { mutateAsync: changeDelete, isPending: deletePending } = useStatusMutation(
         reviewId,
         'delete',
         'reviews',
-        reviewsQueryKeys.getReview(reviewId),
-        [reviewsQueryKeys.all()]
+        queryKeys.reviews.getReview(reviewId),
+        [queryKeys.reviews.all()]
     );
 
     const { mutateAsync: changeApproved, isPending: approvedPending } = useStatusMutation(
         reviewId,
         'active',
         'reviews',
-        reviewsQueryKeys.getReview(reviewId),
-        [reviewsQueryKeys.all()]
+        queryKeys.reviews.getReview(reviewId),
+        [queryKeys.reviews.all()]
     );
 
     const handleAction = (type: 'active' | 'delete' | 'is_approved') => {

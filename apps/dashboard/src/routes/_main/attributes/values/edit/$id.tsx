@@ -6,7 +6,7 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { createFileRoute } from '@tanstack/react-router'
 import ValueForm from '@/components/pagesComponents/Attributes/Values/Form'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
-import { attributeValueQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { ValueDetails } from '@/components/pagesComponents/Attributes/Values/Config'
 
 import { routePermission } from '@/lib/utils'
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_main/attributes/values/edit/$id')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: attributeValueQueryKeys.getValue(params.id),
+        queryKey: queryKeys.attributeValues.getValue(params.id),
         endpoint: `values/${params.id}`,
       }),
     )
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/_main/attributes/values/edit/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<ValueDetails>>({
-    queryKey: attributeValueQueryKeys.getValue(id),
+    queryKey: queryKeys.attributeValues.getValue(id),
     endpoint: `values/${id}`,
     suspense: true,
   })

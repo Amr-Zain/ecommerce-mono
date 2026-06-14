@@ -13,8 +13,7 @@ import { RowActions } from '@/components/common/table/RowActions'
 // import { attributeActions } from '../Config'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
-import { attributeQueryKeys, pagesQueryKeys } from '@/util/queryKeysFactory'
-
+import { queryKeys } from '@/util/queryKeysFactory'
 import { AttributeFormDialog } from './AttributeFormDialog'
 import { AttributeValuesCard } from './AttributeValuesCard'
 import {
@@ -36,16 +35,16 @@ export function AttributeShow({ attribute }: { attribute: AttributeShowType }) {
       id.toString(),
       'active',
       'attributes',
-      attributeQueryKeys.getAttribute(String(id)),
-      [attributeQueryKeys.getAttribute(String(id))],
+      queryKeys.attributes.getAttribute(String(id)),
+      [queryKeys.attributes.getAttribute(String(id))],
     )
   const { mutateAsync: deleteAttr, isPending: attrDeletePending } =
     useStatusMutation(
       id.toString(),
       'delete',
       'attributes',
-      attributeQueryKeys.getAttribute(String(id)),
-      [attributeQueryKeys.getAttribute(String(id))],
+      queryKeys.attributes.getAttribute(String(id)),
+      [queryKeys.attributes.getAttribute(String(id))],
     )
 
   const onHeaderAction = React.useCallback(

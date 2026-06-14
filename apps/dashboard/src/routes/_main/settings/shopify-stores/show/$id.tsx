@@ -5,7 +5,7 @@ import { RouterContext } from '@/main'
 import { ShopifyStoreDetails } from '@/types/api/shopify-store'
 import { ApiResponse } from '@/types/api/http'
 import { prefetchOptions } from '@/util/preFetcher'
-import { shopifyStoresQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 import ShopifyStoreShowSkeleton from '@/components/pagesComponents/Settings/ShopifyStores/ShowSkeleton'
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_main/settings/shopify-stores/show/$id')(
         const { queryClient } = context as RouterContext
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: shopifyStoresQueryKeys.getStore(params.id),
+                queryKey: queryKeys.shopifyStores.getStore(params.id),
                 endpoint: `shopify-stores/${params.id}`,
             }),
         )
@@ -32,7 +32,7 @@ export const Route = createFileRoute('/_main/settings/shopify-stores/show/$id')(
 function RouteComponent() {
     const { id } = Route.useParams()
     const { data } = useFetch<ApiResponse<ShopifyStoreDetails>, ShopifyStoreDetails>({
-        queryKey: shopifyStoresQueryKeys.getStore(id),
+        queryKey: queryKeys.shopifyStores.getStore(id),
         endpoint: `shopify-stores/${id}`,
         suspense: true,
         select: (res) => res.data as unknown as ShopifyStoreDetails,

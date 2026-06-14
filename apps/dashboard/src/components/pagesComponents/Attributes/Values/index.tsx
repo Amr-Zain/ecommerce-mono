@@ -15,7 +15,7 @@ import {
 } from './Config'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
-import { attributeValueQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { HasPermission } from '@/components/common/HasPermission'
 
 const Values = ({ data }: { data: ApiResponse<ValueItem> }) => {
@@ -35,8 +35,8 @@ const Values = ({ data }: { data: ApiResponse<ValueItem> }) => {
       currentId,
       'active',
       'attribute-values',
-      attributeValueQueryKeys.getValue(currentId),
-      [attributeValueQueryKeys.filtered(search)],
+      queryKeys.attributeValues.getValue(currentId),
+      [queryKeys.attributeValues.filtered(search)],
     )
 
   const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -44,8 +44,8 @@ const Values = ({ data }: { data: ApiResponse<ValueItem> }) => {
       currentId,
       'delete',
       'attribute-values',
-      attributeValueQueryKeys.getValue(currentId),
-      [attributeValueQueryKeys.filtered(search)],
+      queryKeys.attributeValues.getValue(currentId),
+      [queryKeys.attributeValues.filtered(search)],
     )
 
   useEffect(() => {
@@ -81,25 +81,17 @@ const Values = ({ data }: { data: ApiResponse<ValueItem> }) => {
 
   return (
     <DataTable
-      data={data.data.items}
+      apiResponse={data}
       columns={valueColumns(openAlert)}
       searchKey="search"
       filters={getValueFilters(t)}
       pagination
-      meta={data.data.meta!}
       actions={RowActions({
         actions: valueActions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: (data.data.meta!.page ?? 1) - 1,
-          pageSize: data.data.meta!.limit ?? 15,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

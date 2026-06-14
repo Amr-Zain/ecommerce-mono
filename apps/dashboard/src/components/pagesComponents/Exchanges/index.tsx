@@ -12,7 +12,7 @@ import {
   AdminReturnRefundPayload,
   ExchangeRequest,
 } from '@/types/api/order'
-import { exchangesQueryKeys, ordersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import {
   exchangeActions,
   ExchangeAction,
@@ -47,13 +47,13 @@ const Exchanges = ({ data }: { data: ExchangeListResponse }) => {
       ),
     onSuccess: (res) => {
       toast.success(res.data.message || t('status_changed_successfully'))
-      queryClient.invalidateQueries({ queryKey: exchangesQueryKeys.all() })
-      queryClient.invalidateQueries({ queryKey: ordersQueryKeys.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.exchanges.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all() })
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || error.message)
-      queryClient.invalidateQueries({ queryKey: exchangesQueryKeys.all() })
-      queryClient.invalidateQueries({ queryKey: ordersQueryKeys.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.exchanges.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all() })
     },
   })
 
@@ -71,7 +71,6 @@ const Exchanges = ({ data }: { data: ExchangeListResponse }) => {
   return (
     <DataTable
       data={data.data.items ?? []}
-      meta={data.data.meta}
       columns={exchangeColumns(t)}
       searchKey="search"
       filters={getExchangeFilters(t)}
@@ -80,7 +79,6 @@ const Exchanges = ({ data }: { data: ExchangeListResponse }) => {
         menuLabel: t('actions.entity'),
       })}
       resizable
-      enableUrlState
     />
   )
 }

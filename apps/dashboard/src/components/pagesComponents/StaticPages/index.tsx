@@ -10,7 +10,7 @@ import {
   staticPagesColumns,
   pageActions,
 } from './Config'
-import { pagesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { StaticPage } from '@/types/api/staticPages'
@@ -43,8 +43,8 @@ const StaticPages = ({
       currentId,
       'active',
       'static-pages',
-      pagesQueryKeys.getPage(currentId),
-      [pagesQueryKeys.filterd(search)],
+      queryKeys.pages.getPage(currentId),
+      [queryKeys.pages.filterd(search)],
     )
 
   const { mutateAsync: ChangeDeleteMutate, isPending: deletePending } =
@@ -52,8 +52,8 @@ const StaticPages = ({
       currentId,
       'delete',
       'static-pages',
-      pagesQueryKeys.getPage(currentId),
-      [pagesQueryKeys.filterd(search)],
+      queryKeys.pages.getPage(currentId),
+      [queryKeys.pages.filterd(search)],
     )
 
   useEffect(() => {
@@ -97,14 +97,6 @@ const StaticPages = ({
       data={rows}
       columns={staticPagesColumns(openAlert, t)}
       searchKey="search"
-      /*  pagination
-        meta={meta}
-        initialState={{
-          pagination: {
-            pageIndex: ((meta?.current_page || 1) - 1) as number,
-            pageSize: (meta?.per_page || 15) as number,
-          },
-        }} */
       rowUrl={(row) => `/static-pages/show/${row.id}`}
       actions={RowActions({
         actions: pageActions(t, openAlert),
@@ -112,7 +104,6 @@ const StaticPages = ({
       })}
       toolbar={customToolbar}
       resizable
-      enableUrlState
       pagination={false}
     />
   )

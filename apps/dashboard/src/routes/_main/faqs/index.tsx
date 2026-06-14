@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { faqQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Faq } from '@/types/api/faq'
 import { searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
@@ -35,7 +35,7 @@ export const Route = createFileRoute('/_main/faqs/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: faqQueryKeys.filterd(search),
+        queryKey: queryKeys.faqs.filterd(search),
         endpoint,
         params: search,
       }),
@@ -46,7 +46,7 @@ export const Route = createFileRoute('/_main/faqs/')({
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Faq>>({
-    queryKey: faqQueryKeys.filterd(search),
+    queryKey: queryKeys.faqs.filterd(search),
     endpoint,
     suspense: true,
     params: search,

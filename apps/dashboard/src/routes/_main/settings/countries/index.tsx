@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { countriesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { CountryDetails } from '@/types/api/country'
 import { cleanObject, searchParamsValidate } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
@@ -28,7 +28,7 @@ export const Route = createFileRoute('/_main/settings/countries/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: countriesQueryKeys.filterd(search),
+        queryKey: queryKeys.countries.filterd(search),
         endpoint,
         params: search,
       }),
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/_main/settings/countries/')({
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<CountryDetails>>({
-    queryKey: countriesQueryKeys.filterd(search),
+    queryKey: queryKeys.countries.filterd(search),
     endpoint,
     suspense: true,
     params: search,

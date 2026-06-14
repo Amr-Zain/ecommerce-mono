@@ -2,7 +2,7 @@ import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { Dashboard } from '@/components/pagesComponents/Dashboard'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { dashboardQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { RouterContext } from '@/main'
 import useFetch from '@/hooks/UseFetch'
 import { DashboardStatistics } from '@/types/api/dashboard'
@@ -29,7 +29,7 @@ export const Route = createFileRoute('/_main/')({
     }
     await queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: dashboardQueryKeys.statistics(),
+        queryKey: queryKeys.dashboard.statistics(),
         endpoint: 'dashboard/home',
       }),
     )
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/_main/')({
 function Index() {
   const hasHomePermission = useAuthStore((state) => (state.user?.permissions["dashboard-home"] || []).includes("index"))
   const { data } = useFetch<ApiResponseBase<DashboardStatistics>>({
-    queryKey: dashboardQueryKeys.statistics(),
+    queryKey: queryKeys.dashboard.statistics(),
     endpoint: 'dashboard/home',
     // suspense: true,
     enabled: hasHomePermission!!

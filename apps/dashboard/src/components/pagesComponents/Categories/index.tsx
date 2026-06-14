@@ -7,7 +7,7 @@ import { useSearch, Link } from '@tanstack/react-router'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
 import { categoryActions, categoryColumns, getCategoryFilters } from './Config'
-import { categoriesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { Category } from '@/types/api/faq'
@@ -35,8 +35,8 @@ const Categories = ({
       currentId,
       'active',
       'collections',
-      categoriesQueryKeys.getCategory(currentId),
-      [categoriesQueryKeys.filterd(search)],
+      queryKeys.categories.getCategory(currentId),
+      [queryKeys.categories.filterd(search)],
     )
 
   const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -44,8 +44,8 @@ const Categories = ({
       currentId,
       'delete',
       'collections',
-      categoriesQueryKeys.getCategory(currentId),
-      [categoriesQueryKeys.filterd(search)],
+      queryKeys.categories.getCategory(currentId),
+      [queryKeys.categories.filterd(search)],
     )
 
   useEffect(() => {
@@ -86,26 +86,18 @@ const Categories = ({
 
   return (
     <DataTable
-      data={data.data.items}
+      apiResponse={data}
       columns={categoryColumns(openAlert)}
       searchKey="search"
       filters={getCategoryFilters(t)}
       pagination
       rowUrl={(row)=>`/categories/show/${row.id}`}
-      meta={data.data.meta!}
       actions={RowActions({
         actions: categoryActions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: (data.data?.meta!?.page ?? 1) - 1,
-          pageSize: data.data?.meta!?.limit || 10,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

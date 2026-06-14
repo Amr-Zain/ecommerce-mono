@@ -32,7 +32,7 @@ import ConfirmModal from '@/components/common/uiComponents/ConfirmModal'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
-import { shopifyStoresQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Link } from '@tanstack/react-router'
 
 interface InstallResponse {

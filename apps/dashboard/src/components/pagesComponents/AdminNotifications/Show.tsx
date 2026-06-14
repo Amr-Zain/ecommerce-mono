@@ -19,7 +19,7 @@ import {
 import { Button } from '@ecommerce/ui/components/button'
 import { AdminNotificationDetail } from './Config'
 import useFetch from '@/hooks/UseFetch'
-import { adminNotificationsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { ApiResponseBase } from '@/types/api/http'
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
@@ -38,7 +38,7 @@ export default function AdminNotificationShow({ notification }: AdminNotificatio
     const endpoint = `admin-notifications/${notification.id}`
 
     const { data: pageData, isFetching } = useFetch<ApiResponseBase<AdminNotificationDetail>>({
-        queryKey: [...adminNotificationsQueryKeys.get(notification.id), 'receivers', page],
+        queryKey: [...queryKeys.adminNotifications.get(notification.id), 'receivers', page],
         endpoint,
         params: { page },
         suspense: false,

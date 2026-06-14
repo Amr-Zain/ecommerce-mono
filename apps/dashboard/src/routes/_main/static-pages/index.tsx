@@ -6,7 +6,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { StaticPage } from '@/types/api/staticPages'
 import { prefetchOptions } from '@/util/preFetcher'
-import { pagesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 import { routePermission } from '@/lib/utils'
@@ -33,7 +33,7 @@ export const Route = createFileRoute('/_main/static-pages/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: pagesQueryKeys.filterd(search),
+        queryKey: queryKeys.pages.filterd(search),
         endpoint,
         params: search,
       }),
@@ -45,7 +45,7 @@ export const Route = createFileRoute('/_main/static-pages/')({
 function Index() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<StaticPage[], 'static_pages'>>({
-    queryKey: pagesQueryKeys.filterd(search),
+    queryKey: queryKeys.pages.filterd(search),
     endpoint,
     suspense: true,
     params: { ...search },

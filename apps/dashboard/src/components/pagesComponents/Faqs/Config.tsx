@@ -10,7 +10,7 @@ import { FieldProp } from '@/types/components/form'
 import { Faq, FAQ_TYPE_OPTIONS, displayFaqType } from '@/types/api/faq'
 import { FaqFormData } from '@/lib/schema'
 import { PickedAction } from '@/hooks/useStatusMutations'
-import { faqQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Filter, RowAction } from '@/types/components/table'
 import { TFn } from '@/lib/schema/validation'
 
@@ -89,7 +89,7 @@ export const faqActions = (
     params: (row: Faq) => ({ id: String(row.id) }),
     permission: 'faqs',
     action: 'update',
-    queryKey: (id: string) => faqQueryKeys.getFaq(id),
+    queryKey: (id: string) => queryKeys.faqs.getFaq(id),
   },
   {
     label: t('actions.delete'),

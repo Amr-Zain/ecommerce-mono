@@ -4,7 +4,7 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { createFileRoute } from '@tanstack/react-router'
 import useFetch from '@/hooks/UseFetch'
 import Supervisors from '@/components/pagesComponents/Supervisors'
-import { supervisorsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Supervisor } from '@/types/api/user'
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
@@ -36,7 +36,7 @@ export const Route = createFileRoute('/_main/supervisors/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: supervisorsQueryKeys.filterd(search),
+        queryKey: queryKeys.supervisors.filterd(search),
         endpoint,
         params: search,
       }),
@@ -47,7 +47,7 @@ export const Route = createFileRoute('/_main/supervisors/')({
 function Index() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Supervisor[], 'users'>>({
-    queryKey: supervisorsQueryKeys.filterd(search),
+    queryKey: queryKeys.supervisors.filterd(search),
     endpoint,
     suspense: true,
     params: { ...search },

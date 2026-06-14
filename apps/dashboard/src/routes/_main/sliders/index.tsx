@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { slidersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { TableLoader } from '@/components/common/table/TableLoader'
@@ -28,7 +28,7 @@ export const Route = createFileRoute('/_main/sliders/')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: slidersQueryKeys.filterd(search),
+        queryKey: queryKeys.sliders.filterd(search),
         endpoint,
         params: search,
       }),
@@ -47,7 +47,7 @@ function RouteComponent() {
       'items'
     >
   >({
-    queryKey: slidersQueryKeys.filterd(search),
+    queryKey: queryKeys.sliders.filterd(search),
     endpoint,
     suspense: true,
     params: search,

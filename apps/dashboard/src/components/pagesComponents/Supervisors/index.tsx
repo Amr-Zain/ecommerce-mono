@@ -8,7 +8,7 @@ import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useEffect, useState } from 'react'
 import { actions, filters, supervisorColumns } from './Config'
 import { useAlertModal } from '@/stores/useAlertModal'
-import { supervisorsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Supervisor } from '@/types/api/user'
 import { getModalTitle } from '@/util/helpers'
 import { HasPermission } from '@/components/common/HasPermission'
@@ -24,9 +24,7 @@ const Supervisors = ({
   const search = useSearch({ from: '/_main/supervisors/' })
 
   const rows = data.data?.items || []
-  const meta = (data as any).data?.meta
-
-const [selected, setSelected] = useState<{
+  const meta = (data as any).data?.metaconst [selected, setSelected] = useState<{
   id: string
   type: PickedAction
   isActive?: boolean
@@ -41,15 +39,15 @@ const { mutateAsync: toggleActive, isPending: pActive } = useStatusMutation(
   currentId,
   'active',
   'supervisors',
-  supervisorsQueryKeys.get(currentId),
-  [supervisorsQueryKeys.filterd(search)],
+  queryKeys.supervisors.get(currentId),
+  [queryKeys.supervisors.filterd(search)],
 )
 const { mutateAsync: deleteSupervisor, isPending: pDelete } = useStatusMutation(
   currentId,
   'delete',
   'supervisors',
-  supervisorsQueryKeys.get(currentId),
-  [supervisorsQueryKeys.filterd(search)],
+  queryKeys.supervisors.get(currentId),
+  [queryKeys.supervisors.filterd(search)],
 )
 
 useEffect(() => {
@@ -106,25 +104,17 @@ const openAlert = (type: PickedAction, row: Supervisor) => {
 
   return (
     <DataTable
-      data={rows}
+      apiResponse={data}
       columns={supervisorColumns(openAlert,t)}
       searchKey="search"
       filters={filters(t)}
       pagination
-      meta={meta}
       actions={RowActions({
         actions: actions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: ((meta?.current_page || 1) - 1) as number,
-          pageSize: (meta?.per_page || 15) as number,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { dashboardQueryKeys, reviewsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { TableLoader } from '@/components/common/table/TableLoader'
@@ -41,7 +41,7 @@ export const Route = createFileRoute('/_main/reviews/')({
         // Prefetch review data
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: reviewsQueryKeys.filterd(search),
+                queryKey: queryKeys.reviews.filterd(search),
                 endpoint,
                 params: search,
             }),
@@ -50,7 +50,7 @@ export const Route = createFileRoute('/_main/reviews/')({
         // Prefetch dashboard stats for review cards
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: dashboardQueryKeys.statistics(),
+                queryKey: queryKeys.dashboard.statistics(),
                 endpoint: 'dashboard/home'
             })
         )
@@ -60,7 +60,7 @@ export const Route = createFileRoute('/_main/reviews/')({
 function ReviewsTable() {
     const search = Route.useLoaderDeps().search
     const { data } = useFetch<ApiResponse<ReviewEntity>>({
-        queryKey: reviewsQueryKeys.filterd(search),
+        queryKey: queryKeys.reviews.filterd(search),
         endpoint,
         suspense: true,
         params: search,

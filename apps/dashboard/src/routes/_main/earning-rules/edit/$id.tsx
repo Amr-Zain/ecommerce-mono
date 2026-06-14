@@ -5,7 +5,7 @@ import { ApiResponse, ApiResponseBase } from '@/types/api/http'
 import { RouterContext } from '@/main'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { earningRulesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { EarningRule } from '@/types/api/earningRules'
 
 import { routePermission } from '@/lib/utils'
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_main/earning-rules/edit/$id')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: earningRulesQueryKeys.getEarningRule(params.id),
+        queryKey: queryKeys.earningRules.getEarningRule(params.id),
         endpoint: `earning-rules/${params.id}`,
       }),
     )
@@ -31,7 +31,7 @@ function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<EarningRule>>({
     endpoint: `earning-rules/${id}`,
-    queryKey: earningRulesQueryKeys.getEarningRule(id),
+    queryKey: queryKeys.earningRules.getEarningRule(id),
     suspense: true,
   })
 

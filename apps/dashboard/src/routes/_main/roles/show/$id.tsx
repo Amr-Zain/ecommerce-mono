@@ -3,7 +3,7 @@ import { RoleShow as ShowComponent } from '@/components/pagesComponents/Roles/Sh
 import { RoleShowSkeleton } from '@/components/pagesComponents/Roles/RoleShowSkeleton'
 import { RouterContext } from '@/main'
 import { prefetchOptions } from '@/util/preFetcher'
-import { rolesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 const endpoint = `roles`
@@ -27,7 +27,7 @@ export const Route = createFileRoute('/_main/roles/show/$id')({
     const id = params.id
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: rolesQueryKeys.get(id),
+        queryKey: queryKeys.roles.get(id),
         endpoint: `${endpoint}/${id}`,
       }),
     )

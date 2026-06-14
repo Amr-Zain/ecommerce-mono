@@ -3,7 +3,7 @@ import { Badge } from '@ecommerce/ui/components/badge'
 import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
 import type { TabItem } from '@/components/ui/AnimatedTabs'
 import useFetch from '@/hooks/UseFetch'
-import { paymentGatewaysQueryKeys, paymentSessionsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ApiResponse, ApiResponseBase } from '@/types/api/http'
@@ -16,12 +16,12 @@ const PaymentGatewaysTabs = () => {
     const currentTab = (searchParams as any).tab || 'gateways'
 
     const { data: gatewaysData, isPending: gatewaysPending } = useFetch<ApiResponseBase<any[]>>({
-        queryKey: paymentGatewaysQueryKeys.all(),
+        queryKey: queryKeys.paymentGateways.all(),
         endpoint: 'payment-gateways',
     })
 
     const { data: sessionsData, isPending: sessionsPending } = useFetch<ApiResponse<any>>({
-        queryKey: paymentSessionsQueryKeys.filterd({ paginate: '1' }),
+        queryKey: queryKeys.paymentSessions.filterd({ paginate: '1' }),
         endpoint: 'payment-sessions',
         params: { paginate: '1' },
     })

@@ -3,7 +3,8 @@ import { Clock, CheckCircle2, XCircle, AlertCircle, ShoppingCart, LucideIcon } f
 import { motion, Variants } from "motion/react";
 import { StatsCard } from "@/components/common/charts/StatsCard";
 import useFetch from "@/hooks/UseFetch";
-import { dashboardQueryKeys } from "@/util/queryKeysFactory";
+import { queryKeys } from '@/util/queryKeysFactory'
+;
 import { ApiResponseBase } from "@/types/api/http";
 import { DashboardStatistics } from "@/types/api/dashboard";
 import { Card, CardContent, CardHeader } from "@ecommerce/ui/components/card";
@@ -24,7 +25,7 @@ const statusConfig: Record<string, { icon: LucideIcon; color: string }> = {
 export function OrderStatusStats() {
     const { t } = useTranslation();
     const { data: statsResponse } = useFetch<ApiResponseBase<DashboardStatistics>>({
-        queryKey: dashboardQueryKeys.statistics(),
+        queryKey: queryKeys.dashboard.statistics(),
         endpoint: 'dashboard/home',
         suspense: true,
     });

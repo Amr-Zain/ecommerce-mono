@@ -5,7 +5,7 @@ import {
     textColumn,
 } from '@/components/features/sharedColumns'
 import { PickedAction } from '@/hooks/useStatusMutations'
-import { offersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Filter, RowAction } from '@/types/components/table'
 import { FieldProp } from '@/types/components/form'
 import { OfferFormData } from '@/lib/schema'
@@ -49,7 +49,7 @@ export const offerActions = (
             params: (row: Offer) => ({ id: String(row.id) }),
             permission: 'offers',
             action: 'update',
-            queryKey: (id: string) => offersQueryKeys.getOffer(id),
+            queryKey: (id: string) => queryKeys.offers.getOffer(id),
         },
         {
             label: t('actions.delete'),

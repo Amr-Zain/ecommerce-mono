@@ -2,7 +2,7 @@ import useFetch from '@/hooks/UseFetch'
 import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { prefetchOptions } from '@/util/preFetcher'
-import { showRoomsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 import ShowRoomForm from '@/components/pagesComponents/ShowRooms/Form'
 import { ShowRoomDetail } from '@/types/api/showRoom'
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_main/show-rooms/edit/$id')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: showRoomsQueryKeys.getShowRoom(params.id),
+        queryKey: queryKeys.showRooms.getShowRoom(params.id),
         endpoint: `show-rooms/${params.id}`,
       }),
     )
@@ -30,7 +30,7 @@ export const Route = createFileRoute('/_main/show-rooms/edit/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponse<ShowRoomDetail>>({
-    queryKey: showRoomsQueryKeys.getShowRoom(id),
+    queryKey: queryKeys.showRooms.getShowRoom(id),
     endpoint: `show-rooms/${id}`,
     suspense: true,
   })

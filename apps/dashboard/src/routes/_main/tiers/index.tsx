@@ -4,7 +4,7 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { createFileRoute } from '@tanstack/react-router'
 import useFetch from '@/hooks/UseFetch'
 import Tiers from '@/components/pagesComponents/Tiers'
-import { dashboardQueryKeys, tiersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Tier } from '@/components/pagesComponents/Tiers/Config'
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
@@ -39,7 +39,7 @@ export const Route = createFileRoute('/_main/tiers/')({
     // Prefetch tiers data
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: tiersQueryKeys.filterd(search),
+        queryKey: queryKeys.tiers.filterd(search),
         endpoint,
         params: search,
       }),
@@ -49,7 +49,7 @@ export const Route = createFileRoute('/_main/tiers/')({
     hasPermission('dashboard-home', 'index') &&
       queryClient.ensureQueryData(
         prefetchOptions({
-          queryKey: dashboardQueryKeys.statistics(),
+          queryKey: queryKeys.dashboard.statistics(),
           endpoint: 'dashboard/home'
         })
       )
@@ -59,7 +59,7 @@ export const Route = createFileRoute('/_main/tiers/')({
 function TiersTable() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponseBase<Tier[]>>({
-    queryKey: tiersQueryKeys.filterd(search),
+    queryKey: queryKeys.tiers.filterd(search),
     endpoint,
     suspense: true,
     params: { ...search },

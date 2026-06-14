@@ -6,7 +6,7 @@ import { RouterContext } from '@/main'
 import { ApiResponseBase } from '@/types/api/http'
 import { Coupon } from '@/types/api/coupon'
 import { prefetchOptions } from '@/util/preFetcher'
-import { couponsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_main/coupons/edit/$id')({
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_main/coupons/edit/$id')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: couponsQueryKeys.getCoupon(id),
+        queryKey: queryKeys.coupons.getCoupon(id),
         endpoint: `coupons/${id}`,
       }),
     )
@@ -30,7 +30,7 @@ function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<Coupon>>({
     endpoint: `coupons/${id}`,
-    queryKey: couponsQueryKeys.getCoupon(id),
+    queryKey: queryKeys.coupons.getCoupon(id),
     suspense: true,
   })
 

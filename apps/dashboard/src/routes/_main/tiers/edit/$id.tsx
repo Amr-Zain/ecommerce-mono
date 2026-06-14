@@ -3,7 +3,7 @@ import TierForm from '@/components/pagesComponents/Tiers/Form'
 import { createFileRoute } from '@tanstack/react-router'
 import { RouterContext } from '@/main'
 import { prefetchOptions } from '@/util/preFetcher'
-import { tiersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import useFetch from '@/hooks/UseFetch'
 import { ApiResponseBase } from '@/types/api/http'
 import { Tier } from '@/components/pagesComponents/Tiers/Config'
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_main/tiers/edit/$id')({
         const { queryClient } = context as RouterContext
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: tiersQueryKeys.getTier(id),
+                queryKey: queryKeys.tiers.getTier(id),
                 endpoint: `tiers/${id}`,
             }),
         )
@@ -30,7 +30,7 @@ export const Route = createFileRoute('/_main/tiers/edit/$id')({
 function RouteComponent() {
     const { id } = Route.useParams()
     const { data } = useFetch<ApiResponseBase<Tier>>({
-        queryKey: tiersQueryKeys.getTier(id),
+        queryKey: queryKeys.tiers.getTier(id),
         endpoint: `tiers/${id}`,
         suspense: true,
     })

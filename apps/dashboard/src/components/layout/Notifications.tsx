@@ -10,7 +10,7 @@ import { Button } from '@ecommerce/ui/components/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@ecommerce/ui/components/popover'
 import { Separator } from '@ecommerce/ui/components/separator'
 import useFetch from '@/hooks/UseFetch'
-import { notificationsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { ApiResponse, ApiResponseBase } from '@/types/api/http'
 import { Notification, NotificationsResponse } from '@/routes/_main/settings/notifications'
 import { ScrollArea } from '@ecommerce/ui/components/scroll-area'
@@ -57,7 +57,7 @@ const PopoverNotifications = () => {
   // const userType = useAuthStore((state) => state.user?.user_type)
   // const { data, isLoading } = useFetch<ApiResponseBase<NotificationsResponse>>({
   //   endpoint: 'notifications',
-  //   queryKey: notificationsQueryKeys.list(),
+  //   queryKey: queryKeys.notifications.list(),
   //   params: { per_page: 5 },
   //   customBaseUrl: import.meta.env.VITE_BASE_URL_API,
   // })
@@ -101,7 +101,7 @@ const PopoverNotifications = () => {
   // const handleMarkAsRead = async (id: string | number) => {
   //   try {
   //     await axiosInstance.get(`${import.meta.env.VITE_BASE_URL_API}/notifications/${id}`)
-  //     queryClient.invalidateQueries({ queryKey: notificationsQueryKeys.all })
+  //     queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all })
   //   } catch (err: any) {
   //     toast.error(err.message || t('errors.somethingWentWrong'))
   //   }

@@ -2,7 +2,7 @@ import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import useFetch from '@/hooks/UseFetch'
 import { ApiResponseBase } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
-import { adminNotificationsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { AdminNotificationDetail } from '@/components/pagesComponents/AdminNotifications/Config'
 import { prefetchOptions } from '@/util/preFetcher'
 import { RouterContext } from '@/main'
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_main/admin-notifications/show/$id')({
     const endpoint = `admin-notifications/${params.id}`
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: adminNotificationsQueryKeys.get(params.id),
+        queryKey: queryKeys.adminNotifications.get(params.id),
         endpoint,
       }),
     )
@@ -30,7 +30,7 @@ export const Route = createFileRoute('/_main/admin-notifications/show/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<AdminNotificationDetail>>({
-    queryKey: adminNotificationsQueryKeys.get(id),
+    queryKey: queryKeys.adminNotifications.get(id),
     endpoint: `admin-notifications/${id}`,
     suspense: true,
   })

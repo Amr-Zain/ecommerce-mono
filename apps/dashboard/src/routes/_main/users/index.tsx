@@ -4,7 +4,7 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { createFileRoute } from '@tanstack/react-router'
 import useFetch from '@/hooks/UseFetch'
 import Users from '@/components/pagesComponents/Users'
-import { dashboardQueryKeys, userQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { UserEntity } from '@/components/pagesComponents/Users/Config'
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
@@ -43,7 +43,7 @@ export const Route = createFileRoute('/_main/users/')({
     // Prefetch user data
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: userQueryKeys.filterd(search),
+        queryKey: queryKeys.user.filterd(search),
         endpoint,
         params: search,
       }),
@@ -52,7 +52,7 @@ export const Route = createFileRoute('/_main/users/')({
     // Prefetch dashboard stats
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: dashboardQueryKeys.statistics(),
+        queryKey: queryKeys.dashboard.statistics(),
         endpoint: 'dashboard/home'
       })
     )
@@ -63,7 +63,7 @@ function UsersTable() {
   const search = Route.useLoaderDeps().search
   console.log(search)
   const { data } = useFetch<ApiResponse<UserEntity>>({
-    queryKey: userQueryKeys.filterd(search),
+    queryKey: queryKeys.user.filterd(search),
     endpoint,
     suspense: true,
     params: { ...search },

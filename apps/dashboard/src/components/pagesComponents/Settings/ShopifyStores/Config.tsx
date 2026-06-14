@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table'
 import { Filter, RowAction } from '@/types/components/table'
-import { shopifyStoresQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import {
     booleanControlColumn,
     createdAtColumn,
@@ -82,7 +82,7 @@ export const shopifyStoreActions = (
             params: (row: ShopifyStore) => ({ id: row.id }),
             permission: 'shopify-stores',
             action: 'update',
-            queryKey: (id: string) => shopifyStoresQueryKeys.getStore(id),
+            queryKey: (id: string) => queryKeys.shopifyStores.getStore(id),
         },
         {
             label: t('actions.show'),
@@ -90,7 +90,7 @@ export const shopifyStoreActions = (
             params: (row: ShopifyStore) => ({ id: row.id }),
             permission: 'shopify-stores',
             action: 'show',
-            queryKey: (id: string) => shopifyStoresQueryKeys.getStore(id),
+            queryKey: (id: string) => queryKeys.shopifyStores.getStore(id),
         },
         {
             label: t('actions.delete'),

@@ -5,7 +5,7 @@ import { useAlertModal } from '@/stores/useAlertModal'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
 import { getModalTitle } from '@/util/helpers'
-import { paymentGatewaysQueryKeys, paymentSessionsQueryKeys, userQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { paymentGatewayColumns, PaymentGatewayEntity } from './Config'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@ecommerce/ui/components/dialog'
 import { PaymentGatewayForm } from './Form'
@@ -26,13 +26,13 @@ const PaymentGateways = () => {
     const currentTab = (searchParams as any).tab || 'gateways'
 
     const { data: gatewaysData } = useFetch<ApiResponseBase<PaymentGatewayEntity[]>>({
-        queryKey: paymentGatewaysQueryKeys.all(),
+        queryKey: queryKeys.paymentGateways.all(),
         endpoint: 'payment-gateways',
         suspense: true,
     })
 
     const { data: sessionsData } = useFetch<ApiResponse<PaymentSession[], 'payment_sessions'>>({
-        queryKey: paymentSessionsQueryKeys.filterd({ ...searchParams, paginate: '1' }),
+        queryKey: queryKeys.paymentSessions.filterd({ ...searchParams, paginate: '1' }),
         endpoint: 'payment-sessions',
         params: { ...searchParams, paginate: '1' },
         suspense: true,
@@ -50,8 +50,8 @@ const PaymentGateways = () => {
             String(currentId),
             'active',
             'payment-gateways',
-            paymentGatewaysQueryKeys.getPaymentGateway(currentId),
-            [paymentGatewaysQueryKeys.all()],
+            queryKeys.paymentGateways.getPaymentGateway(currentId),
+            [queryKeys.paymentGateways.all()],
         )
 
     useEffect(() => {
@@ -120,7 +120,7 @@ const PaymentGateways = () => {
                                     id={selected.row.id}
                                     onSuccess={() => {
                                         setSelected(null)
-                                        queryClient.invalidateQueries({ queryKey: paymentGatewaysQueryKeys.all() })
+                                        queryClient.invalidateQueries({ queryKey: queryKeys.paymentGateways.all() })
                                     }}
                                 />
                             )}
@@ -133,14 +133,13 @@ const PaymentGateways = () => {
                 <DataTable
                     data={sessionsData?.data?.payment_sessions || []}
                     columns={paymentSessionColumns(t)}
-                    enableUrlState
                     rowUrl={(row) => `/payment-gateways/sessions/${row.id}`}
                     filters={[
                         {
                             id: 'filters[provider]',
                             title: t('menu.paymentGateways'),
                             endpoint: 'payment-gateways',
-                            queryKey: paymentGatewaysQueryKeys.all(),
+                            queryKey: queryKeys.paymentGateways.all(),
                             select: (res: any) => res.data.map((item: any) => ({ label: item.name, value: item.identifier })),
                             multiple: false,
                         },
@@ -153,7 +152,7 @@ const PaymentGateways = () => {
                             id: 'filters[user_id]',
                             title: t('Form.labels.user_id'),
                             endpoint: 'users',
-                            queryKey: userQueryKeys.all(),
+                            queryKey: queryKeys.user.all(),
                             select: (res: any) => res.data.map((item: any) => ({ label: item.full_name, value: item.id })),
                             multiple: false,
                         },

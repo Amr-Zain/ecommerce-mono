@@ -18,6 +18,7 @@
         "imports:ui": "node ./scripts/update-ui-imports.mjs"
     },
     "devDependencies": {
+        "@turbo/windows-64": "^2.9.18",
         "turbo": "^2.9.14"
     }
 }

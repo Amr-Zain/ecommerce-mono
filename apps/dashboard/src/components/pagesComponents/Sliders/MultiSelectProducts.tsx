@@ -4,7 +4,7 @@ import type { Option } from '@ecommerce/ui/components/multi-select'
 import MultipleSelector from '@ecommerce/ui/components/multi-select'
 import { ApiResponseBase } from '@/types/api/http'
 import useFetch from '@/hooks/UseFetch'
-import { productsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Product } from '@/types/api/product'
 import { useTranslation } from 'react-i18next'
 import { FormLabel, FormMessage } from '@ecommerce/ui/components/form'
@@ -29,7 +29,7 @@ const MultiSelectProducts = () => {
     ApiResponseBase<Product[]>,
     ProductOption[]
   >({
-    queryKey: productsQueryKeys.all(search),
+    queryKey: queryKeys.products.all(search),
     endpoint,
     params: { search },
     select: (data) =>{

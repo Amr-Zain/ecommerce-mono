@@ -8,7 +8,7 @@ import { City } from '@/types/api/country'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
 import { actions, cityColumns, getCityFilters } from './config'
-import { citiesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { HasPermission } from '@/components/common/HasPermission'
@@ -31,8 +31,8 @@ const Cities = ({ data }: { data: ApiResponse<City[], 'cities'> }) => {
       currentId,
       'active',
       'cities',
-      citiesQueryKeys.getCity(currentId),
-      [citiesQueryKeys.filterd(search)],
+      queryKeys.cities.getCity(currentId),
+      [queryKeys.cities.filterd(search)],
     )
 
   const { mutateAsync: ChangeDeleteMutate, isPending: deletePending } =
@@ -40,8 +40,8 @@ const Cities = ({ data }: { data: ApiResponse<City[], 'cities'> }) => {
       currentId,
       'delete',
       'cities',
-      citiesQueryKeys.getCity(currentId),
-      [citiesQueryKeys.filterd(search)],
+      queryKeys.cities.getCity(currentId),
+      [queryKeys.cities.filterd(search)],
     )
 
   // ✅ Sync the global alert's pending state
@@ -88,20 +88,12 @@ const Cities = ({ data }: { data: ApiResponse<City[], 'cities'> }) => {
       searchKey="search"
       filters={getCityFilters(t)}
       pagination
-      meta={data.data.meta!}
       actions={RowActions({
         actions: actions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={customToolbar}
-      initialState={{
-        pagination: {
-          pageIndex: (data.data.meta?.current_page ?? 1) - 1,
-          pageSize: data.data.meta?.per_page ?? 10,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

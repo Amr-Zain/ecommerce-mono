@@ -2,7 +2,7 @@ import useFetch from '@/hooks/UseFetch'
 import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { prefetchOptions } from '@/util/preFetcher'
-import { faqQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 import FaqForm from '@/components/pagesComponents/Faqs/FaqForm'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
@@ -20,7 +20,7 @@ export const Route = createFileRoute('/_main/faqs/edit/$id')({
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: faqQueryKeys.getFaq(params.id),
+        queryKey: queryKeys.faqs.getFaq(params.id),
         endpoint: `faqs/${params.id}`,
       }),
     )
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/_main/faqs/edit/$id')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponse<FaqShowResponse>>({
-    queryKey: faqQueryKeys.getFaq(id),
+    queryKey: queryKeys.faqs.getFaq(id),
     endpoint: `faqs/${id}`,
     suspense: true,
   })

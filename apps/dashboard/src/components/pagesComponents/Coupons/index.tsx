@@ -7,7 +7,7 @@ import { useSearch, Link } from '@tanstack/react-router'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useEffect, useState } from 'react'
 import { couponActions, couponColumns, getCouponFilters } from './Config'
-import { couponsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { Coupon } from '@/types/api/coupon'
@@ -29,8 +29,8 @@ const Coupons = ({ data }: { data: ApiResponse<Coupon[], 'coupons'> }) => {
       currentId,
       'active',
       'coupons',
-      couponsQueryKeys.getCoupon(currentId),
-      [couponsQueryKeys.filterd(search)],
+      queryKeys.coupons.getCoupon(currentId),
+      [queryKeys.coupons.filterd(search)],
     )
 
   const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -38,8 +38,8 @@ const Coupons = ({ data }: { data: ApiResponse<Coupon[], 'coupons'> }) => {
       currentId,
       'delete',
       'coupons',
-      couponsQueryKeys.getCoupon(currentId),
-      [couponsQueryKeys.filterd(search)],
+      queryKeys.coupons.getCoupon(currentId),
+      [queryKeys.coupons.filterd(search)],
     )
 
   useEffect(() => {
@@ -81,20 +81,12 @@ const Coupons = ({ data }: { data: ApiResponse<Coupon[], 'coupons'> }) => {
       searchKey="search"
       filters={getCouponFilters(t)}
       pagination
-      meta={data.data.meta}
       actions={RowActions({
         actions: couponActions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: (data.data.meta?.current_page ?? 1) - 1,
-          pageSize: data.data.meta?.per_page ?? 10,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

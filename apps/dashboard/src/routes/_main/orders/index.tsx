@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { dashboardQueryKeys, ordersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { Order } from '@/types/api/order'
@@ -44,7 +44,7 @@ export const Route = createFileRoute('/_main/orders/')({
     // Prefetch order data
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: ordersQueryKeys.filterd(search),
+        queryKey: queryKeys.orders.filterd(search),
         endpoint,
         params: search,
       }),
@@ -53,7 +53,7 @@ export const Route = createFileRoute('/_main/orders/')({
     // Prefetch dashboard stats for order cards
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: dashboardQueryKeys.statistics(),
+        queryKey: queryKeys.dashboard.statistics(),
         endpoint: 'dashboard/home',
       }),
     )
@@ -71,7 +71,7 @@ function OrdersTable() {
       'orders'
     >
   >({
-    queryKey: ordersQueryKeys.filterd(search),
+    queryKey: queryKeys.orders.filterd(search),
     endpoint,
     suspense: true,
     params: search,

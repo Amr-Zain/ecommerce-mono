@@ -13,7 +13,7 @@ import {
   faqColumns,
   getFaqFilters,
 } from './Config'
-import { faqQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { HasPermission } from '@/components/common/HasPermission'
@@ -36,8 +36,8 @@ const Faqs = ({ data }: { data: ApiResponse<Faq> }) => {
       currentId,
       'active',
       'faqs',
-      faqQueryKeys.getFaq(currentId),
-      [faqQueryKeys.all()],
+      queryKeys.faqs.getFaq(currentId),
+      [queryKeys.faqs.all()],
     )
 
   const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -45,8 +45,8 @@ const Faqs = ({ data }: { data: ApiResponse<Faq> }) => {
       currentId,
       'delete',
       'faqs',
-      faqQueryKeys.getFaq(currentId),
-      [faqQueryKeys.all()],
+      queryKeys.faqs.getFaq(currentId),
+      [queryKeys.faqs.all()],
     )
 
   useEffect(() => {
@@ -82,25 +82,17 @@ const Faqs = ({ data }: { data: ApiResponse<Faq> }) => {
 
   return (
     <DataTable
-      data={data.data.items}
+      apiResponse={data}
       columns={faqColumns(openAlert,t)}
       searchKey="search"
       filters={getFaqFilters(t)}
       pagination
-      meta={data.data.meta!}
       actions={RowActions({
         actions: faqActions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: (data.data.meta!.page ?? 1) - 1,
-          pageSize: data.data.meta!.limit || 10,
-        },
-      }}
       resizable
-      enableUrlState
     />
   )
 }

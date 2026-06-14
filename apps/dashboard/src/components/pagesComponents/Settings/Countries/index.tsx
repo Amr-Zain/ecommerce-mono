@@ -7,7 +7,7 @@ import { countryColumns, getCountryFilters, countryActions } from './Config'
 import { RowActions } from '@/components/common/table/RowActions'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
-import { countriesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { CountryDetails } from '@/types/api/country'
 import { getModalTitle } from '@/util/helpers'
@@ -39,8 +39,8 @@ const Countries = ({ data }: { data: CountriesApi }) => {
       currentId,
       'active',
       'countries',
-      countriesQueryKeys.getCountry(currentId),
-      [countriesQueryKeys.filterd(search)],
+      queryKeys.countries.getCountry(currentId),
+      [queryKeys.countries.filterd(search)],
     )
 
   const { mutateAsync: ChangeDeleteMutate, isPending: deletePending } =
@@ -48,8 +48,8 @@ const Countries = ({ data }: { data: CountriesApi }) => {
       currentId,
       'delete',
       'countries',
-      countriesQueryKeys.getCountry(currentId),
-      [countriesQueryKeys.filterd(search)],
+      queryKeys.countries.getCountry(currentId),
+      [queryKeys.countries.filterd(search)],
     )
 
   useEffect(() => {
@@ -98,21 +98,12 @@ const Countries = ({ data }: { data: CountriesApi }) => {
       filters={getCountryFilters(t)}
       rowUrl={(row) => `/settings/countries/show/${row.id}`}
       pagination
-      meta={(data as any)?.meta}
-      initialState={{
-        pagination: {
-          pageIndex: ((data as any).items?.meta?.current_page || 1) - 1,
-          pageSize: (data as any)?.meta?.per_page || 10,
-        },
-      }}
       actions={RowActions({
         actions: countryActions(t, openAlert),
         menuLabel: t('actions.entity'),
       })}
       toolbar={customToolbar}
       resizable
-      enableUrlState
-      // exports={{ name: 'countries' }}
     />
   )
 }

@@ -37,8 +37,13 @@ export interface SelectFilter {
 export type Filter = SelectFilter | CustomFilter
 
 export interface DataTableProps<TData, TValue> {
-  data: TData[]
+  /** Pass the full ApiResponse — data, meta and initial pagination are derived automatically.
+   *  When provided, `data` and `meta` props are ignored. */
+  apiResponse?: ApiResponse<TData>
+  /** Raw data array — use when data is not a standard ApiResponse (e.g. non-paginated lists) */
+  data?: TData[]
   columns: ColumnDef<TData, TValue>[]
+  /** Server-side pagination meta — derived automatically from apiResponse when provided */
   meta?: Meta
   filters?: (Filter)[]
   searchKey?: string
@@ -47,7 +52,6 @@ export interface DataTableProps<TData, TValue> {
   initialState?: {
     sorting?: SortingState
     columnFilters?: ColumnFiltersState
-    pagination?: PaginationState
   }
   toolbar?: React.ReactNode
   actions?: (row: Row<TData>) => React.ReactNode
@@ -55,7 +59,6 @@ export interface DataTableProps<TData, TValue> {
   resizable?: boolean
   className?: string
   onRowSelectionChange?: (selectedRows: TData[]) => void
-  enableUrlState?: boolean
   exports?: {
     name: string
     endpoint?: string

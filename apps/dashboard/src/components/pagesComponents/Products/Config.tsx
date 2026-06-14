@@ -6,7 +6,7 @@ import {
   textColumn,
 } from '@/components/features/sharedColumns'
 import { PickedAction } from '@/hooks/useStatusMutations'
-import { categoriesQueryKeys, productsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Filter, RowAction } from '@/types/components/table'
 import { FieldProp } from '@/types/components/form'
 import { ProductFormData } from '@/lib/schema'
@@ -117,7 +117,7 @@ export const productActions = (
       params: (row: Product) => ({ id: String(row.id) }),
       permission: 'products',
       action: 'show',
-      queryKey: (id: string) => productsQueryKeys.getProduct(id),
+      queryKey: (id: string) => queryKeys.products.getProduct(id),
     },
     {
       label: t('actions.edit'),
@@ -125,7 +125,7 @@ export const productActions = (
       params: (row: Product) => ({ id: String(row.id) }),
       permission: 'products',
       action: 'update',
-      queryKey: (id: string) => productsQueryKeys.getProduct(id),
+      queryKey: (id: string) => queryKeys.products.getProduct(id),
     },
     {
       label: t('actions.delete'),
@@ -214,7 +214,7 @@ export const buildProductFields = (
       inputProps: {
         placeholder: t('Form.placeholders.category'),
         endpoint: 'collections?custom_filter=sub_sub_collection',
-        queryKey: categoriesQueryKeys.filterdNotPage({
+        queryKey: queryKeys.categories.filterdNotPage({
           custom_filter: 'sub_sub_collection',
         }),
         select: (res: any) =>

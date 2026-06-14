@@ -4,7 +4,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { offersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { searchParamsValidate } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { TableLoader } from '@/components/common/table/TableLoader'
@@ -28,7 +28,7 @@ export const Route = createFileRoute('/_main/offers/')({
         const { queryClient } = context as RouterContext
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: offersQueryKeys.filterd(search),
+                queryKey: queryKeys.offers.filterd(search),
                 endpoint,
                 params: search,
             }),
@@ -47,7 +47,7 @@ function RouteComponent() {
             'offers'
         >
     >({
-        queryKey: offersQueryKeys.filterd(search),
+        queryKey: queryKeys.offers.filterd(search),
         endpoint,
         suspense: true,
         params: search,

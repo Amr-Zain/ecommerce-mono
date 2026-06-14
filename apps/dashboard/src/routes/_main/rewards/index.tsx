@@ -3,7 +3,7 @@ import { RouterContext } from '@/main'
 import { ApiResponse } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
-import { dashboardQueryKeys, earningRulesQueryKeys, rewardsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { searchParamsValidate, toStr } from '@/types/api/general'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { Reward } from '@/types/api/earningRules'
@@ -38,7 +38,7 @@ export const Route = createFileRoute('/_main/rewards/')({
         // Prefetch rewards data
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: rewardsQueryKeys.filtered(search),
+                queryKey: queryKeys.rewards.filtered(search),
                 endpoint,
                 params: search,
             }),
@@ -47,7 +47,7 @@ export const Route = createFileRoute('/_main/rewards/')({
         // Prefetch dashboard stats for cards
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: dashboardQueryKeys.statistics(),
+                queryKey: queryKeys.dashboard.statistics(),
                 endpoint: 'dashboard/home'
             })
         )
@@ -57,7 +57,7 @@ export const Route = createFileRoute('/_main/rewards/')({
 function RewardsContent() {
     const search = Route.useLoaderDeps().search
     const { data } = useFetch<ApiResponse<Reward[], 'rewards'>>({
-        queryKey: rewardsQueryKeys.filtered(search),
+        queryKey: queryKeys.rewards.filtered(search),
         endpoint,
         suspense: true,
         params: search,

@@ -15,7 +15,7 @@ import { RowActions } from '@/components/common/table/RowActions'
 import { AdditionalPagesActions } from '../Config' 
 import { useAlertModal } from '@/stores/useAlertModal'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
-import { pagesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { AdditionalPage } from '@/types/api/staticPages'
 import { HasPermission } from '@/components/common/HasPermission'
 
@@ -45,8 +45,8 @@ export function AdditionalsCard({
       selected?.id?.toString() || '0',
       'delete',
       'static-page-additionals',
-      pagesQueryKeys.getPage(String(staticPageId)),
-      [pagesQueryKeys.getPage(String(staticPageId))],
+      queryKeys.pages.getPage(String(staticPageId)),
+      [queryKeys.pages.getPage(String(staticPageId))],
     )
 
   const { mutateAsync: ChangeActiveMutate, isPending: activePending } =
@@ -54,8 +54,8 @@ export function AdditionalsCard({
       selected?.id?.toString() || '0',
       'active',
       'static-page-additionals',
-      pagesQueryKeys.getPage(String(staticPageId)),
-      [pagesQueryKeys.getPage(String(staticPageId))],
+      queryKeys.pages.getPage(String(staticPageId)),
+      [queryKeys.pages.getPage(String(staticPageId))],
     )
 
   const openSystemAlert = React.useCallback(

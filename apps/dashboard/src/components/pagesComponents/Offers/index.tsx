@@ -7,7 +7,7 @@ import { useSearch, Link } from '@tanstack/react-router'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
 import { offerActions, offerColumns, getOfferFilters, Offer } from './Config'
-import { offersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 export type { OfferEntity } from './Form'
@@ -33,8 +33,8 @@ const Offers = ({
             currentId,
             'active',
             'offers',
-            offersQueryKeys.getOffer(currentId),
-            [offersQueryKeys.filterd(search)],
+            queryKeys.offers.getOffer(currentId),
+            [queryKeys.offers.filterd(search)],
         )
 
     const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -42,8 +42,8 @@ const Offers = ({
             currentId,
             'delete',
             'offers',
-            offersQueryKeys.getOffer(currentId),
-            [offersQueryKeys.filterd(search)],
+            queryKeys.offers.getOffer(currentId),
+            [queryKeys.offers.filterd(search)],
         )
 
     useEffect(() => {
@@ -85,20 +85,12 @@ const Offers = ({
             searchKey="search"
             filters={getOfferFilters(t)}
             pagination
-            meta={data.data.meta!}
             actions={RowActions({
                 actions: offerActions(t, openAlert),
                 menuLabel: t('actions.entity'),
             })}
             toolbar={toolbar}
-            initialState={{
-                pagination: {
-                    pageIndex: (data.data.meta?.current_page ?? 1) - 1,
-                    pageSize: data.data.meta?.per_page ?? 10,
-                },
-            }}
             resizable
-            enableUrlState
         />
     )
 }

@@ -15,7 +15,7 @@ import { formatDate, getModalTitle } from '@/util/helpers'
 import { RowActions } from '@/components/common/table/RowActions'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
-import { attributeQueryKeys, attributeValueQueryKeys, pagesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { ValueActionsModal, ValueDetails, ValueItem } from '../Values/Config'
 import { HasPermission } from '@/components/common/HasPermission'
 
@@ -43,17 +43,17 @@ export function AttributeValuesCard({
     selected?.id?.toString() || '0',
     'delete',
     'attribute-values',
-    attributeValueQueryKeys.getValue(String(selected?.id || '0')),
-    [attributeQueryKeys.getAttribute(String(attributeId)), 
-      attributeValueQueryKeys.getValue(String(selected?.id || '0'))],
+    queryKeys.attributeValues.getValue(String(selected?.id || '0')),
+    [queryKeys.attributes.getAttribute(String(attributeId)), 
+      queryKeys.attributeValues.getValue(String(selected?.id || '0'))],
   )
 
   const { mutateAsync: doToggle, isPending: activePending } = useStatusMutation(
     selected?.id?.toString() || '0',
     'active',
     'attribute-values',
-    attributeValueQueryKeys.getValue(String(selected?.id || '0')),
-    [attributeQueryKeys.getAttribute(String(attributeId))],
+    queryKeys.attributeValues.getValue(String(selected?.id || '0')),
+    [queryKeys.attributes.getAttribute(String(attributeId))],
   )
 
   const openAlert = React.useCallback(

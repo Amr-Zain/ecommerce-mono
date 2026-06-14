@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import useFetch from '@/hooks/UseFetch'
-import { rolesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Card, CardContent, CardHeader, CardTitle } from '@ecommerce/ui/components/card'
 import { Badge } from '@ecommerce/ui/components/badge'
 import { ShieldCheck, Edit, Calendar } from 'lucide-react'
@@ -17,7 +17,7 @@ export const RoleShow = () => {
 
     const { data: res } = useFetch<any>({
         endpoint: `roles/${id}`,
-        queryKey: rolesQueryKeys.get(id),
+        queryKey: queryKeys.roles.get(id),
         suspense: true,
     })
 

@@ -11,7 +11,7 @@ import {
   productColumns,
   getProductFilters,
 } from './Config'
-import { productsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { Product } from '@/types/api/product'
@@ -40,8 +40,8 @@ export default function Products({
       id,
       'active',
       'products',
-      productsQueryKeys.getProduct(id),
-      [productsQueryKeys.all()],
+      queryKeys.products.getProduct(id),
+      [queryKeys.products.all()],
     )
 
   const { mutateAsync: deleteProduct, isPending: pendingDelete } =
@@ -49,8 +49,8 @@ export default function Products({
       id,
       'delete',
       'products',
-      productsQueryKeys.getProduct(id),
-      [productsQueryKeys.all()],
+      queryKeys.products.getProduct(id),
+      [queryKeys.products.all()],
     )
 
   useEffect(() => {
@@ -87,25 +87,17 @@ export default function Products({
 
   return (
     <DataTable
-      data={data.data.items}
+      apiResponse={data}
       columns={productColumns(open)}
       searchKey="search"
       rowUrl={(row) => `/products/show/${row.id}`}
       filters={getProductFilters(t)}
       pagination
-      meta={data.data.meta!}
       actions={RowActions({
         actions: productActions(t, open),
         menuLabel: t('actions.entity'),
       })}
       toolbar={toolbar}
-      initialState={{
-        pagination: {
-          pageIndex: (data.data.meta?.page ?? 1) - 1,
-          pageSize: data.data.meta?.limit ?? 10,
-        },
-      }}
-      enableUrlState
     />
   )
 }
