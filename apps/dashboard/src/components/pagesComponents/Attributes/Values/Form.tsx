@@ -1,15 +1,12 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
 import {
   buildValueFields,
   ValueDetails,
 } from './Config'
-import { attributeQueryKeys, attributeValueQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { makeValueSchema, ValueFormData } from '@/lib/schema'
 
 export default function ValueForm({
@@ -21,7 +18,6 @@ export default function ValueForm({
   attribute_id?: number | string | null
   onDone?: () => void
 }) {
-  const navigate = useNavigate()
   const { t } = useTranslation()
 
   const hasAttrIdProp =
@@ -51,23 +47,15 @@ export default function ValueForm({
   const { mutate, isPending } = useMutate({
     endpoint: valueItem ? `attribute-values/${valueItem.id}` : 'attribute-values',
     method: valueItem?.id ? 'patch' : 'post',
-    mutationKey: attributeValueQueryKeys.getValue(
+    mutationKey: queryKeys.attributeValues.getValue(
       String(valueItem?.id ?? 'new'),
     ),
-    mutationOptions: {
-      meta: {
-        invalidates: [
-          attributeValueQueryKeys.all(),
-          attributeQueryKeys.getAttribute(attrIdString),
-        ],
-      },
-    },
-    onSuccess: (data: ApiResponse) => {
-      if (onDone) onDone()
-      else navigate({ to: '/attributes/values' as any })
-      toast.success(data.message)
-    },
-    onError: (_e, normalized) => toast.error(normalized.message),
+    invalidates: [
+      queryKeys.attributeValues.all(),
+      queryKeys.attributes.getAttribute(attrIdString),
+    ],
+    redirectTo: onDone ? undefined : '/attributes/values',
+    onSuccess: onDone ? () => onDone() : undefined,
   })
 
   const handleSubmit = (values: ValueFormData) => {

@@ -1,11 +1,8 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { tiersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { buildTierFields, Tier, TierFormData } from './Config'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod/v4'
@@ -30,7 +27,6 @@ const makeTierSchema = (t: any) =>
     })
 
 export default function TierForm({ tier }: { tier?: Tier }) {
-    const navigate = useNavigate()
     const { t } = useTranslation()
 
     const schema = makeTierSchema(t)
@@ -52,21 +48,13 @@ export default function TierForm({ tier }: { tier?: Tier }) {
 
     const { mutate, isPending } = useMutate({
         endpoint: tier ? `tiers/${tier.id}` : 'tiers',
-        mutationKey: tiersQueryKeys.getTier(String(tier?.id ?? 'new')),
-        mutationOptions: {
-            meta: {
-                invalidates: [
-                    tiersQueryKeys.all(),
-                    tiersQueryKeys.getTier(String(tier?.id ?? 'new')),
-                ],
-            },
-        },
+        mutationKey: queryKeys.tiers.getTier(String(tier?.id ?? 'new')),
+        invalidates: [
+            queryKeys.tiers.all(),
+            queryKeys.tiers.getTier(String(tier?.id ?? 'new')),
+        ],
         method: tier?.id ? 'patch' : 'post',
-        onSuccess: (data: ApiResponse) => {
-            toast.success(data.message)
-            navigate({ to: '/tiers' } as any)
-        },
-        onError: (_e, normalized) => toast.error(normalized.message),
+        redirectTo: '/tiers',
     })
 
     const handleSubmit = (values: TierFormData) => {

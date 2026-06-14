@@ -10,7 +10,6 @@ import AppForm from '../../common/form/AppForm'
 import { FieldProp } from '@/types/components/form'
 import { useMutate } from '@/hooks/UseMutate'
 import { useAuthStore, UserAuth, PermissionAction, UserPermissions } from '@/stores/authStore'
-import { toast } from 'sonner'
 import { useNavigate } from '@tanstack/react-router'
 import { Logo } from '@/components/common/Icons'
 import { useMemo } from 'react'
@@ -129,12 +128,7 @@ export function LoginForm() {
       }
 
       setUser(userAuth)
-
-      toast.success(t('Auth.login.success') || 'Login successful')
       navigate({ to: '/', replace: true })
-    },
-    onError: (_err, normalized) => {
-      toast.error(normalized.message)
     },
   })
 

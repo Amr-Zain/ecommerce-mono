@@ -9,15 +9,12 @@ import { useTranslation } from 'react-i18next'
 import { Plus } from 'lucide-react'
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
 import { buildAdminNotificationFields } from './Config'
 import { AdminNotificationFormData, makeAdminNotificationSchema } from '@/lib/schema'
 import { useForm } from 'react-hook-form'
 import { zodFormResolver } from '@/lib/schema/resolver'
 import { generateFinalOut } from '@/util/helpers'
-import { adminNotificationsQueryKeys } from '@/util/queryKeysFactory'
-
+import { queryKeys } from '@/util/queryKeysFactory'
 type FormDialogProps = {
     isOpen: boolean
     setIsOpen: (open: boolean) => void
@@ -72,16 +69,10 @@ export function FormDialog({
         endpoint: 'admin-notifications',
         mutationKey: ['admin-notifications', 'create'],
         method: 'post',
-        mutationOptions: {
-            meta: { invalidates: [adminNotificationsQueryKeys.all()] }
-        },
-        onSuccess: (data: ApiResponse) => {
-            toast.success(data.message)
+        invalidates: [queryKeys.adminNotifications.all()],
+        onSuccess: () => {
             setIsOpen(false)
             form.reset()
-        },
-        onError: (_err, normalized) => {
-            toast.error(normalized.message)
         },
     })
 

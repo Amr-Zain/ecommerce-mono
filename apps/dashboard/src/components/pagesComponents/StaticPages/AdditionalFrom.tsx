@@ -1,14 +1,10 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
-import { pagesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import {
   makePageAdditionalSchema,
-  makePageSchema,
   PageAdditionalForm,
-  StaticPageFormData,
 } from '@/lib/schema'
 import { useTranslation } from 'react-i18next'
 
@@ -28,19 +24,11 @@ export default function PageAdditonalForm({
     endpoint: page?.id
       ? `static-page-additionals/${page.id}`
       : 'static-page-additionals',
-    mutationKey: pagesQueryKeys.getPage(spIdStr),
-    mutationOptions: {
-      meta: { invalidates: [pagesQueryKeys.getPage(spIdStr)] },
-    },
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-      onDone?.() 
-    },
-    onError: (_err, normalized) => {
-      toast.error(normalized.message)
-    },
+    mutationKey: queryKeys.pages.getPage(spIdStr),
+    invalidates: [queryKeys.pages.getPage(spIdStr)],
     method: 'post',
     formData: true,
+    onSuccess: () => onDone?.(),
   })
 
   const handleSubmit = (values: PageAdditionalForm) => {
@@ -62,9 +50,8 @@ export default function PageAdditonalForm({
       inputProps: {
         maxFiles: 1,
         acceptedFileTypes: ['image/*'],
-        apiEndpoint: '/media/upload',
-        model: 'image',
-        baseUrl: import.meta.env.VITE_BASE_URL_API,
+        model: 'staticpageadditional',
+        collection: 'image',
       },
     },
     {

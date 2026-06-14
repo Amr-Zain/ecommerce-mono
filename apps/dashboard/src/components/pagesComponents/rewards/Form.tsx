@@ -1,11 +1,9 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
 import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { rewardsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { Reward } from '@/types/api/earningRules'
 import { buildRewardFields, RewardFormData } from './Config'
 import { useForm } from 'react-hook-form'
@@ -85,25 +83,16 @@ export default function RewardForm({ reward }: { reward?: Reward }) {
 
     const { mutate, isPending } = useMutate({
         endpoint: reward ? `rewards/${reward.id}` : 'rewards',
-        mutationKey: rewardsQueryKeys.getReward(String(reward?.id ?? 'new')),
-        mutationOptions: {
-            meta: {
-                invalidates: [
-                    rewardsQueryKeys.all(),
-                    rewardsQueryKeys.getReward(String(reward?.id ?? 'new')),
-                ],
-            },
-        },
+        mutationKey: queryKeys.rewards.getReward(String(reward?.id ?? 'new')),
+        invalidates: [
+            queryKeys.rewards.all(),
+            queryKeys.rewards.getReward(String(reward?.id ?? 'new')),
+        ],
         method: reward?.id ? 'patch' : 'post',
-        onSuccess: (data: ApiResponse) => {
-            toast.success(data.message)
-            navigate({ to: '/rewards' } as any)
-        },
-        onError: (_e, normalized) => toast.error(normalized.message),
+        redirectTo: '/rewards',
     })
 
     const handleSubmit = (values: RewardFormData) => {
-        console.log(values)
         const finalOut = generateFinalOut(reward, values)
         mutate(finalOut as any)
     }

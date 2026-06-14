@@ -1,11 +1,8 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { formDateToYYYYMMDD, generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { slidersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { makeSliderSchema, SliderFormData } from '@/lib/schema'
 import { buildSliderFields } from './Config'
 export type SliderEntity = {
@@ -27,27 +24,16 @@ export type SliderEntity = {
 }
 
 export default function SliderForm({ slider }: { slider?: SliderEntity }) {
-  const navigate = useNavigate()
   const { t } = useTranslation()
   const schema = makeSliderSchema(t)
   const fields = buildSliderFields(t, slider?.id)
 
   const { mutate, isPending } = useMutate({
     endpoint: slider ? `sliders/${slider.id}` : 'sliders',
-    mutationKey: slidersQueryKeys.getSlider(String(slider?.id ?? 'new')),
-    mutationOptions: {
-      meta: {
-        invalidates: [
-          slidersQueryKeys.all(),
-        ],
-      },
-    },
+    mutationKey: queryKeys.sliders.getSlider(String(slider?.id ?? 'new')),
+    invalidates: [queryKeys.sliders.all()],
     method: slider?.id ? 'patch' : 'post',
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-      navigate({ to: '/sliders' } as any)
-    },
-    onError: (_e, normalized) => toast.error(normalized.message),
+    redirectTo: '/sliders',
   })
 
   const handleSubmit = (values: SliderFormData) => {

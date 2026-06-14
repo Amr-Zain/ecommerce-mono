@@ -1,11 +1,8 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponseBase } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { formDateToYYYYMMDD } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { couponsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { makeCouponSchema } from '@/lib/schema'
 import { buildCouponFields } from './Config'
 import {
@@ -16,7 +13,6 @@ import {
 } from '@/types/api/coupon'
 
 export default function CouponForm({ coupon }: { coupon?: Coupon }) {
-  const navigate = useNavigate()
   const { t } = useTranslation()
   const schema = makeCouponSchema(t)
   const fields = buildCouponFields(t)
@@ -26,24 +22,10 @@ export default function CouponForm({ coupon }: { coupon?: Coupon }) {
     CouponPayload
   >({
     endpoint: coupon ? `coupons/${coupon.id}` : 'coupons',
-    mutationKey: couponsQueryKeys.getCoupon(String(coupon?.id ?? 'new')),
-    mutationOptions: {
-      meta: {
-        invalidates: [couponsQueryKeys.all()],
-      },
-    },
+    mutationKey: queryKeys.coupons.getCoupon(String(coupon?.id ?? 'new')),
+    invalidates: [queryKeys.coupons.all()],
     method: coupon?.id ? 'patch' : 'post',
-    onSuccess: (data) => {
-      toast.success(data.message)
-      navigate({
-        to: '/coupons',
-        search: {
-          'filters[is_active]': undefined,
-          'sort[created_at]': undefined,
-        },
-      })
-    },
-    onError: (_error, normalized) => toast.error(normalized.message),
+    redirectTo: '/coupons',
   })
 
   const handleSubmit = (values: CouponFormData) => {

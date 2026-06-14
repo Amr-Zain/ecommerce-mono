@@ -2,16 +2,14 @@ import AppForm from '@/components/common/form/AppForm'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import useFetch from '@/hooks/UseFetch'
 import { useMutate } from '@/hooks/UseMutate'
-import { ApiResponse } from '@/types/api/http'
 import { FieldProp } from '@/types/components/form'
-import { settingsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { zodFormResolver } from '@/lib/schema/resolver'
 import { createFileRoute } from '@tanstack/react-router'
 import { Settings, Trophy, Bell, ClipboardList, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { z } from 'zod/v4'
 import { TabsList, TabsTrigger, TabsContent } from '@ecommerce/ui/components/tabs'
 import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
@@ -75,7 +73,7 @@ function RouteComponent() {
 
   const { data } = useFetch<ApiResponse<Setting[], 'settings'>>({
     endpoint: 'settings',
-    queryKey: settingsQueryKeys.list('general'),
+    queryKey: queryKeys.settings.list('general'),
     suspense: true,
   })
 
@@ -176,13 +174,7 @@ function RouteComponent() {
   const { mutate, isPending } = useMutate({
     endpoint: 'settings',
     method: 'patch',
-    mutationKey: settingsQueryKeys.list('general'),
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-    },
-    onError: (error) => {
-      toast.error(error.message)
-    },
+    mutationKey: queryKeys.settings.list('general'),
   })
 
   const onSubmit = (values: any) => {

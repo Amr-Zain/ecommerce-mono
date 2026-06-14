@@ -2,8 +2,6 @@ import { useTranslation } from 'react-i18next'
 import AppForm from '@/components/common/form/AppForm'
 import { FieldProp } from '@/types/components/form'
 import { useMutate } from '@/hooks/UseMutate'
-import { ApiResponseBase } from '@/types/api/http'
-import { toast } from 'sonner'
 import { useAuthStore, UserAuth } from '@/stores/authStore'
 
 import {
@@ -31,9 +29,8 @@ export default function EditProfileForm({
       inputProps: {
         maxFiles: 1,
         acceptedFileTypes: ['image/*'],
-        apiEndpoint: '/media/upload',
-        model: 'image',
-        baseUrl: import.meta.env.VITE_BASE_URL_API,
+        model: 'user',
+        collection: 'avatar',
       },
     },
     {
@@ -68,10 +65,6 @@ export default function EditProfileForm({
     endpoint: 'profile',
     onSuccess: (data) => {
       updateUser(data.data)
-      toast.success(data.message)
-    },
-    onError: (_err, normalized) => {
-      toast.error(normalized.message)
     },
     method: 'patch',
   })

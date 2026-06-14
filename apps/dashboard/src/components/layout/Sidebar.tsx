@@ -44,9 +44,8 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/authStore'
 import ConfirmModal from '../common/uiComponents/ConfirmModal'
 import { useMutate } from '@/hooks/UseMutate'
-import { ApiResponse, ApiResponseBase } from '@/types/api/http'
-import { toast } from 'sonner'
-import { notificationsQueryKeys } from '@/util/queryKeysFactory'
+import { ApiResponse } from '@/types/api/http'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { NotificationsResponse } from '@/routes/_main/settings/notifications'
 import useFetch from '@/hooks/UseFetch'
 
@@ -63,14 +62,10 @@ export function AppSidebar() {
     endpoint: 'auth/logout',
     mutationKey: ['logout'],
     method: 'post',
-    onSuccess: (data) => {
+    onSuccess: () => {
       clearUser()
-      toast.success(data.message)
       navigate({ to: '/auth/login' })
     },
-    onError: (_err, error) => {
-      toast.success(error.message)
-    }
   })
 
   const handleConfirmLogout = async () => {
@@ -79,7 +74,7 @@ export function AppSidebar() {
 
   const { data: unreadCount, isLoading } = useFetch<number>({
     endpoint: 'notifications',
-    queryKey: notificationsQueryKeys.list(),
+    queryKey: queryKeys.notifications.list(),
     params: { per_page: 5 },
     customBaseUrl: import.meta.env.VITE_BASE_URL_API,
     //  const unreadCount = data?.data?.unread_notifications_count || 0

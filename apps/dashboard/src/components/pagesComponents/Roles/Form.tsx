@@ -2,8 +2,7 @@ import { useMemo, useEffect, useCallback } from 'react'
 import { z } from 'zod/v4'
 import { useTranslation } from 'react-i18next'
 import { useMutate } from '@/hooks/UseMutate'
-import { rolesQueryKeys } from '@/util/queryKeysFactory'
-import { toast } from 'sonner'
+import { queryKeys } from '@/util/queryKeysFactory'
 import useFetch from '@/hooks/UseFetch'
 import { Skeleton } from '@ecommerce/ui/components/skeleton'
 import { useForm } from 'react-hook-form'
@@ -32,7 +31,6 @@ interface RoleFormProps {
 
 export default function RoleForm({ role: initialValues, onSuccess: onSuccessCallback }: RoleFormProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const isEdit = !!initialValues?.id
 
   // Fetch all permissions for the form
@@ -72,25 +70,11 @@ export default function RoleForm({ role: initialValues, onSuccess: onSuccessCall
 
   const { mutate, isPending } = useMutate({
     endpoint: isEdit ? `roles/${initialValues.id}` : 'roles',
-    method: isEdit ? 'patch' : 'post', // Always POST for FormData (we append _method PUT)
-    // formData: true,
-    mutationKey: rolesQueryKeys.get(initialValues?.id?.toString() || 'new'),
-    mutationOptions: {
-      meta: {
-        invalidates: [rolesQueryKeys.all()]
-      }
-    },
-    onError: (_, nor) => {
-      toast.error(nor.message)
-    },
-    onSuccess: (res: any) => {
-      toast.success(res.message || (isEdit ? t('messages.updateSuccess') : t('messages.addSuccess')))
-      if (onSuccessCallback) {
-        onSuccessCallback()
-      } else {
-        navigate({ to: '/roles' } as any)
-      }
-    },
+    method: isEdit ? 'patch' : 'post',
+    mutationKey: queryKeys.roles.get(initialValues?.id?.toString() || 'new'),
+    invalidates: [queryKeys.roles.all()],
+    redirectTo: onSuccessCallback ? undefined : '/roles',
+    onSuccess: onSuccessCallback ? () => onSuccessCallback() : undefined,
   })
 
   const selectedIds: number[] = form.watch('permissions') || []

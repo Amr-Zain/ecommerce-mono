@@ -1,10 +1,7 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
-import { shopifyStoresQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { ShopifyStoreDetails } from '@/types/api/shopify-store'
 import { fieldsBuilder } from './Config'
 import { useTranslation } from 'react-i18next'
@@ -12,20 +9,13 @@ import { ShopifyStoreFormData, makeShopifyStoreSchema } from '@/lib/schema'
 import { cn } from '@/lib/utils'
 
 export default function ShopifyStoreForm({ store }: { store?: ShopifyStoreDetails }) {
-    const navigate = useNavigate()
     const { t } = useTranslation()
     const { mutate, isPending } = useMutate({
         endpoint: store?.id ? `shopify-stores/${store.id}` : 'shopify-stores',
         mutationKey: ['shopify-store', store?.id],
-        mutationOptions: { meta: { invalidates: [shopifyStoresQueryKeys.all()] } },
+        invalidates: [queryKeys.shopifyStores.all()],
         method: store?.id ? 'patch' : 'post',
-        onSuccess: (data: ApiResponse) => {
-            toast.success(data.message)
-            navigate({ to: '/settings/shopify-stores' as any })
-        },
-        onError: (_err, normalized) => {
-            toast.error(normalized.message)
-        },
+        redirectTo: '/settings/shopify-stores',
     })
     const fields = fieldsBuilder(t)
 

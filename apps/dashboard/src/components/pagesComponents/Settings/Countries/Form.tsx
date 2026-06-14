@@ -1,30 +1,20 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
-import { countriesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { CountryDetails } from '@/types/api/country'
 import { fieldsBuilder } from './Config'
 import { useTranslation } from 'react-i18next'
 import { CountryFormData, makeCountrySchema } from '@/lib/schema'
 
 export default function CountryForm({ country }: { country?: CountryDetails }) {
-  const navigate = useNavigate()
   const { t } = useTranslation()
   const { mutate, isPending } = useMutate({
     endpoint: country?.id ? `countries/${country.id}` : 'countries',
     mutationKey: ['country', country?.id],
-    mutationOptions: { meta: { invalidates: [countriesQueryKeys.all()] } },
+    invalidates: [queryKeys.countries.all()],
     method: country?.id ? 'patch' : 'post',
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-      navigate({ to: '/settings/countries' as any })
-    },
-    onError: (_err, normalized) => {
-      toast.error(normalized.message)
-    },
+    redirectTo: '/settings/countries',
   })
   const fields = fieldsBuilder(t)
   const handleSubmit = (values: CountryFormData) => {

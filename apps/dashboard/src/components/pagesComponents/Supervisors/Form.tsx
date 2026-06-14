@@ -1,19 +1,14 @@
-// src/features/users/supervisors/SupervisorForm.tsx
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { buildSupervisorFields } from './Config'
 import { Supervisor } from '@/types/api/user'
 import { SupervisorFormData, makeSupervisorSchema, updateSupervisorSchema } from '@/lib/schema'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
-import { supervisorsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useMemo, useState } from 'react'
 
 export default function SupervisorForm({ supervisor }: { supervisor?: Supervisor }) {
-  const navigate = useNavigate()
   const { t } = useTranslation()
   // const schema = supervisor ? updateSupervisorSchema(t) : makeSupervisorSchema(t)
   const [currentPhoneLimit, setCurrentPhoneLimit] = useState<number | null>(0)
@@ -26,16 +21,10 @@ export default function SupervisorForm({ supervisor }: { supervisor?: Supervisor
   const fields = buildSupervisorFields(t, setCurrentPhoneLimit, setPhoneStartingNumber)
   const { mutate, isPending } = useMutate({
     endpoint: supervisor ? `supervisors/${supervisor?.id}` : 'supervisors',
-    mutationKey: supervisorsQueryKeys.get(supervisor?.id?.toString() || 'new'),
-    mutationOptions: { meta: { invalidates: [supervisorsQueryKeys.all()] } },
+    mutationKey: queryKeys.supervisors.get(supervisor?.id?.toString() || 'new'),
+    invalidates: [queryKeys.supervisors.all()],
     method: supervisor?.id ? 'patch' : 'post',
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-      navigate({ to: '/supervisors' } as any)
-    },
-    onError: (_err, normalized) => {
-      toast.error(normalized.message)
-    },
+    redirectTo: '/supervisors',
   })
 
   const onSubmit = (values: SupervisorFormData) => {

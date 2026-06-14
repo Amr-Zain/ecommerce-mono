@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   Package,
@@ -45,7 +44,7 @@ import {
   MANUAL_PAYMENT_METHODS,
   PAYMENT_STATUSES,
 } from '@/types/api/order'
-import { ordersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { cn, hasPermission } from '@/lib/utils'
 import { StatusBadge, getStatusColor } from './Config'
 
@@ -96,9 +95,9 @@ export default function OrderShow({ order }: OrderShowProps) {
     )
   const invalidateOrder = () => {
     queryClient.invalidateQueries({
-      queryKey: ordersQueryKeys.getOrder(order.id),
+      queryKey: queryKeys.orders.getOrder(order.id),
     })
-    queryClient.invalidateQueries({ queryKey: ordersQueryKeys.all() })
+    queryClient.invalidateQueries({ queryKey: queryKeys.orders.all() })
   }
 
   const statusMutation = useMutate<
@@ -106,25 +105,16 @@ export default function OrderShow({ order }: OrderShowProps) {
     AdminOrderTransitionPayload
   >({
     endpoint: `orders/${order.id}/status`,
-    mutationKey: ordersQueryKeys.getOrder(order.id),
+    mutationKey: queryKeys.orders.getOrder(order.id),
     method: 'patch',
-    mutationOptions: {
-      meta: {
-        invalidates: [
-          ordersQueryKeys.getOrder(order.id),
-          ordersQueryKeys.all(),
-        ],
-      },
-    },
-    onSuccess: (data) => {
-      toast.success(data.message || t('status_changed_successfully'))
+    invalidates: [queryKeys.orders.getOrder(order.id), queryKeys.orders.all()],
+    onSuccess: () => {
       setSelectedStatus('')
       setCancelDialogOpen(false)
       setCancelReason('')
       invalidateOrder()
     },
-    onError: (_error, normalized) => {
-      toast.error(normalized.message)
+    onError: () => {
       invalidateOrder()
     },
   })
@@ -134,22 +124,13 @@ export default function OrderShow({ order }: OrderShowProps) {
     Record<string, never>
   >({
     endpoint: `orders/${order.id}/confirm-payment`,
-    mutationKey: [...ordersQueryKeys.getOrder(order.id), 'confirm-payment'],
+    mutationKey: [...queryKeys.orders.getOrder(order.id), 'confirm-payment'],
     method: 'post',
-    mutationOptions: {
-      meta: {
-        invalidates: [
-          ordersQueryKeys.getOrder(order.id),
-          ordersQueryKeys.all(),
-        ],
-      },
-    },
-    onSuccess: (data) => {
-      toast.success(data.message || t('orders.actions.payment_confirmed'))
+    invalidates: [queryKeys.orders.getOrder(order.id), queryKeys.orders.all()],
+    onSuccess: () => {
       invalidateOrder()
     },
-    onError: (_error, normalized) => {
-      toast.error(normalized.message)
+    onError: () => {
       invalidateOrder()
     },
   })
@@ -578,10 +559,7 @@ function RetryCancellationRefund({
     mutationKey: ['orders', orderId, 'cancellation-refund', refundId],
     method: 'post',
     onSuccess: () => onSuccess(),
-    onError: (_error, normalized) => {
-      toast.error(normalized.message)
-      onSuccess()
-    },
+    onError: () => onSuccess(),
   })
 
   return (

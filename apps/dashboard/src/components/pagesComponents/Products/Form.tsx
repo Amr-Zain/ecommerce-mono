@@ -1,11 +1,8 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues, mapGalleryForForm, toMediaValue } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { productsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { makeProductSchema, ProductFormData } from '@/lib/schema'
 import { Product } from '@/types/api/product'
 import { buildProductFields } from './Config'
@@ -126,9 +123,8 @@ export const TagsRepeater: React.FC<{ t: (k: string) => string }> = ({ t }) => {
 
 
 export default function ProductForm({ product }: { product?: Product }) {
-  const navigate = useNavigate()
   const { t } = useTranslation()
-  const productQueryKey = productsQueryKeys.getProduct(String(product?.id ?? 'new'))
+  const productQueryKey = queryKeys.products.getProduct(String(product?.id ?? 'new'))
   
   const form = useForm<ProductFormData>({
     resolver: zodFormResolver(makeProductSchema(t)),
@@ -156,20 +152,9 @@ export default function ProductForm({ product }: { product?: Product }) {
   const { mutate, isPending } = useMutate({
     endpoint: product ? `products/${product.id}` : 'products',
     mutationKey: productQueryKey,
-    mutationOptions: {
-      meta: {
-        invalidates: [
-          productsQueryKeys.all(),
-          productQueryKey,
-        ],
-      },
-    },
+    invalidates: [queryKeys.products.all(), productQueryKey],
     method: product?.id ? 'patch' : 'post',
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-      navigate({ to: '/products' } as any)
-    },
-    onError: (_e, normalized) => toast.error(normalized.message),
+    redirectTo: '/products',
   })
 
   const handleSubmit = (values: ProductFormData) => {

@@ -1,11 +1,8 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { categoriesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { CategoryFormData, makeCategorySchema } from '@/lib/schema'
 import { buildCategoryFields } from './Config'
 import { useForm } from 'react-hook-form'
@@ -41,7 +38,6 @@ export default function CategoryForm({
 }: {
   category?: CategoryEntity
 }) {
-  const navigate = useNavigate()
   const { t } = useTranslation()
   const schema = makeCategorySchema(t)
 
@@ -74,21 +70,13 @@ export default function CategoryForm({
 
   const { mutate, isPending } = useMutate({
     endpoint: category ? `collections/${category.id}` : 'collections',
-    mutationKey: categoriesQueryKeys.getCategory(String(category?.id ?? 'new')),
-    mutationOptions: {
-      meta: {
-        invalidates: [
-          categoriesQueryKeys.all(),
-          categoriesQueryKeys.getCategory(String(category?.id ?? 'new')),
-        ],
-      },
-    },
+    mutationKey: queryKeys.categories.getCategory(String(category?.id ?? 'new')),
+    invalidates: [
+      queryKeys.categories.all(),
+      queryKeys.categories.getCategory(String(category?.id ?? 'new')),
+    ],
     method: category?.id ? 'patch' : 'post',
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-      navigate({ to: '/categories' } as any)
-    },
-    onError: (_e, normalized) => toast.error(normalized.message),
+    redirectTo: '/categories',
   })
 
   const handleSubmit = (values: CategoryFormData) => {

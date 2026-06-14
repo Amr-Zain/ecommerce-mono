@@ -1,11 +1,8 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { formDateToYYYYMMDD, generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { offersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { makeOfferSchema, OfferFormData } from '@/lib/schema'
 import { buildOfferFields } from './Config'
 
@@ -25,27 +22,16 @@ export type OfferEntity = {
 }
 
 export default function OfferForm({ offer }: { offer?: OfferEntity }) {
-    const navigate = useNavigate()
     const { t } = useTranslation()
     const schema = makeOfferSchema(t)
     const fields = buildOfferFields(t)
 
     const { mutate, isPending } = useMutate({
         endpoint: offer ? `offers/${offer.id}` : 'offers',
-        mutationKey: offersQueryKeys.getOffer(String(offer?.id ?? 'new')),
-        mutationOptions: {
-            meta: {
-                invalidates: [
-                    offersQueryKeys.all(),
-                ],
-            },
-        },
+        mutationKey: queryKeys.offers.getOffer(String(offer?.id ?? 'new')),
+        invalidates: [queryKeys.offers.all()],
         method: offer?.id ? 'patch' : 'post',
-        onSuccess: (data: ApiResponse) => {
-            toast.success(data.message)
-            navigate({ to: '/offers' } as any)
-        },
-        onError: (_e, normalized) => toast.error(normalized.message),
+        redirectTo: '/offers',
     })
 
     // products field in OfferFormData is array of strings (ids)

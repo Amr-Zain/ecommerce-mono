@@ -1,38 +1,28 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
 import {
   AttributeShow,
   buildAttributeFields,
 } from './Config'
-import { attributeQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { AttributeFormData, makeAttributeSchema } from '@/lib/schema'
 
 export default function AttributeForm({ attribute, onDone }: { attribute?: AttributeShow; onDone?: () => void }) {
-  const navigate = useNavigate()
   const { t } = useTranslation()
   const schema = makeAttributeSchema(t)
   const fields = buildAttributeFields(t)
 
   const { mutate, isPending } = useMutate({
     endpoint: attribute ? `attributes/${attribute.id}` : 'attributes',
-    mutationKey: attributeQueryKeys.getAttribute(
+    mutationKey: queryKeys.attributes.getAttribute(
       String(attribute?.id ?? 'new'),
     ),
     method: attribute ? 'patch' : 'post',
-    mutationOptions: { meta: { invalidates: [attributeQueryKeys.all()] } },
-    onSuccess: (data: ApiResponse) => {
-      if (onDone) onDone()
-      else
-        navigate({ to: '/attributes' } as any)
-
-      toast.success(data.message)
-    },
-    onError: (_e, normalized) => toast.error(normalized.message),
+    invalidates: [queryKeys.attributes.all()],
+    redirectTo: onDone ? undefined : '/attributes',
+    onSuccess: onDone ? () => onDone() : undefined,
   })
 
   const handleSubmit = (values: AttributeFormData) => {

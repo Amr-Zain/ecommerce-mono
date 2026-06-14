@@ -1,9 +1,8 @@
 import { PaymentGatewayEntity } from './Config'
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { paymentGatewaysQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { useMemo } from 'react'
 import { z } from 'zod/v4'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
@@ -26,7 +25,7 @@ export const PaymentGatewayForm = ({ id, onSuccess }: PaymentGatewayFormProps) =
     // Fetch details to get translations (ar, en)
     const { data: detailsResponse, isLoading: detailsLoading } = useFetch<ApiResponseBase<PaymentGatewayEntity>>({
         endpoint: `payment-gateways/${id}`,
-        queryKey: paymentGatewaysQueryKeys.getPaymentGateway(id),
+        queryKey: queryKeys.paymentGateways.getPaymentGateway(id),
     })
 
     const initialData = detailsResponse?.data
@@ -34,14 +33,9 @@ export const PaymentGatewayForm = ({ id, onSuccess }: PaymentGatewayFormProps) =
     const { mutateAsync: update, isPending } = useMutate({
         endpoint: `payment-gateways/${id}`,
         method: 'patch',
-        mutationOptions: {
-            meta: { invalidates: [paymentGatewaysQueryKeys.all(), paymentGatewaysQueryKeys.getPaymentGateway(id)] }
-        },
-        mutationKey: paymentGatewaysQueryKeys.getPaymentGateway(id),
-        onSuccess: (res: any) => {
-            toast.success(res.message || t('status_changed_successfully'))
-            onSuccess()
-        },
+        invalidates: [queryKeys.paymentGateways.all(), queryKeys.paymentGateways.getPaymentGateway(id)],
+        mutationKey: queryKeys.paymentGateways.getPaymentGateway(id),
+        onSuccess: () => onSuccess(),
     })
 
     const initialValues = useMemo(() => {
@@ -66,9 +60,8 @@ export const PaymentGatewayForm = ({ id, onSuccess }: PaymentGatewayFormProps) =
                 inputProps: {
                     maxFiles: 1,
                     acceptedFileTypes: ['image/*'],
-                    apiEndpoint: '/media/upload',
-                    model: 'image',
-                    baseUrl: import.meta.env.VITE_BASE_URL_API,
+                    model: 'paymentgateway',
+                    collection: 'image',
                 },
             },
             {

@@ -3,13 +3,12 @@ import { useTranslation } from 'react-i18next'
 import AppForm from '@/components/common/form/AppForm'
 import { FieldProp } from '@/types/components/form'
 import { useMutate } from '@/hooks/UseMutate'
-import { ApiResponse } from '@/types/api/http'
-import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/authStore'
 import {
   buildProfileSettingsSchema,
   ProfileSettingsFormData ,
 } from '@/lib/schema'
+import { ApiResponse } from '@/types/api/http'
 
 
 
@@ -44,12 +43,6 @@ export default function ProfileSettings() {
   const { mutateAsync, isPending } = useMutate<ApiResponse, any>({
     mutationKey: ['rofile/settings'],
     endpoint: 'profile/settings',
-    onSuccess: (data) => {
-      toast.success(data.message)
-    },
-    onError: (_err, normalized) => {
-      toast.error(normalized.message)
-    },
     method: 'patch',
   })
 

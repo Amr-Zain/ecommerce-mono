@@ -1,11 +1,8 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { earningRulesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { EarningRule } from '@/types/api/earningRules'
 import { buildEarningRuleFields, EarningRuleFormData } from './Config'
 import { useForm } from 'react-hook-form'
@@ -19,7 +16,6 @@ export default function EarningRuleForm({
 }: {
     earningRule?: EarningRule
 }) {
-    const navigate = useNavigate()
     const { t } = useTranslation()
 
     const schema = makeEarningRuleSchema(t)
@@ -49,25 +45,15 @@ export default function EarningRuleForm({
 
     const { mutate, isPending } = useMutate({
         endpoint: earningRule ? `earning-rules/${earningRule.id}` : 'earning-rules',
-        mutationKey: earningRulesQueryKeys.getEarningRule(
+        mutationKey: queryKeys.earningRules.getEarningRule(
             String(earningRule?.id ?? 'new'),
         ),
-        mutationOptions: {
-            meta: {
-                invalidates: [
-                    earningRulesQueryKeys.all(),
-                    earningRulesQueryKeys.getEarningRule(
-                        String(earningRule?.id ?? 'new'),
-                    ),
-                ],
-            },
-        },
+        invalidates: [
+            queryKeys.earningRules.all(),
+            queryKeys.earningRules.getEarningRule(String(earningRule?.id ?? 'new')),
+        ],
         method: earningRule?.id ? 'patch' : 'post',
-        onSuccess: (data: ApiResponse) => {
-            toast.success(data.message)
-            navigate({ to: '/earning-rules' })
-        },
-        onError: (_e, normalized) => toast.error(normalized.message),
+        redirectTo: '/earning-rules',
     })
 
     const handleSubmit = (values: EarningRuleFormData) => {

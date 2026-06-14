@@ -1,13 +1,8 @@
-import z from 'zod/v4'
-import { Control } from 'react-hook-form'
 import AppForm from '@/components/common/form/AppForm'
-import { FieldProp } from '@/types/components/form'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
 import { useNavigate } from '@tanstack/react-router'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
-import { pagesQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { staticPageFields } from './Config'
 import { makePageSchema, StaticPageFormData } from '@/lib/schema'
 import { useTranslation } from 'react-i18next'
@@ -15,20 +10,13 @@ import { useTranslation } from 'react-i18next'
 
 
 export default function PageForm({ page }: { page?: any }) {
-  const navigate = useNavigate()
 
   const { mutate, isPending } = useMutate({
     endpoint: page?.id ? `static-pages/${page.id}` : 'static-pages',
-    mutationKey: pagesQueryKeys.getPage(),
-    mutationOptions: { meta: { invalidates: [pagesQueryKeys.all()] } },
+    mutationKey: queryKeys.pages.getPage(),
+    invalidates: [queryKeys.pages.all()],
     method: page?.id ? 'patch' : 'post',
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-      navigate({ to: '/static-pages' })
-    },
-    onError: (_err, normalized) => {
-      toast.error(normalized.message)
-    },
+    redirectTo: '/static-pages',
   })
 
   const handleSubmit = (values: StaticPageFormData) => {

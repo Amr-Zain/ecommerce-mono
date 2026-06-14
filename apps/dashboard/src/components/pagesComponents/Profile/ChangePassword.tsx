@@ -2,12 +2,11 @@ import { useTranslation } from 'react-i18next'
 import AppForm from '@/components/common/form/AppForm'
 import { FieldProp } from '@/types/components/form'
 import { useMutate } from '@/hooks/UseMutate'
-import { ApiResponse } from '@/types/api/http'
-import { toast } from 'sonner'
 import {
   buildChangePasswordSchema,
   type ChangePasswordFormData,
 } from '@/lib/schema'
+import { ApiResponse } from '@/types/api/http'
 
 export default function ChangePasswordForm() {
   const { t } = useTranslation()
@@ -38,8 +37,6 @@ export default function ChangePasswordForm() {
   const { mutate, isPending } = useMutate<ApiResponse, any>({
     mutationKey: ['profile/change-password'],
     endpoint: 'profile/change-password',
-    onSuccess: (data) => toast.success(data.message),
-    onError: (_err, normalized) => toast.error(normalized.message),
     formData: true,
     method: 'post',
   })

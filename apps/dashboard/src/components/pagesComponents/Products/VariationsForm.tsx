@@ -1,10 +1,8 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
 import { useTranslation } from 'react-i18next'
 import { generateFinalOut } from '@/util/helpers'
-import { attributeValueQueryKeys, productsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { buildVariationFields, ProductVariationFormData } from './Config'
 import { Dialog, DialogContent } from '@ecommerce/ui/components/dialog'
 import * as React from 'react'
@@ -155,7 +153,7 @@ const VariationRow: React.FC<{
           endpoint: attributeId
             ? `attribute-values?paginate=false&filters[attribute_id]=${attributeId}`
             : undefined,
-          queryKey: attributeValueQueryKeys.filtered({ "filters[attribute_id]": attributeId }),
+          queryKey: queryKeys.attributeValues.filtered({ "filters[attribute_id]": attributeId }),
           placeholder: t('Form.placeholders.value'),
           disabled: !attributeId,
           select: toSelectOptions,
@@ -280,18 +278,10 @@ export default function ProductVariationFormDialog({
 
   const { mutate, isPending } = useMutate({
     endpoint,
-    mutationKey: productsQueryKeys.getProduct(String(productId)),
+    mutationKey: queryKeys.products.getProduct(String(productId)),
     method: variation?.id ? 'patch' : 'post',
-    mutationOptions: {
-      meta: {
-        invalidates: [productsQueryKeys.all()],
-      },
-    },
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-      onClose()
-    },
-    onError: (_e, normalized) => toast.error(normalized.message),
+    invalidates: [queryKeys.products.all()],
+    onSuccess: () => onClose(),
   })
 
   const handleSubmit = (values: ProductVariationFormData) => {

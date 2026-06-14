@@ -30,7 +30,6 @@ import { useMutate } from '@/hooks/UseMutate'
 import ConfirmModal from '../common/uiComponents/ConfirmModal'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ApiResponse } from '@/types/api/http'
-import { toast } from 'sonner'
 import PopoverNotifications from './Notifications'
 
 export function DashboardHeader() {
@@ -56,14 +55,10 @@ export function DashboardHeader() {
     endpoint: 'auth/logout',
     mutationKey: ['logout'],
     method: 'post',
-    onSuccess: (data) => {
+    onSuccess: () => {
       clearUser()
-      toast.success(data.message)
       navigate({ to: '/auth/login' })
     },
-    onError: (_err, error) => {
-      toast.success(error.message)
-    }
   })
 
   const handleConfirmLogout = async () => {

@@ -16,7 +16,7 @@ import { HasPermission } from '@/components/common/HasPermission'
 import { useEffect, useState } from 'react'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
-import { productsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useParams } from '@tanstack/react-router'
 import ButtonCopy from '@ecommerce/ui/components/copy-button'
 import { SARIcon } from '@/components/common/Icons'
@@ -34,8 +34,6 @@ import useFetch from '@/hooks/UseFetch'
 import { useMutate } from '@/hooks/UseMutate'
 import { Input } from '@ecommerce/ui/components/input'
 import { Switch } from '@ecommerce/ui/components/switch'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
 
 /* ------------------------------------------------------------------ */
 /*  Simple inline pagination for history tables                       */
@@ -279,7 +277,7 @@ export function ProductVariationsCard({
   const [addStockReason, setAddStockReason] = useState<'RESTOCK' | 'SALE' | 'ADJUSTMENT' | 'RETURN'>('RESTOCK')
 
   const currentId = selected?.id || ''
-  const invalidateKey = productsQueryKeys.getProduct(productId)
+  const invalidateKey = queryKeys.products.getProduct(productId)
 
   const { mutateAsync: changeActive, isPending: activePending } =
     useStatusMutation(
@@ -287,7 +285,7 @@ export function ProductVariationsCard({
       'active',
       'variants',
       invalidateKey,
-      [productsQueryKeys.getProduct(productId)],
+      [queryKeys.products.getProduct(productId)],
     )
 
   const { mutateAsync: changeDelete, isPending: deletePending } =
@@ -296,25 +294,19 @@ export function ProductVariationsCard({
       'delete',
       'variants',
       invalidateKey,
-      [productsQueryKeys.getProduct(productId)],
+      [queryKeys.products.getProduct(productId)],
     )
 
   const { mutate: adjustStockMutate, isPending: adjustStockPending } = useMutate({
     endpoint: 'variants/adjust-stock',
     method: 'post',
-    mutationKey: productsQueryKeys.getProduct(productId),
-    mutationOptions: {
-      meta: {
-        invalidates: [productsQueryKeys.all(), productsQueryKeys.getProduct(productId)],
-      },
-    },
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
+    mutationKey: queryKeys.products.getProduct(productId),
+    invalidates: [queryKeys.products.all(), queryKeys.products.getProduct(productId)],
+    onSuccess: () => {
       setAddStockOpen(false)
       setAddStockVariant(null)
       setAddStockAmount('')
     },
-    onError: (_e, normalized) => toast.error(normalized.message),
   })
 
   useEffect(() => {

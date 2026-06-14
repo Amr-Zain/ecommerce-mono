@@ -1,10 +1,8 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { toast } from 'sonner'
-import { ApiResponse } from '@/types/api/http'
-import { useNavigate } from '@tanstack/react-router'
+import { generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { showRoomsQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { ShowRoomFormData, makeShowRoomSchema } from '@/lib/schema'
 import { buildShowRoomFields } from './Config'
 import { ShowRoomDetail, } from '@/types/api/showRoom'
@@ -14,7 +12,6 @@ import { zodFormResolver } from '@/lib/schema/resolver'
 import { useEffect, useRef, useState } from 'react'
 
 export default function ShowRoomForm({ showRoom }: { showRoom?: ShowRoomDetail }) {
-  const navigate = useNavigate()
   const { t } = useTranslation()
   const [currentPhoneLimit, setCurrentPhoneLimit] = useState<number | null>(0)
   const [phoneStartingNumber, setPhoneStartingNumber] = useState<number | null>(0)
@@ -60,22 +57,13 @@ export default function ShowRoomForm({ showRoom }: { showRoom?: ShowRoomDetail }
 
   const { mutate, isPending } = useMutate({
     endpoint: showRoom ? `show-rooms/${showRoom.id}` : 'show-rooms',
-    mutationKey: showRoomsQueryKeys.getShowRoom(String(showRoom?.id ?? 'new')),
-    mutationOptions: {
-      meta: {
-        invalidates: [
-          showRoomsQueryKeys.all(),
-          showRoomsQueryKeys.getShowRoom(String(showRoom?.id ?? 'new')),
-        ],
-      },
-    },
+    mutationKey: queryKeys.showRooms.getShowRoom(String(showRoom?.id ?? 'new')),
+    invalidates: [
+      queryKeys.showRooms.all(),
+      queryKeys.showRooms.getShowRoom(String(showRoom?.id ?? 'new')),
+    ],
     method: 'post',
-    onSuccess: (data: ApiResponse) => {
-      toast.success(data.message)
-      navigate({ to: '/show-rooms' } as any)
-    },
-    onError: (_e, normalized) => toast.error(normalized.message),
-    // formData: true,
+    redirectTo: '/show-rooms',
   })
 
   const handleSubmit = (v: ShowRoomFormData) => {

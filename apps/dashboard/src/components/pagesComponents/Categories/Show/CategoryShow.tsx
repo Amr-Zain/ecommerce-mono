@@ -17,8 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
 import { formatDate } from '@/util/helpers'
 import { useMutate } from '@/hooks/UseMutate'
-import { categoriesQueryKeys } from '@/util/queryKeysFactory'
-import { ApiResponse } from '@/types/api/http'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { toast } from 'sonner'
 import {
     Edit,
@@ -85,35 +84,27 @@ export function CategoryShow({ category }: { category: CategoryShowData }) {
     const { mutate, isPending: mappingPending } = useMutate({
         endpoint: `collections/${category.id}`,
         method: 'patch',
-        mutationKey: categoriesQueryKeys.getCategory(String(category.id)),
-        mutationOptions: {
-            meta: {
-                invalidates: [
-                    categoriesQueryKeys.all(),
-                    categoriesQueryKeys.getCategory(String(category.id)),
-                ],
-            },
-        },
-        onSuccess: (data: ApiResponse) => {
-            toast.success(data.message)
-        },
-        onError: (_e, normalized) => toast.error(normalized.message),
+        mutationKey: queryKeys.categories.getCategory(String(category.id)),
+        invalidates: [
+            queryKeys.categories.all(),
+            queryKeys.categories.getCategory(String(category.id)),
+        ],
     })
 
     const { mutateAsync: changeActive, isPending: activePending } = useStatusMutation(
         String(category.id),
         'active',
         'collections',
-        categoriesQueryKeys.getCategory(String(category.id)),
-        [categoriesQueryKeys.all(), categoriesQueryKeys.getCategory(String(category.id))],
+        queryKeys.categories.getCategory(String(category.id)),
+        [queryKeys.categories.all(), queryKeys.categories.getCategory(String(category.id))],
     )
 
     const { mutateAsync: changeDelete, isPending: deletePending } = useStatusMutation(
         String(category.id),
         'delete',
         'collections',
-        categoriesQueryKeys.getCategory(String(category.id)),
-        [categoriesQueryKeys.all()],
+        queryKeys.categories.getCategory(String(category.id)),
+        [queryKeys.categories.all()],
     )
 
     useEffect(() => {

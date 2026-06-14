@@ -1,9 +1,8 @@
 import { SmsProviderEntity } from './Config'
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { smsProvidersQueryKeys } from '@/util/queryKeysFactory'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { useMemo, useState } from 'react'
 import { z } from 'zod/v4'
 import { generateFinalOut, generateInitialValues } from '@/util/helpers'
@@ -32,7 +31,7 @@ export const SmsProviderForm = ({ id, onSuccess }: SmsProviderFormProps) => {
     // Fetch details to get translations (ar, en)
     const { data: detailsResponse, isLoading: detailsLoading } = useFetch<ApiResponseBase<SmsProviderEntity>>({
         endpoint: `sms-providers/${id}`,
-        queryKey: smsProvidersQueryKeys.getSmsProvider(id),
+        queryKey: queryKeys.smsProviders.getSmsProvider(id),
     })
 
     const initialData = detailsResponse?.data
@@ -40,14 +39,9 @@ export const SmsProviderForm = ({ id, onSuccess }: SmsProviderFormProps) => {
     const { mutateAsync: update, isPending } = useMutate({
         endpoint: `sms-providers/${id}`,
         method: 'patch',
-        mutationOptions: {
-            meta: { invalidates: [smsProvidersQueryKeys.all(), smsProvidersQueryKeys.getSmsProvider(id)] }
-        },
-        mutationKey: smsProvidersQueryKeys.getSmsProvider(id),
-        onSuccess: (res: any) => {
-            toast.success(res.message || t('status_changed_successfully'))
-            onSuccess()
-        },
+        invalidates: [queryKeys.smsProviders.all(), queryKeys.smsProviders.getSmsProvider(id)],
+        mutationKey: queryKeys.smsProviders.getSmsProvider(id),
+        onSuccess: () => onSuccess(),
     })
 
     const initialValues = useMemo(() => {
@@ -97,9 +91,8 @@ export const SmsProviderForm = ({ id, onSuccess }: SmsProviderFormProps) => {
                 inputProps: {
                     maxFiles: 1,
                     acceptedFileTypes: ['image/*'],
-                    apiEndpoint: '/media/upload',
-                    model: 'image',
-                    baseUrl: import.meta.env.VITE_BASE_URL_API,
+                    model: 'smsprovider',
+                    collection: 'image',
                 },
             },
             {
@@ -110,9 +103,8 @@ export const SmsProviderForm = ({ id, onSuccess }: SmsProviderFormProps) => {
                 inputProps: {
                     maxFiles: 1,
                     acceptedFileTypes: ['image/*'],
-                    apiEndpoint: '/media/upload',
-                    model: 'image',
-                    baseUrl: import.meta.env.VITE_BASE_URL_API,
+                    model: 'smsprovider',
+                    collection: 'icon',
                 },
             },
             {
