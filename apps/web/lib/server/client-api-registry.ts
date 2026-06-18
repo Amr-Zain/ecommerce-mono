@@ -111,7 +111,8 @@ async function proxyClientApiRequest({
     return Response.json({ message: "Not found" }, { status: 404 })
   }
 
-  const backendPath = `/client/${normalizedPath}`
+  const isMediaPath = normalizedPath.startsWith("media/")
+  const backendPath = isMediaPath ? `/${normalizedPath}` : `/client/${normalizedPath}`
   const publicPolicy =
     method === "GET" ? getPublicCachePolicy(normalizedPath) : undefined
   const options: BackendOptions = {

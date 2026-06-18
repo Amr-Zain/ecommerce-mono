@@ -46,7 +46,7 @@ function parseUser(value: unknown) {
 
   try {
     const user = JSON.parse(value) as SessionUser
-    return user?.id && user?.name ? user : null
+    return user?.id ? user : null
   } catch {
     return null
   }
@@ -73,7 +73,7 @@ async function loginWithAccessToken(credentials: AccessTokenCredentials) {
 
   return {
     id: user.id,
-    name: user.name,
+    name: user.name || user.email || user.phone || "Customer",
     email: user.email,
     phone: user.phone,
     role: "user",

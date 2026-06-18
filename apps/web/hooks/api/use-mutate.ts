@@ -10,7 +10,6 @@ import { signOut } from "next-auth/react"
 import { loginPath } from "@/lib/return-path"
 import { withSessionRetry } from "@/lib/client/session-request"
 
-import { toast } from "@ecommerce/ui/components/sonner"
 import {
   clientJson,
   toNormalizedHttpError,
@@ -31,6 +30,7 @@ type MutationMethod =
   | "delete"
 
 type MutationMeta = {
+  disableErrorToast?: boolean
   invalidates?: QueryKey[]
 }
 
@@ -98,7 +98,10 @@ function useMutate<
   return useMutation<TResponse, TError, TVariables>({
     ...mutationOptions,
     mutationKey,
-    meta: mutationOptions?.meta,
+    meta: {
+      ...mutationOptions?.meta,
+      disableErrorToast,
+    },
     mutationFn: async (variables) => {
       if (!ready) {
         throw {
@@ -132,10 +135,6 @@ function useMutate<
         const normalized = toNormalizedHttpError(error)
 
         onError?.(normalized as TError, normalized)
-
-        if (!disableErrorToast) {
-          toast.error(normalized.message)
-        }
 
         if (authRequired && normalized.status === 401) {
           void signOut({ redirect: false })

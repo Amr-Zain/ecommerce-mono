@@ -72,7 +72,7 @@ async function storeAuthCookies(response: Response, data: AuthResponse) {
     accessToken: data.access_token,
     user: {
       id: data.user.id,
-      name: data.user.name,
+        name: data.user.name,
       email: data.user.email,
       phone: data.user.phone,
       isEmailVerified: data.user.is_email_verified,
@@ -113,6 +113,7 @@ async function restoreAuthSessionAction() {
         const response = await backendRequest("/auth/refresh", {
           body: {},
           cache: "no-store",
+          headers: { "x-user-type": "client" },
           includeCookies: true,
           method: "POST",
           retries: 0,
@@ -185,7 +186,11 @@ async function verifyOtpAction(input: VerifyOtpInput) {
 
     return actionSuccess(null, "Signed in")
   } catch (error) {
-    if (error instanceof AuthError) return actionError(error)
+    if (error instanceof AuthError) {
+      return actionError(
+        new Error("Signed in, but the browser session could not be created")
+      )
+    }
     return actionError(error)
   }
 }

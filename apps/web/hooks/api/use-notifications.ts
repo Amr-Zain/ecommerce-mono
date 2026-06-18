@@ -4,10 +4,12 @@ import { useQueryClient } from "@tanstack/react-query"
 import * as React from "react"
 
 import { queryKeys } from "@/hooks/api/query-keys"
+import { usePathname, useRouter } from "@/i18n/navigation"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
 import { ROUTES } from "@/lib/routes"
 import { clientApiEndpoint, clientEndpoints } from "@/lib/client/client-api"
+import { toast } from "@ecommerce/ui/components/sonner"
 
 type Notification = {
   id: string
@@ -30,10 +32,30 @@ function normalizeNotification(value: unknown): Notification | null {
   if (!value || typeof value !== "object") return null
 
   const item = value as Record<string, unknown>
+  const data =
+    item.data && typeof item.data === "object"
+      ? (item.data as Record<string, unknown>)
+      : {}
   const entityValue =
     item.entity && typeof item.entity === "object"
       ? (item.entity as Record<string, unknown>)
       : null
+  const entityType =
+    typeof item.entity === "string"
+      ? item.entity
+      : entityValue
+        ? valueAsString(entityValue.type)
+        : undefined
+  const entityId =
+    entityValue
+      ? valueAsString(entityValue.id)
+      : valueAsString(
+          data.id ??
+            data.ticketId ??
+            data.ticket_id ??
+            data.orderId ??
+            data.order_id
+        )
   const id = valueAsString(item.id)
 
   if (!id) return null
@@ -41,16 +63,13 @@ function normalizeNotification(value: unknown): Notification | null {
   return {
     id,
     type: valueAsString(item.type) ?? "notification",
-    entity: entityValue
+    entity: entityType || entityId
       ? {
-          id: valueAsString(entityValue.id),
-          type: valueAsString(entityValue.type),
+          id: entityId,
+          type: entityType,
         }
       : null,
-    data:
-      item.data && typeof item.data === "object"
-        ? (item.data as Record<string, unknown>)
-        : {},
+    data,
     title: valueAsString(item.title) ?? "Notification",
     body: valueAsString(item.body) ?? "",
     read_at: valueAsString(item.read_at ?? item.readAt) ?? null,
@@ -129,15 +148,42 @@ function useMarkAllNotificationsRead() {
 
 function useNotificationStream(enabled = true) {
   const queryClient = useQueryClient()
+  const pathname = usePathname()
+  const router = useRouter()
 
   React.useEffect(() => {
     if (!enabled) return
     const source = new EventSource(
       clientApiEndpoint(clientEndpoints.notificationsStream)
     )
-    const refresh = () => {
+    const refreshCommon = () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.notifications() })
       void queryClient.invalidateQueries({ queryKey: queryKeys.notificationUnreadCount() })
+    }
+    const refresh = (event: Event) => {
+      refreshCommon()
+
+      const notification = parseNotificationEvent(event)
+      if (!notification || notification.type !== "ticket_reply") return
+
+      const ticketId = ticketNotificationId(notification)
+      if (!ticketId) return
+
+      void queryClient.invalidateQueries({ queryKey: queryKeys.tickets() })
+
+      if (isCurrentTicketPath(pathname, ticketId)) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.ticket(ticketId) })
+        void queryClient.invalidateQueries({ queryKey: queryKeys.ticketMessages(ticketId) })
+        return
+      }
+
+      toast(notification.title, {
+        description: notification.body,
+        action: {
+          label: "View",
+          onClick: () => router.push(ROUTES.profile.support.detail(ticketId)),
+        },
+      })
     }
     source.addEventListener("notification", refresh)
     source.onerror = () => source.close()
@@ -146,7 +192,32 @@ function useNotificationStream(enabled = true) {
       source.removeEventListener("notification", refresh)
       source.close()
     }
-  }, [enabled, queryClient])
+  }, [enabled, pathname, queryClient, router])
+}
+
+function parseNotificationEvent(event: Event) {
+  if (!("data" in event) || typeof (event as MessageEvent).data !== "string") {
+    return null
+  }
+
+  try {
+    return normalizeNotification(JSON.parse((event as MessageEvent).data))
+  } catch {
+    return null
+  }
+}
+
+function ticketNotificationId(notification: Notification) {
+  return valueAsString(
+    notification.entity?.id ??
+      notification.data?.ticketId ??
+      notification.data?.ticket_id
+  )
+}
+
+function isCurrentTicketPath(pathname: string, ticketId: string) {
+  const match = pathname.match(/\/profile\/support\/([^/?#]+)/)
+  return match?.[1] === ticketId
 }
 
 function notificationHref(notification: Notification) {
@@ -166,6 +237,8 @@ function notificationHref(notification: Notification) {
     case "wallet":
     case "withdrawal":
       return ROUTES.profile.wallet
+    case "ticket":
+      return entity.id ? ROUTES.profile.support.detail(entity.id) : ROUTES.profile.support.root
     default:
       return null
   }

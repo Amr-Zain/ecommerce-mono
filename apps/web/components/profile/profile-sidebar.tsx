@@ -9,7 +9,6 @@ import Image from "next/image"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   UserCircleIcon,
-  FavouriteIcon,
   PackageIcon,
   Location01Icon,
   Wallet01Icon,
@@ -21,11 +20,12 @@ import {
   Logout01Icon,
   Camera01Icon,
   DocumentValidationIcon,
+  FavouriteIcon,
 } from "@hugeicons/core-free-icons"
 
 const SIDEBAR_LINKS = [
   { name: "My account", href: ROUTES.profile.root, icon: UserCircleIcon },
-  { name: "My Wishlist", href: ROUTES.profile.wishlist, icon: FavouriteIcon },
+    { name: "My Wishlist", href: ROUTES.profile.wishlist, icon: FavouriteIcon },
   { name: "My Orders", href: ROUTES.profile.orders.root, icon: PackageIcon },
   // {
   //   name: "Order Details",

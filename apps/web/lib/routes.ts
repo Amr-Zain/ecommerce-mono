@@ -35,6 +35,7 @@ export const ROUTES = {
   },
 
   cart: "/cart",
+  wishlist: "/wishlist",
 
   checkout: {
     success: "/checkout/success",

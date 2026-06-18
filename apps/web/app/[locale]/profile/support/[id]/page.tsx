@@ -10,118 +10,105 @@ import {
   Attachment01Icon,
   Image01Icon,
 } from "@hugeicons/core-free-icons"
+import {
+  uploadTicketFiles,
+  useReplyTicket,
+  useTicket,
+  useTicketMessages,
+} from "@/hooks/api/use-tickets"
 import { Avatar, AvatarFallback } from "@ecommerce/ui/components/avatar"
+import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
 import { Input } from "@ecommerce/ui/components/input"
+import { toast } from "@ecommerce/ui/components/sonner"
 import { cn } from "@/lib/utils"
-
-type Message = {
-  id: string
-  role: "client" | "admin"
-  sender: string
-  text: string
-  timestamp: string
-  attachments?: { name: string; url: string; type: "image" | "file" }[]
-}
-
-type Ticket = {
-  id: string
-  title: string
-  status: "open" | "pending" | "resolved" | "closed"
-  category: string
-  messages: Message[]
-}
-
-const MOCK_TICKETS: Record<string, Ticket> = {
-  "1": {
-    id: "1",
-    title: "Mastercard ending in 7830",
-    status: "open",
-    category: "Order Problem",
-    messages: [
-      {
-        id: "m1",
-        role: "client",
-        sender: "Cristofer Torff",
-        text: "I was charged twice for my order #12345. The payment went through on my card twice but I only received one confirmation email.",
-        timestamp: "Jul 02, 2025 10:23 AM",
-        attachments: [
-          { name: "screenshot_charge.png", url: "#", type: "image" },
-        ],
-      },
-      {
-        id: "m2",
-        role: "admin",
-        sender: "Sarah Chen (Support)",
-        text: "Hi Cristofer, I'm sorry to hear about the duplicate charge. Let me look into this for you. Could you confirm the last 4 digits of the card used?",
-        timestamp: "Jul 02, 2025 11:05 AM",
-      },
-      {
-        id: "m3",
-        role: "client",
-        sender: "Cristofer Torff",
-        text: "Yes, it ends in 7830. I've also attached the bank statement showing both charges.",
-        timestamp: "Jul 02, 2025 11:30 AM",
-        attachments: [
-          { name: "bank_statement.png", url: "#", type: "image" },
-          { name: "transaction_receipt.pdf", url: "#", type: "file" },
-        ],
-      },
-      {
-        id: "m4",
-        role: "admin",
-        sender: "Sarah Chen (Support)",
-        text: "Thank you! I can see both transactions in our system. I've initiated a refund for the duplicate charge. It should reflect in your account within 3-5 business days.",
-        timestamp: "Jul 02, 2025 01:15 PM",
-      },
-      {
-        id: "m5",
-        role: "client",
-        sender: "Cristofer Torff",
-        text: "Thank you, Sarah. How long does it usually take for the refund to show up?",
-        timestamp: "Jul 02, 2025 02:00 PM",
-      },
-      {
-        id: "m6",
-        role: "admin",
-        sender: "Sarah Chen (Support)",
-        text: "It typically takes 3-5 business days depending on your bank. You'll receive an email confirmation once the refund has been processed. Is there anything else I can help with?",
-        timestamp: "Jul 02, 2025 02:30 PM",
-      },
-    ],
-  },
-}
-
-function StatusBadge({ status }: { status: Ticket["status"] }) {
-  const styles: Record<string, string> = {
-    open: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    resolved: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-    closed: "bg-muted text-muted-foreground",
-  }
-
-  return (
-    <span className={cn("rounded-full px-3 py-0.5 text-xs font-semibold", styles[status])}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  )
-}
 
 export default function TicketDetailPage() {
   const params = useParams<{ id: string }>()
-  const ticket = MOCK_TICKETS[params.id]
+  const { data: ticket, error, isError, isLoading } = useTicket(params.id)
+  const messagesQuery = useTicketMessages(params.id)
+  const replyTicket = useReplyTicket(params.id)
   const [reply, setReply] = React.useState("")
+  const [files, setFiles] = React.useState<File[]>([])
   const scrollRef = React.useRef<HTMLDivElement>(null)
+  const didShowNotFoundToast = React.useRef(false)
+  const didScrollInitialMessages = React.useRef(false)
+  const previousScrollHeight = React.useRef(0)
+  const canReply = ticket?.status === "open" || ticket?.status === "pending"
+  const messages = React.useMemo(
+    () => [...(messagesQuery.data?.pages.flatMap((page) => page.messages) ?? [])].reverse(),
+    [messagesQuery.data]
+  )
 
   React.useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
-  }, [])
+    const container = scrollRef.current
+    if (!container || messages.length === 0) return
+
+    if (messagesQuery.isFetchingNextPage) {
+      previousScrollHeight.current = container.scrollHeight
+      return
+    }
+
+    if (!didScrollInitialMessages.current) {
+      container.scrollTop = container.scrollHeight
+      didScrollInitialMessages.current = true
+      return
+    }
+
+    if (previousScrollHeight.current > 0) {
+      container.scrollTop += container.scrollHeight - previousScrollHeight.current
+      previousScrollHeight.current = 0
+      return
+    }
+
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+    if (distanceFromBottom < 160) {
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" })
+    }
+  }, [messages.length, messagesQuery.isFetchingNextPage])
+
+  React.useEffect(() => {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? Number((error as { status?: number }).status)
+        : undefined
+
+    if (isError && status === 404 && !didShowNotFoundToast.current) {
+      didShowNotFoundToast.current = true
+      toast.error("Ticket not found")
+    }
+  }, [error, isError])
+
+  const handleMessagesScroll = () => {
+    const container = scrollRef.current
+    if (!container || container.scrollTop > 96 || messagesQuery.isFetchingNextPage || !messagesQuery.hasNextPage) {
+      return
+    }
+
+    previousScrollHeight.current = container.scrollHeight
+    void messagesQuery.fetchNextPage()
+  }
+
+  const submitReply = async () => {
+    if (!reply.trim() || !canReply) return
+    const attachments = await uploadTicketFiles(files)
+    await replyTicket.mutateAsync({ body: reply.trim(), attachments })
+    setReply("")
+    setFiles([])
+  }
+
+  if (isLoading) {
+    return <div className="py-16 text-center text-sm text-muted-foreground">Loading...</div>
+  }
 
   if (!ticket) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <p className="text-lg font-semibold text-foreground">Ticket not found</p>
-        <Link href={ROUTES.profile.support.root} className="mt-4 text-sm text-primary hover:underline">
+        <Link
+          href={ROUTES.profile.support.root}
+          className="mt-4 text-sm text-primary hover:underline"
+        >
           Back to tickets
         </Link>
       </div>
@@ -130,7 +117,6 @@ export default function TicketDetailPage() {
 
   return (
     <div className="flex h-[calc(100vh-12rem)] flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between border-b pb-4">
         <div className="flex items-center gap-3">
           <Link
@@ -140,31 +126,50 @@ export default function TicketDetailPage() {
             <HugeiconsIcon icon={ArrowLeft01Icon} className="size-4" strokeWidth={2.5} />
           </Link>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-foreground">{ticket.title}</h1>
-            <p className="text-xs text-muted-foreground">{ticket.category}</p>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">
+              {ticket.title}
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : ""}
+            </p>
           </div>
         </div>
-        <StatusBadge status={ticket.status} />
+        <Badge variant={ticket.status === "closed" ? "secondary" : "outline"}>
+          {ticket.status}
+        </Badge>
       </div>
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto py-4">
-        {ticket.messages.map((msg) => {
-          const isClient = msg.role === "client"
+      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto py-4" onScroll={handleMessagesScroll}>
+        {messagesQuery.isFetchingNextPage && (
+          <p className="text-center text-xs text-muted-foreground">Loading...</p>
+        )}
+        {messages.map((message) => {
+          const isClient = message.senderType === "client"
           return (
             <div
-              key={msg.id}
+              key={message.id}
               className={cn("flex gap-3", isClient ? "flex-row" : "flex-row-reverse")}
             >
               <Avatar className="mt-1 size-8 shrink-0 rounded-full">
                 <AvatarFallback className="rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                  {isClient ? "CT" : "SC"}
+                  {(message.senderName || (isClient ? "Me" : "Support"))
+                    .slice(0, 2)
+                    .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className={cn("max-w-[75%] space-y-1.5", isClient ? "items-start" : "items-end text-right")}>
+              <div
+                className={cn(
+                  "max-w-[75%] space-y-1.5",
+                  !isClient && "items-end text-right"
+                )}
+              >
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xs font-semibold text-foreground">{msg.sender}</span>
-                  <span className="text-[10px] text-muted-foreground">{msg.timestamp}</span>
+                  <span className="text-xs font-semibold text-foreground">
+                    {message.senderName}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {message.createdAt ? new Date(message.createdAt).toLocaleString() : ""}
+                  </span>
                 </div>
                 <div
                   className={cn(
@@ -174,22 +179,29 @@ export default function TicketDetailPage() {
                       : "rounded-br-sm bg-primary text-primary-foreground"
                   )}
                 >
-                  {msg.text}
+                  {message.body}
                 </div>
-                {msg.attachments && msg.attachments.length > 0 && (
+                {message.attachments.length > 0 && (
                   <div className={cn("flex flex-wrap gap-2", !isClient && "justify-end")}>
-                    {msg.attachments.map((att, i) => (
-                      <span
-                        key={i}
+                    {message.attachments.map((attachment) => (
+                      <a
+                        key={attachment.uuid}
+                        href={attachment.path}
+                        target="_blank"
+                        rel="noreferrer"
                         className="inline-flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground"
                       >
                         <HugeiconsIcon
-                          icon={att.type === "image" ? Image01Icon : Attachment01Icon}
+                          icon={
+                            attachment.type === "image"
+                              ? Image01Icon
+                              : Attachment01Icon
+                          }
                           className="size-3"
                           strokeWidth={2}
                         />
-                        {att.name}
-                      </span>
+                        {attachment.originalName}
+                      </a>
                     ))}
                   </div>
                 )}
@@ -199,23 +211,37 @@ export default function TicketDetailPage() {
         })}
       </div>
 
-      {/* Reply input */}
       <div className="flex items-center gap-2 border-t pt-4">
+        <label className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border text-muted-foreground hover:bg-muted">
+          <HugeiconsIcon icon={Attachment01Icon} className="size-4" />
+          <input
+            type="file"
+            multiple
+            className="sr-only"
+            disabled={!canReply}
+            onChange={(event) => setFiles(Array.from(event.currentTarget.files ?? []))}
+          />
+        </label>
         <Input
           value={reply}
-          onChange={(e) => setReply(e.target.value)}
-          placeholder="Type your reply..."
+          onChange={(event) => setReply(event.target.value)}
+          placeholder={
+            files.length > 0
+              ? `${files.length} file${files.length === 1 ? "" : "s"} selected`
+              : "Type your reply..."
+          }
           className="h-11 flex-1 rounded-xl"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && reply.trim()) {
-              setReply("")
+          disabled={!canReply}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && reply.trim()) {
+              void submitReply()
             }
           }}
         />
         <Button
           className="h-11 rounded-xl px-5 font-semibold"
-          disabled={!reply.trim()}
-          onClick={() => setReply("")}
+          disabled={!reply.trim() || replyTicket.isPending || !canReply}
+          onClick={submitReply}
         >
           Send
         </Button>

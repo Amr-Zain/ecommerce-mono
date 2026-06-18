@@ -2,6 +2,7 @@
 
 import {
   MutationCache,
+  QueryCache,
   QueryClient,
   QueryClientProvider,
   type QueryKey,
@@ -10,14 +11,22 @@ import * as React from "react"
 import { useSession } from "next-auth/react"
 import { useQueryClient } from "@tanstack/react-query"
 import { queryKeys } from "@/hooks/api/query-keys"
+import { toast } from "@ecommerce/ui/components/sonner"
 
 type MutationMeta = {
+  disableErrorToast?: boolean
   invalidates?: QueryKey[]
 }
 
 function createQueryClient() {
   const queryClient = new QueryClient({
     mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) => {
+        const meta = mutation.meta as MutationMeta | undefined
+        if (!meta?.disableErrorToast) {
+          toast.error(error.message)
+        }
+      },
       onSettled: (_data, _error, _variables, _context, mutation) => {
         const invalidates = (mutation.meta as MutationMeta | undefined)
           ?.invalidates
@@ -28,6 +37,14 @@ function createQueryClient() {
 
         for (const queryKey of invalidates) {
           void queryClient.invalidateQueries({ queryKey })
+        }
+      },
+    }),
+    queryCache: new QueryCache({
+      onError: (error, query) => {
+        const meta = query.meta as MutationMeta | undefined
+        if (!meta?.disableErrorToast) {
+          toast.error(error.message)
         }
       },
     }),

@@ -13,7 +13,6 @@ import {
   type NormalizedHttpError,
 } from "@/lib/client/http"
 import { withSessionRetry } from "@/lib/client/session-request"
-import { toast } from "@ecommerce/ui/components/sonner"
 import { clientApiEndpoint } from "@/lib/client/client-api"
 import { signOut } from "next-auth/react"
 import { useRouter } from "@/i18n/navigation"
@@ -59,6 +58,10 @@ function useFetch<
 
   return useQuery<TResponse, TError, TData>({
     ...options,
+    meta: {
+      ...options.meta,
+      disableErrorToast,
+    },
     queryKey,
     enabled: Boolean(endpoint) && enabled,
     select,
@@ -85,9 +88,6 @@ function useFetch<
 
         onError?.(normalized as TError)
 
-        if (!disableErrorToast) {
-          toast.error(normalized.message)
-        }
         if (authRequired && normalized.status === 401) {
           void signOut({ redirect: false })
           const returnTo = `${window.location.pathname}${window.location.search}`

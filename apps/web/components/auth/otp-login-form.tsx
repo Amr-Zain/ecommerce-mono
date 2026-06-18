@@ -129,7 +129,9 @@ function OtpLoginForm({
             value={code}
             required
             autoComplete="one-time-code"
-            onChange={(event) => setCode(event.target.value)}
+            onChange={(event) =>
+              setCode(event.target.value.replace(/\D/g, "").slice(0, 4))
+            }
           />
         </div>
       )}

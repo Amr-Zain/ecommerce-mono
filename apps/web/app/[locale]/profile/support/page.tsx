@@ -2,80 +2,161 @@
 
 import * as React from "react"
 import { Link } from "@/i18n/navigation"
+import { ROUTES } from "@/lib/routes"
+import {
+  uploadTicketFiles,
+  useCreateTicket,
+  useTickets,
+} from "@/hooks/api/use-tickets"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { CustomerService01Icon } from "@hugeicons/core-free-icons"
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia, EmptyContent } from "@ecommerce/ui/components/empty"
+import {
+  Attachment01Icon,
+  CustomerService01Icon,
+} from "@hugeicons/core-free-icons"
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+  EmptyContent,
+} from "@ecommerce/ui/components/empty"
 import { Button } from "@ecommerce/ui/components/button"
-
-const MOCK_TICKETS = [
-  {
-    id: "1",
-    title: "Mastercard ending in 7830",
-    date: "Jul 02, 2025",
-    category: "Order Problem",
-  },
-  {
-    id: "2",
-    title: "Promo Code Not Working at Checkout",
-    date: "Jul 01, 2025",
-    category: "Website Help",
-  },
-  {
-    id: "3",
-    title: "Request to Change Delivery Address",
-    date: "Jun 29, 2025",
-    category: "Order Update",
-  },
-  {
-    id: "4",
-    title: "Damaged Package — Replacement Needed",
-    date: "Jun 28, 2025",
-    category: "Returns & Refunds",
-  },
-  {
-    id: "5",
-    title: "Account Login Help Needed",
-    date: "Jun 27, 2025",
-    category: "Website Help",
-  },
-]
+import { Input } from "@ecommerce/ui/components/input"
+import { Textarea } from "@ecommerce/ui/components/textarea"
+import { Badge } from "@ecommerce/ui/components/badge"
 
 export default function SupportTicketsPage() {
+  const { data: tickets = [], isLoading } = useTickets()
+  const createTicket = useCreateTicket()
+  const [isCreating, setIsCreating] = React.useState(false)
+  const [title, setTitle] = React.useState("")
+  const [description, setDescription] = React.useState("")
+  const [files, setFiles] = React.useState<File[]>([])
+
+  const canSubmit = title.trim() && description.trim()
+
+  const submitTicket = async () => {
+    if (!canSubmit) return
+    const attachments = await uploadTicketFiles(files)
+    await createTicket.mutateAsync({
+      title: title.trim(),
+      description: description.trim(),
+      attachments,
+    })
+    setTitle("")
+    setDescription("")
+    setFiles([])
+    setIsCreating(false)
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight text-foreground">Support Tickets</h1>
-      
-      {MOCK_TICKETS.length === 0 ? (
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Support Tickets
+        </h1>
+        <Button
+          className="gap-2 rounded-xl"
+          onClick={() => setIsCreating((value) => !value)}
+        >
+          <span className="text-base leading-none">+</span>
+          New Ticket
+        </Button>
+      </div>
+
+      {isCreating && (
+        <div className="space-y-4 rounded-lg border bg-card p-4">
+          <Input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Title"
+            className="h-11 rounded-xl"
+          />
+          <Textarea
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Describe what happened..."
+            className="min-h-32 rounded-xl"
+          />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground">
+              <HugeiconsIcon icon={Attachment01Icon} className="size-4" />
+              Attach files
+              <input
+                type="file"
+                multiple
+                className="sr-only"
+                onChange={(event) =>
+                  setFiles(Array.from(event.currentTarget.files ?? []))
+                }
+              />
+            </label>
+            {files.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {files.length} file{files.length === 1 ? "" : "s"} selected
+              </span>
+            )}
+            <Button
+              className="gap-2 rounded-xl"
+              disabled={!canSubmit || createTicket.isPending}
+              onClick={submitTicket}
+            >
+              Send
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && tickets.length === 0 ? (
         <Empty className="py-24">
           <EmptyHeader>
-            <EmptyMedia variant="icon" className="size-16 rounded-2xl bg-muted/50 mb-4 text-muted-foreground">
-              <HugeiconsIcon icon={CustomerService01Icon} className="size-8" strokeWidth={1.5} />
+            <EmptyMedia
+              variant="icon"
+              className="mb-4 size-16 rounded-2xl bg-muted/50 text-muted-foreground"
+            >
+              <HugeiconsIcon
+                icon={CustomerService01Icon}
+                className="size-8"
+                strokeWidth={1.5}
+              />
             </EmptyMedia>
             <EmptyTitle className="text-xl">No support tickets</EmptyTitle>
             <EmptyDescription>
-              You haven't opened any support tickets yet. Need help with an order?
+              You haven't opened any support tickets yet. Need help with an
+              order?
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button className="mt-4 rounded-xl px-8 h-11 bg-primary hover:bg-primary/90">
+            <Button
+              className="mt-4 h-11 rounded-xl px-8"
+              onClick={() => setIsCreating(true)}
+            >
               Contact Support
             </Button>
           </EmptyContent>
         </Empty>
       ) : (
         <div className="flex flex-col gap-4">
-          {MOCK_TICKETS.map((ticket) => (
+          {tickets.map((ticket) => (
             <Link
               key={ticket.id}
-              href={`/profile/support/${ticket.id}`}
-              className="group flex flex-col justify-center rounded-xl border bg-card px-5 py-4 transition-all hover:shadow-sm"
+              href={ROUTES.profile.support.detail(ticket.id)}
+              className="group flex flex-col gap-2 rounded-lg border bg-card px-5 py-4 transition-all hover:shadow-sm"
             >
-              <h3 className="text-base font-bold text-foreground group-hover:underline">
-                {ticket.title}
-              </h3>
-              <p className="mt-1 text-sm font-medium text-muted-foreground">
-                {ticket.date} — {ticket.category}
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-base font-bold text-foreground group-hover:underline">
+                  {ticket.title}
+                </h3>
+                <Badge variant={ticket.status === "closed" ? "secondary" : "outline"}>
+                  {ticket.status}
+                </Badge>
+              </div>
+              <p className="line-clamp-1 text-sm text-muted-foreground">
+                {ticket.lastMessage || ticket.description}
+              </p>
+              <p className="text-xs font-medium text-muted-foreground">
+                {new Date(ticket.updatedAt).toLocaleString()}
               </p>
             </Link>
           ))}

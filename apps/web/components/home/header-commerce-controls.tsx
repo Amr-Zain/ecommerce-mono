@@ -44,7 +44,7 @@ function HeaderCommerceControls() {
   return (
     <>
       <Link
-        href={ROUTES.profile.wishlist}
+        href={ROUTES.wishlist}
         aria-label={`Wishlist (${wishlistCount} items)`}
       >
         <BadgeIcon count={wishlistCount}>
