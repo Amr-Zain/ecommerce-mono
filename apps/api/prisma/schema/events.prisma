@@ -50,3 +50,67 @@ model Notification {
   @@index([recipientId, readAt, createdAt])
   @@map("notifications")
 }
+
+model MessageTemplate {
+  id          BigInt   @id @default(autoincrement())
+  key         String   @unique
+  name        String
+  channel     String
+  purpose     String
+  content     Json     @db.JsonB
+  variables   Json?    @db.JsonB
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  campaigns MessageCampaign[]
+
+  @@index([channel, purpose, isActive])
+  @@map("message_templates")
+}
+
+model MessageCampaign {
+  id             BigInt   @id @default(autoincrement())
+  templateId     BigInt   @map("template_id")
+  template       MessageTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  senderId       BigInt?  @map("sender_id")
+  sender         User?    @relation("MessageCampaignSender", fields: [senderId], references: [id], onDelete: SetNull)
+  channel        String
+  recipientType  String   @map("recipient_type")
+  titleOverride  String?  @map("title_override")
+  variables      Json?    @db.JsonB
+  templateSnapshot Json   @map("template_snapshot") @db.JsonB
+  status         String   @default("queued")
+  queuedCount    Int      @default(0) @map("queued_count")
+  sentCount      Int      @default(0) @map("sent_count")
+  failedCount    Int      @default(0) @map("failed_count")
+  skippedCount   Int      @default(0) @map("skipped_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  recipients MessageCampaignRecipient[]
+
+  @@index([status, createdAt])
+  @@index([templateId])
+  @@map("message_campaigns")
+}
+
+model MessageCampaignRecipient {
+  id          BigInt   @id @default(autoincrement())
+  campaignId  BigInt   @map("campaign_id")
+  campaign    MessageCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  userId      BigInt   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel     String
+  email       String?
+  status      String   @default("queued")
+  error       String?  @db.Text
+  sentAt      DateTime? @map("sent_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([campaignId, userId, channel])
+  @@index([campaignId, status])
+  @@index([userId])
+  @@map("message_campaign_recipients")
+}

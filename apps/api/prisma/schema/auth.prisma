@@ -47,12 +47,8 @@ model User {
   isPhoneVerified         Boolean                   @default(false) @map("is_phone_verified")
   isEmailVerified         Boolean                   @default(false) @map("is_email_verified")
   isActive                Boolean                   @default(true) @map("is_active")
-  emailVerificationCode   String?                   @map("email_verification_code") // 4-digit code
-  emailVerificationExpiry DateTime?                 @map("email_verification_expiry")
   phoneVerificationCode   String?                   @map("phone_verification_code") // 4-digit code
   phoneVerificationExpiry DateTime?                 @map("phone_verification_expiry")
-  passwordResetCode       String?                   @map("password_reset_code") // 4-digit code
-  passwordResetExpiry     DateTime?                 @map("password_reset_expiry")
   settings                Json?                     @default("{}")
   createdAt               DateTime                  @default(now()) @map("created_at")
   updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
@@ -68,12 +64,40 @@ model User {
   walletTransactions      WalletTransaction[]
   walletWithdrawals       WalletWithdrawalRequest[]
   notifications           Notification[]
+  emailOtpChallenges      EmailOtpChallenge[]
+  tickets                 Ticket[]
+  ticketMessages          TicketMessage[]
+  messageCampaigns        MessageCampaign[]         @relation("MessageCampaignSender")
+  messageRecipients       MessageCampaignRecipient[]
 
   @@index([phone])
   @@index([phoneCode, phone])
   @@index([userType])
   @@index([roleId])
   @@map("users")
+}
+
+model EmailOtpChallenge {
+  id            String    @id @default(uuid())
+  userId        BigInt?   @map("user_id")
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipient     String
+  purpose       String
+  codeHash      String    @map("code_hash")
+  expiresAt     DateTime  @map("expires_at")
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(5) @map("max_attempts")
+  requestIp     String?   @map("request_ip")
+  locale        String    @default("en")
+  activeKey     String?   @unique @map("active_key")
+  consumedAt    DateTime? @map("consumed_at")
+  invalidatedAt DateTime? @map("invalidated_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([recipient, purpose, createdAt])
+  @@index([requestIp, createdAt])
+  @@index([expiresAt])
+  @@map("email_otp_challenges")
 }
 
 model AnonymousSession {
