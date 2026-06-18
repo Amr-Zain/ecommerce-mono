@@ -22,7 +22,8 @@ const RolesTable = ({
   const alert = useAlertModal()
   const search = useSearch({ from: '/_main/roles/' })
 
-  const rows = (data as any).data || []  const [selected, setSelected] = useState<{
+  const rows = (data as any).data || []
+  const [selected, setSelected] = useState<{
     id: string
     type: PickedAction
     isActive?: boolean

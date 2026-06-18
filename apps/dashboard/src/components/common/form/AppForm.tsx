@@ -32,6 +32,7 @@ interface GeneralFormConfig<T extends FieldValues> {
   showResetButton?: boolean
   showSubmitButton?: boolean
   isLoading?: boolean
+  submitDisabled?: boolean
   className?: string
   formClassName?: string
   gridColumns?: number
@@ -60,6 +61,7 @@ function AppForm<T extends FieldValues>({
   showResetButton = false, // Default to false to make it optional
   showSubmitButton = true,
   isLoading = false,
+  submitDisabled = false,
   className = "",
   formClassName = "",
   gridColumns = 1,
@@ -198,7 +200,7 @@ function AppForm<T extends FieldValues>({
 
               <Button
                 type="submit"
-                disabled={isLoading /* || !form.formState.isValid */}
+                disabled={isLoading || submitDisabled /* || !form.formState.isValid */}
                 className={`min-w-[120px] bg-primary text-primary-foreground hover:bg-primary/90 ${layoutConfig.submitButtonClassName || ""
                   }`}
               >

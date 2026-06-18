@@ -23,8 +23,7 @@ const Supervisors = ({
   const alert = useAlertModal()
   const search = useSearch({ from: '/_main/supervisors/' })
 
-  const rows = data.data?.items || []
-  const meta = (data as any).data?.metaconst [selected, setSelected] = useState<{
+  const [selected, setSelected] = useState<{
   id: string
   type: PickedAction
   isActive?: boolean

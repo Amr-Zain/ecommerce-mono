@@ -23,7 +23,8 @@ const AdminNotifications = ({
     const alert = useAlertModal()
 
     const rows = (data as any).data?.data || []
-    const meta = (data as any).data?.meta    const [isFormOpen, setIsFormOpen] = useState(false)
+    const meta = (data as any).data?.meta
+    const [isFormOpen, setIsFormOpen] = useState(false)
     const isRTL = i18n.dir(i18n.language) === 'rtl'
 
     const [selected, setSelected] = useState<{
