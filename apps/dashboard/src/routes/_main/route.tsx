@@ -18,9 +18,19 @@ import { setupZodI18n } from '@/errorMap'
 
 export const Route = createFileRoute('/_main')({
   beforeLoad: ({ location }) => {
-    const user = useAuthStore.getState().user;
-    const clearUser = useAuthStore.getState().clearUser
-    if (!useAuthStore.getState().token) {
+    const { user, token, isAuthenticated, isAuthReady, clearUser } = useAuthStore.getState();
+
+    if (!isAuthReady || !isAuthenticated || !token || !user) {
+      throw redirect({
+        to: '/auth/login',
+        search: {
+          redirect: location.href,
+        },
+      })
+    }
+    if (user.user_type !== 'admin' && user.user_type !== 'super_admin') {
+      toast('Admin access only')
+      clearUser()
       throw redirect({
         to: '/auth/login',
         search: {

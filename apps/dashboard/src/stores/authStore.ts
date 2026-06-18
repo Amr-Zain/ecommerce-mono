@@ -2,7 +2,6 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import Cookies from "js-cookie";
 import { Image } from "@/types/api/general";
 
 export interface UserLocation {
@@ -16,7 +15,16 @@ export interface UserSettings {
   market?: string
 }
 
-export type PermissionAction = 'index' | 'show' | 'store' | 'update' | 'delete' | 'destroy' 
+export type PermissionAction =
+  | 'index'
+  | 'show'
+  | 'store'
+  | 'list'
+  | 'read'
+  | 'create'
+  | 'update'
+  | 'delete'
+  | 'destroy'
 
 export type UserPermissions = Record<string, PermissionAction[]>
 
@@ -79,7 +87,11 @@ export interface UserAuth {
 interface AuthStore {
   user: UserAuth | null;
   token: string | null;
+  isAuthenticated: boolean;
+  isAuthReady: boolean;
   setUser: (user: UserAuth) => void;
+  setToken: (token: string) => void;
+  setAuthReady: (isAuthReady: boolean) => void;
   updateUser: (user: any) => void;
   clearUser: () => void;
 }
@@ -91,17 +103,38 @@ export const useAuthStore = create<AuthStore>()(
     (set, get) => ({
       user: null,
       token: null,
+      isAuthenticated: false,
+      isAuthReady: false,
       setUser: (user) => {
-        set({ user, token: user.token ?? get().token });
-        console.log(user.permissions);
-
+        set({
+          user,
+          token: user.token ?? get().token,
+          isAuthenticated: true,
+          isAuthReady: true,
+        });
+      },
+      setToken: (token) => {
+        const user = get().user;
+        set({
+          token,
+          user: user ? { ...user, token } : user,
+          isAuthenticated: !!user,
+        });
+      },
+      setAuthReady: (isAuthReady) => {
+        set({ isAuthReady });
       },
       updateUser: (values) => {
         set({ user: { ...get()?.user, ...values } });
 
       },
       clearUser: () => {
-        set({ user: null, token: null });
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isAuthReady: true,
+        });
       },
     }),
     {

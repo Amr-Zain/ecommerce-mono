@@ -10,8 +10,21 @@ export function cn(...inputs: ClassValue[]) {
 
 export const hasPermission = (entity: string, action: PermissionAction) => {
   const permissions = useAuthStore.getState().user?.permissions
-  if (permissions && permissions[entity])
-    return permissions[entity].includes(action)
+  if (permissions && permissions[entity]) {
+    const actions = permissions[entity]
+    if (actions.includes(action)) return true
+    const aliases: Partial<Record<PermissionAction, PermissionAction[]>> = {
+      index: ['list'],
+      list: ['index'],
+      show: ['read'],
+      read: ['show'],
+      store: ['create'],
+      create: ['store'],
+      destroy: ['delete'],
+      delete: ['destroy'],
+    }
+    return aliases[action]?.some((alias) => actions.includes(alias)) ?? false
+  }
   return false
 }
 

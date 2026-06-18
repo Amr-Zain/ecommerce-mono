@@ -1,4 +1,10 @@
 import { useAuthStore } from "@/stores/authStore";
+import {
+  getAccessTokenUserType,
+  isDashboardUser,
+  mapDashboardAuthResponse,
+  unwrapApiData,
+} from "@/lib/dashboardAuth";
 import axios from "axios";
 import Cookies from "js-cookie";
 
@@ -70,25 +76,25 @@ axiosInstance.interceptors.response.use(
       return new Promise((resolve, reject) => {
         axios({
           method: 'post',
-          url: `${import.meta.env.VITE_BASE_URL}/auth/refresh`,
+          url: `${import.meta.env.VITE_BASE_URL_API}/auth/refresh`,
           withCredentials: true,
           headers: {
-            'x-platform': 'browser'
+            'x-platform': 'browser',
+            'x-user-type': 'admin',
           }
         })
           .then(({ data }) => {
-            const newAccessToken = data?.data?.access_token || data.access_token || data.accessToken;
-            
-            // Save new token in store
-            const user = useAuthStore.getState().user;
-            if (user) {
-              useAuthStore.setState({
-                user: { ...user, token: newAccessToken },
-                token: newAccessToken,
-              });
-            } else {
-              useAuthStore.setState({ token: newAccessToken });
+            const response = unwrapApiData<any>(data);
+            const newAccessToken = response?.access_token || response?.accessToken;
+            if (getAccessTokenUserType(newAccessToken) !== 'admin') {
+              throw new Error('Refresh token does not belong to an admin user');
             }
+            
+            const user = mapDashboardAuthResponse(response);
+            if (!isDashboardUser(user)) {
+              throw new Error('Refresh token does not belong to a dashboard user');
+            }
+            useAuthStore.getState().setUser(user);
 
             // Update Auth header for retry
             originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
