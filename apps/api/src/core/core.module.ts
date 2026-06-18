@@ -12,6 +12,7 @@ import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { CartsModule } from './carts/carts.module';
+import { TicketsModule } from './tickets/tickets.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { CartsModule } from './carts/carts.module';
     ReviewsModule,
     ShowRoomsModule,
     CartsModule,
+    TicketsModule,
   ],
-  exports: [ReviewsModule, ShowRoomsModule, CartsModule],
+  exports: [ReviewsModule, ShowRoomsModule, CartsModule, TicketsModule],
 })
 export class CoreModule {}
