@@ -29,17 +29,27 @@ export const AUTH_DEFAULTS = {
   phoneCode: '+966',
   accessExpiration: '15m',
   refreshExpiration: '7d',
-  verificationCode: '1111',
+  phoneVerificationCode: '1111',
 } as const;
 
 export const AUTH_SECURITY = {
   bcryptRounds: 10,
   refreshTokenIdBytes: 32,
-  verificationExpiryMs: 15 * 60 * 1000,
+  verificationExpiryMs: 10 * 60 * 1000,
   registrationVerificationExpiryMs: 150 * 60 * 1000,
+  otpResendCooldownMs: 60 * 1000,
+  otpHourlyLimit: 5,
+  otpMaxAttempts: 5,
   refreshCookieMaxAgeMs: 7 * 24 * 60 * 60 * 1000,
   fallbackRefreshExpirationMs: 7 * 24 * 60 * 60 * 1000,
 } as const;
+
+export const EMAIL_OTP_PURPOSES = {
+  login: 'login',
+  passwordReset: 'password_reset',
+} as const;
+
+export type EmailOtpPurpose = (typeof EMAIL_OTP_PURPOSES)[keyof typeof EMAIL_OTP_PURPOSES];
 
 export const AUTH_COOKIE = {
   refreshToken: 'refreshToken',

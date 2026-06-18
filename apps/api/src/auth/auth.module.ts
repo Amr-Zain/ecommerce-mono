@@ -16,6 +16,7 @@ import { MediaModule } from '../media/media.module';
 import { UsersModule as CoreUsersModule } from '@/core/users/users.module';
 import { AnonymousSessionService } from './services/anonymous-session.service';
 import { AnonymousSessionsRepository } from './repositories/anonymous-sessions.repository';
+import { EmailOtpChallengeService } from './services/email-otp-challenge.service';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { AnonymousSessionsRepository } from './repositories/anonymous-sessions.r
     RefreshTokensRepository,
     AnonymousSessionService,
     AnonymousSessionsRepository,
+    EmailOtpChallengeService,
   ],
   exports: [AuthService, RefreshTokensRepository, OptionalJwtAuthGuard, AnonymousSessionService],
 })

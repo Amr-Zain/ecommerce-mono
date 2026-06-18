@@ -33,19 +33,24 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Req() req: Request, @Body() registerDto: RegisterDto, @I18nLang() lang: string) {
+    return this.authService.register(registerDto, req.ip, lang);
   }
 
   @Public()
   @Post('send-otp')
-  async sendOtp(@Body() sendOtpDto: SendOtpDto) {
-    return this.authService.sendOtp(sendOtpDto);
+  async sendOtp(@Req() req: Request, @Body() sendOtpDto: SendOtpDto, @I18nLang() lang: string) {
+    return this.authService.sendOtp(sendOtpDto, req.ip, lang);
   }
 
   @Public()
   @Post('login-otp')
-  async loginOtp(@Req() req: Request, @Res() res: Response, @Body() verifyOtpDto: VerifyOtpDto) {
+  async loginOtp(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() verifyOtpDto: VerifyOtpDto,
+    @I18nLang() lang: string,
+  ) {
     const deviceInfo = req.headers['user-agent'];
     const ipAddress = req.ip;
     const platform = (req.headers['x-platform'] as string) || 'browser';
@@ -55,6 +60,7 @@ export class AuthController {
       deviceInfo,
       ipAddress,
       req.header('x-anonymous-session-token'),
+      lang,
     );
     return this.authService.handleAuthResponse(res, authResult, platform);
   }
@@ -97,6 +103,15 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token is required');
     }
 
+    const expectedUserType = req.headers['x-user-type'];
+    if (
+      typeof expectedUserType === 'string' &&
+      expectedUserType &&
+      user.userType !== expectedUserType
+    ) {
+      throw new UnauthorizedException('Refresh token does not match the requested user type');
+    }
+
     const platform = (req.headers['x-platform'] as string) || 'browser';
     const authResult = await this.authService.refreshAccessToken(user, token);
     return this.authService.handleAuthResponse(res, authResult, platform);
@@ -126,8 +141,8 @@ export class AuthController {
 
   @Public()
   @Post('forgot-password')
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return this.authService.forgotPassword(forgotPasswordDto.email);
+  async forgotPassword(@Req() req: Request, @Body() forgotPasswordDto: ForgotPasswordDto, @I18nLang() lang: string) {
+    return this.authService.forgotPassword(forgotPasswordDto.email, req.ip, lang);
   }
 
   @Public()
@@ -138,6 +153,12 @@ export class AuthController {
 
   @Get('me')
   getProfile(@CurrentUser() user: AuthUserPayload, @I18nLang() lang: string) {
+    const roleTranslations = Array.isArray(user.role?.translations) ? user.role.translations : [];
+    const roleName =
+      roleTranslations.find((t) => t.langId === lang)?.name ||
+      roleTranslations.find((t) => t.langId === 'en')?.name ||
+      ((user.role as unknown as { name?: string })?.name ?? '');
+
     return {
       id: user.id.toString(),
       name: user.name,
@@ -146,13 +167,11 @@ export class AuthController {
       role: user.role
         ? {
             id: user.role.id.toString(),
-            name:
-              user.role.translations.find((t) => t.langId === lang)?.name ||
-              user.role.translations.find((t) => t.langId === 'en')?.name ||
-              '',
-            permissions: PermissionUtil.groupPermissions(user.role.permissions),
+            name: roleName,
+            permissions: PermissionUtil.groupPermissionsAsStrings(user.role.permissions),
           }
         : null,
+      userType: user.userType,
       isEmailVerified: user.isEmailVerified,
       isPhoneVerified: user.isPhoneVerified,
       isActive: user.isActive,

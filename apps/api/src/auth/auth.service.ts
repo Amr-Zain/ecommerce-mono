@@ -5,7 +5,10 @@ import {
   BadRequestException,
   NotFoundException,
   Inject,
+  Logger,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '../prisma';
@@ -25,6 +28,9 @@ import { Response } from 'express';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../generated/i18n.generated';
 import { AnonymousSessionService } from './services/anonymous-session.service';
+import { EmailOtpChallengeService } from './services/email-otp-challenge.service';
+import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
+import { createDomainEvent, DOMAIN_EVENTS } from '@/common/events/domain-event';
 import {
   AUTH_CONFIG_KEYS,
   AUTH_COOKIE,
@@ -37,6 +43,7 @@ import {
   AUTH_SECURITY,
   AUTH_TOKEN_TYPES,
   AUTH_USER_TYPES,
+  EMAIL_OTP_PURPOSES,
   AuthConfigSecretKey,
 } from '../common/constants/auth.constants';
 
@@ -70,6 +77,8 @@ type AuthSessionSummary = Prisma.RefreshTokenGetPayload<{
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
@@ -77,6 +86,9 @@ export class AuthService {
     private readonly refreshTokensRepository: RefreshTokensRepository,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly anonymousSessions: AnonymousSessionService,
+    private readonly emailChallenges: EmailOtpChallengeService,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly domainEvents: DomainEventPublisher,
   ) {}
 
   /**
@@ -123,7 +135,7 @@ export class AuthService {
   /**
    * Register a new user
    */
-  async register(registerDto: RegisterDto): Promise<{ message: string }> {
+  async register(registerDto: RegisterDto, requestIp?: string, lang: string = AUTH_DEFAULTS.language): Promise<{ message: string }> {
     const isEmailRegistration = registerDto.type === AUTH_IDENTIFIER_TYPES.email;
     const existingUser = isEmailRegistration
       ? await this.usersRepository.findByEmail(registerDto.email!)
@@ -133,18 +145,15 @@ export class AuthService {
       throw new ConflictException(this.i18n.t(isEmailRegistration ? 'errors.email_exists' : 'errors.phone_exists'));
     }
 
-    // Generate verification code (hardcoded to 1111 for now)
-    const verificationCode = AUTH_DEFAULTS.verificationCode;
+    const verificationCode = AUTH_DEFAULTS.phoneVerificationCode;
     const verificationExpiry = new Date(Date.now() + AUTH_SECURITY.registrationVerificationExpiryMs);
 
-    await this.usersRepository.create({
+    const user = await this.usersRepository.create({
       name: registerDto.name,
       email: isEmailRegistration ? registerDto.email : undefined,
       phone: isEmailRegistration ? undefined : registerDto.phone,
       phoneCode: isEmailRegistration ? undefined : registerDto.phoneCode,
       userType: AUTH_USER_TYPES.client,
-      emailVerificationCode: isEmailRegistration ? verificationCode : undefined,
-      emailVerificationExpiry: isEmailRegistration ? verificationExpiry : undefined,
       phoneVerificationCode: isEmailRegistration ? undefined : verificationCode,
       phoneVerificationExpiry: isEmailRegistration ? undefined : verificationExpiry,
       isEmailVerified: false,
@@ -152,8 +161,18 @@ export class AuthService {
       isActive: true,
     });
 
-    const destination = isEmailRegistration ? registerDto.email : `${registerDto.phoneCode}${registerDto.phone}`;
-    console.log(`${isEmailRegistration ? 'Email' : 'Phone'} verification code for ${destination}: ${verificationCode}`);
+    if (isEmailRegistration) {
+      const challenge = await this.emailChallenges.create({
+        recipient: registerDto.email!,
+        purpose: EMAIL_OTP_PURPOSES.login,
+        userId: user.id,
+        requestIp,
+        locale: lang,
+      });
+      await this.deliverEmailChallenge(challenge, DOMAIN_EVENTS.authEmailOtpRequested);
+    } else {
+      console.log(`Phone verification code for ${registerDto.phoneCode}${registerDto.phone}: ${verificationCode}`);
+    }
 
     return {
       message: this.i18n.t(
@@ -303,6 +322,7 @@ export class AuthService {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || undefined,
+        userType: user.userType ?? undefined,
         role: user.role
           ? {
               id: user.role.id.toString(),
@@ -320,7 +340,7 @@ export class AuthService {
   /**
    * Send verification code (OTP) via Email or Phone
    */
-  async sendOtp(dto: SendOtpDto): Promise<{ message: string }> {
+  async sendOtp(dto: SendOtpDto, requestIp?: string, lang: string = AUTH_DEFAULTS.language): Promise<{ message: string }> {
     const type = dto.type;
     let user: UserInterface | null = null;
 
@@ -364,15 +384,18 @@ export class AuthService {
       throw new UnauthorizedException(this.i18n.t('errors.account_inactive_or_not_found'));
     }
 
-    const verificationCode = AUTH_DEFAULTS.verificationCode;
+    const verificationCode = AUTH_DEFAULTS.phoneVerificationCode;
     const verificationExpiry = new Date(Date.now() + AUTH_SECURITY.verificationExpiryMs);
 
     if (type === AUTH_IDENTIFIER_TYPES.email) {
-      await this.usersRepository.update(user.id, {
-        emailVerificationCode: verificationCode,
-        emailVerificationExpiry: verificationExpiry,
+      const challenge = await this.emailChallenges.create({
+        recipient: dto.email!,
+        purpose: EMAIL_OTP_PURPOSES.login,
+        userId: user.id,
+        requestIp,
+        locale: lang,
       });
-      console.log(`[OTP] Email verification code for ${dto.email}: ${verificationCode}`);
+      await this.deliverEmailChallenge(challenge, DOMAIN_EVENTS.authEmailOtpRequested);
     } else {
       await this.usersRepository.update(user.id, {
         phoneVerificationCode: verificationCode,
@@ -420,24 +443,24 @@ export class AuthService {
         throw new UnauthorizedException(this.i18n.t('errors.invalid_credentials'));
       }
 
-      if (!user.emailVerificationCode || !user.emailVerificationExpiry) {
-        throw new BadRequestException(this.i18n.t('errors.verification_code_not_found'));
-      }
-
-      if (user.emailVerificationExpiry < new Date()) {
-        throw new BadRequestException(this.i18n.t('errors.verification_code_expired'));
-      }
-
-      if (user.emailVerificationCode !== dto.code) {
-        throw new BadRequestException(this.i18n.t('errors.invalid_verification_code'));
-      }
-
-      // Mark as verified
-      await this.usersRepository.update(user.id, {
-        isEmailVerified: true,
-        emailVerificationCode: null,
-        emailVerificationExpiry: null,
+      await this.emailChallenges.consume(EMAIL_OTP_PURPOSES.login, email, dto.code, async (tx) => {
+        await tx.user.update({ where: { id: user!.id }, data: { isEmailVerified: true } });
+        await this.domainEvents.publish(
+          createDomainEvent({
+            eventName: DOMAIN_EVENTS.authEmailVerified,
+            aggregateType: 'user',
+            aggregateId: user!.id.toString(),
+            payload: {
+              userId: user!.id.toString(),
+              recipient: email.toLowerCase(),
+              locale: lang,
+              name: user!.name ?? undefined,
+            },
+          }),
+          tx,
+        );
       });
+      user = { ...user, isEmailVerified: true };
     } else {
       const phone = dto.phone;
       const phoneCode = dto.phoneCode ?? AUTH_DEFAULTS.phoneCode;
@@ -560,7 +583,7 @@ export class AuthService {
   /**
    * Forgot password - send reset code
    */
-  async forgotPassword(email: string): Promise<{ message: string }> {
+  async forgotPassword(email: string, requestIp?: string, lang: string = AUTH_DEFAULTS.language): Promise<{ message: string }> {
     const user = await this.usersRepository.findOne({ email });
 
     if (!user) {
@@ -568,17 +591,18 @@ export class AuthService {
       return { message: this.i18n.t('common.auth_password_reset_code_sent') };
     }
 
-    // Generate reset code (hardcoded to 1111 for now)
-    const resetCode = AUTH_DEFAULTS.verificationCode;
-    const resetExpiry = new Date(Date.now() + AUTH_SECURITY.verificationExpiryMs);
-
-    await this.usersRepository.update(user.id, {
-      passwordResetCode: resetCode,
-      passwordResetExpiry: resetExpiry,
-    });
-
-    // TODO: Send reset code via email
-    console.log(`Password reset code for ${email}: ${resetCode}`);
+    try {
+      const challenge = await this.emailChallenges.create({
+        recipient: email,
+        purpose: EMAIL_OTP_PURPOSES.passwordReset,
+        userId: user.id,
+        requestIp,
+        locale: lang,
+      });
+      await this.deliverEmailChallenge(challenge, DOMAIN_EVENTS.authPasswordResetRequested);
+    } catch (error) {
+      this.logger.error('Password reset email delivery failed', error);
+    }
 
     return { message: this.i18n.t('common.auth_password_reset_code_sent') };
   }
@@ -593,32 +617,40 @@ export class AuthService {
       throw new NotFoundException(this.i18n.t('errors.user_not_found'));
     }
 
-    if (!user.passwordResetCode || !user.passwordResetExpiry) {
-      throw new BadRequestException(this.i18n.t('errors.reset_code_not_found'));
-    }
-
-    if (user.passwordResetExpiry < new Date()) {
-      throw new BadRequestException(this.i18n.t('errors.reset_code_expired'));
-    }
-
-    if (user.passwordResetCode !== code) {
-      throw new BadRequestException(this.i18n.t('errors.invalid_reset_code'));
-    }
-
-    // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, AUTH_SECURITY.bcryptRounds);
-
-    // Update password and clear reset code
-    await this.usersRepository.update(user.id, {
-      password: hashedPassword,
-      passwordResetCode: null,
-      passwordResetExpiry: null,
+    await this.emailChallenges.consume(EMAIL_OTP_PURPOSES.passwordReset, email, code, async (tx) => {
+      await tx.user.update({ where: { id: user.id }, data: { password: hashedPassword } });
+      await tx.refreshToken.updateMany({ where: { userId: user.id, isRevoked: false }, data: { isRevoked: true } });
     });
 
-    // Revoke all refresh tokens
-    await this.refreshTokensRepository.revokeAllUserTokens(user.id);
-
     return { message: this.i18n.t('common.auth_password_reset_successful') };
+  }
+
+  private async deliverEmailChallenge(
+    challenge: { id: string; code: string; expiresAt: Date; recipient: string; locale: string },
+    eventName: typeof DOMAIN_EVENTS.authEmailOtpRequested | typeof DOMAIN_EVENTS.authPasswordResetRequested,
+  ) {
+    const purpose = eventName === DOMAIN_EVENTS.authEmailOtpRequested ? 'login' : 'password_reset';
+    try {
+      await this.eventEmitter.emitAsync(
+        eventName,
+        createDomainEvent({
+          eventName,
+          aggregateType: 'email_otp_challenge',
+          aggregateId: challenge.id,
+          payload: {
+            recipient: challenge.recipient,
+            locale: challenge.locale,
+            code: challenge.code,
+            expiresAt: challenge.expiresAt.toISOString(),
+            purpose,
+          },
+        }),
+      );
+    } catch (error) {
+      await this.emailChallenges.invalidate(challenge.id);
+      throw new ServiceUnavailableException(this.i18n.t('errors.email_delivery_unavailable'), { cause: error });
+    }
   }
 
   /**
@@ -672,7 +704,7 @@ export class AuthService {
     }
 
     // Generate verification code
-    const verificationCode = AUTH_DEFAULTS.verificationCode;
+    const verificationCode = AUTH_DEFAULTS.phoneVerificationCode;
     const verificationExpiry = new Date(Date.now() + AUTH_SECURITY.verificationExpiryMs);
 
     await this.usersRepository.update(user.id, {
