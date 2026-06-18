@@ -71,6 +71,10 @@ export type I18nTranslations = {
         "notification_exchange_review_body": string;
         "notification_exchange_reservation_expired_title": string;
         "notification_exchange_reservation_expired_body": string;
+        "notification_ticket_reply_title": string;
+        "notification_ticket_reply_body": string;
+        "notification_custom_title": string;
+        "notification_custom_body": string;
     };
     "errors": {
         "user_not_found": string;
@@ -182,6 +186,10 @@ export type I18nTranslations = {
         "verification_code_not_found": string;
         "verification_code_expired": string;
         "invalid_verification_code": string;
+        "otp_resend_cooldown": string;
+        "otp_rate_limit": string;
+        "otp_attempts_exhausted": string;
+        "email_delivery_unavailable": string;
         "account_inactive": string;
         "email_verification_required": string;
         "invalid_refresh_token": string;

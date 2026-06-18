@@ -63,5 +63,9 @@
   "notification_exchange_review_title": "طلب الاستبدال يتطلب المراجعة",
   "notification_exchange_review_body": "طلب الاستبدال يتطلب مراجعة إضافية.",
   "notification_exchange_reservation_expired_title": "انتهت صلاحية حجز الاستبدال",
-  "notification_exchange_reservation_expired_body": "انتهت صلاحية حجز مخزون الاستبدال ويتطلب المراجعة."
+  "notification_exchange_reservation_expired_body": "انتهت صلاحية حجز مخزون الاستبدال ويتطلب المراجعة.",
+  "notification_ticket_reply_title": "رد الدعم على تذكرتك",
+  "notification_ticket_reply_body": "{body}",
+  "notification_custom_title": "{title}",
+  "notification_custom_body": "{body}"
 }

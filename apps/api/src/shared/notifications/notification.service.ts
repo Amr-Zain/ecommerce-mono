@@ -33,6 +33,26 @@ export class NotificationService {
     }
   }
 
+  async createRenderedForUsers(
+    recipientIds: bigint[],
+    input: {
+      eventId: string;
+      notificationType: string;
+      title: string;
+      body: string;
+      data?: Record<string, unknown>;
+    },
+  ) {
+    return this.createForUsers(recipientIds, {
+      eventId: input.eventId,
+      notificationType: input.notificationType,
+      titleKey: 'common.notification_custom_title',
+      bodyKey: 'common.notification_custom_body',
+      args: { title: input.title, body: input.body },
+      data: input.data,
+    });
+  }
+
   async createForAdmins(resource: string, input: Parameters<NotificationService['createForUsers']>[1]) {
     const admins = await this.repository.findAdminRecipients(resource);
     return this.createForUsers(

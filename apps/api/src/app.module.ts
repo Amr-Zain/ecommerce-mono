@@ -22,6 +22,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DomainEventsModule } from './common/events/domain-events.module';
 import { NotificationModule } from './shared/notifications/notification.module';
+import { EmailModule } from './shared/email/email.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { NotificationModule } from './shared/notifications/notification.module';
     }),
     DomainEventsModule,
     NotificationModule,
+    EmailModule,
     PrismaModule,
     CommonModule,
     MediaModule,

@@ -15,6 +15,10 @@ export type {
 } from './domain-event-payloads';
 
 export const DOMAIN_EVENTS = {
+  authEmailOtpRequested: 'auth.email_otp_requested',
+  authPasswordResetRequested: 'auth.password_reset_requested',
+  authEmailVerified: 'auth.email_verified',
+  messageCampaignRequested: 'message.campaign_requested',
   orderCreated: 'order.created',
   orderStatusChanged: 'order.status_changed',
   orderCancelled: 'order.cancelled',
@@ -24,6 +28,33 @@ export const DOMAIN_EVENTS = {
   exchangeRequested: 'exchange.requested',
   exchangeReservationExpired: 'exchange.reservation_expired',
 } as const;
+
+export interface AuthEmailOtpRequestedPayload {
+  recipient: string;
+  locale: string;
+  code: string;
+  expiresAt: string;
+  purpose: 'login';
+}
+
+export interface AuthPasswordResetRequestedPayload {
+  recipient: string;
+  locale: string;
+  code: string;
+  expiresAt: string;
+  purpose: 'password_reset';
+}
+
+export interface AuthEmailVerifiedPayload {
+  userId: string;
+  recipient: string;
+  locale: string;
+  name?: string;
+}
+
+export interface MessageCampaignRequestedPayload {
+  campaignId: string;
+}
 
 export const returnStatusEvent = (status: ReturnRequestStatus) => `return.${status}` as const;
 export const exchangeStatusEvent = (status: ExchangeRequestStatus) => `exchange.${status}` as const;

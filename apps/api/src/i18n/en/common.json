@@ -16,6 +16,8 @@
   "auth_session_revoked_successfully": "Session revoked successfully",
   "notification_update_title": "New update",
   "notification_update_body": "There is a new update related to your account.",
+  "notification_custom_title": "{title}",
+  "notification_custom_body": "{body}",
   "notification_order_created_title": "Order placed",
   "notification_order_created_body": "Your order was placed successfully.",
   "notification_order_status_title": "Order status updated",
@@ -63,5 +65,7 @@
   "notification_exchange_review_title": "Exchange requires review",
   "notification_exchange_review_body": "Your exchange request requires additional review.",
   "notification_exchange_reservation_expired_title": "Exchange reservation expired",
-  "notification_exchange_reservation_expired_body": "The replacement stock reservation expired and requires review."
+  "notification_exchange_reservation_expired_body": "The replacement stock reservation expired and requires review.",
+  "notification_ticket_reply_title": "Support replied to your ticket",
+  "notification_ticket_reply_body": "{body}"
 }
