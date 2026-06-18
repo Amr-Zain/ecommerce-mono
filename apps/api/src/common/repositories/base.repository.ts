@@ -252,7 +252,7 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     }
 
     if (query.paginate === false) {
-      const data = await model.findMany(queryArgs);
+      const data = await this.prisma.readWithConnectionRetry(() => model.findMany(queryArgs));
       return this.mergeMedia(data);
     }
 
@@ -260,7 +260,9 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     queryArgs.skip = skip;
     queryArgs.take = take;
 
-    const [data, total] = await Promise.all([model.findMany(queryArgs), model.count({ where })]);
+    const [data, total] = await this.prisma.readWithConnectionRetry(() =>
+      Promise.all([model.findMany(queryArgs), model.count({ where })]),
+    );
 
     const enrichedData = await this.mergeMedia(data);
 
@@ -286,7 +288,7 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       queryArgs.include = options.include;
     }
 
-    const record = await model.findUnique(queryArgs);
+    const record = await this.prisma.readWithConnectionRetry(() => model.findUnique(queryArgs));
     return record ? this.mergeMedia(record) : null;
   }
 
@@ -314,7 +316,7 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       queryArgs.include = options.include;
     }
 
-    const record = await model.findFirst(queryArgs);
+    const record = await this.prisma.readWithConnectionRetry(() => model.findFirst(queryArgs));
     return record ? this.mergeMedia(record) : null;
   }
 
@@ -330,7 +332,7 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
       queryArgs.include = options.include;
     }
 
-    const data = await model.findMany(queryArgs);
+    const data = await this.prisma.readWithConnectionRetry(() => model.findMany(queryArgs));
     return this.mergeMedia(data);
   }
 

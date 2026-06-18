@@ -1,7 +1,7 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { SSE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
+import { Request, Response as ExpressResponse } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CaseTransformer } from '../utils/case-transformer.util';
@@ -22,6 +22,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
     }
 
     const request = context.switchToHttp().getRequest<Request>();
+    const response = context.switchToHttp().getResponse<ExpressResponse>();
     const acceptLanguage = (request.headers['accept-language'] as string) || 'en';
     const requestedLangId = acceptLanguage.split(',')[0].split('-')[0].trim();
 
@@ -32,6 +33,12 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
 
     return next.handle().pipe(
       map((data: unknown) => {
+        // Controllers using @Res() have already serialized their response.
+        // Their return value is the circular Express Response object.
+        if (response.headersSent) {
+          return data as Response<T>;
+        }
+
         const transformedData = this.deepTransform(data, requestedLangId, apiContext);
 
         const dataWithFullPaths = this.transformMediaPaths(transformedData);
@@ -67,6 +74,10 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
    * Recursively traverses an object/array to flatten 'translations' everywhere.
    */
   private deepTransform(data: unknown, langId: string, apiContext: ApiContextType = 'admin'): unknown {
+    if (typeof data === 'bigint') {
+      return data.toString();
+    }
+
     if (!data || typeof data !== 'object' || data instanceof Date || data instanceof Buffer) {
       return data;
     }
@@ -80,14 +91,13 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
       }
     }
 
-    // Handle BigInt
-    if (typeof data === 'bigint') {
-      return (data as bigint).toString();
-    }
-
     // Handle Arrays
     if (Array.isArray(data)) {
       return data.map((item: unknown) => this.deepTransform(item, langId, apiContext));
+    }
+
+    if (!this.isPlainObject(data)) {
+      return data;
     }
 
     // Handle Objects
@@ -145,6 +155,10 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
       return data.map((item: unknown) => this.transformMediaPaths(item));
     }
 
+    if (!this.isPlainObject(data)) {
+      return data;
+    }
+
     const result = { ...(data as Record<string, unknown>) };
 
     // If this object has a 'path' and looks like a Media object
@@ -166,5 +180,10 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
     }
 
     return result;
+  }
+
+  private isPlainObject(data: object): boolean {
+    const prototype = Object.getPrototypeOf(data);
+    return prototype === Object.prototype || prototype === null;
   }
 }

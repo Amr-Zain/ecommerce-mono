@@ -13,8 +13,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<unknown>();
+    const response = ctx.getResponse<{ headersSent?: boolean }>();
     const i18n = I18nContext.current(host);
+
+    if (response.headersSent) {
+      this.logger.error('Exception occurred after response headers were sent', exception);
+      return;
+    }
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';

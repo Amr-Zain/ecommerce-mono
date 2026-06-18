@@ -129,6 +129,51 @@ export class MediaService {
     return { count: mediaItems.length };
   }
 
+  async attachTempMediaMany(
+    input: { model: string; attachHashes: string[]; modelId: string },
+    tx?: Prisma.TransactionClient,
+  ) {
+    const attachHashes = [...new Set(input.attachHashes.filter(Boolean))];
+    if (attachHashes.length === 0) return { count: 0 };
+
+    const prisma = tx || this.prisma;
+    const mediaItems = await prisma.media.findMany({
+      where: {
+        model: input.model,
+        attachHash: { in: attachHashes },
+        modelId: null,
+      },
+    });
+
+    if (mediaItems.length === 0) return { count: 0 };
+
+    const pathByHash = new Map<string, string>();
+    for (const attachHash of attachHashes) {
+      if (mediaItems.some((item) => item.attachHash === attachHash)) {
+        pathByHash.set(attachHash, await this.storage.moveDir(input.model, attachHash, input.modelId));
+      }
+    }
+
+    const bigIntModelId = BigInt(input.modelId);
+    for (const item of mediaItems) {
+      if (!item.attachHash) continue;
+      const newPathBase = pathByHash.get(item.attachHash);
+      if (!newPathBase) continue;
+      const newPath = item.path.replace(`/uploads/${input.model}/${item.attachHash}`, newPathBase);
+
+      await prisma.media.update({
+        where: { id: item.id },
+        data: {
+          modelId: bigIntModelId,
+          attachHash: null,
+          path: newPath,
+        },
+      });
+    }
+
+    return { count: mediaItems.length };
+  }
+
   async findByUuid(uuid: string) {
     const media = await this.prisma.media.findUnique({ where: { uuid } });
     if (!media) throw new NotFoundException('Media not found');
