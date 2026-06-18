@@ -105,7 +105,11 @@
     "shopifyStores": "متاجر شوبيفاي",
     "shopify-stores": "متاجر شوبيفاي",
     "admin_notifications": "إشعارات الإدارة",
-    "coupons": "الكوبونات"
+    "message_templates": "قوالب الرسائل",
+    "send_message": "إرسال رسالة",
+    "message_campaigns": "حملات الرسائل",
+    "coupons": "الكوبونات",
+    "tickets": "التذاكر"
   },
   "workspace": {
     "switch": "تبديل مساحة العمل",
@@ -1573,6 +1577,81 @@
       "target_info": "تفاصيل الاستهداف"
     }
   },
+  "messageTemplates": {
+    "entity": "قالب رسالة",
+    "formTitle": "محتوى القالب",
+    "variables": "المتغيرات",
+    "preview": "معاينة",
+    "activeHint": "لا يمكن استخدام القوالب غير النشطة في حملات جديدة.",
+    "noVariables": "لا توجد متغيرات مضافة بعد.",
+    "invalidVariables": "يجب أن تكون المتغيرات كائن JSON صالح.",
+    "invalidPreviewVariables": "يجب أن تكون متغيرات المعاينة كائن JSON صالح.",
+    "saveBeforePreview": "احفظ القالب قبل استخدام المعاينة من الخادم.",
+    "labels": {
+      "key": "المفتاح",
+      "name": "الاسم",
+      "channel": "القناة",
+      "purpose": "الغرض",
+      "subject": "عنوان البريد",
+      "title": "عنوان الإشعار",
+      "body": "النص / محتوى الإشعار",
+      "html": "HTML البريد"
+    },
+    "channels": {
+      "email": "بريد إلكتروني",
+      "notification": "إشعار",
+      "both": "بريد + إشعار"
+    },
+    "purposes": {
+      "otp": "رمز تحقق",
+      "welcome": "ترحيب",
+      "generic": "عام",
+      "campaign": "حملة"
+    },
+    "locales": {
+      "en": "الإنجليزية",
+      "ar": "العربية"
+    }
+  },
+  "messages": {
+    "entity": "حملة رسائل",
+    "send": "إرسال رسالة",
+    "details": "تفاصيل الحملة",
+    "recipients": "المستلمون",
+    "selectTemplate": "اختر قالبا",
+    "queueCampaign": "إضافة الحملة إلى قائمة الإرسال",
+    "labels": {
+      "id": "المعرف",
+      "recipientType": "المستلمون",
+      "recipientIds": "معرفات مستخدمين محددين",
+      "titleOverride": "استبدال العنوان",
+      "queued": "في الانتظار",
+      "sent": "تم الإرسال",
+      "failed": "فشل",
+      "skipped": "تم التخطي",
+      "userId": "معرف المستخدم",
+      "error": "الخطأ",
+      "sentAt": "وقت الإرسال"
+    },
+    "recipientTypes": {
+      "admin": "المديرون",
+      "client": "العملاء",
+      "all": "كل المستخدمين",
+      "specific": "مستخدمون محددون"
+    },
+    "status": {
+      "queued": "في الانتظار",
+      "processing": "قيد المعالجة",
+      "sent": "تم الإرسال",
+      "failed": "فشل",
+      "skipped": "تم التخطي",
+      "completed": "مكتمل",
+      "completed_with_failures": "مكتمل مع أخطاء"
+    },
+    "validation": {
+      "templateRequired": "اختر قالبا أولا."
+    }
+  },
   "coupons": {
     "entity": "كوبون",
     "labels": {
@@ -1596,6 +1675,17 @@
       "fixed": "مبلغ ثابت",
       "free_shipping": "شحن مجاني"
     }
+  },
+  "tickets": {
+    "details": "تفاصيل التذكرة",
+    "conversation": "المحادثة",
+    "lastMessage": "آخر رسالة",
+    "replyPlaceholder": "اكتب ردا...",
+    "attachFiles": "إرفاق ملفات",
+    "reply": "الرد",
+    "changeStatus": "تغيير الحالة",
+    "loadMoreMessages": "تحميل المزيد من الرسائل",
+    "noMoreMessages": "لا توجد رسائل أخرى"
   },
   "returns": {
     "labels": {

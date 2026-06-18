@@ -141,6 +141,12 @@ export const getProductsAndShowRoomsMenuItems: MenuItem[] = [
     checkPermission: true,
   },
   {
+    title: 'menu.tickets',
+    url: '/tickets',
+    icon: MessageSquare,
+    checkPermission: true,
+  },
+  {
     title: 'menu.exchanges',
     url: '/exchanges',
     icon: ShoppingCart,
@@ -206,6 +212,27 @@ export const getEarningMenuItems: MenuItem[] = [
   },
 ] */
 export const getSettingsMenuItems: any = (not_count?: number) => [
+  {
+    title: 'menu.message_templates',
+    url: '/message-templates',
+    icon: MessageSquare,
+    checkPermission: true,
+    permissionEntity: 'message_templates',
+  },
+  {
+    title: 'menu.send_message',
+    url: '/messages/send',
+    icon: MessageSquare,
+    checkPermission: true,
+    permissionEntity: 'messages',
+  },
+  {
+    title: 'menu.message_campaigns',
+    url: '/messages',
+    icon: MessageSquare,
+    checkPermission: true,
+    permissionEntity: 'messages',
+  },
   {
     title: 'menu.admin_notifications',
     url: '/admin-notifications',

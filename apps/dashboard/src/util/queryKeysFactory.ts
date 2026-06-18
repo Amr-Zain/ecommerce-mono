@@ -204,6 +204,14 @@ export const queryKeys = {
     getReturn: (id: string | number) => ['returns', 'one', id] as const,
   },
 
+  tickets: {
+    all: () => ['tickets'] as const,
+    filterd: (filters?: Record<string, any>) =>
+      ['tickets', 'filterd', filters] as const,
+    getTicket: (id: string | number) => ['tickets', 'one', id] as const,
+    messages: (id: string | number) => ['tickets', 'one', id, 'messages'] as const,
+  },
+
   exchanges: {
     all: () => ['exchanges'] as const,
     filterd: (filters?: Record<string, any>) =>
@@ -284,5 +292,21 @@ export const queryKeys = {
       [...queryKeys.adminNotifications.all(), 'filtered', params] as const,
     get: (id: string | number) =>
       [...queryKeys.adminNotifications.all(), 'one', String(id)] as const,
+  },
+
+  messageTemplates: {
+    all: () => ['message-templates'] as const,
+    filterd: (params?: unknown) =>
+      [...queryKeys.messageTemplates.all(), 'filtered', params] as const,
+    get: (id: string | number) =>
+      [...queryKeys.messageTemplates.all(), 'one', String(id)] as const,
+  },
+
+  messageCampaigns: {
+    all: () => ['message-campaigns'] as const,
+    filterd: (params?: unknown) =>
+      [...queryKeys.messageCampaigns.all(), 'filtered', params] as const,
+    get: (id: string | number) =>
+      [...queryKeys.messageCampaigns.all(), 'one', String(id)] as const,
   },
 }

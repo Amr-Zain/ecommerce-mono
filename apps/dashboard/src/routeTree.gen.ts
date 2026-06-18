@@ -16,6 +16,7 @@ import { Route as MainIndexRouteImport } from './routes/_main/index'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as MainUsersIndexRouteImport } from './routes/_main/users/index'
 import { Route as MainTiersIndexRouteImport } from './routes/_main/tiers/index'
+import { Route as MainTicketsIndexRouteImport } from './routes/_main/tickets/index'
 import { Route as MainSupervisorsIndexRouteImport } from './routes/_main/supervisors/index'
 import { Route as MainStaticPagesIndexRouteImport } from './routes/_main/static-pages/index'
 import { Route as MainSmsProvidersIndexRouteImport } from './routes/_main/sms-providers/index'
@@ -30,6 +31,8 @@ import { Route as MainProductsIndexRouteImport } from './routes/_main/products/i
 import { Route as MainPaymentGatewaysIndexRouteImport } from './routes/_main/payment-gateways/index'
 import { Route as MainOrdersIndexRouteImport } from './routes/_main/orders/index'
 import { Route as MainOffersIndexRouteImport } from './routes/_main/offers/index'
+import { Route as MainMessagesIndexRouteImport } from './routes/_main/messages/index'
+import { Route as MainMessageTemplatesIndexRouteImport } from './routes/_main/message-templates/index'
 import { Route as MainFaqsIndexRouteImport } from './routes/_main/faqs/index'
 import { Route as MainExchangesIndexRouteImport } from './routes/_main/exchanges/index'
 import { Route as MainEarningRulesIndexRouteImport } from './routes/_main/earning-rules/index'
@@ -46,6 +49,8 @@ import { Route as MainRolesAddRouteImport } from './routes/_main/roles/add'
 import { Route as MainRewardsAddRouteImport } from './routes/_main/rewards/add'
 import { Route as MainProductsAddRouteImport } from './routes/_main/products/add'
 import { Route as MainOffersAddRouteImport } from './routes/_main/offers/add'
+import { Route as MainMessagesSendRouteImport } from './routes/_main/messages/send'
+import { Route as MainMessageTemplatesAddRouteImport } from './routes/_main/message-templates/add'
 import { Route as MainFaqsAddRouteImport } from './routes/_main/faqs/add'
 import { Route as MainEarningRulesAddRouteImport } from './routes/_main/earning-rules/add'
 import { Route as MainCouponsAddRouteImport } from './routes/_main/coupons/add'
@@ -59,6 +64,7 @@ import { Route as MainSettingsCitiesIndexRouteImport } from './routes/_main/sett
 import { Route as MainAttributesValuesIndexRouteImport } from './routes/_main/attributes/values/index'
 import { Route as MainUsersShowIdRouteImport } from './routes/_main/users/show/$id'
 import { Route as MainTiersEditIdRouteImport } from './routes/_main/tiers/edit/$id'
+import { Route as MainTicketsShowIdRouteImport } from './routes/_main/tickets/show/$id'
 import { Route as MainSupervisorsEditIdRouteImport } from './routes/_main/supervisors/edit/$id'
 import { Route as MainStaticPagesShowIdRouteImport } from './routes/_main/static-pages/show/$id'
 import { Route as MainStaticPagesEditIdRouteImport } from './routes/_main/static-pages/edit/$id'
@@ -77,6 +83,9 @@ import { Route as MainProductsEditIdRouteImport } from './routes/_main/products/
 import { Route as MainPaymentGatewaysSessionsIdRouteImport } from './routes/_main/payment-gateways/sessions/$id'
 import { Route as MainOrdersShowIdRouteImport } from './routes/_main/orders/show/$id'
 import { Route as MainOffersEditIdRouteImport } from './routes/_main/offers/edit/$id'
+import { Route as MainMessagesShowIdRouteImport } from './routes/_main/messages/show/$id'
+import { Route as MainMessageTemplatesShowIdRouteImport } from './routes/_main/message-templates/show/$id'
+import { Route as MainMessageTemplatesEditIdRouteImport } from './routes/_main/message-templates/edit/$id'
 import { Route as MainFaqsEditIdRouteImport } from './routes/_main/faqs/edit/$id'
 import { Route as MainEarningRulesEditIdRouteImport } from './routes/_main/earning-rules/edit/$id'
 import { Route as MainCouponsEditIdRouteImport } from './routes/_main/coupons/edit/$id'
@@ -125,6 +134,11 @@ const MainUsersIndexRoute = MainUsersIndexRouteImport.update({
 const MainTiersIndexRoute = MainTiersIndexRouteImport.update({
   id: '/tiers/',
   path: '/tiers/',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainTicketsIndexRoute = MainTicketsIndexRouteImport.update({
+  id: '/tickets/',
+  path: '/tickets/',
   getParentRoute: () => MainRouteRoute,
 } as any)
 const MainSupervisorsIndexRoute = MainSupervisorsIndexRouteImport.update({
@@ -198,6 +212,17 @@ const MainOffersIndexRoute = MainOffersIndexRouteImport.update({
   path: '/offers/',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainMessagesIndexRoute = MainMessagesIndexRouteImport.update({
+  id: '/messages/',
+  path: '/messages/',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainMessageTemplatesIndexRoute =
+  MainMessageTemplatesIndexRouteImport.update({
+    id: '/message-templates/',
+    path: '/message-templates/',
+    getParentRoute: () => MainRouteRoute,
+  } as any)
 const MainFaqsIndexRoute = MainFaqsIndexRouteImport.update({
   id: '/faqs/',
   path: '/faqs/',
@@ -279,6 +304,16 @@ const MainOffersAddRoute = MainOffersAddRouteImport.update({
   path: '/offers/add',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainMessagesSendRoute = MainMessagesSendRouteImport.update({
+  id: '/messages/send',
+  path: '/messages/send',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainMessageTemplatesAddRoute = MainMessageTemplatesAddRouteImport.update({
+  id: '/message-templates/add',
+  path: '/message-templates/add',
+  getParentRoute: () => MainRouteRoute,
+} as any)
 const MainFaqsAddRoute = MainFaqsAddRouteImport.update({
   id: '/faqs/add',
   path: '/faqs/add',
@@ -347,6 +382,11 @@ const MainUsersShowIdRoute = MainUsersShowIdRouteImport.update({
 const MainTiersEditIdRoute = MainTiersEditIdRouteImport.update({
   id: '/tiers/edit/$id',
   path: '/tiers/edit/$id',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainTicketsShowIdRoute = MainTicketsShowIdRouteImport.update({
+  id: '/tickets/show/$id',
+  path: '/tickets/show/$id',
   getParentRoute: () => MainRouteRoute,
 } as any)
 const MainSupervisorsEditIdRoute = MainSupervisorsEditIdRouteImport.update({
@@ -443,6 +483,23 @@ const MainOffersEditIdRoute = MainOffersEditIdRouteImport.update({
   path: '/offers/edit/$id',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainMessagesShowIdRoute = MainMessagesShowIdRouteImport.update({
+  id: '/messages/show/$id',
+  path: '/messages/show/$id',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainMessageTemplatesShowIdRoute =
+  MainMessageTemplatesShowIdRouteImport.update({
+    id: '/message-templates/show/$id',
+    path: '/message-templates/show/$id',
+    getParentRoute: () => MainRouteRoute,
+  } as any)
+const MainMessageTemplatesEditIdRoute =
+  MainMessageTemplatesEditIdRouteImport.update({
+    id: '/message-templates/edit/$id',
+    path: '/message-templates/edit/$id',
+    getParentRoute: () => MainRouteRoute,
+  } as any)
 const MainFaqsEditIdRoute = MainFaqsEditIdRouteImport.update({
   id: '/faqs/edit/$id',
   path: '/faqs/edit/$id',
@@ -536,6 +593,8 @@ export interface FileRoutesByFullPath {
   '/coupons/add': typeof MainCouponsAddRoute
   '/earning-rules/add': typeof MainEarningRulesAddRoute
   '/faqs/add': typeof MainFaqsAddRoute
+  '/message-templates/add': typeof MainMessageTemplatesAddRoute
+  '/messages/send': typeof MainMessagesSendRoute
   '/offers/add': typeof MainOffersAddRoute
   '/products/add': typeof MainProductsAddRoute
   '/rewards/add': typeof MainRewardsAddRoute
@@ -552,6 +611,8 @@ export interface FileRoutesByFullPath {
   '/earning-rules/': typeof MainEarningRulesIndexRoute
   '/exchanges/': typeof MainExchangesIndexRoute
   '/faqs/': typeof MainFaqsIndexRoute
+  '/message-templates/': typeof MainMessageTemplatesIndexRoute
+  '/messages/': typeof MainMessagesIndexRoute
   '/offers/': typeof MainOffersIndexRoute
   '/orders/': typeof MainOrdersIndexRoute
   '/payment-gateways/': typeof MainPaymentGatewaysIndexRoute
@@ -566,6 +627,7 @@ export interface FileRoutesByFullPath {
   '/sms-providers/': typeof MainSmsProvidersIndexRoute
   '/static-pages/': typeof MainStaticPagesIndexRoute
   '/supervisors/': typeof MainSupervisorsIndexRoute
+  '/tickets/': typeof MainTicketsIndexRoute
   '/tiers/': typeof MainTiersIndexRoute
   '/users/': typeof MainUsersIndexRoute
   '/admin-notifications/show/$id': typeof MainAdminNotificationsShowIdRoute
@@ -577,6 +639,9 @@ export interface FileRoutesByFullPath {
   '/coupons/edit/$id': typeof MainCouponsEditIdRoute
   '/earning-rules/edit/$id': typeof MainEarningRulesEditIdRoute
   '/faqs/edit/$id': typeof MainFaqsEditIdRoute
+  '/message-templates/edit/$id': typeof MainMessageTemplatesEditIdRoute
+  '/message-templates/show/$id': typeof MainMessageTemplatesShowIdRoute
+  '/messages/show/$id': typeof MainMessagesShowIdRoute
   '/offers/edit/$id': typeof MainOffersEditIdRoute
   '/orders/show/$id': typeof MainOrdersShowIdRoute
   '/payment-gateways/sessions/$id': typeof MainPaymentGatewaysSessionsIdRoute
@@ -595,6 +660,7 @@ export interface FileRoutesByFullPath {
   '/static-pages/edit/$id': typeof MainStaticPagesEditIdRoute
   '/static-pages/show/$id': typeof MainStaticPagesShowIdRoute
   '/supervisors/edit/$id': typeof MainSupervisorsEditIdRoute
+  '/tickets/show/$id': typeof MainTicketsShowIdRoute
   '/tiers/edit/$id': typeof MainTiersEditIdRoute
   '/users/show/$id': typeof MainUsersShowIdRoute
   '/attributes/values/': typeof MainAttributesValuesIndexRoute
@@ -620,6 +686,8 @@ export interface FileRoutesByTo {
   '/coupons/add': typeof MainCouponsAddRoute
   '/earning-rules/add': typeof MainEarningRulesAddRoute
   '/faqs/add': typeof MainFaqsAddRoute
+  '/message-templates/add': typeof MainMessageTemplatesAddRoute
+  '/messages/send': typeof MainMessagesSendRoute
   '/offers/add': typeof MainOffersAddRoute
   '/products/add': typeof MainProductsAddRoute
   '/rewards/add': typeof MainRewardsAddRoute
@@ -636,6 +704,8 @@ export interface FileRoutesByTo {
   '/earning-rules': typeof MainEarningRulesIndexRoute
   '/exchanges': typeof MainExchangesIndexRoute
   '/faqs': typeof MainFaqsIndexRoute
+  '/message-templates': typeof MainMessageTemplatesIndexRoute
+  '/messages': typeof MainMessagesIndexRoute
   '/offers': typeof MainOffersIndexRoute
   '/orders': typeof MainOrdersIndexRoute
   '/payment-gateways': typeof MainPaymentGatewaysIndexRoute
@@ -650,6 +720,7 @@ export interface FileRoutesByTo {
   '/sms-providers': typeof MainSmsProvidersIndexRoute
   '/static-pages': typeof MainStaticPagesIndexRoute
   '/supervisors': typeof MainSupervisorsIndexRoute
+  '/tickets': typeof MainTicketsIndexRoute
   '/tiers': typeof MainTiersIndexRoute
   '/users': typeof MainUsersIndexRoute
   '/admin-notifications/show/$id': typeof MainAdminNotificationsShowIdRoute
@@ -661,6 +732,9 @@ export interface FileRoutesByTo {
   '/coupons/edit/$id': typeof MainCouponsEditIdRoute
   '/earning-rules/edit/$id': typeof MainEarningRulesEditIdRoute
   '/faqs/edit/$id': typeof MainFaqsEditIdRoute
+  '/message-templates/edit/$id': typeof MainMessageTemplatesEditIdRoute
+  '/message-templates/show/$id': typeof MainMessageTemplatesShowIdRoute
+  '/messages/show/$id': typeof MainMessagesShowIdRoute
   '/offers/edit/$id': typeof MainOffersEditIdRoute
   '/orders/show/$id': typeof MainOrdersShowIdRoute
   '/payment-gateways/sessions/$id': typeof MainPaymentGatewaysSessionsIdRoute
@@ -679,6 +753,7 @@ export interface FileRoutesByTo {
   '/static-pages/edit/$id': typeof MainStaticPagesEditIdRoute
   '/static-pages/show/$id': typeof MainStaticPagesShowIdRoute
   '/supervisors/edit/$id': typeof MainSupervisorsEditIdRoute
+  '/tickets/show/$id': typeof MainTicketsShowIdRoute
   '/tiers/edit/$id': typeof MainTiersEditIdRoute
   '/users/show/$id': typeof MainUsersShowIdRoute
   '/attributes/values': typeof MainAttributesValuesIndexRoute
@@ -706,6 +781,8 @@ export interface FileRoutesById {
   '/_main/coupons/add': typeof MainCouponsAddRoute
   '/_main/earning-rules/add': typeof MainEarningRulesAddRoute
   '/_main/faqs/add': typeof MainFaqsAddRoute
+  '/_main/message-templates/add': typeof MainMessageTemplatesAddRoute
+  '/_main/messages/send': typeof MainMessagesSendRoute
   '/_main/offers/add': typeof MainOffersAddRoute
   '/_main/products/add': typeof MainProductsAddRoute
   '/_main/rewards/add': typeof MainRewardsAddRoute
@@ -722,6 +799,8 @@ export interface FileRoutesById {
   '/_main/earning-rules/': typeof MainEarningRulesIndexRoute
   '/_main/exchanges/': typeof MainExchangesIndexRoute
   '/_main/faqs/': typeof MainFaqsIndexRoute
+  '/_main/message-templates/': typeof MainMessageTemplatesIndexRoute
+  '/_main/messages/': typeof MainMessagesIndexRoute
   '/_main/offers/': typeof MainOffersIndexRoute
   '/_main/orders/': typeof MainOrdersIndexRoute
   '/_main/payment-gateways/': typeof MainPaymentGatewaysIndexRoute
@@ -736,6 +815,7 @@ export interface FileRoutesById {
   '/_main/sms-providers/': typeof MainSmsProvidersIndexRoute
   '/_main/static-pages/': typeof MainStaticPagesIndexRoute
   '/_main/supervisors/': typeof MainSupervisorsIndexRoute
+  '/_main/tickets/': typeof MainTicketsIndexRoute
   '/_main/tiers/': typeof MainTiersIndexRoute
   '/_main/users/': typeof MainUsersIndexRoute
   '/_main/admin-notifications/show/$id': typeof MainAdminNotificationsShowIdRoute
@@ -747,6 +827,9 @@ export interface FileRoutesById {
   '/_main/coupons/edit/$id': typeof MainCouponsEditIdRoute
   '/_main/earning-rules/edit/$id': typeof MainEarningRulesEditIdRoute
   '/_main/faqs/edit/$id': typeof MainFaqsEditIdRoute
+  '/_main/message-templates/edit/$id': typeof MainMessageTemplatesEditIdRoute
+  '/_main/message-templates/show/$id': typeof MainMessageTemplatesShowIdRoute
+  '/_main/messages/show/$id': typeof MainMessagesShowIdRoute
   '/_main/offers/edit/$id': typeof MainOffersEditIdRoute
   '/_main/orders/show/$id': typeof MainOrdersShowIdRoute
   '/_main/payment-gateways/sessions/$id': typeof MainPaymentGatewaysSessionsIdRoute
@@ -765,6 +848,7 @@ export interface FileRoutesById {
   '/_main/static-pages/edit/$id': typeof MainStaticPagesEditIdRoute
   '/_main/static-pages/show/$id': typeof MainStaticPagesShowIdRoute
   '/_main/supervisors/edit/$id': typeof MainSupervisorsEditIdRoute
+  '/_main/tickets/show/$id': typeof MainTicketsShowIdRoute
   '/_main/tiers/edit/$id': typeof MainTiersEditIdRoute
   '/_main/users/show/$id': typeof MainUsersShowIdRoute
   '/_main/attributes/values/': typeof MainAttributesValuesIndexRoute
@@ -792,6 +876,8 @@ export interface FileRouteTypes {
     | '/coupons/add'
     | '/earning-rules/add'
     | '/faqs/add'
+    | '/message-templates/add'
+    | '/messages/send'
     | '/offers/add'
     | '/products/add'
     | '/rewards/add'
@@ -808,6 +894,8 @@ export interface FileRouteTypes {
     | '/earning-rules/'
     | '/exchanges/'
     | '/faqs/'
+    | '/message-templates/'
+    | '/messages/'
     | '/offers/'
     | '/orders/'
     | '/payment-gateways/'
@@ -822,6 +910,7 @@ export interface FileRouteTypes {
     | '/sms-providers/'
     | '/static-pages/'
     | '/supervisors/'
+    | '/tickets/'
     | '/tiers/'
     | '/users/'
     | '/admin-notifications/show/$id'
@@ -833,6 +922,9 @@ export interface FileRouteTypes {
     | '/coupons/edit/$id'
     | '/earning-rules/edit/$id'
     | '/faqs/edit/$id'
+    | '/message-templates/edit/$id'
+    | '/message-templates/show/$id'
+    | '/messages/show/$id'
     | '/offers/edit/$id'
     | '/orders/show/$id'
     | '/payment-gateways/sessions/$id'
@@ -851,6 +943,7 @@ export interface FileRouteTypes {
     | '/static-pages/edit/$id'
     | '/static-pages/show/$id'
     | '/supervisors/edit/$id'
+    | '/tickets/show/$id'
     | '/tiers/edit/$id'
     | '/users/show/$id'
     | '/attributes/values/'
@@ -876,6 +969,8 @@ export interface FileRouteTypes {
     | '/coupons/add'
     | '/earning-rules/add'
     | '/faqs/add'
+    | '/message-templates/add'
+    | '/messages/send'
     | '/offers/add'
     | '/products/add'
     | '/rewards/add'
@@ -892,6 +987,8 @@ export interface FileRouteTypes {
     | '/earning-rules'
     | '/exchanges'
     | '/faqs'
+    | '/message-templates'
+    | '/messages'
     | '/offers'
     | '/orders'
     | '/payment-gateways'
@@ -906,6 +1003,7 @@ export interface FileRouteTypes {
     | '/sms-providers'
     | '/static-pages'
     | '/supervisors'
+    | '/tickets'
     | '/tiers'
     | '/users'
     | '/admin-notifications/show/$id'
@@ -917,6 +1015,9 @@ export interface FileRouteTypes {
     | '/coupons/edit/$id'
     | '/earning-rules/edit/$id'
     | '/faqs/edit/$id'
+    | '/message-templates/edit/$id'
+    | '/message-templates/show/$id'
+    | '/messages/show/$id'
     | '/offers/edit/$id'
     | '/orders/show/$id'
     | '/payment-gateways/sessions/$id'
@@ -935,6 +1036,7 @@ export interface FileRouteTypes {
     | '/static-pages/edit/$id'
     | '/static-pages/show/$id'
     | '/supervisors/edit/$id'
+    | '/tickets/show/$id'
     | '/tiers/edit/$id'
     | '/users/show/$id'
     | '/attributes/values'
@@ -961,6 +1063,8 @@ export interface FileRouteTypes {
     | '/_main/coupons/add'
     | '/_main/earning-rules/add'
     | '/_main/faqs/add'
+    | '/_main/message-templates/add'
+    | '/_main/messages/send'
     | '/_main/offers/add'
     | '/_main/products/add'
     | '/_main/rewards/add'
@@ -977,6 +1081,8 @@ export interface FileRouteTypes {
     | '/_main/earning-rules/'
     | '/_main/exchanges/'
     | '/_main/faqs/'
+    | '/_main/message-templates/'
+    | '/_main/messages/'
     | '/_main/offers/'
     | '/_main/orders/'
     | '/_main/payment-gateways/'
@@ -991,6 +1097,7 @@ export interface FileRouteTypes {
     | '/_main/sms-providers/'
     | '/_main/static-pages/'
     | '/_main/supervisors/'
+    | '/_main/tickets/'
     | '/_main/tiers/'
     | '/_main/users/'
     | '/_main/admin-notifications/show/$id'
@@ -1002,6 +1109,9 @@ export interface FileRouteTypes {
     | '/_main/coupons/edit/$id'
     | '/_main/earning-rules/edit/$id'
     | '/_main/faqs/edit/$id'
+    | '/_main/message-templates/edit/$id'
+    | '/_main/message-templates/show/$id'
+    | '/_main/messages/show/$id'
     | '/_main/offers/edit/$id'
     | '/_main/orders/show/$id'
     | '/_main/payment-gateways/sessions/$id'
@@ -1020,6 +1130,7 @@ export interface FileRouteTypes {
     | '/_main/static-pages/edit/$id'
     | '/_main/static-pages/show/$id'
     | '/_main/supervisors/edit/$id'
+    | '/_main/tickets/show/$id'
     | '/_main/tiers/edit/$id'
     | '/_main/users/show/$id'
     | '/_main/attributes/values/'
@@ -1091,6 +1202,13 @@ declare module '@tanstack/react-router' {
       path: '/tiers'
       fullPath: '/tiers/'
       preLoaderRoute: typeof MainTiersIndexRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/tickets/': {
+      id: '/_main/tickets/'
+      path: '/tickets'
+      fullPath: '/tickets/'
+      preLoaderRoute: typeof MainTicketsIndexRouteImport
       parentRoute: typeof MainRouteRoute
     }
     '/_main/supervisors/': {
@@ -1189,6 +1307,20 @@ declare module '@tanstack/react-router' {
       path: '/offers'
       fullPath: '/offers/'
       preLoaderRoute: typeof MainOffersIndexRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/messages/': {
+      id: '/_main/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof MainMessagesIndexRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/message-templates/': {
+      id: '/_main/message-templates/'
+      path: '/message-templates'
+      fullPath: '/message-templates/'
+      preLoaderRoute: typeof MainMessageTemplatesIndexRouteImport
       parentRoute: typeof MainRouteRoute
     }
     '/_main/faqs/': {
@@ -1303,6 +1435,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainOffersAddRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/_main/messages/send': {
+      id: '/_main/messages/send'
+      path: '/messages/send'
+      fullPath: '/messages/send'
+      preLoaderRoute: typeof MainMessagesSendRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/message-templates/add': {
+      id: '/_main/message-templates/add'
+      path: '/message-templates/add'
+      fullPath: '/message-templates/add'
+      preLoaderRoute: typeof MainMessageTemplatesAddRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/_main/faqs/add': {
       id: '/_main/faqs/add'
       path: '/faqs/add'
@@ -1392,6 +1538,13 @@ declare module '@tanstack/react-router' {
       path: '/tiers/edit/$id'
       fullPath: '/tiers/edit/$id'
       preLoaderRoute: typeof MainTiersEditIdRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/tickets/show/$id': {
+      id: '/_main/tickets/show/$id'
+      path: '/tickets/show/$id'
+      fullPath: '/tickets/show/$id'
+      preLoaderRoute: typeof MainTicketsShowIdRouteImport
       parentRoute: typeof MainRouteRoute
     }
     '/_main/supervisors/edit/$id': {
@@ -1520,6 +1673,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainOffersEditIdRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/_main/messages/show/$id': {
+      id: '/_main/messages/show/$id'
+      path: '/messages/show/$id'
+      fullPath: '/messages/show/$id'
+      preLoaderRoute: typeof MainMessagesShowIdRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/message-templates/show/$id': {
+      id: '/_main/message-templates/show/$id'
+      path: '/message-templates/show/$id'
+      fullPath: '/message-templates/show/$id'
+      preLoaderRoute: typeof MainMessageTemplatesShowIdRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/message-templates/edit/$id': {
+      id: '/_main/message-templates/edit/$id'
+      path: '/message-templates/edit/$id'
+      fullPath: '/message-templates/edit/$id'
+      preLoaderRoute: typeof MainMessageTemplatesEditIdRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/_main/faqs/edit/$id': {
       id: '/_main/faqs/edit/$id'
       path: '/faqs/edit/$id'
@@ -1635,6 +1809,8 @@ interface MainRouteRouteChildren {
   MainCouponsAddRoute: typeof MainCouponsAddRoute
   MainEarningRulesAddRoute: typeof MainEarningRulesAddRoute
   MainFaqsAddRoute: typeof MainFaqsAddRoute
+  MainMessageTemplatesAddRoute: typeof MainMessageTemplatesAddRoute
+  MainMessagesSendRoute: typeof MainMessagesSendRoute
   MainOffersAddRoute: typeof MainOffersAddRoute
   MainProductsAddRoute: typeof MainProductsAddRoute
   MainRewardsAddRoute: typeof MainRewardsAddRoute
@@ -1651,6 +1827,8 @@ interface MainRouteRouteChildren {
   MainEarningRulesIndexRoute: typeof MainEarningRulesIndexRoute
   MainExchangesIndexRoute: typeof MainExchangesIndexRoute
   MainFaqsIndexRoute: typeof MainFaqsIndexRoute
+  MainMessageTemplatesIndexRoute: typeof MainMessageTemplatesIndexRoute
+  MainMessagesIndexRoute: typeof MainMessagesIndexRoute
   MainOffersIndexRoute: typeof MainOffersIndexRoute
   MainOrdersIndexRoute: typeof MainOrdersIndexRoute
   MainPaymentGatewaysIndexRoute: typeof MainPaymentGatewaysIndexRoute
@@ -1665,6 +1843,7 @@ interface MainRouteRouteChildren {
   MainSmsProvidersIndexRoute: typeof MainSmsProvidersIndexRoute
   MainStaticPagesIndexRoute: typeof MainStaticPagesIndexRoute
   MainSupervisorsIndexRoute: typeof MainSupervisorsIndexRoute
+  MainTicketsIndexRoute: typeof MainTicketsIndexRoute
   MainTiersIndexRoute: typeof MainTiersIndexRoute
   MainUsersIndexRoute: typeof MainUsersIndexRoute
   MainAdminNotificationsShowIdRoute: typeof MainAdminNotificationsShowIdRoute
@@ -1676,6 +1855,9 @@ interface MainRouteRouteChildren {
   MainCouponsEditIdRoute: typeof MainCouponsEditIdRoute
   MainEarningRulesEditIdRoute: typeof MainEarningRulesEditIdRoute
   MainFaqsEditIdRoute: typeof MainFaqsEditIdRoute
+  MainMessageTemplatesEditIdRoute: typeof MainMessageTemplatesEditIdRoute
+  MainMessageTemplatesShowIdRoute: typeof MainMessageTemplatesShowIdRoute
+  MainMessagesShowIdRoute: typeof MainMessagesShowIdRoute
   MainOffersEditIdRoute: typeof MainOffersEditIdRoute
   MainOrdersShowIdRoute: typeof MainOrdersShowIdRoute
   MainPaymentGatewaysSessionsIdRoute: typeof MainPaymentGatewaysSessionsIdRoute
@@ -1694,6 +1876,7 @@ interface MainRouteRouteChildren {
   MainStaticPagesEditIdRoute: typeof MainStaticPagesEditIdRoute
   MainStaticPagesShowIdRoute: typeof MainStaticPagesShowIdRoute
   MainSupervisorsEditIdRoute: typeof MainSupervisorsEditIdRoute
+  MainTicketsShowIdRoute: typeof MainTicketsShowIdRoute
   MainTiersEditIdRoute: typeof MainTiersEditIdRoute
   MainUsersShowIdRoute: typeof MainUsersShowIdRoute
   MainAttributesValuesIndexRoute: typeof MainAttributesValuesIndexRoute
@@ -1717,6 +1900,8 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainCouponsAddRoute: MainCouponsAddRoute,
   MainEarningRulesAddRoute: MainEarningRulesAddRoute,
   MainFaqsAddRoute: MainFaqsAddRoute,
+  MainMessageTemplatesAddRoute: MainMessageTemplatesAddRoute,
+  MainMessagesSendRoute: MainMessagesSendRoute,
   MainOffersAddRoute: MainOffersAddRoute,
   MainProductsAddRoute: MainProductsAddRoute,
   MainRewardsAddRoute: MainRewardsAddRoute,
@@ -1733,6 +1918,8 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainEarningRulesIndexRoute: MainEarningRulesIndexRoute,
   MainExchangesIndexRoute: MainExchangesIndexRoute,
   MainFaqsIndexRoute: MainFaqsIndexRoute,
+  MainMessageTemplatesIndexRoute: MainMessageTemplatesIndexRoute,
+  MainMessagesIndexRoute: MainMessagesIndexRoute,
   MainOffersIndexRoute: MainOffersIndexRoute,
   MainOrdersIndexRoute: MainOrdersIndexRoute,
   MainPaymentGatewaysIndexRoute: MainPaymentGatewaysIndexRoute,
@@ -1747,6 +1934,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainSmsProvidersIndexRoute: MainSmsProvidersIndexRoute,
   MainStaticPagesIndexRoute: MainStaticPagesIndexRoute,
   MainSupervisorsIndexRoute: MainSupervisorsIndexRoute,
+  MainTicketsIndexRoute: MainTicketsIndexRoute,
   MainTiersIndexRoute: MainTiersIndexRoute,
   MainUsersIndexRoute: MainUsersIndexRoute,
   MainAdminNotificationsShowIdRoute: MainAdminNotificationsShowIdRoute,
@@ -1758,6 +1946,9 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainCouponsEditIdRoute: MainCouponsEditIdRoute,
   MainEarningRulesEditIdRoute: MainEarningRulesEditIdRoute,
   MainFaqsEditIdRoute: MainFaqsEditIdRoute,
+  MainMessageTemplatesEditIdRoute: MainMessageTemplatesEditIdRoute,
+  MainMessageTemplatesShowIdRoute: MainMessageTemplatesShowIdRoute,
+  MainMessagesShowIdRoute: MainMessagesShowIdRoute,
   MainOffersEditIdRoute: MainOffersEditIdRoute,
   MainOrdersShowIdRoute: MainOrdersShowIdRoute,
   MainPaymentGatewaysSessionsIdRoute: MainPaymentGatewaysSessionsIdRoute,
@@ -1776,6 +1967,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainStaticPagesEditIdRoute: MainStaticPagesEditIdRoute,
   MainStaticPagesShowIdRoute: MainStaticPagesShowIdRoute,
   MainSupervisorsEditIdRoute: MainSupervisorsEditIdRoute,
+  MainTicketsShowIdRoute: MainTicketsShowIdRoute,
   MainTiersEditIdRoute: MainTiersEditIdRoute,
   MainUsersShowIdRoute: MainUsersShowIdRoute,
   MainAttributesValuesIndexRoute: MainAttributesValuesIndexRoute,

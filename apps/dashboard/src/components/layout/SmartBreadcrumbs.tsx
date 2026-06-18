@@ -75,6 +75,7 @@ const entityIconMap: Record<string, React.ReactNode> = {
   'menu.paymentSessions': <HugeiconsIcon icon={CreditCardIcon} />,
   'menu.admin_notifications': <HugeiconsIcon icon={Notification01Icon} />,
   'menu.notifications': <HugeiconsIcon icon={Notification01Icon} />,
+  'menu.tickets': <HugeiconsIcon icon={Message01Icon} />,
   'menu.shopifyStores': <HugeiconsIcon icon={Store01Icon} />,
   'menu.profile': <HugeiconsIcon icon={UserMultipleIcon} />,
   'menu.analytics': <HugeiconsIcon icon={ChartAreaIcon} />,

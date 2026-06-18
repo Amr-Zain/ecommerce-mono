@@ -106,7 +106,11 @@
     "shopify-stores": "Shopify Stores",
     "shopifyStores": "Shopify Stores",
     "admin_notifications": "Admin Notifications",
-    "coupons": "Coupons"
+    "message_templates": "Message Templates",
+    "send_message": "Send Message",
+    "message_campaigns": "Message Campaigns",
+    "coupons": "Coupons",
+    "tickets": "Tickets"
   },
   "workspace": {
     "switch": "Switch Workspace",
@@ -1481,6 +1485,7 @@
     "payment-sessions": "Payment Sessions",
     "product-variations": "Product Variations",
     "shopify-stores": "Shopify Stores",
+    "tickets": "Tickets",
     "sms-sessions": "SMS Sessions",
     "static-page-additionals": "Page Additionals",
     "values": "Values",
@@ -1551,6 +1556,81 @@
       "target_info": "Target Details"
     }
   },
+  "messageTemplates": {
+    "entity": "Message Template",
+    "formTitle": "Template Content",
+    "variables": "Variables",
+    "preview": "Preview",
+    "activeHint": "Inactive templates cannot be used for new campaigns.",
+    "noVariables": "No variables configured yet.",
+    "invalidVariables": "Variables must be a valid JSON object.",
+    "invalidPreviewVariables": "Preview variables must be a valid JSON object.",
+    "saveBeforePreview": "Save the template before using server preview.",
+    "labels": {
+      "key": "Key",
+      "name": "Name",
+      "channel": "Channel",
+      "purpose": "Purpose",
+      "subject": "Email Subject",
+      "title": "Notification Title",
+      "body": "Plain Text / Notification Body",
+      "html": "Email HTML"
+    },
+    "channels": {
+      "email": "Email",
+      "notification": "Notification",
+      "both": "Email + Notification"
+    },
+    "purposes": {
+      "otp": "OTP",
+      "welcome": "Welcome",
+      "generic": "Generic",
+      "campaign": "Campaign"
+    },
+    "locales": {
+      "en": "English",
+      "ar": "Arabic"
+    }
+  },
+  "messages": {
+    "entity": "Message Campaign",
+    "send": "Send Message",
+    "details": "Campaign Details",
+    "recipients": "Recipients",
+    "selectTemplate": "Select a template",
+    "queueCampaign": "Queue Campaign",
+    "labels": {
+      "id": "ID",
+      "recipientType": "Recipients",
+      "recipientIds": "Specific User IDs",
+      "titleOverride": "Title Override",
+      "queued": "Queued",
+      "sent": "Sent",
+      "failed": "Failed",
+      "skipped": "Skipped",
+      "userId": "User ID",
+      "error": "Error",
+      "sentAt": "Sent At"
+    },
+    "recipientTypes": {
+      "admin": "Admins",
+      "client": "Clients",
+      "all": "All Users",
+      "specific": "Specific Users"
+    },
+    "status": {
+      "queued": "Queued",
+      "processing": "Processing",
+      "sent": "Sent",
+      "failed": "Failed",
+      "skipped": "Skipped",
+      "completed": "Completed",
+      "completed_with_failures": "Completed with failures"
+    },
+    "validation": {
+      "templateRequired": "Choose a template first."
+    }
+  },
   "coupons": {
     "entity": "Coupon",
     "labels": {
@@ -1574,6 +1654,17 @@
       "fixed": "Fixed amount",
       "free_shipping": "Free shipping"
     }
+  },
+  "tickets": {
+    "details": "Ticket details",
+    "conversation": "Conversation",
+    "lastMessage": "Last message",
+    "replyPlaceholder": "Write a reply...",
+    "attachFiles": "Attach files",
+    "reply": "Reply",
+    "changeStatus": "Change status",
+    "loadMoreMessages": "Load more messages",
+    "noMoreMessages": "No more messages"
   },
   "returns": {
     "labels": {
