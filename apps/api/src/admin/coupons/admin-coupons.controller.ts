@@ -4,8 +4,11 @@ import { AdminCouponsService } from './admin-coupons.service';
 import { CreateCouponDto, UpdateCouponDto } from './dto/coupon.dto';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiContext('admin')
+@ApiTags('Admin - Coupons')
+@ApiBearerAuth('access-token')
 @Controller('coupons')
 export class AdminCouponsController {
   constructor(private readonly couponsService: AdminCouponsService) {}

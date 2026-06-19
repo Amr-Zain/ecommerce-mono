@@ -1,6 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
 import { RequirePermissions } from '../../auth/decorators/permissions.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('Admin - Dashboard')
+@ApiBearerAuth('access-token')
 @Controller('dashboard')
 export class DashboardController {
   @Get('home')

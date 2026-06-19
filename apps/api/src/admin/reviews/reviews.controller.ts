@@ -4,14 +4,19 @@ import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { ReviewsService } from './reviews.service';
 import { ReviewQueryDto } from './dto/review-query.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Reviews')
+@ApiBearerAuth('access-token')
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Get()
   @RequirePermissions({ resource: 'reviews', action: 'list' })
+  @ApiAdvancedQuery()
   findAll(@ParsedQuery(ReviewQueryDto) query: ReviewQueryDto) {
     return this.reviewsService.findAll(query);
   }

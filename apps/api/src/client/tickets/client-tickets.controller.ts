@@ -5,8 +5,12 @@ import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { CreateTicketDto, ReplyTicketDto } from '@/core/tickets/dto/ticket.dto';
 import { TicketsService } from '@/core/tickets/tickets.service';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('client')
+@ApiTags('Client - Tickets')
+@ApiBearerAuth('access-token')
 @Controller('tickets')
 export class ClientTicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
@@ -27,6 +31,7 @@ export class ClientTicketsController {
   }
 
   @Get(':id/messages')
+  @ApiAdvancedQuery()
   findMessages(
     @CurrentUser() user: { id: bigint },
     @Param('id') id: string,

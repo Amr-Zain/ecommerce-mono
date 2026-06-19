@@ -11,8 +11,12 @@ import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../../generated/i18n.generated';
 import type { PaginatedResult } from '../../common/dto/pagination.dto';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Roles')
+@ApiBearerAuth('access-token')
 @Controller('roles')
 export class RolesController {
   constructor(
@@ -29,6 +33,7 @@ export class RolesController {
 
   @Get()
   @RequirePermissions({ resource: 'roles', action: 'list' })
+  @ApiAdvancedQuery()
   async findAll(
     @ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto,
   ): Promise<PaginatedResult<TransformedRole> | TransformedRole[]> {

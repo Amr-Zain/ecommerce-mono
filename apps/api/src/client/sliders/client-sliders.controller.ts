@@ -3,8 +3,10 @@ import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { ClientSlidersService } from './client-sliders.service';
+import { ApiTags } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Sliders')
 @Controller('sliders')
 export class ClientSlidersController {
   constructor(private readonly slidersService: ClientSlidersService) {}

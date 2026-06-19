@@ -11,8 +11,12 @@ import type { User as UserInterface } from '@/common/interfaces';
 import { I18nLang, I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Supervisors')
+@ApiBearerAuth('access-token')
 @Controller('supervisors')
 export class SupervisorsController {
   constructor(
@@ -28,6 +32,7 @@ export class SupervisorsController {
 
   @Get()
   @RequirePermissions({ resource: 'supervisors', action: 'list' })
+  @ApiAdvancedQuery()
   async findAll(
     @ParsedQuery(UserQueryDto) query: UserQueryDto,
     @I18nLang() lang: string,

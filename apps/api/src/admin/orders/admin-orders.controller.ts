@@ -5,8 +5,11 @@ import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { AuthUserPayload } from '@/auth/auth.service';
 import { AdminOrdersService } from './admin-orders.service';
 import { UpdateOrderStatusDto, AdminOrderQueryDto } from './dto/admin-order.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiContext('admin')
+@ApiTags('Admin - Orders')
+@ApiBearerAuth('access-token')
 @Controller('orders')
 export class AdminOrdersController {
   constructor(private readonly ordersService: AdminOrdersService) {}

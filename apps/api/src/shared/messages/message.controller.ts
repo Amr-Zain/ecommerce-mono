@@ -5,13 +5,19 @@ import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { MessageService } from './message.service';
 import { CreateMessageTemplateDto, PreviewMessageTemplateDto, UpdateMessageTemplateDto } from './dto/message-template.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
+@ApiTags('Shared - Message')
+@ApiBearerAuth('access-token')
 @Controller('message-templates')
 export class MessageTemplateController {
   constructor(private readonly messages: MessageService) {}
 
   @Get()
   @RequirePermissions({ resource: 'message_templates', action: 'list' })
+  @ApiQuery({ name: 'search', required: false, example: 'welcome' })
+  @ApiQuery({ name: 'page', required: false, example: '1' })
+  @ApiQuery({ name: 'limit', required: false, example: '10' })
   list(@Query() query: Record<string, unknown>) {
     return this.messages.listTemplates(query);
   }

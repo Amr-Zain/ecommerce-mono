@@ -9,13 +9,18 @@ import { UseLanguageTransform } from '@/common/decorators/transform-language-key
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { Prisma } from '@/prisma';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Static-pages')
+@ApiBearerAuth('access-token')
 @Controller('/static-pages')
 export class StaticPagesController {
   constructor(private readonly staticPageService: StaticPageService) {}
 
   @Get()
+  @ApiAdvancedQuery()
   async getAllStaticPagesWithAllSections(
     @ParsedQuery() query: AdvancedQueryDto = {},
   ): Promise<StaticPageInterface[] | PaginatedResult<StaticPageInterface>> {

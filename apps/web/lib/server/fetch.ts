@@ -83,12 +83,16 @@ function resolveUrl(input: string | URL, baseUrl?: string) {
   }
 
   const resolvedBaseUrl = baseUrl ?? process.env.API_BASE_URL
-
+  
   if (!resolvedBaseUrl && input.startsWith("/")) {
     throw new Error("API_BASE_URL is required for relative server fetch URLs")
   }
+  const url = new URL(input, resolvedBaseUrl)
+  if (!url.pathname.startsWith("/api/v1")) {
+    url.pathname = `/api/v1${url.pathname}`
+  }
 
-  return new URL(input, resolvedBaseUrl)
+  return url
 }
 
 function toHeaders(headers?: HeadersInit) {

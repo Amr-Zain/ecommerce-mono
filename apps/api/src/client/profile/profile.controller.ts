@@ -3,8 +3,11 @@ import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto, UpdateProfileImageDto } from './dto/profile.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Profile')
+@ApiBearerAuth('access-token')
 @Controller('profile')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}

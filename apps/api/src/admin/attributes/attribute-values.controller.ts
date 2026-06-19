@@ -6,10 +6,13 @@ import { UpdateAttributeValueDto } from './dto/update-dtos';
 import { I18nLang } from 'nestjs-i18n';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Attribute-values')
+@ApiBearerAuth('access-token')
 @Controller('attribute-values')
 export class AttributeValuesController {
   constructor(private readonly service: AttributeValuesService) {}

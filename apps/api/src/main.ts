@@ -1,8 +1,10 @@
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
+import { VersioningType, RequestMethod } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { I18nValidationPipe } from 'nestjs-i18n';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { Prisma } from '@prisma/client';
+import { setupSwagger } from './common/swagger/swagger.setup';
 
 import { SnakeToCamelPipe } from './common/pipes/snake-to-camel.pipe';
 import cookieParser from 'cookie-parser';
@@ -26,10 +28,26 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
+  app.setGlobalPrefix('api', {
+    exclude: [
+      { path: 'api/v1/docs', method: RequestMethod.ALL },
+      { path: 'api/v1/docs/(.*)', method: RequestMethod.ALL },
+      { path: 'api/v1/docs-json', method: RequestMethod.ALL },
+      { path: 'uploads', method: RequestMethod.ALL },
+      { path: 'uploads/(.*)', method: RequestMethod.ALL },
+    ],
+  });
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
+
   const httpAdapterHost = app.get(HttpAdapterHost);
 
   app.useGlobalPipes(new SnakeToCamelPipe(), new I18nValidationPipe({ transform: true, whitelist: true }));
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost));
+
+  setupSwagger(app);
 
   app.enableShutdownHooks();
 

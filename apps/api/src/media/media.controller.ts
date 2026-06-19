@@ -15,7 +15,10 @@ import { MediaService } from './media.service';
 import { UploadMediaDto } from './dto/upload-media.dto';
 import { AttachMediaDto } from './dto/attach-media.dto';
 import { AppException } from '../common/exceptions/app.exception';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiTags('App - Media')
+@ApiBearerAuth('access-token')
 @Controller('media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}

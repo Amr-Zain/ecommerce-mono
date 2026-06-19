@@ -6,8 +6,12 @@ import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Variants')
+@ApiBearerAuth('access-token')
 @Controller('variants')
 export class VariantsController {
   constructor(private readonly variantsService: VariantsService) {}
@@ -20,6 +24,7 @@ export class VariantsController {
 
   @Get()
   @RequirePermissions({ resource: 'products', action: 'list' })
+  @ApiAdvancedQuery()
   findAll(@ParsedQuery() query: AdvancedQueryDto) {
     return this.variantsService.findAll(query);
   }
@@ -50,12 +55,14 @@ export class VariantsController {
 
   @Get(':id/price-history')
   @RequirePermissions({ resource: 'products', action: 'read' })
+  @ApiAdvancedQuery()
   getPriceHistory(@Param('id', ParseIntPipe) id: number, @ParsedQuery() query: AdvancedQueryDto) {
     return this.variantsService.getPriceHistory(id, query);
   }
 
   @Get(':id/inventory-logs')
   @RequirePermissions({ resource: 'products', action: 'read' })
+  @ApiAdvancedQuery()
   getInventoryLogs(@Param('id', ParseIntPipe) id: number, @ParsedQuery() query: AdvancedQueryDto) {
     return this.variantsService.getInventoryLogs(id, query);
   }

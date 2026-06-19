@@ -7,8 +7,11 @@ import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { ClientProductsService } from './client-products.service';
 import { CatalogQueryDto } from './dto/catalog-query.dto';
+import { ApiTags, ApiQuery } from '@nestjs/swagger';
+import { ApiCatalogQuery } from '@/common/swagger/api-catalog-query.decorator';
 
 @ApiContext('client')
+@ApiTags('Client - Products')
 @Controller('products')
 export class ClientProductsController {
   constructor(private readonly productsService: ClientProductsService) {}
@@ -16,6 +19,7 @@ export class ClientProductsController {
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @Get()
+  @ApiCatalogQuery()
   findAll(
     @ParsedQuery(CatalogQueryDto) query: CatalogQueryDto,
     @I18nLang() lang: string,
@@ -27,6 +31,7 @@ export class ClientProductsController {
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @Get(':id/related')
+  @ApiQuery({ name: 'limit', required: false, example: '8' })
   findRelated(@Param('id') id: string, @I18nLang() lang: string, @Query('limit') limit?: string) {
     return this.productsService.findRelated(BigInt(id), lang, Number(limit) || 8);
   }

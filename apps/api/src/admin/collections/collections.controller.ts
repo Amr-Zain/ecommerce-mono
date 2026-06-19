@@ -8,8 +8,12 @@ import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
+import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Collections')
+@ApiBearerAuth('access-token')
 @Controller('collections')
 export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
@@ -23,6 +27,8 @@ export class CollectionsController {
 
   @Get()
   @RequirePermissions({ resource: 'collections', action: 'list' })
+  @ApiAdvancedQuery()
+  @ApiQuery({ name: 'customFilter', required: false, example: 'collection', description: 'Filter by collection level' })
   findAll(@ParsedQuery(CollectionQueryDto) query: CollectionQueryDto, @I18nLang() lang: string) {
     return this.collectionsService.findAll(query, lang);
   }

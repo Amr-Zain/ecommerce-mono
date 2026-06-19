@@ -3,8 +3,10 @@ import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { ClientFaqsService } from './client-faqs.service';
+import { ApiTags } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Faqs')
 @Controller('faqs')
 export class ClientFaqsController {
   constructor(private readonly faqsService: ClientFaqsService) {}

@@ -7,8 +7,12 @@ import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Countries')
+@ApiBearerAuth('access-token')
 @Controller('countries')
 export class CountriesController {
   constructor(private readonly countriesService: CountriesService) {}
@@ -22,6 +26,7 @@ export class CountriesController {
 
   @Get()
   @RequirePermissions({ resource: 'countries', action: 'list' })
+  @ApiAdvancedQuery()
   async findAll(@ParsedQuery(CountryQueryDto) query: CountryQueryDto) {
     return this.countriesService.getAllCountries(query);
   }

@@ -7,8 +7,12 @@ import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Faqs')
+@ApiBearerAuth('access-token')
 @Controller('faqs')
 export class FaqsController {
   constructor(private readonly faqsService: FaqsService) {}
@@ -22,6 +26,7 @@ export class FaqsController {
 
   @Get()
   @RequirePermissions({ resource: 'faqs', action: 'list' })
+  @ApiAdvancedQuery()
   async findAll(@ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto) {
     return this.faqsService.getAllFaqs(query);
   }

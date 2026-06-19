@@ -7,8 +7,12 @@ import { createCityDto } from './dto/create-city.dto';
 import { UpdateCityDto } from './dto/update-city.dto';
 import { CityQueryDto } from './dto/city-query';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
+import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Cities')
+@ApiBearerAuth('access-token')
 @Controller('cities')
 export class CitiesController {
   constructor(private readonly cityService: CitiesService) {}
@@ -22,14 +26,15 @@ export class CitiesController {
 
   @Get()
   @RequirePermissions({ resource: 'city', action: 'read' })
+  @ApiAdvancedQuery()
   findAll(@ParsedQuery(CityQueryDto) query: CityQueryDto) {
     return this.cityService.findAll(query);
   }
 
   @Get(':id')
   @RequirePermissions({ resource: 'city', action: 'read' })
-  findOne(@Param('id') id: string, @Query('langId') langId?: string) {
-    return this.cityService.findOne(+id, langId);
+  findOne(@Param('id') id: string) {
+    return this.cityService.findOne(+id);
   }
 
   @Put(':id')

@@ -8,8 +8,12 @@ import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { ProductQueryDto } from './dto/product-query.dto';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Products')
+@ApiBearerAuth('access-token')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
@@ -23,6 +27,7 @@ export class ProductsController {
 
   @Get()
   @RequirePermissions({ resource: 'products', action: 'list' })
+  @ApiAdvancedQuery()
   findAll(@ParsedQuery(ProductQueryDto) query: ProductQueryDto) {
     return this.productsService.findAll(query);
   }

@@ -3,8 +3,11 @@ import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ClientReturnsService } from './client-returns.service';
 import { CreateExchangeRequestDto, CreateReturnRequestDto } from './dto/client-return-exchange.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Returns')
+@ApiBearerAuth('access-token')
 @Controller()
 export class ClientReturnsController {
   constructor(private readonly returnsService: ClientReturnsService) {}

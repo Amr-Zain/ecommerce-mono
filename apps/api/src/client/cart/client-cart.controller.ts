@@ -8,8 +8,10 @@ import { AddToCartDto, UpdateCartItemDto } from './dto/cart.dto';
 import { Public } from '@/auth/decorators/public.decorator';
 import { OptionalJwtAuthGuard } from '@/auth/guards/optional-jwt-auth.guard';
 import { AnonymousSessionService } from '@/auth/services/anonymous-session.service';
+import { ApiTags } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Cart')
 @Controller('cart')
 export class ClientCartController {
   constructor(

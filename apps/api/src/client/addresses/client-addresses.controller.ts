@@ -4,8 +4,11 @@ import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ClientAddressesService } from './client-addresses.service';
 import { CreateAddressDto, UpdateAddressDto } from './dto/address.dto';
 import { User } from '@/common/interfaces';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Addresses')
+@ApiBearerAuth('access-token')
 @Controller('profile/addresses')
 export class ClientAddressesController {
   constructor(private readonly addressesService: ClientAddressesService) {}

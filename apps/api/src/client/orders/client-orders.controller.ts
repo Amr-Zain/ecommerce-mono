@@ -4,8 +4,11 @@ import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ClientOrdersService } from './client-orders.service';
 import { CancelOrderDto, OrderQueryDto } from './dto/order.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Orders')
+@ApiBearerAuth('access-token')
 @Controller('orders')
 export class ClientOrdersController {
   constructor(private readonly ordersService: ClientOrdersService) {}

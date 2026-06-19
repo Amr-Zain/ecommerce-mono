@@ -14,6 +14,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 interface AuthUser {
   id: bigint;
@@ -27,6 +28,7 @@ interface AuthUser {
   [key: string]: unknown;
 }
 
+@ApiTags('App - Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -117,6 +119,7 @@ export class AuthController {
     return this.authService.handleAuthResponse(res, authResult, platform);
   }
 
+  @ApiBearerAuth('access-token')
   @Post('logout')
   async logout(@Req() req: Request, @Res() res: Response, @Body() refreshTokenDto: RefreshTokenDto) {
     const cookies = req.cookies as Record<string, string> | undefined;
@@ -134,6 +137,7 @@ export class AuthController {
     return res.status(200).json(result);
   }
 
+  @ApiBearerAuth('access-token')
   @Post('logout-all')
   async logoutAll(@CurrentUser() user: AuthUserPayload) {
     return this.authService.logoutAll(user.id);
@@ -151,6 +155,7 @@ export class AuthController {
     return this.authService.resetPassword(resetPasswordDto.email, resetPasswordDto.code, resetPasswordDto.newPassword);
   }
 
+  @ApiBearerAuth('access-token')
   @Get('me')
   getProfile(@CurrentUser() user: AuthUserPayload, @I18nLang() lang: string) {
     const roleTranslations = Array.isArray(user.role?.translations) ? user.role.translations : [];
@@ -178,11 +183,13 @@ export class AuthController {
     };
   }
 
+  @ApiBearerAuth('access-token')
   @Get('sessions')
   async getSessions(@CurrentUser() user: AuthUser) {
     return this.authService.getSessions(user.id);
   }
 
+  @ApiBearerAuth('access-token')
   @Delete('sessions/:sessionId')
   async revokeSession(@CurrentUser() user: AuthUser, @Param('sessionId') sessionId: string) {
     return this.authService.revokeSession(user.id, BigInt(sessionId));

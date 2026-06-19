@@ -14,14 +14,20 @@ import {
   AdminVerifyExchangePaymentDto,
   AdminReturnExchangeQueryDto,
 } from './dto/admin-return-exchange.dto';
+import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Returns')
+@ApiBearerAuth('access-token')
 @Controller()
 export class AdminReturnsController {
   constructor(private readonly returnsService: AdminReturnsService) {}
 
   @Get('returns')
   @RequirePermissions({ resource: 'returns', action: 'list' })
+  @ApiAdvancedQuery()
+  @ApiQuery({ name: 'status', required: false, example: 'requested', description: 'Filter by return status' })
   findReturns(@ParsedQuery(AdminReturnExchangeQueryDto) query: AdminReturnExchangeQueryDto) {
     return this.returnsService.findReturns(query);
   }
@@ -64,6 +70,8 @@ export class AdminReturnsController {
 
   @Get('exchanges')
   @RequirePermissions({ resource: 'exchanges', action: 'list' })
+  @ApiAdvancedQuery()
+  @ApiQuery({ name: 'status', required: false, example: 'requested', description: 'Filter by exchange status' })
   findExchanges(@ParsedQuery(AdminReturnExchangeQueryDto) query: AdminReturnExchangeQueryDto) {
     return this.returnsService.findExchanges(query);
   }

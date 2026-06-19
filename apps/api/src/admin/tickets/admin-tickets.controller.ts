@@ -7,14 +7,19 @@ import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { AuthUserPayload } from '@/auth/auth.service';
 import { ReplyTicketDto, UpdateTicketDto } from '@/core/tickets/dto/ticket.dto';
 import { TicketsService } from '@/core/tickets/tickets.service';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
+@ApiTags('Admin - Tickets')
+@ApiBearerAuth('access-token')
 @Controller('tickets')
 export class AdminTicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
   @Get()
   @RequirePermissions({ resource: 'tickets', action: 'list' })
+  @ApiAdvancedQuery()
   findAll(@ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto) {
     return this.ticketsService.findAdminTickets(query);
   }
@@ -27,6 +32,7 @@ export class AdminTicketsController {
 
   @Get(':id/messages')
   @RequirePermissions({ resource: 'tickets', action: 'read' })
+  @ApiAdvancedQuery()
   findMessages(@Param('id') id: string, @ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto) {
     return this.ticketsService.findAdminMessages(BigInt(id), query);
   }

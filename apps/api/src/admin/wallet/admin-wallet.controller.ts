@@ -4,8 +4,11 @@ import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { WalletService } from '@/shared/wallet/wallet.service';
 import { AdminMarkWithdrawalPaidDto, AdminWithdrawalActionDto } from '@/shared/wallet/dto/wallet.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiContext('admin')
+@ApiTags('Admin - Wallet')
+@ApiBearerAuth('access-token')
 @Controller()
 export class AdminWalletController {
   constructor(private readonly walletService: WalletService) {}

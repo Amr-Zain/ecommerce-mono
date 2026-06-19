@@ -4,11 +4,15 @@ import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { ParseBigIntPipe } from '@/common/pipes/parse-bigint.pipe';
 import { NotificationService } from './notification.service';
+import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 abstract class BaseNotificationController {
   constructor(protected readonly notifications: NotificationService) {}
 
   @Get()
+  @ApiQuery({ name: 'page', required: false, example: '1' })
+  @ApiQuery({ name: 'limit', required: false, example: '20' })
+  @ApiQuery({ name: 'unread', required: false, example: 'false' })
   findAll(
     @CurrentUser() user: { id: bigint },
     @I18nLang() lang: string,
@@ -47,6 +51,8 @@ abstract class BaseNotificationController {
 }
 
 @ApiContext('client')
+@ApiTags('Shared - Notification')
+@ApiBearerAuth('access-token')
 @Controller('client/notifications')
 export class ClientNotificationController extends BaseNotificationController {
   constructor(notifications: NotificationService) {

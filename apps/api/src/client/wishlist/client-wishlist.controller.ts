@@ -8,8 +8,10 @@ import { ToggleWishlistDto } from './dto/wishlist.dto';
 import { Public } from '@/auth/decorators/public.decorator';
 import { OptionalJwtAuthGuard } from '@/auth/guards/optional-jwt-auth.guard';
 import { AnonymousSessionService } from '@/auth/services/anonymous-session.service';
+import { ApiTags } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Wishlist')
 @Controller('wishlist')
 export class ClientWishlistController {
   constructor(

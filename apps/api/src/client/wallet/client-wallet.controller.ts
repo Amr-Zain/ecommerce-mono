@@ -4,8 +4,11 @@ import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { WalletService } from '@/shared/wallet/wallet.service';
 import { CreateWalletDepositDto, CreateWalletWithdrawalDto } from '@/shared/wallet/dto/wallet.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Wallet')
+@ApiBearerAuth('access-token')
 @Controller('wallet')
 export class ClientWalletController {
   constructor(private readonly walletService: WalletService) {}

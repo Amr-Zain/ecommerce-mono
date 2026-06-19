@@ -4,8 +4,11 @@ import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ClientCheckoutService } from './client-checkout.service';
 import { CheckoutPreviewDto, PlaceOrderDto, VerifyCheckoutPaymentDto } from './dto/checkout.dto';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiContext('client')
+@ApiTags('Client - Checkout')
+@ApiBearerAuth('access-token')
 @Controller('checkout')
 export class ClientCheckoutController {
   constructor(private readonly checkoutService: ClientCheckoutService) {}
