@@ -16,6 +16,8 @@ import cookieParser from 'cookie-parser';
   return this.toString();
 };
 
+const API_VERSION = process.env.API_VERSION ?? '1'
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
 
@@ -30,16 +32,16 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api', {
     exclude: [
-      { path: 'api/v1/docs', method: RequestMethod.ALL },
-      { path: 'api/v1/docs/(.*)', method: RequestMethod.ALL },
-      { path: 'api/v1/docs-json', method: RequestMethod.ALL },
+      { path: `api/v${API_VERSION}/docs`, method: RequestMethod.ALL },
+      { path: `api/v${API_VERSION}/docs/(.*)`, method: RequestMethod.ALL },
+      { path: `api/v${API_VERSION}/docs-json`, method: RequestMethod.ALL },
       { path: 'uploads', method: RequestMethod.ALL },
       { path: 'uploads/(.*)', method: RequestMethod.ALL },
     ],
   });
   app.enableVersioning({
     type: VersioningType.URI,
-    defaultVersion: '1',
+    defaultVersion: API_VERSION,
   });
 
   const httpAdapterHost = app.get(HttpAdapterHost);

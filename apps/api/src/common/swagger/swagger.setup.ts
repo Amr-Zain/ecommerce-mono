@@ -5,6 +5,9 @@ import { AdminModule } from '@/admin/admin.module';
 import { ClientModule } from '@/client/client.module';
 import { AuthModule } from '@/auth/auth.module';
 
+const API_VERSION = process.env.API_VERSION ?? '1';
+const API_PREFIX = `api/v${API_VERSION}`;
+
 function basicAuthMiddleware(req: Request, res: Response, next: NextFunction) {
   const username = process.env.SWAGGER_USERNAME;
   const password = process.env.SWAGGER_PASSWORD;
@@ -38,7 +41,7 @@ function buildSwaggerDocument(app: INestApplication, title: string, modules?: an
     .setTitle(title)
     .setDescription('API documentation for Ecommerce')
     .setVersion('1.0')
-    .addServer('/api/v1')
+    .addServer(`/api/v${API_VERSION}`)
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token')
     .build();
 
@@ -59,13 +62,13 @@ export function setupSwagger(app: INestApplication) {
     customSiteTitle: 'Ecommerce API Docs',
   };
 
-  app.use('/api/v1/docs', basicAuthMiddleware);
-  app.use('/api/v1/docs/admin', basicAuthMiddleware);
-  app.use('/api/v1/docs/client', basicAuthMiddleware);
-  app.use('/api/v1/docs/public', basicAuthMiddleware);
+  app.use(`/${API_PREFIX}/docs`, basicAuthMiddleware);
+  app.use(`/${API_PREFIX}/docs/admin`, basicAuthMiddleware);
+  app.use(`/${API_PREFIX}/docs/client`, basicAuthMiddleware);
+  app.use(`/${API_PREFIX}/docs/public`, basicAuthMiddleware);
 
-  SwaggerModule.setup('api/v1/docs', app, fullDocument, commonOptions);
-  SwaggerModule.setup('api/v1/docs/admin', app, adminDocument, commonOptions);
-  SwaggerModule.setup('api/v1/docs/client', app, clientDocument, commonOptions);
-  SwaggerModule.setup('api/v1/docs/public', app, publicDocument, commonOptions);
+  SwaggerModule.setup(`${API_PREFIX}/docs`, app, fullDocument, commonOptions);
+  SwaggerModule.setup(`${API_PREFIX}/docs/admin`, app, adminDocument, commonOptions);
+  SwaggerModule.setup(`${API_PREFIX}/docs/client`, app, clientDocument, commonOptions);
+  SwaggerModule.setup(`${API_PREFIX}/docs/public`, app, publicDocument, commonOptions);
 }
