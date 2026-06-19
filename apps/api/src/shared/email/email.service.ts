@@ -10,7 +10,10 @@ export class EmailService implements OnModuleInit {
   private readonly transporter: Transporter;
   private readonly from: { name: string; address: string };
 
-  constructor(config: ConfigService, private readonly templates: EmailTemplateService) {
+  constructor(
+    config: ConfigService,
+    private readonly templates: EmailTemplateService,
+  ) {
     const required = (key: string) => {
       const value = config.get<string>(key);
       if (!value) throw new Error(`${key} is required`);
@@ -35,7 +38,7 @@ export class EmailService implements OnModuleInit {
 
   async sendTemplate<T extends EmailTemplate>(input: SendTemplateEmailInput<T>): Promise<void> {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.to)) throw new Error('Invalid email recipient');
-    const rendered = this.templates.render(input.template, input.locale, input.variables);
+    const rendered = await this.templates.render(input.template, input.locale, input.variables);
     await this.transporter.sendMail({ from: this.from, to: input.to, ...rendered });
   }
 

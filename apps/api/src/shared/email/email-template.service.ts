@@ -1,43 +1,96 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '@/prisma';
 import { EmailLocale, EmailTemplate, EmailTemplateVariables } from './email.types';
+
+type LocalizedContent = {
+  subject?: string;
+  body?: string;
+  html?: string;
+};
+
+type MessageContent = {
+  en?: LocalizedContent;
+  ar?: LocalizedContent;
+};
 
 @Injectable()
 export class EmailTemplateService {
-  render<T extends EmailTemplate>(
+  private readonly templateKeyMap: Record<EmailTemplate, string> = {
+    emailOtp: 'email_otp',
+    passwordResetOtp: 'password_reset_otp',
+    welcome: 'welcome',
+  };
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  async render<T extends EmailTemplate>(
     template: T,
     locale: EmailLocale,
     variables: EmailTemplateVariables[T],
-  ): { subject: string; html: string; text: string } {
-    const copy = this.copy(template, locale, variables);
-    const direction = locale === 'ar' ? 'rtl' : 'ltr';
-    return {
-      subject: copy.subject,
-      text: `${copy.heading}\n\n${copy.body}\n\n${copy.highlight ?? ''}`.trim(),
-      html: `<!doctype html><html dir="${direction}" lang="${locale}"><body style="margin:0;background:#f5f5f5;font-family:Arial,sans-serif;color:#171717"><div style="max-width:560px;margin:32px auto;background:#fff;border:1px solid #e5e5e5;border-radius:16px;padding:32px"><p style="font-size:14px;color:#737373;margin:0 0 24px">Fayendra</p><h1 style="font-size:24px;margin:0 0 16px">${copy.heading}</h1><p style="line-height:1.7;margin:0 0 24px">${copy.body}</p>${copy.highlight ? `<div style="font-size:32px;font-weight:700;letter-spacing:8px;text-align:center;background:#f5f5f5;border-radius:12px;padding:18px">${copy.highlight}</div>` : ''}</div></body></html>`,
-    };
+  ): Promise<{ subject: string; html: string; text: string }> {
+    const key = this.templateKeyMap[template];
+    const record = await this.prisma.messageTemplate.findUnique({ where: { key } });
+
+    if (!record) {
+      throw new NotFoundException(`Email template "${key}" not found`);
+    }
+    if (!record.isActive) {
+      throw new Error(`Email template "${key}" is inactive`);
+    }
+
+    const content = (record.content ?? {}) as MessageContent;
+    const lang = locale === 'ar' ? 'ar' : 'en';
+    const localized = content[lang] ?? content.en ?? content.ar ?? {};
+
+    const rawVariables = this.stringifyVariables(variables);
+    const escapedVariables = this.escapeVariables(rawVariables);
+
+    const subject = this.interpolate(String(localized.subject ?? ''), rawVariables);
+    const body = this.interpolate(String(localized.body ?? ''), rawVariables);
+    const html = this.interpolate(String(localized.html ?? ''), escapedVariables);
+
+    if (!subject || !html) {
+      throw new Error(`Email template "${key}" is missing subject or html for locale "${lang}"`);
+    }
+
+    return { subject, html, text: body };
   }
 
-  private copy<T extends EmailTemplate>(template: T, locale: EmailLocale, variables: EmailTemplateVariables[T]) {
-    if (template === 'welcome') {
-      const name = this.escape(String((variables as EmailTemplateVariables['welcome']).name || ''));
-      return locale === 'ar'
-        ? { subject: 'مرحباً بك في Fayendra', heading: name ? `مرحباً ${name}` : 'مرحباً بك', body: 'تم تأكيد بريدك الإلكتروني بنجاح.' }
-        : { subject: 'Welcome to Fayendra', heading: name ? `Welcome, ${name}` : 'Welcome', body: 'Your email address has been verified successfully.' };
+  private stringifyVariables(variables: Record<string, unknown>): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(variables)) {
+      if (value === undefined || value === null) {
+        result[key] = '';
+      } else if (
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean' ||
+        typeof value === 'bigint'
+      ) {
+        result[key] = String(value);
+      } else {
+        result[key] = JSON.stringify(value);
+      }
     }
+    return result;
+  }
 
-    const otp = variables as EmailTemplateVariables['emailOtp'];
-    const highlight = this.escape(otp.code);
-    if (template === 'passwordResetOtp') {
-      return locale === 'ar'
-        ? { subject: 'رمز إعادة تعيين كلمة المرور', heading: 'إعادة تعيين كلمة المرور', body: `استخدم الرمز التالي خلال ${otp.expiresMinutes} دقائق.`, highlight }
-        : { subject: 'Password reset code', heading: 'Reset your password', body: `Use this code within ${otp.expiresMinutes} minutes.`, highlight };
+  private escapeVariables(variables: Record<string, string>): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(variables)) {
+      result[key] = this.escape(value);
     }
-    return locale === 'ar'
-      ? { subject: 'رمز التحقق', heading: 'تأكيد بريدك الإلكتروني', body: `استخدم الرمز التالي خلال ${otp.expiresMinutes} دقائق.`, highlight }
-      : { subject: 'Verification code', heading: 'Verify your email', body: `Use this code within ${otp.expiresMinutes} minutes.`, highlight };
+    return result;
+  }
+
+  private interpolate(template: string, variables: Record<string, string>): string {
+    return template.replace(/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g, (_match, key: string) => variables[key] ?? '');
   }
 
   private escape(value: string): string {
-    return value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]!);
+    return value.replace(
+      /[&<>"']/g,
+      (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]!,
+    );
   }
 }
