@@ -78,6 +78,7 @@ import { Route as MainRolesShowIdRouteImport } from './routes/_main/roles/show/$
 import { Route as MainRolesEditIdRouteImport } from './routes/_main/roles/edit/$id'
 import { Route as MainRewardsEditIdRouteImport } from './routes/_main/rewards/edit/$id'
 import { Route as MainReviewsShowIdRouteImport } from './routes/_main/reviews/show/$id'
+import { Route as MainReturnsShowIdRouteImport } from './routes/_main/returns/show/$id'
 import { Route as MainProductsShowIdRouteImport } from './routes/_main/products/show/$id'
 import { Route as MainProductsEditIdRouteImport } from './routes/_main/products/edit/$id'
 import { Route as MainPaymentGatewaysSessionsIdRouteImport } from './routes/_main/payment-gateways/sessions/$id'
@@ -87,6 +88,7 @@ import { Route as MainMessagesShowIdRouteImport } from './routes/_main/messages/
 import { Route as MainMessageTemplatesShowIdRouteImport } from './routes/_main/message-templates/show/$id'
 import { Route as MainMessageTemplatesEditIdRouteImport } from './routes/_main/message-templates/edit/$id'
 import { Route as MainFaqsEditIdRouteImport } from './routes/_main/faqs/edit/$id'
+import { Route as MainExchangesShowIdRouteImport } from './routes/_main/exchanges/show/$id'
 import { Route as MainEarningRulesEditIdRouteImport } from './routes/_main/earning-rules/edit/$id'
 import { Route as MainCouponsEditIdRouteImport } from './routes/_main/coupons/edit/$id'
 import { Route as MainCategoriesShowIdRouteImport } from './routes/_main/categories/show/$id'
@@ -457,6 +459,11 @@ const MainReviewsShowIdRoute = MainReviewsShowIdRouteImport.update({
   path: '/reviews/show/$id',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainReturnsShowIdRoute = MainReturnsShowIdRouteImport.update({
+  id: '/returns/show/$id',
+  path: '/returns/show/$id',
+  getParentRoute: () => MainRouteRoute,
+} as any)
 const MainProductsShowIdRoute = MainProductsShowIdRouteImport.update({
   id: '/products/show/$id',
   path: '/products/show/$id',
@@ -503,6 +510,11 @@ const MainMessageTemplatesEditIdRoute =
 const MainFaqsEditIdRoute = MainFaqsEditIdRouteImport.update({
   id: '/faqs/edit/$id',
   path: '/faqs/edit/$id',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainExchangesShowIdRoute = MainExchangesShowIdRouteImport.update({
+  id: '/exchanges/show/$id',
+  path: '/exchanges/show/$id',
   getParentRoute: () => MainRouteRoute,
 } as any)
 const MainEarningRulesEditIdRoute = MainEarningRulesEditIdRouteImport.update({
@@ -638,6 +650,7 @@ export interface FileRoutesByFullPath {
   '/categories/show/$id': typeof MainCategoriesShowIdRoute
   '/coupons/edit/$id': typeof MainCouponsEditIdRoute
   '/earning-rules/edit/$id': typeof MainEarningRulesEditIdRoute
+  '/exchanges/show/$id': typeof MainExchangesShowIdRoute
   '/faqs/edit/$id': typeof MainFaqsEditIdRoute
   '/message-templates/edit/$id': typeof MainMessageTemplatesEditIdRoute
   '/message-templates/show/$id': typeof MainMessageTemplatesShowIdRoute
@@ -647,6 +660,7 @@ export interface FileRoutesByFullPath {
   '/payment-gateways/sessions/$id': typeof MainPaymentGatewaysSessionsIdRoute
   '/products/edit/$id': typeof MainProductsEditIdRoute
   '/products/show/$id': typeof MainProductsShowIdRoute
+  '/returns/show/$id': typeof MainReturnsShowIdRoute
   '/reviews/show/$id': typeof MainReviewsShowIdRoute
   '/rewards/edit/$id': typeof MainRewardsEditIdRoute
   '/roles/edit/$id': typeof MainRolesEditIdRoute
@@ -731,6 +745,7 @@ export interface FileRoutesByTo {
   '/categories/show/$id': typeof MainCategoriesShowIdRoute
   '/coupons/edit/$id': typeof MainCouponsEditIdRoute
   '/earning-rules/edit/$id': typeof MainEarningRulesEditIdRoute
+  '/exchanges/show/$id': typeof MainExchangesShowIdRoute
   '/faqs/edit/$id': typeof MainFaqsEditIdRoute
   '/message-templates/edit/$id': typeof MainMessageTemplatesEditIdRoute
   '/message-templates/show/$id': typeof MainMessageTemplatesShowIdRoute
@@ -740,6 +755,7 @@ export interface FileRoutesByTo {
   '/payment-gateways/sessions/$id': typeof MainPaymentGatewaysSessionsIdRoute
   '/products/edit/$id': typeof MainProductsEditIdRoute
   '/products/show/$id': typeof MainProductsShowIdRoute
+  '/returns/show/$id': typeof MainReturnsShowIdRoute
   '/reviews/show/$id': typeof MainReviewsShowIdRoute
   '/rewards/edit/$id': typeof MainRewardsEditIdRoute
   '/roles/edit/$id': typeof MainRolesEditIdRoute
@@ -826,6 +842,7 @@ export interface FileRoutesById {
   '/_main/categories/show/$id': typeof MainCategoriesShowIdRoute
   '/_main/coupons/edit/$id': typeof MainCouponsEditIdRoute
   '/_main/earning-rules/edit/$id': typeof MainEarningRulesEditIdRoute
+  '/_main/exchanges/show/$id': typeof MainExchangesShowIdRoute
   '/_main/faqs/edit/$id': typeof MainFaqsEditIdRoute
   '/_main/message-templates/edit/$id': typeof MainMessageTemplatesEditIdRoute
   '/_main/message-templates/show/$id': typeof MainMessageTemplatesShowIdRoute
@@ -835,6 +852,7 @@ export interface FileRoutesById {
   '/_main/payment-gateways/sessions/$id': typeof MainPaymentGatewaysSessionsIdRoute
   '/_main/products/edit/$id': typeof MainProductsEditIdRoute
   '/_main/products/show/$id': typeof MainProductsShowIdRoute
+  '/_main/returns/show/$id': typeof MainReturnsShowIdRoute
   '/_main/reviews/show/$id': typeof MainReviewsShowIdRoute
   '/_main/rewards/edit/$id': typeof MainRewardsEditIdRoute
   '/_main/roles/edit/$id': typeof MainRolesEditIdRoute
@@ -921,6 +939,7 @@ export interface FileRouteTypes {
     | '/categories/show/$id'
     | '/coupons/edit/$id'
     | '/earning-rules/edit/$id'
+    | '/exchanges/show/$id'
     | '/faqs/edit/$id'
     | '/message-templates/edit/$id'
     | '/message-templates/show/$id'
@@ -930,6 +949,7 @@ export interface FileRouteTypes {
     | '/payment-gateways/sessions/$id'
     | '/products/edit/$id'
     | '/products/show/$id'
+    | '/returns/show/$id'
     | '/reviews/show/$id'
     | '/rewards/edit/$id'
     | '/roles/edit/$id'
@@ -1014,6 +1034,7 @@ export interface FileRouteTypes {
     | '/categories/show/$id'
     | '/coupons/edit/$id'
     | '/earning-rules/edit/$id'
+    | '/exchanges/show/$id'
     | '/faqs/edit/$id'
     | '/message-templates/edit/$id'
     | '/message-templates/show/$id'
@@ -1023,6 +1044,7 @@ export interface FileRouteTypes {
     | '/payment-gateways/sessions/$id'
     | '/products/edit/$id'
     | '/products/show/$id'
+    | '/returns/show/$id'
     | '/reviews/show/$id'
     | '/rewards/edit/$id'
     | '/roles/edit/$id'
@@ -1108,6 +1130,7 @@ export interface FileRouteTypes {
     | '/_main/categories/show/$id'
     | '/_main/coupons/edit/$id'
     | '/_main/earning-rules/edit/$id'
+    | '/_main/exchanges/show/$id'
     | '/_main/faqs/edit/$id'
     | '/_main/message-templates/edit/$id'
     | '/_main/message-templates/show/$id'
@@ -1117,6 +1140,7 @@ export interface FileRouteTypes {
     | '/_main/payment-gateways/sessions/$id'
     | '/_main/products/edit/$id'
     | '/_main/products/show/$id'
+    | '/_main/returns/show/$id'
     | '/_main/reviews/show/$id'
     | '/_main/rewards/edit/$id'
     | '/_main/roles/edit/$id'
@@ -1638,6 +1662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainReviewsShowIdRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/_main/returns/show/$id': {
+      id: '/_main/returns/show/$id'
+      path: '/returns/show/$id'
+      fullPath: '/returns/show/$id'
+      preLoaderRoute: typeof MainReturnsShowIdRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/_main/products/show/$id': {
       id: '/_main/products/show/$id'
       path: '/products/show/$id'
@@ -1699,6 +1730,13 @@ declare module '@tanstack/react-router' {
       path: '/faqs/edit/$id'
       fullPath: '/faqs/edit/$id'
       preLoaderRoute: typeof MainFaqsEditIdRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/exchanges/show/$id': {
+      id: '/_main/exchanges/show/$id'
+      path: '/exchanges/show/$id'
+      fullPath: '/exchanges/show/$id'
+      preLoaderRoute: typeof MainExchangesShowIdRouteImport
       parentRoute: typeof MainRouteRoute
     }
     '/_main/earning-rules/edit/$id': {
@@ -1854,6 +1892,7 @@ interface MainRouteRouteChildren {
   MainCategoriesShowIdRoute: typeof MainCategoriesShowIdRoute
   MainCouponsEditIdRoute: typeof MainCouponsEditIdRoute
   MainEarningRulesEditIdRoute: typeof MainEarningRulesEditIdRoute
+  MainExchangesShowIdRoute: typeof MainExchangesShowIdRoute
   MainFaqsEditIdRoute: typeof MainFaqsEditIdRoute
   MainMessageTemplatesEditIdRoute: typeof MainMessageTemplatesEditIdRoute
   MainMessageTemplatesShowIdRoute: typeof MainMessageTemplatesShowIdRoute
@@ -1863,6 +1902,7 @@ interface MainRouteRouteChildren {
   MainPaymentGatewaysSessionsIdRoute: typeof MainPaymentGatewaysSessionsIdRoute
   MainProductsEditIdRoute: typeof MainProductsEditIdRoute
   MainProductsShowIdRoute: typeof MainProductsShowIdRoute
+  MainReturnsShowIdRoute: typeof MainReturnsShowIdRoute
   MainReviewsShowIdRoute: typeof MainReviewsShowIdRoute
   MainRewardsEditIdRoute: typeof MainRewardsEditIdRoute
   MainRolesEditIdRoute: typeof MainRolesEditIdRoute
@@ -1945,6 +1985,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainCategoriesShowIdRoute: MainCategoriesShowIdRoute,
   MainCouponsEditIdRoute: MainCouponsEditIdRoute,
   MainEarningRulesEditIdRoute: MainEarningRulesEditIdRoute,
+  MainExchangesShowIdRoute: MainExchangesShowIdRoute,
   MainFaqsEditIdRoute: MainFaqsEditIdRoute,
   MainMessageTemplatesEditIdRoute: MainMessageTemplatesEditIdRoute,
   MainMessageTemplatesShowIdRoute: MainMessageTemplatesShowIdRoute,
@@ -1954,6 +1995,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainPaymentGatewaysSessionsIdRoute: MainPaymentGatewaysSessionsIdRoute,
   MainProductsEditIdRoute: MainProductsEditIdRoute,
   MainProductsShowIdRoute: MainProductsShowIdRoute,
+  MainReturnsShowIdRoute: MainReturnsShowIdRoute,
   MainReviewsShowIdRoute: MainReviewsShowIdRoute,
   MainRewardsEditIdRoute: MainRewardsEditIdRoute,
   MainRolesEditIdRoute: MainRolesEditIdRoute,

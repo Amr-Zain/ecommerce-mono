@@ -234,6 +234,11 @@ export interface ReturnRequest {
 export interface ReturnRequestItem {
   id: string
   order_item_id: string
+  product_id: string | null
+  product_name_snapshot: string | null
+  variant_id: string | null
+  variant_info_snapshot: JsonValue
+  image_snapshot: string | null
   old_variant_id: string | null
   quantity: number
   accepted_quantity: number
@@ -286,8 +291,14 @@ export interface ReturnExchangeStatusHistory {
 export interface ExchangeRequestItem {
   id: string
   order_item_id: string
+  product_id: string | null
+  product_name_snapshot: string | null
+  variant_id: string | null
+  variant_info_snapshot: JsonValue
+  image_snapshot: string | null
   old_variant_id: string | null
   new_variant_id: string
+  new_variant_sku?: string | null
   quantity: number
   accepted_quantity: number
   exchange_reason: string
