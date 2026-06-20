@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Query, Sse } from '@nestjs/common';
+import { Controller, Get, Header, Param, Patch, Query, Sse } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
@@ -45,6 +45,9 @@ abstract class BaseNotificationController {
   }
 
   @Sse('stream')
+  @Header('Cache-Control', 'no-cache, no-transform')
+  @Header('Connection', 'keep-alive')
+  @Header('X-Accel-Buffering', 'no')
   stream(@CurrentUser() user: { id: bigint }, @I18nLang() lang: string) {
     return this.notifications.stream(user.id, lang);
   }

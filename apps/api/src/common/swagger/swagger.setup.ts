@@ -41,7 +41,7 @@ function buildSwaggerDocument(app: INestApplication, title: string, modules?: an
     .setTitle(title)
     .setDescription('API documentation for Ecommerce')
     .setVersion('1.0')
-    .addServer(`/api/v${API_VERSION}`)
+    .addServer('/')
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token')
     .build();
 

@@ -18,14 +18,38 @@ import cookieParser from 'cookie-parser';
 
 const API_VERSION = process.env.API_VERSION ?? '1'
 
+const configuredCorsOrigins = (process.env.CORS_ORIGINS ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+function isAllowedCorsOrigin(origin?: string) {
+  if (!origin) {
+    return true;
+  }
+
+  if (configuredCorsOrigins.includes(origin)) {
+    return true;
+  }
+
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'],
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (isAllowedCorsOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`CORS origin not allowed: ${origin}`));
+    },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Accept-Language, Authorization, X-Requested-With, X-Platform',
+    allowedHeaders:
+      'Content-Type, Accept, Accept-Language, Authorization, X-Requested-With, X-Platform, x-user-type, Cache-Control, Last-Event-ID, X-Anonymous-Session-Token',
   });
 
   app.use(cookieParser());

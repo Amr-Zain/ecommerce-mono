@@ -6,7 +6,7 @@ import { CreateAttributeValueDto } from './dto/attribute-value.dto';
 import { UpdateAttributeValueDto } from './dto/update-dtos';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { Prisma } from '@/prisma';
-/import {
+import {
   PUBLIC_CACHE_EVENTS,
   PublicCacheInvalidationPublisher,
 } from '@/shared/cache/public-cache-invalidation.service';
