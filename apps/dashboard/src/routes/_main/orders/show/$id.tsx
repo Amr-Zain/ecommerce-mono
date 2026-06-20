@@ -20,11 +20,10 @@ export const Route = createFileRoute('/_main/orders/show/$id')({
   pendingComponent: OrderShowSkeleton,
   loader: async ({ params, context }) => {
     const { queryClient } = context as RouterContext
-    const endpoint = `orders/${params.id}`
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.orders.getOrder(params.id),
-        endpoint: endpoint,
+        endpoint: `orders/${params.id}`,
       }),
     )
   },

@@ -14,8 +14,6 @@ import { UserStats, UserStatsSkeleton } from '@/components/pagesComponents/Users
 
 import { hasPermission, routePermission } from '@/lib/utils'
 
-const endpoint = `clients?paginate=1`
-
 export const Route = createFileRoute('/_main/users/')({
   beforeLoad: ({ context }) => {
     routePermission('clients', 'index')
@@ -44,7 +42,7 @@ export const Route = createFileRoute('/_main/users/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.user.filterd(search),
-        endpoint,
+        endpoint: 'clients?paginate=1',
         params: search,
       }),
     )
@@ -64,7 +62,7 @@ function UsersTable() {
   console.log(search)
   const { data } = useFetch<ApiResponse<UserEntity>>({
     queryKey: queryKeys.user.filterd(search),
-    endpoint,
+    endpoint: 'clients?paginate=1',
     suspense: true,
     params: { ...search },
   })

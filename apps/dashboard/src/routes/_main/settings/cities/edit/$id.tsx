@@ -18,11 +18,10 @@ export const Route = createFileRoute('/_main/settings/cities/edit/$id')({
   component: RouteComponent,
   loader: ({ params, context }) => {
     const { queryClient } = context as RouterContext
-    const endpoint = `cities/${params.id}`
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.cities.getCity(params.id),
-        endpoint,
+        endpoint: `cities/${params.id}`,
       }),
     )
   },

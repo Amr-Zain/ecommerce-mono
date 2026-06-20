@@ -11,8 +11,6 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
-const endpoint = 'exchanges'
-
 export const Route = createFileRoute('/_main/exchanges/')({
   beforeLoad: ({ context }) => {
     routePermission('exchanges', 'index')
@@ -37,7 +35,7 @@ export const Route = createFileRoute('/_main/exchanges/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.exchanges.filterd(search),
-        endpoint,
+        endpoint: 'exchanges',
         params: search,
       }),
     )
@@ -48,7 +46,7 @@ function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponseBase<{ items: ExchangeRequest[]; meta?: Meta }>>({
     queryKey: queryKeys.exchanges.filterd(search),
-    endpoint,
+    endpoint: 'exchanges',
     suspense: true,
     params: search,
   })

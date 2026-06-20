@@ -12,8 +12,6 @@ import { TableLoader } from '@/components/common/table/TableLoader'
 
 import { routePermission } from '@/lib/utils'
 
-const endpoint = 'show-rooms?paginate=1'
-
 export const Route = createFileRoute('/_main/show-rooms/')({
   beforeLoad: ({ context }) => {
     routePermission('show-rooms', 'index')
@@ -31,7 +29,7 @@ export const Route = createFileRoute('/_main/show-rooms/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.showRooms.filterd(search),
-        endpoint,
+        endpoint: 'show-rooms?paginate=1',
         params: search,
       }),
     )
@@ -42,7 +40,7 @@ function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<ShowRoom[], 'show_rooms'>>({
     queryKey: queryKeys.showRooms.filterd(search),
-    endpoint,
+    endpoint: 'show-rooms?paginate=1',
     suspense: true,
     params: search,
   })

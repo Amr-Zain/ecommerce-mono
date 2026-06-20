@@ -10,8 +10,6 @@ import { type Attribute } from '@/components/pagesComponents/Attributes/Config'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { routePermission } from '@/lib/utils'
 
-const endpoint = 'attributes?paginate=1'
-
 export const Route = createFileRoute('/_main/attributes/')({
   beforeLoad: ({ context }) => {
     routePermission('attributes', 'index')
@@ -27,7 +25,7 @@ export const Route = createFileRoute('/_main/attributes/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.attributes.filterd(search),
-        endpoint,
+        endpoint: 'attributes?paginate=1',
         params: search,
       }),
     )
@@ -38,7 +36,7 @@ function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Attribute>>({
     queryKey: queryKeys.attributes.filterd(search),
-    endpoint,
+    endpoint: 'attributes?paginate=1',
     suspense: true,
     params: search,
   })

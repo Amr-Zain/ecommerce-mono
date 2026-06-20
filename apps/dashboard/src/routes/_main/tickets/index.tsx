@@ -11,7 +11,6 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
-const endpoint = 'tickets?paginate=1'
 
 export const Route = createFileRoute('/_main/tickets/')({
   beforeLoad: ({ context }) => {
@@ -35,7 +34,7 @@ export const Route = createFileRoute('/_main/tickets/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.tickets.filterd(search),
-        endpoint,
+        endpoint: 'tickets?paginate=1',
         params: search,
       }),
     )
@@ -46,7 +45,7 @@ function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Ticket>>({
     queryKey: queryKeys.tickets.filterd(search),
-    endpoint,
+    endpoint: 'tickets?paginate=1',
     suspense: true,
     params: search,
   })

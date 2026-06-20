@@ -11,8 +11,6 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
-const endpoint = 'message-templates'
-
 export const Route = createFileRoute('/_main/message-templates/')({
   beforeLoad: ({ context }) => {
     routePermission('message_templates', 'list')
@@ -41,7 +39,7 @@ export const Route = createFileRoute('/_main/message-templates/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.messageTemplates.filterd(search),
-        endpoint,
+        endpoint: 'message-templates',
         params: search,
       }),
     )
@@ -52,7 +50,7 @@ function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponseBase<MessageTemplate[]>>({
     queryKey: queryKeys.messageTemplates.filterd(search),
-    endpoint,
+    endpoint: 'message-templates',
     suspense: true,
     params: search,
   })

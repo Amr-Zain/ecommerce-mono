@@ -14,8 +14,6 @@ import { ProductStats, ProductStatsSkeleton } from '@/components/pagesComponents
 
 import { hasPermission, routePermission } from '@/lib/utils'
 
-const endpoint = 'products?paginate=1'
-
 export const Route = createFileRoute('/_main/products/')({
   beforeLoad: ({ context }) => {
     routePermission('products', 'index')
@@ -39,7 +37,7 @@ export const Route = createFileRoute('/_main/products/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.products.filterd(search),
-        endpoint,
+        endpoint: 'products?paginate=1',
         params: search,
       }),
     )
@@ -58,7 +56,7 @@ function ProductsTable() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Product>>({
     queryKey: queryKeys.products.filterd(search),
-    endpoint,
+    endpoint: 'products?paginate=1',
     suspense: true,
     params: search,
   })

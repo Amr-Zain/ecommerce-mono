@@ -12,8 +12,6 @@ import { TableLoader } from '@/components/common/table/TableLoader'
 
 import { routePermission } from '@/lib/utils'
 
-const endpoint = `supervisors?paginate=1`
-
 export const Route = createFileRoute('/_main/supervisors/')({
   beforeLoad: ({ context }) => {
     routePermission('supervisors', 'index')
@@ -37,7 +35,7 @@ export const Route = createFileRoute('/_main/supervisors/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.supervisors.filterd(search),
-        endpoint,
+        endpoint: `supervisors?paginate=1`,
         params: search,
       }),
     )
@@ -48,7 +46,7 @@ function Index() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Supervisor[], 'users'>>({
     queryKey: queryKeys.supervisors.filterd(search),
-    endpoint,
+    endpoint: `supervisors?paginate=1`,
     suspense: true,
     params: { ...search },
   })

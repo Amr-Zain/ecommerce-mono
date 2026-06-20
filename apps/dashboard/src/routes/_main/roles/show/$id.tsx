@@ -6,8 +6,6 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
-const endpoint = `roles`
-
 import { routePermission } from '@/lib/utils'
 
 export const Route = createFileRoute('/_main/roles/show/$id')({
@@ -28,7 +26,7 @@ export const Route = createFileRoute('/_main/roles/show/$id')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.roles.get(id),
-        endpoint: `${endpoint}/${id}`,
+        endpoint: `roles/${id}`,
       }),
     )
   },

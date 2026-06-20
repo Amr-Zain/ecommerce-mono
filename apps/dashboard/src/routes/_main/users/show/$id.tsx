@@ -9,8 +9,6 @@ import { UserShow } from '@/components/pagesComponents/Users/Show'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import UserShowSkeleton from '@/components/pagesComponents/Users/Show/UserShowSkeleton'
 
-const endpoint = (id: string) => `clients/${id}`
-
 import { routePermission } from '@/lib/utils'
 
 export const Route = createFileRoute('/_main/users/show/$id')({
@@ -24,7 +22,7 @@ export const Route = createFileRoute('/_main/users/show/$id')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.user.getUser(id),
-        endpoint: endpoint(id),
+        endpoint: `clients/${id}`,
       }),
     )
   },
@@ -35,7 +33,7 @@ function UserShowRoute() {
   const { id } = Route.useParams()
   const { data } = useFetch<ApiResponseBase<UserShowType>>({
     queryKey: queryKeys.user.getUser(id),
-    endpoint: endpoint(id),
+    endpoint: `clients/${id}`,
     suspense: true,
   })
 

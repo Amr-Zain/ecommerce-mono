@@ -11,8 +11,6 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { createFileRoute } from '@tanstack/react-router'
 
-const endpoint = 'returns'
-
 export const Route = createFileRoute('/_main/returns/')({
   beforeLoad: ({ context }) => {
     routePermission('returns', 'index')
@@ -37,7 +35,7 @@ export const Route = createFileRoute('/_main/returns/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.returns.filterd(search),
-        endpoint,
+        endpoint: 'returns',
         params: search,
       }),
     )
@@ -48,7 +46,7 @@ function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponseBase<{ items: ReturnRequest[]; meta?: Meta }>>({
     queryKey: queryKeys.returns.filterd(search),
-    endpoint,
+    endpoint: 'returns',
     suspense: true,
     params: search,
   })

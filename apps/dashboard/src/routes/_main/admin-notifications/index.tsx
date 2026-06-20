@@ -11,8 +11,6 @@ import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import { TableLoader } from '@/components/common/table/TableLoader'
 import { routePermission } from '@/lib/utils'
 
-const endpoint = `admin-notifications?paginate=1`
-
 export const Route = createFileRoute('/_main/admin-notifications/')({
   beforeLoad: ({ context }) => {
     routePermission('admin-notifications', 'index')
@@ -34,7 +32,7 @@ export const Route = createFileRoute('/_main/admin-notifications/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.adminNotifications.filterd(search),
-        endpoint,
+        endpoint: `admin-notifications?paginate=1`,
         params: search,
       }),
     )
@@ -45,7 +43,7 @@ function Index() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<AdminNotificationEntity[], 'admin-notifications'>>({
     queryKey: queryKeys.adminNotifications.filterd(search),
-    endpoint,
+    endpoint: `admin-notifications?paginate=1`,
     suspense: true,
     params: { ...search },
   })

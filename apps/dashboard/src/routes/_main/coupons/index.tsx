@@ -11,8 +11,6 @@ import { TableLoader } from '@/components/common/table/TableLoader'
 import { Coupon } from '@/types/api/coupon'
 import { routePermission } from '@/lib/utils'
 
-const endpoint = 'coupons'
-
 export const Route = createFileRoute('/_main/coupons/')({
   beforeLoad: ({ context }) => {
     routePermission('coupons', 'index')
@@ -39,7 +37,7 @@ export const Route = createFileRoute('/_main/coupons/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.coupons.filterd(search),
-        endpoint,
+        endpoint: 'coupons',
         params: search,
       }),
     )
@@ -50,7 +48,7 @@ function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<Coupon[], 'coupons'>>({
     queryKey: queryKeys.coupons.filterd(search),
-    endpoint,
+    endpoint: 'coupons',
     suspense: true,
     params: search,
   })

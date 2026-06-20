@@ -12,8 +12,6 @@ import { TableLoader } from '@/components/common/table/TableLoader'
 
 import { routePermission } from '@/lib/utils'
 
-const endpoint = `roles?paginate=0`
-
 export const Route = createFileRoute('/_main/roles/')({
   beforeLoad: ({ context }) => {
     routePermission('roles', 'index')
@@ -31,7 +29,7 @@ export const Route = createFileRoute('/_main/roles/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.roles.filterd(search),
-        endpoint,
+        endpoint: `roles?paginate=0`,
         params: search,
       }),
     )
@@ -43,7 +41,7 @@ function Index() {
 
   const { data } = useFetch<ApiResponseBase<Role[]>>({
     queryKey: queryKeys.roles.filterd(search),
-    endpoint,
+    endpoint: `roles?paginate=0`,
     suspense: true,
     params: search,
   })

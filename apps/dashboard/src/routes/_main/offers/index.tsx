@@ -11,8 +11,6 @@ import { TableLoader } from '@/components/common/table/TableLoader'
 
 import { routePermission } from '@/lib/utils'
 
-const endpoint = 'offers?paginate=1'
-
 export const Route = createFileRoute('/_main/offers/')({
     beforeLoad: ({ context }) => {
         routePermission('offers', 'index')
@@ -29,7 +27,7 @@ export const Route = createFileRoute('/_main/offers/')({
         queryClient.ensureQueryData(
             prefetchOptions({
                 queryKey: queryKeys.offers.filterd(search),
-                endpoint,
+                endpoint: 'offers?paginate=1',
                 params: search,
             }),
         )
@@ -48,7 +46,7 @@ function RouteComponent() {
         >
     >({
         queryKey: queryKeys.offers.filterd(search),
-        endpoint,
+        endpoint: 'offers?paginate=1',
         suspense: true,
         params: search,
     })

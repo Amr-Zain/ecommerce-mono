@@ -56,8 +56,6 @@ export interface NotificationsResponse {
   }
 }
 
-const endpoint = 'notifications'
-
 export const Route = createFileRoute('/_main/settings/notifications/')({
   component: RouteComponent,
   validateSearch: (search: Record<string, unknown>) => ({
@@ -78,9 +76,8 @@ export const Route = createFileRoute('/_main/settings/notifications/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.notifications.filterd(search),
-        endpoint,
+        endpoint: 'notifications',
         params: search,
-        customBaseUrl: import.meta.env.VITE_BASE_URL_API,
       }),
     )
   },
@@ -92,10 +89,9 @@ function RouteComponent() {
     ApiResponseBase<NotificationsResponse>
   >({
     queryKey: queryKeys.notifications.filterd(search),
-    endpoint,
+    endpoint: 'notifications',
     suspense: true,
     params: search,
-    customBaseUrl: import.meta.env.VITE_BASE_URL_API,
   })
 
   return (

@@ -8,8 +8,6 @@ import { TableLoader } from '@/components/common/table/TableLoader'
 import { routePermission } from '@/lib/utils'
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 
-const endpoint = 'sms-providers'
-
 export const Route = createFileRoute('/_main/sms-providers/')({
     beforeLoad: ({ context }) => {
         routePermission('sms-providers', 'index')
@@ -39,7 +37,7 @@ export const Route = createFileRoute('/_main/sms-providers/')({
             queryClient.ensureQueryData(
                 prefetchOptions({
                     queryKey: queryKeys.smsProviders.all(),
-                    endpoint,
+                    endpoint: 'sms-providers',
                 }),
             )
         } else {

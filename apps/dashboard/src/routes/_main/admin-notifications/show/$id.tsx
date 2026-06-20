@@ -17,11 +17,10 @@ export const Route = createFileRoute('/_main/admin-notifications/show/$id')({
   component: RouteComponent,
   loader: async ({ params, context }) => {
     const { queryClient } = context as RouterContext
-    const endpoint = `admin-notifications/${params.id}`
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.adminNotifications.get(params.id),
-        endpoint,
+        endpoint: `admin-notifications/${params.id}`,
       }),
     )
   },

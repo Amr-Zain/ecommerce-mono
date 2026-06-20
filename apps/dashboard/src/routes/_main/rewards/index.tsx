@@ -14,8 +14,6 @@ import { RewardStats, RewardStatsSkeleton } from '@/components/pagesComponents/r
 
 import { hasPermission, routePermission } from '@/lib/utils'
 
-const endpoint = 'rewards?paginate=1'
-
 export const Route = createFileRoute('/_main/rewards/')({
     beforeLoad: ({ context }) => {
         routePermission('rewards', 'index')
@@ -39,7 +37,7 @@ export const Route = createFileRoute('/_main/rewards/')({
         queryClient.ensureQueryData(
             prefetchOptions({
                 queryKey: queryKeys.rewards.filtered(search),
-                endpoint,
+                endpoint: 'rewards?paginate=1',
                 params: search,
             }),
         )
@@ -58,7 +56,7 @@ function RewardsContent() {
     const search = Route.useLoaderDeps().search
     const { data } = useFetch<ApiResponse<Reward[], 'rewards'>>({
         queryKey: queryKeys.rewards.filtered(search),
-        endpoint,
+        endpoint: 'rewards?paginate=1',
         suspense: true,
         params: search,
     })

@@ -12,8 +12,6 @@ import { TableLoader } from '@/components/common/table/TableLoader'
 
 import { routePermission } from '@/lib/utils'
 
-const endpoint = 'shopify-stores?paginate=0'
-
 export const Route = createFileRoute('/_main/settings/shopify-stores/')({
     beforeLoad: ({ context }) => {
         routePermission('shopify-stores', 'index')
@@ -29,7 +27,7 @@ export const Route = createFileRoute('/_main/settings/shopify-stores/')({
         queryClient.ensureQueryData(
             prefetchOptions({
                 queryKey: queryKeys.shopifyStores.filterd(search),
-                endpoint,
+                endpoint: 'shopify-stores?paginate=0',
                 params: search,
             }),
         )
@@ -40,7 +38,7 @@ function RouteComponent() {
     const search = Route.useLoaderDeps().search
     const { data } = useFetch<ApiResponse<ShopifyStore[], 'shopify-stores'>>({
         queryKey: queryKeys.shopifyStores.filterd(search),
-        endpoint,
+        endpoint: 'shopify-stores?paginate=0',
         suspense: true,
         params: search,
     })

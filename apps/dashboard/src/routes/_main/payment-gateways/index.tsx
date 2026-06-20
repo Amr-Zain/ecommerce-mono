@@ -11,8 +11,6 @@ import { PaymentGatewayEntity } from '@/components/pagesComponents/PaymentGatewa
 import { Suspense } from 'react'
 import { PaymentGatewayStats, PaymentGatewayStatsSkeleton } from '@/components/pagesComponents/PaymentGateways/PaymentGatewayStats'
 
-const endpoint = 'payment-gateways'
-
 import { cleanObject, searchParamsValidate, toStr } from '@/types/api/general'
 import { hasPermission, routePermission } from '@/lib/utils'
 
@@ -49,7 +47,7 @@ export const Route = createFileRoute('/_main/payment-gateways/')({
         queryClient.ensureQueryData(
             prefetchOptions({
                 queryKey: queryKeys.paymentGateways.all(),
-                endpoint,
+                endpoint: 'payment-gateways',
             }),
         )
 

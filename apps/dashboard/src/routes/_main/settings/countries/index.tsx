@@ -12,8 +12,6 @@ import { TableLoader } from '@/components/common/table/TableLoader'
 
 import { routePermission } from '@/lib/utils'
 
-const endpoint = 'countries?paginate=1'
-
 export const Route = createFileRoute('/_main/settings/countries/')({
   beforeLoad: ({ context }) => {
     routePermission('countries', 'index')
@@ -29,7 +27,7 @@ export const Route = createFileRoute('/_main/settings/countries/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.countries.filterd(search),
-        endpoint,
+        endpoint: 'countries?paginate=1',
         params: search,
       }),
     )
@@ -40,7 +38,7 @@ function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<CountryDetails>>({
     queryKey: queryKeys.countries.filterd(search),
-    endpoint,
+    endpoint: 'countries?paginate=1',
     suspense: true,
     params: search,
   })

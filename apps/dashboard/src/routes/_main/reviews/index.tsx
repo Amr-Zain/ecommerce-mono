@@ -13,8 +13,6 @@ import { ReviewStats, ReviewStatsSkeleton } from '@/components/pagesComponents/R
 
 import { hasPermission, routePermission } from '@/lib/utils'
 
-const endpoint = 'reviews?paginate=1'
-
 export const Route = createFileRoute('/_main/reviews/')({
     beforeLoad: ({ context }) => {
         routePermission('reviews', 'index')
@@ -42,7 +40,7 @@ export const Route = createFileRoute('/_main/reviews/')({
         queryClient.ensureQueryData(
             prefetchOptions({
                 queryKey: queryKeys.reviews.filterd(search),
-                endpoint,
+                endpoint: 'reviews?paginate=1',
                 params: search,
             }),
         )
@@ -61,7 +59,7 @@ function ReviewsTable() {
     const search = Route.useLoaderDeps().search
     const { data } = useFetch<ApiResponse<ReviewEntity>>({
         queryKey: queryKeys.reviews.filterd(search),
-        endpoint,
+        endpoint: 'reviews?paginate=1',
         suspense: true,
         params: search,
     })

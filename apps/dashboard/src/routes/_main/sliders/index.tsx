@@ -11,8 +11,6 @@ import { TableLoader } from '@/components/common/table/TableLoader'
 
 import { routePermission } from '@/lib/utils'
 
-const endpoint = 'sliders?paginate=1'
-
 export const Route = createFileRoute('/_main/sliders/')({
   beforeLoad: ({ context }) => {
     routePermission('sliders', 'index')
@@ -29,7 +27,7 @@ export const Route = createFileRoute('/_main/sliders/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.sliders.filterd(search),
-        endpoint,
+        endpoint: 'sliders?paginate=1',
         params: search,
       }),
     )
@@ -48,7 +46,7 @@ function RouteComponent() {
     >
   >({
     queryKey: queryKeys.sliders.filterd(search),
-    endpoint,
+    endpoint: 'sliders?paginate=1',
     suspense: true,
     params: search,
   })

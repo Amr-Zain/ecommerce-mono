@@ -14,8 +14,6 @@ import { TierStats, TierStatsSkeleton } from '@/components/pagesComponents/Tiers
 
 import { hasPermission, routePermission } from '@/lib/utils'
 
-const endpoint = `tiers?paginate=0`
-
 export const Route = createFileRoute('/_main/tiers/')({
   beforeLoad: ({ context }) => {
     routePermission('tiers', 'index')
@@ -40,7 +38,7 @@ export const Route = createFileRoute('/_main/tiers/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.tiers.filterd(search),
-        endpoint,
+        endpoint: 'tiers?paginate=0',
         params: search,
       }),
     )
@@ -60,7 +58,7 @@ function TiersTable() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponseBase<Tier[]>>({
     queryKey: queryKeys.tiers.filterd(search),
-    endpoint,
+    endpoint: 'tiers?paginate=0',
     suspense: true,
     params: { ...search },
   })

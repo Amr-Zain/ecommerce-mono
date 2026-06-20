@@ -29,11 +29,10 @@ export const Route = createFileRoute('/_main/products/show/$id')({
   component: RouteComponent,
   loader: async ({ params, context }) => {
     const { queryClient } = context as RouterContext
-    const endpoint = `products/${params.id}`
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.products.getProduct(params.id),
-        endpoint: endpoint,
+        endpoint: `products/${params.id}`,
       }),
     )
   },

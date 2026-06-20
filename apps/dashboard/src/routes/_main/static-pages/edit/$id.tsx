@@ -19,11 +19,10 @@ export const Route = createFileRoute('/_main/static-pages/edit/$id')({
   component: RouteComponent,
   loader: async ({ params, context }) => {
     const { queryClient } = context as RouterContext
-    const endpoint = `static-pages/${params.id}`
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.pages.getPage(params.id),
-        endpoint,
+        endpoint: `static-pages/${params.id}`,
       }),
     )
   },

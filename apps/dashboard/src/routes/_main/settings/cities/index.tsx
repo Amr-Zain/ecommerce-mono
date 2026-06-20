@@ -12,8 +12,6 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { routePermission } from '@/lib/utils'
 
-const endpoint = 'cities?paginate=1'
-
 export const Route = createFileRoute('/_main/settings/cities/')({
   beforeLoad: ({ context }) => {
     routePermission('cities', 'index')
@@ -37,7 +35,7 @@ export const Route = createFileRoute('/_main/settings/cities/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.cities.filterd(search),
-        endpoint,
+        endpoint: 'cities?paginate=1',
         params: search,
       }),
     )
@@ -49,7 +47,7 @@ function RouteComponent() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<City[], 'cities'>>({
     queryKey: queryKeys.cities.filterd(search),
-    endpoint,
+    endpoint: 'cities?paginate=1',
     suspense: true,
     params: search,
   })

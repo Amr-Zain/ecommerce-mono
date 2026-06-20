@@ -1,7 +1,7 @@
 import Orders from '@/components/pagesComponents/Orders'
 import useFetch from '@/hooks/UseFetch'
 import { RouterContext } from '@/main'
-import { ApiResponse } from '@/types/api/http'
+import { ApiResponseBase } from '@/types/api/http'
 import { createFileRoute } from '@tanstack/react-router'
 import { prefetchOptions } from '@/util/preFetcher'
 import { queryKeys } from '@/util/queryKeysFactory'
@@ -17,8 +17,6 @@ import {
 } from '@/components/pagesComponents/Orders/OrderStatusStats'
 
 import { hasPermission, routePermission } from '@/lib/utils'
-
-const endpoint = 'orders?paginate=1'
 
 export const Route = createFileRoute('/_main/orders/')({
   beforeLoad: ({ context }) => {
@@ -45,7 +43,7 @@ export const Route = createFileRoute('/_main/orders/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.orders.filterd(search),
-        endpoint,
+        endpoint: 'orders?paginate=1',
         params: search,
       }),
     )
@@ -63,16 +61,13 @@ export const Route = createFileRoute('/_main/orders/')({
 function OrdersTable() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<
-    ApiResponse<
-      {
-        orders: Order[]
-        meta: Meta
-      },
-      'orders'
-    >
+    ApiResponseBase<{
+      items: Order[]
+      meta?: Meta
+    }>
   >({
     queryKey: queryKeys.orders.filterd(search),
-    endpoint,
+    endpoint: 'orders?paginate=1',
     suspense: true,
     params: search,
   })

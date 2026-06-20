@@ -11,7 +11,6 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { routePermission } from '@/lib/utils'
 
-const endpoint = `static-pages?paginate=1`
 export const Route = createFileRoute('/_main/static-pages/')({
   beforeLoad: ({ context }) => {
     routePermission('static-pages', 'index')
@@ -34,7 +33,7 @@ export const Route = createFileRoute('/_main/static-pages/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.pages.filterd(search),
-        endpoint,
+        endpoint: `static-pages?paginate=1`,
         params: search,
       }),
     )
@@ -46,7 +45,7 @@ function Index() {
   const search = Route.useLoaderDeps().search
   const { data } = useFetch<ApiResponse<StaticPage[], 'static_pages'>>({
     queryKey: queryKeys.pages.filterd(search),
-    endpoint,
+    endpoint: `static-pages?paginate=1`,
     suspense: true,
     params: { ...search },
   })
