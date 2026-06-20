@@ -10,6 +10,7 @@ import { I18nTranslations } from '@/generated/i18n.generated';
 import { IOrdersRepository, ORDERS_REPOSITORY } from '@/common/interfaces';
 import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
 import { createDomainEvent, DOMAIN_EVENTS, type PaymentCompletedPayload } from '@/common/events/domain-event';
+import { PaginatedResult } from '@/common/dto/pagination.dto';
 
 const ADMIN_ORDER_TRANSITIONS: Record<string, readonly string[]> = {
   pending: ['processing', 'cancelled'],
@@ -48,9 +49,16 @@ export class AdminOrdersService {
     if (query.status) where.status = query.status;
     if (query.paymentStatus) where.paymentStatus = query.paymentStatus;
 
-    const orders = await this.ordersRepository.findAdminOrders(where, langId);
+    const orders = await this.ordersRepository.findAdminOrders(query, where, langId);
 
-    return orders.map((o) => this.formatOrder(o));
+    if (Array.isArray(orders)) {
+      return orders.map((order) => this.formatOrder(order));
+    }
+
+    return {
+      ...orders,
+      data: orders.data.map((order) => this.formatOrder(order)),
+    } satisfies PaginatedResult<ReturnType<AdminOrdersService['formatOrder']>>;
   }
 
   async findOne(id: bigint, langId: string = 'en') {

@@ -1,5 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { IBaseRepository } from './base.repository.interface';
+import { AdvancedQueryDto } from '../dto/advanced-query.dto';
+import { PaginatedResult } from '../dto/pagination.dto';
 
 export type Order = Prisma.OrderGetPayload<Record<string, never>>;
 
@@ -27,7 +29,11 @@ export type OrderLifecycleRecord = Prisma.OrderGetPayload<{
 export const ORDERS_REPOSITORY = 'ORDERS_REPOSITORY';
 
 export interface IOrdersRepository extends IBaseRepository<Order> {
-  findAdminOrders(where: Prisma.OrderWhereInput, langId: string): Promise<AdminOrderRecord[]>;
+  findAdminOrders(
+    query: AdvancedQueryDto,
+    where: Prisma.OrderWhereInput,
+    langId: string,
+  ): Promise<PaginatedResult<AdminOrderRecord> | AdminOrderRecord[]>;
   findAdminOrderById(id: bigint, langId: string): Promise<AdminOrderRecord | null>;
   findClientOrders(userId: bigint, status: string | undefined, langId: string): Promise<ClientOrderRecord[]>;
   findClientOrderById(userId: bigint, id: bigint, langId: string): Promise<ClientOrderRecord | null>;

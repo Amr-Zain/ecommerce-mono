@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Body } from '@nestjs/common';
 import { I18nLang } from 'nestjs-i18n';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
@@ -6,6 +6,9 @@ import { AuthUserPayload } from '@/auth/auth.service';
 import { AdminOrdersService } from './admin-orders.service';
 import { UpdateOrderStatusDto, AdminOrderQueryDto } from './dto/admin-order.dto';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
+import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
 @ApiTags('Admin - Orders')
@@ -15,16 +18,20 @@ export class AdminOrdersController {
   constructor(private readonly ordersService: AdminOrdersService) {}
 
   @Get()
-  findAll(@Query() query: AdminOrderQueryDto, @I18nLang() lang: string) {
+  @RequirePermissions({ resource: 'orders', action: 'list' })
+  @ApiAdvancedQuery()
+  findAll(@ParsedQuery(AdminOrderQueryDto) query: AdminOrderQueryDto, @I18nLang() lang: string) {
     return this.ordersService.findAll(query, lang);
   }
 
   @Get(':id')
+  @RequirePermissions({ resource: 'orders', action: 'read' })
   findOne(@Param('id') id: string, @I18nLang() lang: string) {
     return this.ordersService.findOne(BigInt(id), lang);
   }
 
   @Patch(':id/status')
+  @RequirePermissions({ resource: 'orders', action: 'update' })
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,
@@ -35,11 +42,13 @@ export class AdminOrdersController {
   }
 
   @Post(':id/confirm-payment')
+  @RequirePermissions({ resource: 'orders', action: 'update' })
   confirmPayment(@Param('id') id: string, @CurrentUser() user: AuthUserPayload, @I18nLang() lang: string) {
     return this.ordersService.confirmPayment(BigInt(id), user, lang);
   }
 
   @Post(':id/cancellation-refunds/:refundId/retry')
+  @RequirePermissions({ resource: 'orders', action: 'update' })
   retryCancellationRefund(
     @Param('id') id: string,
     @Param('refundId') refundId: string,

@@ -2,6 +2,7 @@ import { IsOptional, IsString, IsEnum, IsNotEmpty } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '../../../generated/i18n.generated';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -24,7 +25,7 @@ export class UpdateOrderStatusDto {
   reason?: string;
 }
 
-export class AdminOrderQueryDto {
+export class AdminOrderQueryDto extends AdvancedQueryDto {
   @IsOptional()
   @IsEnum(OrderStatus, { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
   @ApiPropertyOptional({ example: "shipped", description: 'status' })

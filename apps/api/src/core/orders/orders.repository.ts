@@ -9,6 +9,8 @@ import {
   OrderLifecycleRecord,
 } from '@/common/interfaces/orders.interface';
 import { PrismaService } from '@/prisma';
+import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
+import { PaginatedResult } from '@/common/dto/pagination.dto';
 
 @Injectable()
 export class OrdersRepository extends BaseRepository<Order> implements IOrdersRepository {
@@ -20,17 +22,35 @@ export class OrdersRepository extends BaseRepository<Order> implements IOrdersRe
     return this.prisma.order;
   }
 
-  findAdminOrders(where: Prisma.OrderWhereInput, langId: string): Promise<AdminOrderRecord[]> {
-    return this.prisma.order.findMany({
-      where,
-      include: {
-        items: { include: { translations: { where: { langId } } } },
-        payments: true,
-        user: true,
-        statusHistory: { orderBy: { createdAt: 'asc' } },
+  async findAdminOrders(
+    query: AdvancedQueryDto,
+    where: Prisma.OrderWhereInput,
+    langId: string,
+  ): Promise<PaginatedResult<AdminOrderRecord> | AdminOrderRecord[]> {
+    const include = {
+      items: { include: { translations: { where: { langId } } } },
+      payments: true,
+      user: true,
+      statusHistory: { orderBy: { createdAt: 'asc' as const } },
+    };
+
+    if (query.paginate === false) {
+      return this.prisma.order.findMany({
+        where,
+        include,
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    const result = await this.paginate(
+      {
+        ...query,
+        sort: Object.keys(query.sort ?? {}).length > 0 ? query.sort : { createdAt: 'desc' },
       },
-      orderBy: { createdAt: 'desc' },
-    });
+      where,
+      { include },
+    );
+    return result as PaginatedResult<AdminOrderRecord>;
   }
 
   findAdminOrderById(id: bigint, langId: string): Promise<AdminOrderRecord | null> {
