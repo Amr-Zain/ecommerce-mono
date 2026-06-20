@@ -22,6 +22,8 @@ export const ROUTES = {
     wallet: "/profile/wallet",
     wishlist: "/profile/wishlist",
     returns: "/profile/returns",
+    returnRequest: (type: "return" | "exchange", id: string | number | bigint) =>
+      `/profile/returns/${type}/${id}`,
     notifications: "/profile/notifications",
     orders: {
       root: "/profile/orders",

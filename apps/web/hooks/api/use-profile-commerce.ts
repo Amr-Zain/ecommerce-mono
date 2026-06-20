@@ -43,6 +43,81 @@ type Order = {
 
 type OrderAction = "cancel" | "return_exchange" | "track" | "view"
 
+type ReturnExchangeItem = {
+  id: string
+  order_item_id: string
+  product_id?: string | null
+  product_name_snapshot?: string | null
+  variant_id?: string | null
+  variant_info_snapshot?: Record<string, string> | null
+  image_snapshot?: string | null
+  old_variant_id?: string | null
+  new_variant_id?: string | null
+  new_variant_sku?: string | null
+  quantity: number
+  accepted_quantity: number
+  return_reason?: string | null
+  exchange_reason?: string | null
+  client_note?: string | null
+  admin_note?: string | null
+  item_disposition?: string | null
+  old_unit_price_snapshot?: number | null
+  old_net_unit_price?: number | null
+  calculated_refund_amount?: number | null
+  calculated_vat_refund_amount?: number | null
+  adjusted_refund_amount?: number | null
+  adjusted_vat_refund_amount?: number | null
+  refund_adjustment_reason?: string | null
+  new_unit_price_snapshot?: number | null
+  old_value?: number | null
+  new_value?: number | null
+  price_difference?: number | null
+}
+
+type ReturnRequest = {
+  id: string
+  order_id: string
+  user_id: string
+  status: string
+  refund_status: string
+  calculated_refund_amount: number
+  calculated_vat_refund_amount: number
+  adjusted_refund_amount: number
+  adjusted_vat_refund_amount: number
+  max_shipping_refund_amount: number
+  suggested_shipping_refund_amount: number
+  shipping_refund_amount: number
+  final_refund_amount: number
+  client_note?: string | null
+  admin_note?: string | null
+  item_count: number
+  requested_at?: string | null
+  created_at: string
+  updated_at: string
+  items: ReturnExchangeItem[]
+}
+
+type ExchangeRequest = {
+  id: string
+  order_id: string
+  user_id: string
+  status: string
+  price_adjustment_status: string
+  total_old_value: number
+  total_new_value: number
+  total_price_difference: number
+  suggested_replacement_shipping_fee: number
+  replacement_shipping_fee: number
+  settlement_amount: number
+  client_note?: string | null
+  admin_note?: string | null
+  item_count: number
+  requested_at?: string | null
+  created_at: string
+  updated_at: string
+  items: ReturnExchangeItem[]
+}
+
 function orderActions(order: Order): OrderAction[] {
   switch (order.status) {
     case "pending":
@@ -133,6 +208,50 @@ function useCreateExchange() {
   })
 }
 
+function useReturns() {
+  return useFetch<unknown, ReturnRequest[]>({
+    authRequired: true,
+    endpoint: clientEndpoints.returns,
+    queryKey: queryKeys.returns(),
+    select: responseItems<ReturnRequest>,
+  })
+}
+
+function useExchanges() {
+  return useFetch<unknown, ExchangeRequest[]>({
+    authRequired: true,
+    endpoint: clientEndpoints.exchanges,
+    queryKey: queryKeys.exchanges(),
+    select: responseItems<ExchangeRequest>,
+  })
+}
+
+function useCancelReturn() {
+  return useMutate<unknown, { id: string }>({
+    authRequired: true,
+    endpoint: (input) => `${clientEndpoints.returns}/${input.id}/cancel`,
+    body: () => undefined,
+    mutationKey: ["returns", "cancel"],
+    method: "POST",
+    mutationOptions: {
+      meta: { invalidates: [queryKeys.returns(), queryKeys.orders()] },
+    },
+  })
+}
+
+function useCancelExchange() {
+  return useMutate<unknown, { id: string }>({
+    authRequired: true,
+    endpoint: (input) => `${clientEndpoints.exchanges}/${input.id}/cancel`,
+    body: () => undefined,
+    mutationKey: ["exchanges", "cancel"],
+    method: "POST",
+    mutationOptions: {
+      meta: { invalidates: [queryKeys.exchanges(), queryKeys.orders()] },
+    },
+  })
+}
+
 function useCancelOrder(id?: string) {
   return useMutate<unknown, { reason?: string }>({
     authRequired: true,
@@ -189,12 +308,16 @@ function useSetDefaultAddress() {
 export {
   useCreateExchange,
   useCreateReturn,
+  useCancelExchange,
   useCancelOrder,
+  useCancelReturn,
   useDeleteAddress,
+  useExchanges,
   useOrder,
   useOrders,
+  useReturns,
   useSetDefaultAddress,
   useUpdateAddress,
 }
 export { isReturnExchangeEligible, orderActions, orderStatusMessage }
-export type { Order, OrderAction, OrderItem }
+export type { ExchangeRequest, Order, OrderAction, OrderItem, ReturnExchangeItem, ReturnRequest }
