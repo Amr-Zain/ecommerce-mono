@@ -121,6 +121,8 @@ export const queryKeys = {
       [...queryKeys.notifications.all, 'filtered', params] as const,
     getNotification: (id: string | number) =>
       [...queryKeys.notifications.all, 'one', id] as const,
+    unreadCount: () =>
+      [...queryKeys.notifications.all, 'unread-count'] as const,
   },
 
   attributes: {
