@@ -8,6 +8,7 @@ import {
 import axiosInstance from '@/services/instance'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ADMIN_API_BASE_URL, API_BASE_URL } from '@/lib/env'
 import i18n from '@/i18n'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -54,8 +55,8 @@ function useFetch<TResponse = unknown, TData = TResponse, TError = unknown>({
   const baseURL = customBaseUrl
     ? customBaseUrl
     : general
-      ? import.meta.env.VITE_BASE_GENERAL_URL
-      : import.meta.env.VITE_BASE_URL
+      ? API_BASE_URL
+      : ADMIN_API_BASE_URL
 
   const paginationParams = {} as AnyObj
   if (params?.page) paginationParams.page = params.page

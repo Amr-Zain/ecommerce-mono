@@ -15,6 +15,7 @@ import { Logo } from '@/components/common/Icons'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { mapDashboardAuthResponse } from '@/lib/dashboardAuth'
+import { API_BASE_URL } from '@/lib/env'
 
 type LoginFormValues = {
   email: string
@@ -54,7 +55,7 @@ export function LoginForm() {
   const { mutate, isPending } = useMutate<LoginResponse, LoginFormValues>({
     endpoint: 'auth/login',
     mutationKey: ['login'],
-    customBaseUrl: import.meta.env.VITE_BASE_URL_API,
+    customBaseUrl: API_BASE_URL,
     onSuccess: (data) => {
       setUser(mapDashboardAuthResponse(data))
       navigate({ to: '/', replace: true })

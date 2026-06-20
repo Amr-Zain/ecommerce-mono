@@ -76,7 +76,6 @@ export function AppSidebar() {
     endpoint: 'notifications',
     queryKey: queryKeys.notifications.list(),
     params: { per_page: 5 },
-    customBaseUrl: import.meta.env.VITE_BASE_URL_API,
     //  const unreadCount = data?.data?.unread_notifications_count || 0
     select: (res: any) => res?.data?.unread_notifications_count || 0 as any,
     enabled: false

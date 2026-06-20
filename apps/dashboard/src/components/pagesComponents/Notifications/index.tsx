@@ -11,13 +11,13 @@ import { Notification, NotificationsResponse } from '@/routes/_main/settings/not
 import { ApiResponseBase } from '@/types/api/http'
 import { ColumnDef } from '@tanstack/react-table'
 import { DateColumn, textColumn } from '@/components/features/sharedColumns'
-import { Eye, Trash2 } from 'lucide-react'
 import useFetch from '@/hooks/UseFetch'
 import { queryClient } from '@/components/providers/tabstackQueryProvider'
 import { notificationColumns } from './Config'
 import axiosInstance from '@/services/instance'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/authStore'
+import { API_BASE_URL } from '@/lib/env'
 
 const NotificationsTable = ({
   data,
@@ -44,7 +44,7 @@ const NotificationsTable = ({
         queryKey: queryKeys.notifications.all,
       })
     },
-    customBaseUrl: import.meta.env.VITE_BASE_URL_API,
+    customBaseUrl: API_BASE_URL,
     enabled: false,
   })
 
@@ -55,7 +55,7 @@ const NotificationsTable = ({
       'notifications',
       queryKeys.notifications.getNotification(currentId),
       [queryKeys.notifications.filterd(search)],
-      import.meta.env.VITE_BASE_URL_API,
+      API_BASE_URL,
     )
 
   useEffect(() => {
@@ -103,7 +103,7 @@ const NotificationsTable = ({
 
         const handleMarkAsRead = async (id: string | number) => {
           try {
-            await axiosInstance.get(`${import.meta.env.VITE_BASE_URL_API}/notifications/${id}`)
+            await axiosInstance.get(`${API_BASE_URL}/notifications/${id}`)
             queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all })
           } catch (err: any) {
             toast.error(err.message || t('errors.somethingWentWrong'))

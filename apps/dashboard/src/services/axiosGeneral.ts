@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/stores/authStore";
+import { API_BASE_URL } from "@/lib/env";
 import {
   getAccessTokenUserType,
   isDashboardUser,
@@ -9,7 +10,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const axiosInstance = axios.create({
-  baseURL: import.meta?.env?.VITE_BASE_GENERAL_URL!,
+  baseURL: API_BASE_URL,
 });
 
 axiosInstance.interceptors.request.use(
@@ -76,7 +77,7 @@ axiosInstance.interceptors.response.use(
       return new Promise((resolve, reject) => {
         axios({
           method: 'post',
-          url: `${import.meta.env.VITE_BASE_URL_API}/auth/refresh`,
+          url: `${API_BASE_URL}/auth/refresh`,
           withCredentials: true,
           headers: {
             'x-platform': 'browser',

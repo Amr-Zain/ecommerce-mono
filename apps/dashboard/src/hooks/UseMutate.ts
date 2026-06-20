@@ -5,6 +5,7 @@ import {
   UseMutationOptions,
 } from '@tanstack/react-query'
 import axiosInstance from '@/services/instance'
+import { ADMIN_API_BASE_URL, API_BASE_URL } from '@/lib/env'
 import type {
   AxiosError,
   AxiosRequestConfig,
@@ -82,8 +83,8 @@ export function useMutate<Response_T = unknown, Request_T = unknown>({
   const baseURL = customBaseUrl
     ? customBaseUrl
     : general
-      ? import.meta.env.VITE_BASE_GENERAL_URL
-      : import.meta.env.VITE_BASE_URL
+      ? API_BASE_URL
+      : ADMIN_API_BASE_URL
 
   const navigate = useNavigate()
 

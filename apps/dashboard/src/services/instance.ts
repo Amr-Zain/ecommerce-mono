@@ -1,6 +1,7 @@
 
 import i18n from '@/i18n';
 import { useAuthStore } from '@/stores/authStore';
+import { API_BASE_URL } from '@/lib/env';
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import {
   getAccessTokenUserType,
@@ -85,7 +86,7 @@ axiosInstance.interceptors.response.use(
       return new Promise((resolve, reject) => {
         axios({
           method: 'post',
-          url: `${import.meta.env.VITE_BASE_URL_API}/auth/refresh`,
+          url: `${API_BASE_URL}/auth/refresh`,
           withCredentials: true,
           headers: {
             'x-platform': 'browser',

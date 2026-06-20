@@ -11,11 +11,12 @@ import {
   unwrapApiData,
 } from '@/lib/dashboardAuth'
 import { useAuthStore, type UserAuth } from '@/stores/authStore'
+import { API_BASE_URL } from '@/lib/env'
 
 type AuthProfileResponse = DashboardApiUser
 
 const authApi = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL_API,
+  baseURL: API_BASE_URL,
 })
 
 let inFlightRestore: Promise<UserAuth> | null = null

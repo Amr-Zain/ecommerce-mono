@@ -9,11 +9,12 @@ import { AppLoaderProps, UploadFile } from "@/types/components/uploader";
 import { Modal } from "../../uiComponents/Modal";
 import { useFormState } from "react-hook-form";
 import { ImageModal } from "../../uiComponents/ImageModal";
+import { API_BASE_URL } from "@/lib/env";
 
 type FileType = File;
 
 export const DEFAULT_UPLOAD_ENDPOINT = "/media/upload";
-export const DEFAULT_API_BASE_URL = import.meta.env.VITE_BASE_URL_API || "";
+export const DEFAULT_API_BASE_URL = API_BASE_URL;
 
 const buildApiUrl = (baseUrl: string, endpoint: string) => {
   if (!baseUrl) return endpoint;

@@ -4,6 +4,7 @@ import axios from "axios";
 import { redirect } from "@tanstack/react-router";
 import i18n from '@/i18n';
 import { useAuthStore } from "@/stores/authStore";
+import { ADMIN_API_BASE_URL, API_BASE_URL } from "@/lib/env";
 
 
 
@@ -25,8 +26,8 @@ export function prefetchOptions(
     const baseURL = customBaseUrl
       ? customBaseUrl
       : general
-        ? import.meta.env.VITE_BASE_GENERAL_URL
-        : import.meta.env.VITE_BASE_URL
+        ? API_BASE_URL
+        : ADMIN_API_BASE_URL
         
     const isRTL = (i18n.language || 'ar').startsWith('ar')
     const fullQueryKey = [...queryKey, isRTL];
