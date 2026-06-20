@@ -20,7 +20,7 @@ export async function GET() {
     if (error instanceof Response) return error
     throw error
   }
-  const response = await fetch(new URL("/client/notifications/stream", baseUrl), {
+  const response = await fetch(apiUrl("/client/notifications/stream", baseUrl), {
     cache: "no-store",
     headers,
   })
@@ -43,4 +43,15 @@ export async function GET() {
       "content-type": response.headers.get("content-type") ?? "text/event-stream",
     },
   })
+}
+
+function apiUrl(path: string, baseUrl: string) {
+  const url = new URL(baseUrl)
+  const basePath = url.pathname.replace(/\/+$/, "")
+  const apiBasePath = basePath.endsWith("/api/v1")
+    ? basePath
+    : `${basePath}/api/v1`
+
+  url.pathname = `${apiBasePath}${path.startsWith("/") ? path : `/${path}`}`
+  return url
 }
