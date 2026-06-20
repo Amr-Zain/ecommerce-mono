@@ -6,10 +6,10 @@ export default async function CollectionProductsPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ locale: string; slug: string }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const { slug } = await params
+  const { locale, slug } = await params
   const resolvedSearchParams = await searchParams
   return (
     <Suspense
@@ -18,6 +18,7 @@ export default async function CollectionProductsPage({
     >
       <CatalogListing
         collectionSlug={slug}
+        locale={locale}
         searchParams={resolvedSearchParams}
       />
     </Suspense>

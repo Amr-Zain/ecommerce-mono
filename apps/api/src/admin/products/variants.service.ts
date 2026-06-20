@@ -6,6 +6,10 @@ import { UpdateVariantDto } from './dto/update-dtos';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { Prisma } from '@prisma/client';
 import { PricingService } from '@/core/products/pricing.service';
+import {
+  PUBLIC_CACHE_EVENTS,
+  PublicCacheInvalidationPublisher,
+} from '@/shared/cache/public-cache-invalidation.service';
 
 function buildAttributeSignature(attributes: { attributeId: number | bigint; valueId: number | bigint }[]): string {
   return [...attributes]
@@ -19,6 +23,7 @@ export class VariantsService {
   constructor(
     @Inject(VARIANTS_REPOSITORY) private readonly repo: VariantsRepository,
     private readonly pricingService: PricingService,
+    private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
   ) {}
 
   async create(productId: number, createVariantDto: CreateVariantDto) {
@@ -89,7 +94,9 @@ export class VariantsService {
       },
     };
 
-    return this.repo.createVariant(data, createVariantDto.gallery);
+    const variant = await this.repo.createVariant(data, createVariantDto.gallery);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.productsChanged, { productId });
+    return variant;
   }
 
   async findAll(query: AdvancedQueryDto) {
@@ -170,15 +177,21 @@ export class VariantsService {
       }
     }
 
-    return this.repo.updateVariant(id, dto as Prisma.ProductVariantUpdateInput);
+    const variant = await this.repo.updateVariant(id, dto as Prisma.ProductVariantUpdateInput);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.productsChanged);
+    return variant;
   }
 
   async adjustStock(adjustStockDto: AdjustStockDto) {
-    return this.repo.adjustStock(adjustStockDto.variantId, adjustStockDto.amount, adjustStockDto.reason);
+    const variant = await this.repo.adjustStock(adjustStockDto.variantId, adjustStockDto.amount, adjustStockDto.reason);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.productsChanged);
+    return variant;
   }
 
   async remove(id: number) {
-    return this.repo.delete(id);
+    const variant = await this.repo.delete(id);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.productsChanged);
+    return variant;
   }
 
   async getPriceHistory(variantId: number, query: AdvancedQueryDto) {

@@ -11,7 +11,7 @@ import type {
   CatalogResponse,
   CollectionTreeItem,
 } from "@/hooks/api/use-products"
-import { backendGet, publicBackendGet } from "@/lib/server/backend"
+import { publicBackendGet } from "@/lib/server/backend"
 import { cacheTags } from "@/lib/server/cache-tags"
 import { cn } from "@/lib/utils"
 
@@ -62,9 +62,11 @@ function pageUrl(
 
 async function CatalogListing({
   collectionSlug,
+  locale,
   searchParams,
 }: {
   collectionSlug?: string
+  locale: string
   searchParams: CatalogSearchParams
 }) {
   const query = {
@@ -73,18 +75,25 @@ async function CatalogListing({
     limit: "9",
   }
   const [response, collectionTree] = await Promise.all([
-    backendGet<CatalogResponse>("/client/products", {
-      cache: "no-store",
+    publicBackendGet<CatalogResponse>("/client/products", {
+      cache: "force-cache",
+      headers: { "accept-language": locale },
       query,
+      revalidate: 60,
+      tags: [cacheTags.products],
       retries: 0,
     }),
     collectionSlug
       ? Promise.resolve([])
-      : publicBackendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
-          revalidate: 60,
-          tags: [cacheTags.categories],
-          retries: 0,
-        }).then((result) => result.data),
+      : publicBackendGet<{ data: CollectionTreeItem[] }>(
+          "/client/collections/tree",
+          {
+            headers: { "accept-language": locale },
+            revalidate: 60,
+            tags: [cacheTags.categories],
+            retries: 0,
+          }
+        ).then((result) => result.data),
   ])
   const data = response.data
   const view = searchParams.view === "list" ? "list" : "grid"
@@ -93,7 +102,9 @@ async function CatalogListing({
     : ROUTES.products.root
   const breadcrumbs = [
     { label: "Home", href: ROUTES.home },
-    ...(collectionSlug ? [{ label: "Collections", href: ROUTES.collections.root }] : []),
+    ...(collectionSlug
+      ? [{ label: "Collections", href: ROUTES.collections.root }]
+      : []),
     ...(data.collection?.ancestors.map((ancestor) => ({
       label: ancestor.name,
       href: ROUTES.collections.bySlug(ancestor.slug),

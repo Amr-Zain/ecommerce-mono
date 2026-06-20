@@ -2,20 +2,23 @@ import { BadRequestException, ForbiddenException, Inject, Injectable } from '@ne
 import { IReviewsRepository, REVIEWS_REPOSITORY } from '@/common/interfaces';
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateReviewDto, ReviewQueryDto, UpdateReviewDto } from './dto/review.dto';
+import {
+  PUBLIC_CACHE_EVENTS,
+  PublicCacheInvalidationPublisher,
+} from '@/shared/cache/public-cache-invalidation.service';
 
 @Injectable()
 export class ClientReviewsService {
   constructor(
     @Inject(REVIEWS_REPOSITORY) private readonly reviewsRepository: IReviewsRepository,
     private readonly prisma: PrismaService,
+    private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
   ) {}
 
   async findByProduct(productId: bigint, query: ReviewQueryDto, _langId: string = 'en') {
-    return this.reviewsRepository.findActiveVerifiedByProductPaginated(
-      productId,
-      Number(query.page) || 1,
-      Number(query.limit) || 10,
-    );
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    return this.reviewsRepository.findActiveVerifiedByProductPaginated(productId, page, limit);
   }
 
   async findMine(userId: bigint, productId: bigint) {
@@ -34,13 +37,15 @@ export class ClientReviewsService {
     if (!(await this.hasDeliveredPurchase(userId, BigInt(dto.productId)))) {
       throw new BadRequestException('A delivered purchase is required to review this product');
     }
-    return this.reviewsRepository.createForUser({
+    const review = await this.reviewsRepository.createForUser({
       userId,
       productId: BigInt(dto.productId),
       rating: dto.rating,
       comment: dto.comment,
       images: dto.images,
     });
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.reviewsChanged, { productId: dto.productId });
+    return review;
   }
 
   async update(userId: bigint, id: bigint, dto: UpdateReviewDto) {
@@ -49,11 +54,13 @@ export class ClientReviewsService {
       throw new ForbiddenException('You can only update your own reviews');
     }
 
-    return this.reviewsRepository.updateClientReview(id, {
+    const updated = await this.reviewsRepository.updateClientReview(id, {
       rating: dto.rating,
       comment: dto.comment,
       images: dto.images,
     });
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.reviewsChanged, { productId: review.productId });
+    return updated;
   }
 
   async remove(userId: bigint, id: bigint) {
@@ -61,7 +68,9 @@ export class ClientReviewsService {
     if (!review || review.userId !== userId) {
       throw new ForbiddenException('You can only delete your own reviews');
     }
-    return this.reviewsRepository.deleteById(id);
+    const deleted = await this.reviewsRepository.deleteById(id);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.reviewsChanged, { productId: review.productId });
+    return deleted;
   }
 
   private async hasDeliveredPurchase(userId: bigint, productId: bigint) {

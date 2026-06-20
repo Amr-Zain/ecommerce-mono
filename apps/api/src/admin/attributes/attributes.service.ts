@@ -6,10 +6,17 @@ import { CreateAttributeDto } from './dto/attribute.dto';
 import { UpdateAttributeDto } from './dto/update-dtos';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { Prisma } from '@/prisma';
+import {
+  PUBLIC_CACHE_EVENTS,
+  PublicCacheInvalidationPublisher,
+} from '@/shared/cache/public-cache-invalidation.service';
 
 @Injectable()
 export class AttributesService {
-  constructor(@Inject(ATTRIBUTES_REPOSITORY) private readonly repo: AttributesRepository) {}
+  constructor(
+    @Inject(ATTRIBUTES_REPOSITORY) private readonly repo: AttributesRepository,
+    private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
+  ) {}
 
   async findAll(query: AttributeQueryDto, lang: string): Promise<PaginatedResult<Attribute> | Attribute[]> {
     return this.repo.findAll(query, lang);
@@ -22,14 +29,20 @@ export class AttributesService {
   }
 
   async create(data: CreateAttributeDto): Promise<Attribute> {
-    return this.repo.createAttribute(data as unknown as Prisma.AttributeCreateInput);
+    const created = await this.repo.createAttribute(data as unknown as Prisma.AttributeCreateInput);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
+    return created;
   }
 
   async update(id: number, data: UpdateAttributeDto): Promise<Attribute> {
-    return this.repo.updateAttribute(id, data as unknown as Prisma.AttributeUpdateInput);
+    const updated = await this.repo.updateAttribute(id, data as unknown as Prisma.AttributeUpdateInput);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
+    return updated;
   }
 
   async remove(id: number): Promise<Attribute> {
-    return this.repo.deleteAttribute(id);
+    const deleted = await this.repo.deleteAttribute(id);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
+    return deleted;
   }
 }

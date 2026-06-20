@@ -6,10 +6,17 @@ import { CreateAttributeValueDto } from './dto/attribute-value.dto';
 import { UpdateAttributeValueDto } from './dto/update-dtos';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { Prisma } from '@/prisma';
+/import {
+  PUBLIC_CACHE_EVENTS,
+  PublicCacheInvalidationPublisher,
+} from '@/shared/cache/public-cache-invalidation.service';
 
 @Injectable()
 export class AttributeValuesService {
-  constructor(@Inject(ATTRIBUTE_VALUES_REPOSITORY) private readonly repo: AttributeValuesRepository) {}
+  constructor(
+    @Inject(ATTRIBUTE_VALUES_REPOSITORY) private readonly repo: AttributeValuesRepository,
+    private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
+  ) {}
 
   async findAll(
     query: AttributeValueQueryDto,
@@ -24,10 +31,12 @@ export class AttributeValuesService {
 
   async create(data: CreateAttributeValueDto): Promise<AttributeValue> {
     const { attributeId, ...rest } = data;
-    return this.repo.createValue({
+    const created = await this.repo.createValue({
       ...rest,
       attribute: { connect: { id: BigInt(attributeId) } },
     } as unknown as Prisma.AttributeValueCreateInput);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
+    return created;
   }
 
   async update(id: number, data: UpdateAttributeValueDto): Promise<AttributeValue> {
@@ -41,10 +50,14 @@ export class AttributeValuesService {
       updateData.attribute = { connect: { id: BigInt(attributeId) } };
     }
 
-    return this.repo.updateValue(id, updateData);
+    const updated = await this.repo.updateValue(id, updateData);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
+    return updated;
   }
 
   async remove(id: number): Promise<AttributeValue> {
-    return this.repo.deleteValue(id);
+    const deleted = await this.repo.deleteValue(id);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
+    return deleted;
   }
 }

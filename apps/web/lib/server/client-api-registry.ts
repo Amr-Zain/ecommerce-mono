@@ -46,7 +46,12 @@ const publicCachePolicies: PublicCachePolicy[] = [
   {
     matches: pattern(/^products\/[^/]+\/related$/),
     revalidate: 60,
-    tags: () => [cacheTags.products],
+    tags: (path) => [cacheTags.products, productTag(path.split("/")[1])],
+  },
+  {
+    matches: pattern(/^reviews\/products\/[^/]+$/),
+    revalidate: 60,
+    tags: (path) => [cacheTags.products, productTag(path.split("/")[2])],
   },
   {
     matches: pattern(/^collections(?:\/tree|\/slug\/[^/]+|\/[^/]+)?$/),
@@ -54,7 +59,9 @@ const publicCachePolicies: PublicCachePolicy[] = [
     tags: () => [cacheTags.categories],
   },
   {
-    matches: pattern(/^(?:countries|cities|attributes|static-pages|show-rooms)(?:\/[^/]+)?$/),
+    matches: pattern(
+      /^(?:countries|cities|attributes|static-pages|show-rooms)(?:\/[^/]+)?$/
+    ),
     revalidate: 300,
     tags: () => [],
   },
@@ -112,7 +119,9 @@ async function proxyClientApiRequest({
   }
 
   const isMediaPath = normalizedPath.startsWith("media/")
-  const backendPath = isMediaPath ? `/${normalizedPath}` : `/client/${normalizedPath}`
+  const backendPath = isMediaPath
+    ? `/${normalizedPath}`
+    : `/client/${normalizedPath}`
   const publicPolicy =
     method === "GET" ? getPublicCachePolicy(normalizedPath) : undefined
   const options: BackendOptions = {
@@ -137,7 +146,10 @@ async function proxyClientApiRequest({
       })
     }
     if (token) {
-      options.headers = { ...options.headers, "x-anonymous-session-token": token }
+      options.headers = {
+        ...options.headers,
+        "x-anonymous-session-token": token,
+      }
     }
   }
 

@@ -5,12 +5,17 @@ import { CreateProductDto } from '@/common/dto/product.dto';
 import { UpdateProductDto } from './dto/update-dtos';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PricingService } from '@/core/products/pricing.service';
+import {
+  PUBLIC_CACHE_EVENTS,
+  PublicCacheInvalidationPublisher,
+} from '@/shared/cache/public-cache-invalidation.service';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @Inject(PRODUCTS_REPOSITORY) private readonly repo: ProductsRepository,
     private readonly pricingService: PricingService,
+    private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
   ) {}
 
   async create(createProductDto: CreateProductDto) {
@@ -63,7 +68,9 @@ export class ProductsService {
       }
     }
 
-    return this.repo.createProductWithVariants(createProductDto);
+    const product = await this.repo.createProductWithVariants(createProductDto);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.productsChanged, { productId: product?.id });
+    return product;
   }
 
   async findAll(query: AdvancedQueryDto) {
@@ -226,10 +233,14 @@ export class ProductsService {
       ...(variantPriceUpdates && variantPriceUpdates.length > 0 && { variantPriceUpdates }),
     };
 
-    return this.repo.executeUpdatePlan(id, plan);
+    const product = await this.repo.executeUpdatePlan(id, plan);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.productsChanged, { productId: id });
+    return product;
   }
 
   async remove(id: number) {
-    return this.repo.delete(id);
+    const product = await this.repo.delete(id);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.productsChanged, { productId: id });
+    return product;
   }
 }

@@ -164,7 +164,7 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
   async findOwnerById(id: bigint): Promise<ReviewOwner | null> {
     return this.prisma.review.findUnique({
       where: { id },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, productId: true },
     });
   }
 

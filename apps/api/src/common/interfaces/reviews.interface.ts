@@ -47,6 +47,7 @@ export interface AdminReview {
 export interface ReviewOwner {
   id: bigint;
   userId: bigint;
+  productId: bigint;
 }
 
 export const REVIEWS_REPOSITORY = Symbol('IReviewsRepository');

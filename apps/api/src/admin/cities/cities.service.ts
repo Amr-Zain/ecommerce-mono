@@ -7,17 +7,28 @@ import { createCityDto } from './dto/create-city.dto';
 import { PaginatedResult } from 'src/common/dto/pagination.dto';
 import { City as CityModel } from '@prisma/client';
 import { UpdateCityDto } from './dto/update-city.dto';
+import {
+  PUBLIC_CACHE_EVENTS,
+  PublicCacheInvalidationPublisher,
+} from '@/shared/cache/public-cache-invalidation.service';
 
 @Injectable()
 export class CitiesService {
-  constructor(@Inject(CITIES_REPOSITORY) private readonly CitiesRepo: CitiesRepository) {}
+  constructor(
+    @Inject(CITIES_REPOSITORY) private readonly CitiesRepo: CitiesRepository,
+    private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
+  ) {}
 
-  createCity(city: createCityDto) {
-    return this.CitiesRepo.createCity(city as unknown as Prisma.CityCreateInput);
+  async createCity(city: createCityDto) {
+    const created = await this.CitiesRepo.createCity(city as unknown as Prisma.CityCreateInput);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.locationsChanged);
+    return created;
   }
 
-  updateCity(id: number | bigint, city: UpdateCityDto) {
-    return this.CitiesRepo.updateCity(id, city as unknown as Prisma.CityUpdateInput);
+  async updateCity(id: number | bigint, city: UpdateCityDto) {
+    const updated = await this.CitiesRepo.updateCity(id, city as unknown as Prisma.CityUpdateInput);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.locationsChanged);
+    return updated;
   }
 
   async findAll(query: CityQueryDto): Promise<PaginatedResult<CityModel> | CityModel[]> {
@@ -28,7 +39,9 @@ export class CitiesService {
     return this.CitiesRepo.findByIdWithRelationsOrThrow(id, langId);
   }
 
-  deleteCity(id: number | bigint) {
-    return this.CitiesRepo.deleteCity(id);
+  async deleteCity(id: number | bigint) {
+    const deleted = await this.CitiesRepo.deleteCity(id);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.locationsChanged);
+    return deleted;
   }
 }

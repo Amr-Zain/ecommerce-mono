@@ -31,8 +31,11 @@ import {
 } from "@ecommerce/ui/components/navigation-menu"
 import type { CollectionTreeItem } from "@/hooks/api/use-products"
 
-function StorefrontNavigation({ collections }: { collections: CollectionTreeItem[] }) {
-  console.log("collections: ", collections)
+function StorefrontNavigation({
+  collections,
+}: {
+  collections: CollectionTreeItem[]
+}) {
   return (
     <>
       <NavigationMenu className="hidden lg:flex">
@@ -43,7 +46,12 @@ function StorefrontNavigation({ collections }: { collections: CollectionTreeItem
               <div className="grid w-[760px] grid-cols-4 gap-5 p-5">
                 {collections.map((root) => (
                   <div key={root.id} className="space-y-2">
-                    <NavigationMenuLink render={<Link href={ROUTES.collections.bySlug(root.slug)} />} className="font-semibold">
+                    <NavigationMenuLink
+                      render={
+                        <Link href={ROUTES.collections.bySlug(root.slug)} />
+                      }
+                      className="font-semibold"
+                    >
                       {root.image ? (
                         <Image
                           src={root.image}
@@ -57,7 +65,14 @@ function StorefrontNavigation({ collections }: { collections: CollectionTreeItem
                     </NavigationMenuLink>
                     {root.children?.map((child) => (
                       <div key={child.id} className="space-y-1">
-                        <NavigationMenuLink render={<Link href={ROUTES.collections.bySlug(child.slug)} />} className="text-xs font-medium">
+                        <NavigationMenuLink
+                          render={
+                            <Link
+                              href={ROUTES.collections.bySlug(child.slug)}
+                            />
+                          }
+                          className="text-xs font-medium"
+                        >
                           {child.image ? (
                             <Image
                               src={child.image}
@@ -70,7 +85,15 @@ function StorefrontNavigation({ collections }: { collections: CollectionTreeItem
                           {child.name}
                         </NavigationMenuLink>
                         {child.children?.map((leaf) => (
-                          <NavigationMenuLink key={leaf.id} render={<Link href={ROUTES.collections.bySlug(leaf.slug)} />} className="py-1 ps-4 text-xs text-muted-foreground">
+                          <NavigationMenuLink
+                            key={leaf.id}
+                            render={
+                              <Link
+                                href={ROUTES.collections.bySlug(leaf.slug)}
+                              />
+                            }
+                            className="py-1 ps-4 text-xs text-muted-foreground"
+                          >
                             {leaf.image ? (
                               <Image
                                 src={leaf.image}
@@ -95,17 +118,28 @@ function StorefrontNavigation({ collections }: { collections: CollectionTreeItem
 
       <Drawer direction="right">
         <DrawerTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Menu" className="lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Menu"
+            className="lg:hidden"
+          >
             <HugeiconsIcon icon={Menu02Icon} strokeWidth={2} />
           </Button>
         </DrawerTrigger>
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>Shop collections</DrawerTitle>
-            <DrawerDescription>Browse every collection and category.</DrawerDescription>
+            <DrawerDescription>
+              Browse every collection and category.
+            </DrawerDescription>
           </DrawerHeader>
           <div className="overflow-y-auto px-4 pb-6">
-            <Button render={<Link href={ROUTES.collections.root} />} variant="outline" className="mb-3 w-full">
+            <Button
+              render={<Link href={ROUTES.collections.root} />}
+              variant="outline"
+              className="mb-3 w-full"
+            >
               View all collections
             </Button>
             <Accordion>
@@ -113,12 +147,26 @@ function StorefrontNavigation({ collections }: { collections: CollectionTreeItem
                 <AccordionItem key={root.id} value={root.id}>
                   <AccordionTrigger>{root.name}</AccordionTrigger>
                   <AccordionContent className="space-y-2 ps-3">
-                    <Link href={ROUTES.collections.bySlug(root.slug)} className="font-semibold">View all {root.name}</Link>
+                    <Link
+                      href={ROUTES.collections.bySlug(root.slug)}
+                      className="font-semibold"
+                    >
+                      View all {root.name}
+                    </Link>
                     {root.children?.map((child) => (
                       <div key={child.id} className="space-y-1">
-                        <Link href={ROUTES.collections.bySlug(child.slug)} className="block font-medium">{child.name}</Link>
+                        <Link
+                          href={ROUTES.collections.bySlug(child.slug)}
+                          className="block font-medium"
+                        >
+                          {child.name}
+                        </Link>
                         {child.children?.map((leaf) => (
-                          <Link key={leaf.id} href={ROUTES.collections.bySlug(leaf.slug)} className="block ps-3 text-muted-foreground">
+                          <Link
+                            key={leaf.id}
+                            href={ROUTES.collections.bySlug(leaf.slug)}
+                            className="block ps-3 text-muted-foreground"
+                          >
                             {leaf.name}
                           </Link>
                         ))}

@@ -23,6 +23,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { DomainEventsModule } from './common/events/domain-events.module';
 import { NotificationModule } from './shared/notifications/notification.module';
 import { EmailModule } from './shared/email/email.module';
+import { CacheModule } from './shared/cache/cache.module';
+import { PublicCacheInterceptor } from './shared/cache/public-cache.interceptor';
 
 @Module({
   imports: [
@@ -44,6 +46,7 @@ import { EmailModule } from './shared/email/email.module';
       ignoreErrors: false,
     }),
     DomainEventsModule,
+    CacheModule,
     NotificationModule,
     EmailModule,
     PrismaModule,
@@ -88,6 +91,10 @@ import { EmailModule } from './shared/email/email.module';
     {
       provide: APP_GUARD,
       useClass: PermissionsGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: PublicCacheInterceptor,
     },
     {
       provide: APP_INTERCEPTOR,

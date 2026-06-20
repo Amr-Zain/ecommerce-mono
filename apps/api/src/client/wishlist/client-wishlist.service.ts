@@ -6,10 +6,6 @@ import { MediaService } from '@/media/media.service';
 import { CommerceIdentity } from '@/auth/interfaces/commerce-identity.interface';
 import { ClientWishlistRepository } from './client-wishlist.repository';
 
-type ProductLike = {
-  id: bigint | string | number;
-};
-
 @Injectable()
 export class ClientWishlistService {
   constructor(
@@ -69,59 +65,4 @@ export class ClientWishlistService {
 
     return this.findAll(identity, langId);
   }
-
-  async decorateProductWithWishlist<TProduct extends ProductLike | null>(
-    product: TProduct,
-    userId?: bigint,
-  ): Promise<(TProduct & { isInWishlist?: boolean }) | null> {
-    if (!product) {
-      return null;
-    }
-
-    if (!userId) {
-      return { ...product, isInWishlist: false };
-    }
-
-    const wishlistItem = await this.prisma.wishlistItem.findUnique({
-      where: {
-        userId_productId: {
-          userId,
-          productId: BigInt(product.id),
-        },
-      },
-      select: { id: true },
-    });
-
-    return { ...product, isInWishlist: Boolean(wishlistItem) };
-  }
-
-  async decorateProductsWithWishlist<TProduct extends ProductLike>(
-    products: TProduct[],
-    userId?: bigint,
-  ): Promise<Array<TProduct & { isInWishlist: boolean }>> {
-    if (products.length === 0) {
-      return [];
-    }
-
-    if (!userId) {
-      return products.map((product) => ({ ...product, isInWishlist: false }));
-    }
-
-    const productIds = [...new Set(products.map((product) => BigInt(product.id)))];
-    const wishlistItems = await this.prisma.wishlistItem.findMany({
-      where: {
-        userId,
-        productId: { in: productIds },
-      },
-      select: { productId: true },
-    });
-
-    const wishlistProductIds = new Set(wishlistItems.map((item) => item.productId.toString()));
-
-    return products.map((product) => ({
-      ...product,
-      isInWishlist: wishlistProductIds.has(BigInt(product.id).toString()),
-    }));
-  }
-
 }
