@@ -2,7 +2,21 @@ import { Review } from "@/types/api/reviews";
 import { Card, CardContent, CardHeader, CardTitle } from "@ecommerce/ui/components/card";
 import { Badge } from "@ecommerce/ui/components/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@ecommerce/ui/components/avatar";
-import { Star, Calendar, User, Package, ShieldCheck, ShieldAlert, Eye, MessageSquare, ExternalLink, Trash2, CheckCircle, XCircle } from "lucide-react";
+import {
+    StarIcon,
+    Calendar01Icon,
+    User02Icon,
+    Package01Icon,
+    Shield01Icon,
+    Alert01Icon,
+    EyeIcon,
+    Message01Icon,
+    Link01Icon,
+    CheckmarkCircle01Icon,
+    Cancel01Icon,
+    Delete01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type HugeiconsIconProps } from "@hugeicons/react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
@@ -12,6 +26,23 @@ import { queryKeys } from '@/util/queryKeysFactory'
 ;
 import { useAlertModal } from "@/stores/useAlertModal";
 import { getModalTitle } from "@/util/helpers";
+import { ShowHeader, EntityLinkCard } from "@/components/common/show";
+
+const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
+    <HugeiconsIcon icon={icon} {...props} />
+)
+const Star = H(StarIcon)
+const Calendar = H(Calendar01Icon)
+const User = H(User02Icon)
+const Package = H(Package01Icon)
+const ShieldCheck = H(Shield01Icon)
+const ShieldAlert = H(Alert01Icon)
+const Eye = H(EyeIcon)
+const MessageSquare = H(Message01Icon)
+const ExternalLink = H(Link01Icon)
+const CheckCircle = H(CheckmarkCircle01Icon)
+const XCircle = H(Cancel01Icon)
+const Trash2 = H(Delete01Icon)
 
 interface ReviewShowProps {
     review: Review;
@@ -73,39 +104,40 @@ export default function ReviewShow({ review }: ReviewShowProps) {
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-black tracking-tight">{t('dashboard.review')}</h1>
-                </div>
-                <div className="flex items-center gap-3">
-                    {!review.is_approved && (
+            <ShowHeader
+                variant="plain"
+                title={t('dashboard.review')}
+                actions={
+                    <>
+                        {!review.is_approved && (
+                            <Button
+                                onClick={() => handleAction('is_approved')}
+                                className="gap-2 bg-success hover:bg-success/90 text-white"
+                                disabled={approvedPending}
+                            >
+                                <CheckCircle className="h-4 w-4" /> {t('actions.verify')}
+                            </Button>
+                        )}
                         <Button
-                            onClick={() => handleAction('is_approved')}
-                            className="gap-2 bg-success hover:bg-success/90 text-white"
-                            disabled={approvedPending}
+                            variant="outline"
+                            onClick={() => handleAction('active')}
+                            className={cn("gap-2", review.is_active ? "text-destructive border-destructive/20 hover:bg-destructive/5" : "text-success border-success/20 hover:bg-success/5")}
+                            disabled={activePending}
                         >
-                            <CheckCircle className="h-4 w-4" /> {t('actions.verify')}
+                            {review.is_active ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                            {review.is_active ? t('actions.deactivate') : t('actions.activate')}
                         </Button>
-                    )}
-                    <Button
-                        variant="outline"
-                        onClick={() => handleAction('active')}
-                        className={cn("gap-2", review.is_active ? "text-destructive border-destructive/20 hover:bg-destructive/5" : "text-success border-success/20 hover:bg-success/5")}
-                        disabled={activePending}
-                    >
-                        {review.is_active ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                        {review.is_active ? t('actions.deactivate') : t('actions.activate')}
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => handleAction('delete')}
-                        disabled={deletePending}
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => handleAction('delete')}
+                            disabled={deletePending}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </>
+                }
+            />
 
             <div className="grid gap-6 md:grid-cols-3">
                 {/* Review Content & Details */}
@@ -182,66 +214,29 @@ export default function ReviewShow({ review }: ReviewShowProps) {
                     </CardContent>
                 </Card>
 
-                {/* Relations Column */}
                 <div className="space-y-6">
-                    {/* User Info */}
-                    <Card className="shadow-sm border-muted/60 overflow-hidden group hover:border-primary/30 transition-colors">
-                        <CardHeader className="pb-2 border-b border-muted/40">
-                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                <User className="h-4 w-4" /> {t('common.user')}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-6">
-                            <Link
-                                to={`/users/show/$id`}
-                                /* @ts-ignore */
-                                params={{ id: String(review.user.id) }}
-                                className="flex flex-col items-center text-center gap-4 hover:opacity-80 transition-opacity"
-                            >
-                                <Avatar className="h-24 w-24 border-4 border-primary/10 shadow-lg group-hover:scale-105 transition-transform">
-                                    <AvatarImage src={review.user.image?.url} alt={review.user.full_name} />
-                                    <AvatarFallback className="bg-primary/5 text-primary text-2xl font-black">
-                                        {review.user.full_name?.substring(0, 2).toUpperCase()}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div className="space-y-1">
-                                    <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{review.user.full_name}</h3>
-                                    <p className="text-sm text-muted-foreground">{review.user.email}</p>
-                                </div>
-                            </Link>
-                        </CardContent>
-                    </Card>
+                    <EntityLinkCard
+                        title={t('common.user')}
+                        titleIcon={<User className="h-4 w-4" />}
+                        to="/users/show/$id"
+                        params={{ id: String(review.user.id) }}
+                        image={review.user.image?.url}
+                        name={review.user.full_name}
+                        fallbackText={review.user.full_name?.substring(0, 2).toUpperCase()}
+                        subtitle={review.user.email}
+                        variant="avatar"
+                    />
 
-                    {/* Product Info */}
-                    <Card className="shadow-sm border-muted/60 overflow-hidden group hover:border-primary/30 transition-colors">
-                        <CardHeader className="pb-2 border-b border-muted/40">
-                            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                <Package className="h-4 w-4" /> {t('common.product')}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-6">
-                            <Link
-                                to={`/products/show/$id`}
-                                /* @ts-ignore */
-                                params={{ id: String(review.product.id) }}
-                                className="flex flex-col items-center text-center gap-4 hover:opacity-80 transition-opacity"
-                            >
-                                <div className="relative h-32 w-full rounded-2xl overflow-hidden border bg-muted/30 group-hover:bg-muted/50 transition-colors">
-                                    {review.product.image ? (
-                                        <img src={review.product.image.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={review.product.name} />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
-                                            <Package className="h-12 w-12 opacity-20" />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <h3 className="text-base font-bold line-clamp-2 group-hover:text-primary transition-colors px-2">{review.product.name}</h3>
-                                    <Badge variant="secondary" className="font-bold"># {review.product.id}</Badge>
-                                </div>
-                            </Link>
-                        </CardContent>
-                    </Card>
+                    <EntityLinkCard
+                        title={t('common.product')}
+                        titleIcon={<Package className="h-4 w-4" />}
+                        to="/products/show/$id"
+                        params={{ id: String(review.product.id) }}
+                        image={review.product.image?.url}
+                        name={review.product.name}
+                        variant="image"
+                        badge={<Badge variant="secondary" className="font-bold"># {review.product.id}</Badge>}
+                    />
                 </div>
             </div>
         </div>

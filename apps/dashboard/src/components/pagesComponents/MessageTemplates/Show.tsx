@@ -2,6 +2,7 @@ import { Badge } from '@ecommerce/ui/components/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@ecommerce/ui/components/card'
 import { MessageTemplate } from '@/types/api/message'
 import { useTranslation } from 'react-i18next'
+import { ShowInfoCard, ShowStatusCard, JsonCard } from '@/components/common/show'
 
 export default function MessageTemplateShow({
   template,
@@ -18,15 +19,15 @@ export default function MessageTemplateShow({
         </CardHeader>
         <CardContent className="grid gap-5">
           <div className="grid gap-4 md:grid-cols-2">
-            <Info label={t('messageTemplates.labels.key')} value={template.key} />
-            <Info label={t('messageTemplates.labels.name')} value={template.name} />
-            <Info
-              label={t('messageTemplates.labels.channel')}
-              value={t(`messageTemplates.channels.${template.channel}`)}
-            />
-            <Info
-              label={t('messageTemplates.labels.purpose')}
-              value={t(`messageTemplates.purposes.${template.purpose}`)}
+            <ShowInfoCard
+              flat
+              asTable={false}
+              items={[
+                { label: t('messageTemplates.labels.key'), value: template.key },
+                { label: t('messageTemplates.labels.name'), value: template.name },
+                { label: t('messageTemplates.labels.channel'), value: t(`messageTemplates.channels.${template.channel}`) },
+                { label: t('messageTemplates.labels.purpose'), value: t(`messageTemplates.purposes.${template.purpose}`) },
+              ]}
             />
           </div>
 
@@ -40,21 +41,21 @@ export default function MessageTemplateShow({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Info
-                    label={t('messageTemplates.labels.subject')}
-                    value={content?.subject || '-'}
+                  <ShowInfoCard
+                    flat
+                    asTable={false}
+                    items={[
+                      { label: t('messageTemplates.labels.subject'), value: content?.subject || '-' },
+                      { label: t('messageTemplates.labels.title'), value: content?.title || '-' },
+                    ]}
                   />
-                  <Info
-                    label={t('messageTemplates.labels.title')}
-                    value={content?.title || '-'}
-                  />
-                  <TextBlock
-                    label={t('messageTemplates.labels.body')}
-                    value={content?.body || '-'}
-                  />
-                  <TextBlock
-                    label={t('messageTemplates.labels.html')}
-                    value={content?.html || '-'}
+                  <ShowInfoCard
+                    flat
+                    asTable={false}
+                    items={[
+                      { label: t('messageTemplates.labels.body'), value: content?.body || '-', pre: true },
+                      { label: t('messageTemplates.labels.html'), value: content?.html || '-', html: true },
+                    ]}
                   />
                 </CardContent>
               </Card>
@@ -64,49 +65,17 @@ export default function MessageTemplateShow({
       </Card>
 
       <div className="grid content-start gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('table.status')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge variant={template.is_active ? 'default' : 'destructive'}>
-              {template.is_active ? t('status.active') : t('status.inactive')}
-            </Badge>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {t('messageTemplates.variables')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="max-h-96 overflow-auto rounded-lg bg-muted p-3 text-xs">
-              {JSON.stringify(template.variables ?? {}, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
+        <ShowStatusCard
+          isActive={template.is_active}
+          readOnly
+          activeLabel={template.is_active ? t('status.active') : t('status.inactive')}
+        />
+        <JsonCard
+          title={t('messageTemplates.variables')}
+          data={template.variables ?? {}}
+          maxHeightClassName="max-h-96"
+        />
       </div>
-    </div>
-  )
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border p-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 break-words font-medium">{value}</p>
-    </div>
-  )
-}
-
-function TextBlock({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="mb-2 text-xs text-muted-foreground">{label}</p>
-      <pre className="whitespace-pre-wrap rounded-lg bg-muted p-3 text-sm">
-        {value}
-      </pre>
     </div>
   )
 }

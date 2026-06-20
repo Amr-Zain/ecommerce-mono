@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@ecommerce/ui/components/card";
-import { LucideIcon, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowUpRight01Icon, ArrowDownRight01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useTranslation } from "react-i18next";
 import CountUp from "@/components/CountUp.jsx";
 import { useState, useEffect } from "react";
@@ -17,7 +18,7 @@ interface StatsCardProps {
   value: number | string | React.ReactNode;
   change?: string;
   changeType?: "increase" | "decrease";
-  icon: LucideIcon;
+  icon: React.ComponentType<{ className?: string }>;
   iconColor?: string;
   className?: string;
   subItems?: StatsSubItem[];
@@ -61,9 +62,9 @@ export function StatsCard({
         {change && (
           <div className="flex items-center text-xs text-muted-foreground mt-1">
             {changeType === "increase" ? (
-              <ArrowUpRight className="me-1 h-3 w-3 text-success" />
+              <HugeiconsIcon icon={ArrowUpRight01Icon} className="me-1 h-3 w-3 text-success" />
             ) : (
-              <ArrowDownRight className="me-1 h-3 w-3 text-destructive" />
+              <HugeiconsIcon icon={ArrowDownRight01Icon} className="me-1 h-3 w-3 text-destructive" />
             )}
             <span className={changeType === "increase" ? "text-success" : "text-destructive"}>
               {change}

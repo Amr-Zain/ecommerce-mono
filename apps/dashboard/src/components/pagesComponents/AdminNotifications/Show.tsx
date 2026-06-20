@@ -3,19 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@ecommerce/ui/componen
 import { Badge } from '@ecommerce/ui/components/badge'
 import { Separator } from '@ecommerce/ui/components/separator'
 import {
-    Bell,
-    User,
-    Users,
-    Calendar,
-    Globe,
-    Mail,
-    CheckCircle2,
-    XCircle,
-    Hash,
-    Send,
-    ChevronLeft,
-    ChevronRight,
-} from 'lucide-react'
+    Notification01Icon,
+    User02Icon,
+    UserGroup02Icon,
+    Calendar01Icon,
+    Globe02Icon,
+    Mail01Icon,
+    CheckmarkCircle01Icon,
+    Cancel01Icon,
+    HashtagIcon,
+    Sent02Icon,
+    ArrowLeft01Icon,
+    ArrowRight01Icon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
 import { Button } from '@ecommerce/ui/components/button'
 import { AdminNotificationDetail } from './Config'
 import useFetch from '@/hooks/UseFetch'
@@ -24,6 +25,23 @@ import { ApiResponseBase } from '@/types/api/http'
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Skeleton } from '@ecommerce/ui/components/skeleton'
+import { ShowHeader, ShowInfoCard, EntityLinkCard, EmptyState } from '@/components/common/show'
+
+const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
+    <HugeiconsIcon icon={icon} {...props} />
+)
+const Bell = H(Notification01Icon)
+const User = H(User02Icon)
+const Users = H(UserGroup02Icon)
+const Calendar = H(Calendar01Icon)
+const Globe = H(Globe02Icon)
+const Mail = H(Mail01Icon)
+const CheckCircle2 = H(CheckmarkCircle01Icon)
+const XCircle = H(Cancel01Icon)
+const Hash = H(HashtagIcon)
+const Send = H(Sent02Icon)
+const ChevronLeft = H(ArrowLeft01Icon)
+const ChevronRight = H(ArrowRight01Icon)
 
 interface AdminNotificationShowProps {
     notification: AdminNotificationDetail
@@ -70,38 +88,45 @@ export default function AdminNotificationShow({ notification }: AdminNotificatio
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto pb-10">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-                        <Bell className="h-8 w-8 text-primary" />
-                        {t('admin_notifications.entity')} #{notification.id}
-                    </h1>
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <ShowHeader
+                variant="plain"
+                titleIcon={<Bell className="h-8 w-8 text-primary" />}
+                title={`${t('admin_notifications.entity')} #${notification.id}`}
+                meta={
+                    <span className="flex items-center gap-2 text-muted-foreground text-sm">
                         <Calendar className="h-4 w-4" />
                         <span>{notification.created_at}</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                    <Badge variant="outline" className="capitalize font-medium px-3 py-1 text-sm">
-                        <Globe className="h-3.5 w-3.5 me-1.5" />
-                        {t(`admin_notifications.${notification.type}`) || notification.type}
-                    </Badge>
-                    <Badge
-                        variant={notification.is_sent ? 'default' : 'secondary'}
-                        className="font-bold px-3 py-1 text-sm"
-                    >
-                        {notification.is_sent ? (
-                            <CheckCircle2 className="h-3.5 w-3.5 me-1.5" />
-                        ) : (
-                            <XCircle className="h-3.5 w-3.5 me-1.5" />
-                        )}
-                        {notification.is_sent
-                            ? t('admin_notifications.is_sent')
-                            : t('admin_notifications.show.not_sent')}
-                    </Badge>
-                </div>
-            </div>
+                    </span>
+                }
+                badges={[
+                    {
+                        variant: 'outline',
+                        className: 'capitalize font-medium px-3 py-1 text-sm',
+                        children: (
+                            <>
+                                <Globe className="h-3.5 w-3.5 me-1.5" />
+                                {t(`admin_notifications.${notification.type}`) || notification.type}
+                            </>
+                        ),
+                    },
+                    {
+                        variant: notification.is_sent ? 'default' : 'secondary',
+                        className: 'font-bold px-3 py-1 text-sm',
+                        children: (
+                            <>
+                                {notification.is_sent ? (
+                                    <CheckCircle2 className="h-3.5 w-3.5 me-1.5" />
+                                ) : (
+                                    <XCircle className="h-3.5 w-3.5 me-1.5" />
+                                )}
+                                {notification.is_sent
+                                    ? t('admin_notifications.is_sent')
+                                    : t('admin_notifications.show.not_sent')}
+                            </>
+                        ),
+                    },
+                ]}
+            />
 
             <div className="grid gap-6 lg:grid-cols-3">
                 {/* Main – left 2 cols */}
@@ -189,10 +214,11 @@ export default function AdminNotificationShow({ notification }: AdminNotificatio
                                 </div>
                             )}
                             {!isFetching && (receivers?.data?.length ?? 0) === 0 && (
-                                <div className="p-8 text-center">
-                                    <Users className="h-10 w-10 text-muted-foreground/40 mx-auto mb-2" />
-                                    <p className="text-sm text-muted-foreground">{t('admin_notifications.show.no_receivers')}</p>
-                                </div>
+                                <EmptyState
+                                    icon={<Users className="h-10 w-10 text-muted-foreground/40" />}
+                                    message={t('admin_notifications.show.no_receivers')}
+                                    className="py-8"
+                                />
                             )}
                             {!isFetching && (receivers?.data?.length ?? 0) > 0 && (
                                 <>

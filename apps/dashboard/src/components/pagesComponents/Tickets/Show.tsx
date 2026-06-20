@@ -16,7 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@ecommerce/ui/components/dialog'
-import { Paperclip, Trash2 } from 'lucide-react'
+import { Delete01Icon, Attachment01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
 import AppForm from '@/components/common/form/AppForm'
 import ConfirmModal from '@/components/common/uiComponents/ConfirmModal'
 import { useMutate } from '@/hooks/UseMutate'
@@ -26,6 +27,13 @@ import { cn } from '@/lib/utils'
 import { FieldProp } from '@/types/components/form'
 import { Ticket, TicketAttachment, TicketMessage, TicketStatus } from '@/types/api/ticket'
 import { canMoveTicketStatusForward, ticketStatusOptions, TicketStatusBadge } from './Config'
+import { ShowHeader, ShowInfoCard } from '@/components/common/show'
+
+const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
+  <HugeiconsIcon icon={icon} {...props} />
+)
+const Trash2 = H(Delete01Icon)
+const Paperclip = H(Attachment01Icon)
 
 type Props = {
   ticket: Ticket
@@ -240,10 +248,11 @@ export default function TicketShow({ ticket }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{ticket.title}</h1>
-          {userId ? (
+      <ShowHeader
+        variant="plain"
+        title={ticket.title}
+        meta={
+          userId ? (
             <Link
               to="/users/show/$id"
               params={{ id: String(userId) }}
@@ -252,44 +261,33 @@ export default function TicketShow({ ticket }: Props) {
               {userName} - {userEmail}
             </Link>
           ) : (
-            <p className="text-sm text-muted-foreground">{userName} - {userEmail}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <TicketStatusBadge status={status} />
-          <Button variant="outline" onClick={() => setStatusDialogOpen(true)}>
-            {t('tickets.changeStatus')}
-          </Button>
-          <Button variant="destructive" size="icon" disabled={deletePending} onClick={() => setDeleteDialogOpen(true)}>
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      </div>
+            <span className="text-sm text-muted-foreground">{userName} - {userEmail}</span>
+          )
+        }
+        badges={[{ children: <TicketStatusBadge status={status} /> }]}
+        actions={
+          <>
+            <Button variant="outline" onClick={() => setStatusDialogOpen(true)}>
+              {t('tickets.changeStatus')}
+            </Button>
+            <Button variant="destructive" size="icon" disabled={deletePending} onClick={() => setDeleteDialogOpen(true)}>
+              <Trash2 className="size-4" />
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('tickets.details')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">{t('Form.labels.title')}</p>
-              <p className="font-medium">{ticket.title}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">{t('Form.labels.description')}</p>
-              <p className="whitespace-pre-wrap">{ticket.description}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">{t('table.createdAt')}</p>
-              <p>{formatDate(getValue(normalizedTicket, 'createdAt', 'created_at', ''))}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">{t('table.updatedAt')}</p>
-              <p>{formatDate(getValue(normalizedTicket, 'updatedAt', 'updated_at', ''))}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <ShowInfoCard
+          flat
+          title={t('tickets.details')}
+          items={[
+            { label: t('Form.labels.title'), value: ticket.title },
+            { label: t('Form.labels.description'), value: ticket.description },
+            { label: t('table.createdAt'), value: formatDate(getValue(normalizedTicket, 'createdAt', 'created_at', '')) },
+            { label: t('table.updatedAt'), value: formatDate(getValue(normalizedTicket, 'updatedAt', 'updated_at', '')) },
+          ]}
+        />
 
         <Card>
           <CardHeader>

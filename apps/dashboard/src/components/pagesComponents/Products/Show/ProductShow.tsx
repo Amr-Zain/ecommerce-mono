@@ -12,7 +12,6 @@ import { Badge } from '@ecommerce/ui/components/badge'
 import { useTranslation } from 'react-i18next'
 import { formatDate } from '@/util/helpers'
 
-import { ProductHeaderCard } from './ProductHeaderCard'
 import { ProductVariationsCard } from './ProductVariationsCard'
 import { LocalizedContentCard } from '../../StaticPages/show/LocalizedContentCard'
 import { Product, ProductVariation, ProductStatistics } from '@/types/api/product'
@@ -24,21 +23,39 @@ import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { StatsCard } from '@/components/common/charts/StatsCard'
 import { HasPermission } from '@/components/common/HasPermission'
 import {
-  ShoppingCart,
-  TrendingUp,
-  Eye,
-  Heart,
-  Package,
-  Star as StarIcon,
-  LayoutDashboard,
-  History,
-  ArrowRight,
-  Plus,
-  Edit,
-} from 'lucide-react'
+  ShoppingCart01Icon,
+  TrendingUpDownIcon,
+  EyeIcon,
+  Package01Icon,
+  StarIcon as StarIconSvg,
+  HeartAddIcon,
+  LayoutGridIcon,
+  Time01Icon,
+  ArrowRight01Icon,
+  Add01Icon,
+  Edit01Icon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
 import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
 import { Avatar, AvatarImage, AvatarFallback } from '@ecommerce/ui/components/avatar'
 import { Progress } from '@ecommerce/ui/components/progress'
+import ButtonCopy from '@ecommerce/ui/components/copy-button'
+import { ShowHeader } from '@/components/common/show'
+
+const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
+  <HugeiconsIcon icon={icon} {...props} />
+)
+const ShoppingCart = H(ShoppingCart01Icon)
+const TrendingUp = H(TrendingUpDownIcon)
+const Eye = H(EyeIcon)
+const Package = H(Package01Icon)
+const StarIcon = H(StarIconSvg)
+const Heart = H(HeartAddIcon)
+const LayoutDashboard = H(LayoutGridIcon)
+const History = H(Time01Icon)
+const ArrowRight = H(ArrowRight01Icon)
+const Plus = H(Add01Icon)
+const Edit = H(Edit01Icon)
 
 type Props = {
   product: Product
@@ -84,8 +101,54 @@ export function ProductShow({ product }: Props) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-4">
-      {/* Header */}
-      <ProductHeaderCard product={product} />
+      <ShowHeader
+        variant="card"
+        image={product.image?.url ? { src: product.image.url, alt: product.en?.name ?? product.name ?? 'Product' } : null}
+        title={product.en?.name ?? product.name ?? '—'}
+        secondaryTitle={product.ar?.name ?? '—'}
+        id={product.id}
+        createdAt={product.created_at}
+        meta={<span>SKU {product.sku}</span>}
+        badges={[
+          { variant: product.is_active ? 'default' : 'secondary', children: product.is_active ? t('status.active') : t('status.inactive') },
+          ...(product.is_featured ? [{ children: t('status.featured') }] : []),
+          ...(product.discount && product.discount.value > 0 ? [{ variant: 'destructive' as const, className: 'animate-pulse', children: product.discount.type === 'percentage' ? `-${product.discount.value}%` : `-${product.discount.value}` }] : []),
+        ]}
+        preHeader={
+          <HasPermission entity="products" action="update">
+            <div className="flex justify-end">
+              <Link to={'/products/edit/$id'} params={{ id: String(product.id) }}>
+                <Button size="sm" className="gap-1.5">
+                  <Edit className="h-3.5 w-3.5" />
+                  {t('actions.update', { entity: t('common.product') })}
+                </Button>
+              </Link>
+            </div>
+          </HasPermission>
+        }
+        actions={
+          <>
+            <span className="text-xs text-muted-foreground">
+              {t('menu.products')} • {product.collection?.name ?? '—'}
+            </span>
+            {product.shopify_id && <div className='flex items-center gap-1'>
+              <div className='text-sm font-medium'>
+                {t('userShow.shopify_id')}: {product.shopify_id || "unregistered"}
+              </div>
+              <ButtonCopy content={product.shopify_id || ''} className='h-6 w-6' />
+            </div>}
+          </>
+        }
+      />
+      {product.tags && product.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {product.tags.map((tag) => (
+            <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )}
       <AnimatedTabs
         value={activeTab}
         onValueChange={setActiveTab}

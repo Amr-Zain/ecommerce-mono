@@ -10,22 +10,23 @@ import { useMutate } from '@/hooks/UseMutate'
 import { ApiResponse } from '@/types/api/http'
 import { Skeleton } from '@ecommerce/ui/components/skeleton'
 import {
-    Store,
-    Settings,
-    Webhook,
-    Calendar,
-    Info,
-    ShieldCheck,
-    Activity,
-    ExternalLink,
-    Key,
-    Lock,
-    RefreshCcw,
-    AlertCircle,
-    Globe,
-    Download,
-    Loader2,
-} from 'lucide-react'
+    Store01Icon,
+    Settings01Icon,
+    WebhookIcon,
+    Calendar01Icon,
+    InformationCircleIcon,
+    Shield01Icon,
+    Activity01Icon,
+    Link01Icon,
+    Key01Icon,
+    LockIcon,
+    ReloadIcon,
+    AlertCircleIcon,
+    Globe02Icon,
+    Download01Icon,
+    Loading02Icon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
 import { Separator } from '@ecommerce/ui/components/separator'
 import ButtonCopy from '@ecommerce/ui/components/copy-button'
 import ConfirmModal from '@/components/common/uiComponents/ConfirmModal'
@@ -34,6 +35,26 @@ import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { Link } from '@tanstack/react-router'
+import { ShowHeader, ShowInfoCard, EmptyState } from '@/components/common/show'
+
+const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
+    <HugeiconsIcon icon={icon} {...props} />
+)
+const Store = H(Store01Icon)
+const Settings = H(Settings01Icon)
+const Webhook = H(WebhookIcon)
+const Calendar = H(Calendar01Icon)
+const Info = H(InformationCircleIcon)
+const ShieldCheck = H(Shield01Icon)
+const Activity = H(Activity01Icon)
+const ExternalLink = H(Link01Icon)
+const Key = H(Key01Icon)
+const Lock = H(LockIcon)
+const RefreshCcw = H(ReloadIcon)
+const AlertCircle = H(AlertCircleIcon)
+const Globe = H(Globe02Icon)
+const Download = H(Download01Icon)
+const Loader2 = H(Loading02Icon)
 
 interface InstallResponse {
     status: string
@@ -96,46 +117,44 @@ export default function ShopifyStoreShow({ store }: { store: ShopifyStoreDetails
                 variant="default"
             />
 
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-                        <Store className="h-8 w-8 text-primary" />
-                        {store.shop_domain}
-                    </h1>
-                    <p className="text-muted-foreground text-sm flex items-center gap-2">
+            <ShowHeader
+                variant="plain"
+                titleIcon={<Store className="h-8 w-8 text-primary" />}
+                title={store.shop_domain}
+                meta={
+                    <span className="text-muted-foreground text-sm flex items-center gap-2">
                         <Activity className="h-4 w-4" />
                         {t('shopifyStoreShow.subtitle')}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                    <Badge variant={store.status === 'connected' ? 'default' : 'outline'} className="px-3 py-1 capitalize font-bold">
-                        {t(`status.${store.status}`)}
-                    </Badge>
-                    <Badge variant={store.is_active ? 'default' : 'secondary'} className="px-3 py-1 capitalize font-bold">
-                        {store.is_active ? t('status.active') : t('status.inactive')}
-                    </Badge>
-                    {store.status !== 'connected' && (
-                        <Button
-                            onClick={() => setShowInstallConfirm(true)}
-                            disabled={isInstalling}
-                            className="gap-2"
-                        >
-                            {isInstalling ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Download className="h-4 w-4" />
-                            )}
-                            {store.status === 'pending-reinstall' ? t('shopifyStoreShow.install.reinstall') : t('shopifyStoreShow.install.button')}
-                        </Button>
-                    )}
-                    <Link to="/settings/shopify-stores/edit/$id" params={{ id: store.id }}>
-                        <Button>
-                            {t('actions.edit')}
-                        </Button>
-                    </Link>
-                </div>
-            </div>
+                    </span>
+                }
+                badges={[
+                    { variant: store.status === 'connected' ? 'default' : 'outline', className: 'px-3 py-1 capitalize font-bold', children: t(`status.${store.status}`) },
+                    { variant: store.is_active ? 'default' : 'secondary', className: 'px-3 py-1 capitalize font-bold', children: store.is_active ? t('status.active') : t('status.inactive') },
+                ]}
+                actions={
+                    <>
+                        {store.status !== 'connected' && (
+                            <Button
+                                onClick={() => setShowInstallConfirm(true)}
+                                disabled={isInstalling}
+                                className="gap-2"
+                            >
+                                {isInstalling ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Download className="h-4 w-4" />
+                                )}
+                                {store.status === 'pending-reinstall' ? t('shopifyStoreShow.install.reinstall') : t('shopifyStoreShow.install.button')}
+                            </Button>
+                        )}
+                        <Link to="/settings/shopify-stores/edit/$id" params={{ id: store.id }}>
+                            <Button>
+                                {t('actions.edit')}
+                            </Button>
+                        </Link>
+                    </>
+                }
+            />
 
             <div className="grid gap-6 lg:grid-cols-3">
                 {/* Main Content */}
@@ -253,10 +272,11 @@ export default function ShopifyStoreShow({ store }: { store: ShopifyStoreDetails
                                     </TableBody>
                                 </Table>
                             ) : (
-                                <div className="text-center py-12 text-muted-foreground flex flex-col items-center gap-2">
-                                    <Webhook className="h-10 w-10 opacity-10" />
-                                    <span className="text-sm font-medium">{t('shopifyStoreShow.webhooks.empty')}</span>
-                                </div>
+                                <EmptyState
+                                    icon={<Webhook className="h-10 w-10 opacity-10" />}
+                                    message={t('shopifyStoreShow.webhooks.empty')}
+                                    className="py-12"
+                                />
                             )}
                         </CardContent>
                     </Card>

@@ -129,7 +129,7 @@ export const showRoomColumns = (
       'country',
       'table.columns.country',
       {
-        render: (ctx) => <div className='text-muted-foreground'>{ctx.getValue().name}</div>
+        render: (ctx) => <div className='text-muted-foreground'>{ctx.getValue()?.name}</div>
       }
 
     ),
@@ -137,7 +137,7 @@ export const showRoomColumns = (
       'city',
       'table.columns.city',
       {
-        render: (ctx) => <div className='text-muted-foreground'>{ctx.getValue().name}</div>
+        render: (ctx) => <div className='text-muted-foreground'>{ctx.getValue()?.name}</div>
       }
     ),
     textColumn<ShowRoom>('phone', 'table.columns.phone', {

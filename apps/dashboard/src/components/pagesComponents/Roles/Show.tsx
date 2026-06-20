@@ -4,11 +4,20 @@ import useFetch from '@/hooks/UseFetch'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { Card, CardContent, CardHeader, CardTitle } from '@ecommerce/ui/components/card'
 import { Badge } from '@ecommerce/ui/components/badge'
-import { ShieldCheck, Edit, Calendar } from 'lucide-react'
+import { Shield01Icon, Edit01Icon, Calendar01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
 import { type RolePermission } from '@/types/api/role'
 import { formatDate } from '@/util/helpers'
 import { Button } from '@ecommerce/ui/components/button'
 import { HasPermission } from '@/components/common/HasPermission'
+import { ShowHeader } from '@/components/common/show'
+
+const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
+    <HugeiconsIcon icon={icon} {...props} />
+)
+const ShieldCheck = H(Shield01Icon)
+const Edit = H(Edit01Icon)
+const Calendar = H(Calendar01Icon)
 
 export const RoleShow = () => {
     const { t } = useTranslation()
@@ -23,7 +32,6 @@ export const RoleShow = () => {
 
     const role = res?.data
 
-    // Fetch all permissions for grouping
     const { data: allPermissionsRes } = useFetch<any>({
         endpoint: 'permissions',
         queryKey: ['permissions-list'],
@@ -50,9 +58,10 @@ export const RoleShow = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">{t('titles.role_details')}</h1>
-                <div className="flex items-center gap-3">
+            <ShowHeader
+                variant="plain"
+                title={t('titles.role_details')}
+                actions={
                     <HasPermission entity="roles" action="update">
                         <Link to="/roles/edit/$id" params={{ id }}>
                             <Button variant="outline" size="sm" className="gap-2">
@@ -61,8 +70,8 @@ export const RoleShow = () => {
                             </Button>
                         </Link>
                     </HasPermission>
-                </div>
-            </div>
+                }
+            />
 
             <Card className="rounded-xl border border-border pt-0!">
                 <CardHeader className="bg-muted/30 border-b border-border p-4!">
@@ -81,10 +90,6 @@ export const RoleShow = () => {
                             <span className="text-sm font-medium text-muted-foreground mb-1 block">{t('Form.labels.name_ar')}</span>
                             <p className="font-semibold text-lg">{role?.ar?.name || '—'}</p>
                         </div>
-                        {/* <div>
-                            <span className="text-sm font-medium text-muted-foreground mb-1 block">{t('Form.labels.prefix')}</span>
-                            <Badge variant="outline" className="text-sm">{role?.prefix || '—'}</Badge>
-                        </div> */}
                         <div>
                             <span className="text-sm font-medium text-muted-foreground mb-1 block">{t('table.columns.status')}</span>
                             <Badge variant={role?.is_active ? 'default' : 'secondary'} className="text-sm">

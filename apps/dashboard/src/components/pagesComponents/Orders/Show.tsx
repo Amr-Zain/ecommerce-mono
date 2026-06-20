@@ -2,18 +2,19 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  Package,
-  CreditCard,
-  MapPin,
-  User,
-  CheckCircle2,
-  Truck,
-  History,
-  XCircle,
-  RefreshCcw,
-  TriangleAlert,
-  LoaderCircle,
-} from 'lucide-react'
+  Package01Icon,
+  CreditCardIcon,
+  Location01Icon,
+  User02Icon,
+  CheckmarkCircle01Icon,
+  TruckIcon,
+  Time01Icon,
+  Cancel01Icon,
+  ReloadIcon,
+  Alert01Icon,
+  Loading02Icon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
 import {
   Card,
   CardContent,
@@ -47,6 +48,22 @@ import {
 import { queryKeys } from '@/util/queryKeysFactory'
 import { cn, hasPermission } from '@/lib/utils'
 import { StatusBadge, getStatusColor } from './Config'
+import { ShowHeader, ShowInfoCard } from '@/components/common/show'
+
+const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
+  <HugeiconsIcon icon={icon} {...props} />
+)
+const Package = H(Package01Icon)
+const CreditCard = H(CreditCardIcon)
+const MapPin = H(Location01Icon)
+const User = H(User02Icon)
+const CheckCircle2 = H(CheckmarkCircle01Icon)
+const Truck = H(TruckIcon)
+const History = H(Time01Icon)
+const XCircle = H(Cancel01Icon)
+const RefreshCcw = H(ReloadIcon)
+const TriangleAlert = H(Alert01Icon)
+const LoaderCircle = H(Loading02Icon)
 
 interface OrderShowProps {
   order: OrderDetail
@@ -146,36 +163,35 @@ export default function OrderShow({ order }: OrderShowProps) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-10">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <Package className="h-7 w-7 text-primary" />
-            <h1 className="text-2xl font-black tracking-tight">
-              {t('orders.entity')} {order.order_number}
-            </h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      <ShowHeader
+        variant="plain"
+        titleIcon={<Package className="h-7 w-7 text-primary" />}
+        title={`${t('orders.entity')} ${order.order_number}`}
+        meta={
+          <>
             <span>{new Date(order.created_at).toLocaleString()}</span>
             <span>{order.user_name}</span>
             {order.user_email && <span>{order.user_email}</span>}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <StatusBadge
-            status={order.status}
-            labelPrefix="orders.status"
-            t={t}
-          />
-          <StatusBadge
-            status={order.payment_status}
-            labelPrefix="orders.paymentStatus"
-            t={t}
-          />
-          <Badge variant="outline" className="capitalize">
-            {order.payment_method}
-          </Badge>
-        </div>
-      </div>
+          </>
+        }
+        badges={[
+          {
+            children: (
+              <StatusBadge status={order.status} labelPrefix="orders.status" t={t} />
+            ),
+          },
+          {
+            children: (
+              <StatusBadge status={order.payment_status} labelPrefix="orders.paymentStatus" t={t} />
+            ),
+          },
+          {
+            variant: 'outline' as const,
+            className: 'capitalize',
+            children: order.payment_method,
+          },
+        ]}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
@@ -416,54 +432,35 @@ export default function OrderShow({ order }: OrderShowProps) {
             </CardContent>
           </Card>
 
-          <Card className="pt-0">
-            <CardHeader className="border-b bg-muted/30 py-4">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <User className="h-5 w-5 text-primary" />
-                {t('orders.labels.customer')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 p-5 text-sm">
-              <InfoRow label={t('orders.labels.name')} value={order.user_name} />
-              <InfoRow
-                label={t('orders.labels.email')}
-                value={order.user_email || '-'}
-              />
-              <InfoRow
-                label={t('orders.labels.phone')}
-                value={order.user_phone || '-'}
-              />
-            </CardContent>
-          </Card>
+          <ShowInfoCard
+            flat
+            title={t('orders.labels.customer')}
+            titleIcon={<User className="h-5 w-5 text-primary" />}
+            items={[
+              { label: t('orders.labels.name'), value: order.user_name },
+              { label: t('orders.labels.email'), value: order.user_email || '-' },
+              { label: t('orders.labels.phone'), value: order.user_phone || '-' },
+            ]}
+          />
 
-          <Card className="pt-0">
-            <CardHeader className="border-b bg-muted/30 py-4">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <MapPin className="h-5 w-5 text-primary" />
-                {t('orders.labels.shipping_address')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 p-5 text-sm">
-              <InfoRow
-                label={t('orders.labels.country')}
-                value={order.country_name_snapshot || '-'}
-              />
-              <InfoRow
-                label={t('orders.labels.city')}
-                value={order.city_name_snapshot || '-'}
-              />
-              <InfoRow
-                label={t('orders.labels.address')}
-                value={
+          <ShowInfoCard
+            flat
+            title={t('orders.labels.shipping_address')}
+            titleIcon={<MapPin className="h-5 w-5 text-primary" />}
+            items={[
+              { label: t('orders.labels.country'), value: order.country_name_snapshot || '-' },
+              { label: t('orders.labels.city'), value: order.city_name_snapshot || '-' },
+              {
+                label: t('orders.labels.address'),
+                value:
                   typeof order.shipping_address_snapshot === 'object' &&
                   order.shipping_address_snapshot &&
                   'address' in order.shipping_address_snapshot
                     ? String(order.shipping_address_snapshot.address)
-                    : '-'
-                }
-              />
-            </CardContent>
-          </Card>
+                    : '-',
+              },
+            ]}
+          />
 
           <Card className={cn('border', getStatusColor(order.payment_status))}>
             <CardContent className="space-y-2 p-5">
@@ -573,15 +570,6 @@ function RetryCancellationRefund({
       <RefreshCcw className="h-4 w-4" />
       {t('orders.actions.retry_refund')}
     </Button>
-  )
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="max-w-[220px] text-end font-medium">{value}</span>
-    </div>
   )
 }
 

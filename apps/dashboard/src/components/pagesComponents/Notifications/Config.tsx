@@ -5,7 +5,8 @@ import {
 } from '@/components/features/sharedColumns'
 import { PickedAction } from '@/hooks/useStatusMutations'
 import { Notification } from '@/routes/_main/settings/notifications'
-import { Eye, Trash2 } from 'lucide-react'
+import { EyeIcon, Delete01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { TFn } from '@/lib/schema/validation'
 import { hasPermission } from '@/lib/utils'
 import { Badge } from '@ecommerce/ui/components/badge'
@@ -16,7 +17,6 @@ export const notificationColumns = (
 ): ColumnDef<Notification>[] => [
   textColumn<Notification>('title', 'table.columns.title'),
   textColumn<Notification>('body', 'table.columns.description'),
-  // textColumn<Notification>('type', 'table.columns.type'),
   textColumn<Notification>('additional_data', 'table.columns.user_name', {
     render: (value) => value?.getValue().user_name ?? '-',
   }),
@@ -31,7 +31,7 @@ export const notificationColumns = (
             onClick={(e) => {e.stopPropagation(); openAlert('read_note', value.row.original)}}
           >
             <div className=" absolute top-0.5 -end-2.5 w-2 h-2 rounded-full bg-primary inline-block me-2" />
-            <Eye />
+            <HugeiconsIcon icon={EyeIcon} className="size-4" />
           </div>
             <Badge variant="destructive" className='rounded-full'>{t('status.unread')}</Badge>
         </div>
@@ -47,7 +47,7 @@ export const notificationColumns = (
             className="status-failed w-fit p-4 aspect-square flex items-center ms-auto me-4 !bg-transparent !hover:bg-red-100 rounded-md cursor-pointer"
             onClick={() => openAlert('delete', value.row.original)}
           >
-            <Trash2 size={16} />
+            <HugeiconsIcon icon={Delete01Icon} size={16} />
           </div>
         )
       )

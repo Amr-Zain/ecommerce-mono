@@ -2,14 +2,9 @@ import {
     Card,
     CardHeader,
     CardTitle,
-    CardDescription,
     CardContent,
 } from '@ecommerce/ui/components/card'
 import { Badge } from '@ecommerce/ui/components/badge'
-import { Table, TableBody, TableCell, TableRow } from '@ecommerce/ui/components/table'
-import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
-import type { TabItem } from '@/components/ui/AnimatedTabs'
-import { Separator } from '@ecommerce/ui/components/separator'
 import { Switch } from '@ecommerce/ui/components/switch'
 import { Button } from '@ecommerce/ui/components/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@ecommerce/ui/components/avatar'
@@ -18,29 +13,49 @@ import { Link } from '@tanstack/react-router'
 import { formatDate } from '@/util/helpers'
 import { useMutate } from '@/hooks/UseMutate'
 import { queryKeys } from '@/util/queryKeysFactory'
-import { toast } from 'sonner'
 import {
-    Edit,
-    Plus,
-    Trash2,
-    ShoppingBag,
-    Store,
-    Image as ImageIcon,
-    Layers,
-    Hash,
-    Calendar,
-    SortAsc,
-    FolderTree,
-} from 'lucide-react'
-import { useState, useEffect } from 'react'
+    Edit01Icon,
+    Add01Icon,
+    Delete01Icon,
+    ShoppingBag01Icon,
+    Store01Icon,
+    Image01Icon,
+    Layers01Icon,
+    HashtagIcon,
+    Calendar01Icon,
+    FolderTreeIcon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
+import { useState, useEffect, type ReactNode } from 'react'
 import ShopifyMappingDialog from './ShopifyMappingDialog'
 import { HasPermission } from '@/components/common/HasPermission'
 import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useNavigate } from '@tanstack/react-router'
-import { hasPermission } from '@/lib/utils'
 import ButtonCopy from '@ecommerce/ui/components/copy-button'
+import {
+    ShowHeader,
+    ShowInfoCard,
+    ShowStatusCard,
+    ShowActions,
+    EntityLinkCard,
+} from '@/components/common/show'
+import { LocalizedContentCard } from '@/components/pagesComponents/StaticPages/show/LocalizedContentCard'
+
+const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
+    <HugeiconsIcon icon={icon} {...props} />
+)
+const Edit = H(Edit01Icon)
+const Plus = H(Add01Icon)
+const Trash2 = H(Delete01Icon)
+const ShoppingBag = H(ShoppingBag01Icon)
+const Store = H(Store01Icon)
+const ImageIcon = H(Image01Icon)
+const Layers = H(Layers01Icon)
+const Hash = H(HashtagIcon)
+const Calendar = H(Calendar01Icon)
+const FolderTree = H(FolderTreeIcon)
 
 export type ShopifyMappingData = {
     id?: number
@@ -169,139 +184,45 @@ export function CategoryShow({ category }: { category: CategoryShowData }) {
     return (
         <div className="space-y-6 max-w-6xl mx-auto pb-10">
 
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16 rounded-xl border shadow-sm">
-                        {category.image?.path
-                            ? <AvatarImage src={category.image.path} alt={categoryName} />
-                            : null}
-                        <AvatarFallback className="rounded-xl bg-primary/10">
-                            <ImageIcon className="h-7 w-7 text-primary" />
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-1">
-                        <h1 className="text-2xl font-black tracking-tight flex items-center gap-3">
-                            <FolderTree className="h-6 w-6 text-primary" />
-                            {categoryName}
-                            {category.ar?.name && category.ar.name !== categoryName && (
-                                <span className="text-muted-foreground text-lg font-medium">{category.ar.name}</span>
-                            )}
-                        </h1>
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                            <Hash className="h-4 w-4" />
-                            <span>#{category.id}</span>
-                            <span>•</span>
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDate(category.created_at)}</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                    <Badge
-                        variant={category.is_active ? 'default' : 'secondary'}
-                        className="capitalize font-medium px-3 py-1 text-sm"
-                    >
-                        {category.is_active ? t('status.active') : t('status.inactive')}
-                    </Badge>
-                    <HasPermission entity="collections" action="update">
-                        <Link to="/categories/edit/$id" params={{ id: String(category.id) }}>
-                            <Button variant="outline" size="sm">
-                                <Edit className="me-1 h-4 w-4" />
-                                {t('actions.update', { entity: t('common.category') })}
-                            </Button>
-                        </Link>
-                    </HasPermission>
-                    <HasPermission entity="collections" action="delete">
-                        <Button variant="destructive" size="sm" onClick={() => openAlert('delete')} disabled={deletePending}>
-                            <Trash2 className="me-1 h-4 w-4" />
-                            {t('actions.delete', { entity: t('common.category') })}
-                        </Button>
-                    </HasPermission>
-                </div>
-            </div>
+            <ShowHeader
+                variant="plain"
+                image={category.image?.path ? { src: category.image.path, alt: categoryName } : null}
+                avatarFallbackText={categoryName.charAt(0).toUpperCase()}
+                titleIcon={<FolderTree className="h-6 w-6 text-primary" />}
+                title={categoryName}
+                secondaryTitle={category.ar?.name && category.ar.name !== categoryName ? category.ar.name : undefined}
+                id={category.id}
+                createdAt={category.created_at}
+                badges={[
+                    {
+                        variant: category.is_active ? 'default' : 'secondary',
+                        className: 'capitalize font-medium px-3 py-1 text-sm',
+                        children: category.is_active ? t('status.active') : t('status.inactive'),
+                    },
+                ]}
+                actions={
+                    <ShowActions
+                        entity="collections"
+                        editTo="/categories/edit/$id"
+                        editParams={{ id: String(category.id) }}
+                        editLabel={t('actions.update', { entity: t('common.category') })}
+                        onDelete={() => openAlert('delete')}
+                        deletePending={deletePending}
+                        deleteLabel={t('actions.delete', { entity: t('common.category') })}
+                    />
+                }
+            />
 
             <div className="grid gap-6 lg:grid-cols-3">
-                {/* Main content — left 2 cols */}
                 <div className="lg:col-span-2 space-y-6">
 
-                    {/* Localized Content */}
-                    <Card className="shadow-sm border-muted/60 overflow-hidden pt-0">
-                        <CardHeader className="bg-muted/30 pb-2">
-                            <div className="flex items-center gap-2 pt-4">
-                                <Layers className="h-5 w-5 text-primary" />
-                                <CardTitle className="text-lg">
-                                    {t('countryShow.localized.title', { defaultValue: 'Localized Details' })}
-                                </CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="pt-4">
-                            <AnimatedTabs
-                                defaultValue="en"
-                                items={[
-                                    {
-                                        value: 'en',
-                                        label: t('english'),
-                                        content: (
-                                            <div className="mt-4 space-y-4">
-                                                <div className="space-y-1">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                                        {t('Form.labels.name')}
-                                                    </p>
-                                                    <p className="font-semibold text-sm">{category.en?.name || '—'}</p>
-                                                </div>
-                                                {category.en?.description && (
-                                                    <>
-                                                        <Separator />
-                                                        <div className="space-y-1">
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                                                {t('Form.labels.description')}
-                                                            </p>
-                                                            <div
-                                                                className="prose prose-sm dark:prose-invert max-w-none text-sm"
-                                                                dangerouslySetInnerHTML={{ __html: category.en?.description || '' }}
-                                                            />
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        ),
-                                    },
-                                    {
-                                        value: 'ar',
-                                        label: t('arabic'),
-                                        content: (
-                                            <div className="mt-4 space-y-4">
-                                                <div className="space-y-1">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                                        {t('Form.labels.name')}
-                                                    </p>
-                                                    <p className="font-semibold text-sm">{category.ar?.name || '—'}</p>
-                                                </div>
-                                                {category.ar?.description && (
-                                                    <>
-                                                        <Separator />
-                                                        <div className="space-y-1">
-                                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                                                {t('Form.labels.description')}
-                                                            </p>
-                                                            <div
-                                                                className="prose prose-sm dark:prose-invert max-w-none text-sm"
-                                                                dangerouslySetInnerHTML={{ __html: category.ar?.description || '' }}
-                                                            />
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        ),
-                                    },
-                                ]}
-                                tabsListClassName="grid w-full grid-cols-2"
-                            />
-                        </CardContent>
-                    </Card>
+                    <LocalizedContentCard
+                        titleI18nKey="countryShow.localized.title"
+                        subtitleI18nKey="countryShow.localized.subtitle"
+                        en={{ title: category.en?.name, content: category.en?.description }}
+                        ar={{ title: category.ar?.name, content: category.ar?.description }}
+                    />
 
-                    {/* Sub-Collections */}
                     {category.children && category.children.length > 0 && (
                         <Card className="shadow-sm border-muted/60 overflow-hidden pt-0">
                             <CardHeader className="bg-muted/30 pb-2">
@@ -351,7 +272,6 @@ export function CategoryShow({ category }: { category: CategoryShowData }) {
                         </Card>
                     )}
 
-                    {/* Shopify Mappings */}
                     {category?.shopify_mappings?.length > 0 && (
                         <Card className="shadow-sm border-muted/60 overflow-hidden pt-0">
                             <CardHeader className="bg-muted/30 pb-2">
@@ -432,95 +352,38 @@ export function CategoryShow({ category }: { category: CategoryShowData }) {
                     )}
                 </div>
 
-                {/* Sidebar — right col */}
                 <div className="space-y-6">
-                    {/* General Info */}
-                    <Card className="shadow-sm border-muted/60 overflow-hidden group hover:border-primary/30 transition-all duration-300">
-                        <CardHeader className="border-b border-muted/40 pb-2!">
-                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                                {t('countryShow.general.title', { defaultValue: 'General' })}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-4">
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground flex items-center gap-1.5">
-                                        <Hash className="h-3.5 w-3.5" /> ID
-                                    </span>
-                                    <span className="font-bold font-mono">#{category.id}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground flex items-center gap-1.5">
-                                        <SortAsc className="h-3.5 w-3.5" /> {t('Form.labels.sortOrder')}
-                                    </span>
-                                    <span className="font-bold">{category.sort_order}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-muted-foreground flex items-center gap-1.5">
-                                        <Calendar className="h-3.5 w-3.5" /> {t('table.createdAt')}
-                                    </span>
-                                    <span className="font-bold text-xs">{formatDate(category.created_at)}</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <ShowInfoCard
+                        microTitle
+                        title={t('countryShow.general.title', { defaultValue: 'General' })}
+                        items={[
+                            { label: 'ID', value: `#${category.id}`, icon: <Hash className="h-3.5 w-3.5" /> },
+                            { label: t('Form.labels.sortOrder'), value: category.sort_order, icon: <Layers className="h-3.5 w-3.5" /> },
+                            { label: t('table.createdAt'), value: formatDate(category.created_at), icon: <Calendar className="h-3.5 w-3.5" /> },
+                        ]}
+                    />
 
-                    {/* Status */}
-                    <Card className="shadow-sm border-muted/60 overflow-hidden group hover:border-primary/30 transition-all duration-300">
-                        <CardHeader className="border-b border-muted/40 pb-2!">
-                            <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                                {t('table.columns.status')}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Badge variant={category.is_active ? 'default' : 'secondary'}>
-                                        {category.is_active ? t('status.active') : t('status.inactive')}
-                                    </Badge>
-                                </div>
-                                <HasPermission entity="collections" action="update">
-                                    <Switch
-                                        checked={category.is_active}
-                                        onCheckedChange={() => openAlert('active')}
-                                        disabled={activePending}
-                                    />
-                                </HasPermission>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <ShowStatusCard
+                        isActive={category.is_active}
+                        permissionEntity="collections"
+                        onToggle={() => openAlert('active')}
+                        togglePending={activePending}
+                    />
 
-                    {/* Parent Category */}
                     {category.parent && (
-                        <Card className="shadow-sm border-muted/60 overflow-hidden group hover:border-primary/30 transition-all duration-300">
-                            <CardHeader className="border-b border-muted/40 pb-2!">
-                                <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                                    {t('Form.labels.parentCategory')}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-3">
-                                <Link
-                                    to="/categories/show/$id"
-                                    params={{ id: String(category.parent.id) }}
-                                    className="flex items-center gap-3 group/link"
-                                >
-                                    <div className="h-10 w-10 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-black text-sm shadow-inner group-hover/link:bg-primary group-hover/link:text-white transition-all">
-                                        {parentName?.charAt(0).toUpperCase() ?? '?'}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-sm group-hover/link:text-primary transition-colors">
-                                            {parentName}
-                                        </p>
-                                        <p className="text-[10px] text-muted-foreground">#{category.parent.id}</p>
-                                    </div>
-                                </Link>
-                            </CardContent>
-                        </Card>
+                        <EntityLinkCard
+                            title={t('Form.labels.parentCategory')}
+                            to="/categories/show/$id"
+                            params={{ id: String(category.parent.id) }}
+                            name={parentName}
+                            fallbackText={parentName?.charAt(0).toUpperCase() ?? '?'}
+                            subtitle={<span className="text-[10px] text-muted-foreground">#{category.parent.id}</span>}
+                            variant="avatar"
+                        />
                     )}
                 </div>
             </div>
 
-            {/* Add / Edit Mapping Dialog */}
             <ShopifyMappingDialog
                 open={showAddDialog || !!editMapping}
                 onClose={() => { setShowAddDialog(false); setEditMapping(null) }}

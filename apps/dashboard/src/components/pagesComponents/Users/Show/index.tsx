@@ -12,25 +12,42 @@ import { Badge } from '@ecommerce/ui/components/badge'
 import { useTranslation } from 'react-i18next'
 import { formatDate } from '@/util/helpers'
 import { UserShow as UserShowType } from '../Config'
-import { UserHeaderCard } from './UserHeaderCard'
+import { Avatar, AvatarFallback, AvatarImage } from '@ecommerce/ui/components/avatar'
 import {
-    CreditCard,
-    Star,
-    MapPin,
-    Smartphone,
-    User,
-    Mail,
-    Phone,
-    Calendar,
-    Copy,
-    TrendingUp,
-} from 'lucide-react'
+    CreditCardIcon,
+    StarIcon,
+    Location01Icon,
+    SmartPhone01Icon,
+    User02Icon,
+    Mail01Icon,
+    Call02Icon,
+    Calendar01Icon,
+    Copy01Icon,
+    TrendingUpDownIcon,
+    Alert01Icon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
 import { SARIcon } from '@/components/common/Icons'
 import { Button } from '@ecommerce/ui/components/button'
 import { toast } from 'sonner'
 import { StatsCard } from '@/components/common/charts/StatsCard'
 import ButtonCopy from '@ecommerce/ui/components/copy-button'
 import { hasPermission } from '@/lib/utils'
+import { ShowHeader, EmptyState } from '@/components/common/show'
+
+const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
+    <HugeiconsIcon icon={icon} {...props} />
+)
+const CreditCard = H(CreditCardIcon)
+const Star = H(StarIcon)
+const MapPin = H(Location01Icon)
+const Smartphone = H(SmartPhone01Icon)
+const User = H(User02Icon)
+const Mail = H(Mail01Icon)
+const Phone = H(Call02Icon)
+const Calendar = H(Calendar01Icon)
+const Copy = H(Copy01Icon)
+const TrendingUp = H(TrendingUpDownIcon)
 
 type Props = {
     user: UserShowType
@@ -38,11 +55,51 @@ type Props = {
 
 export function UserShow({ user }: Props) {
     const { t } = useTranslation()
+    const imageUrl = typeof user.image === 'string' ? user.image : user.image?.url
 
     return (
         <div className="mx-auto max-w-5xl space-y-6">
-            {/* Header - standard structure */}
-            <UserHeaderCard user={user} />
+            <ShowHeader
+                variant="card"
+                imageNode={
+                    <Avatar className="h-20 w-20 border ring-1 ring-border">
+                        <AvatarImage src={imageUrl || ''} />
+                        <AvatarFallback className="text-xl uppercase bg-primary/10 text-primary">
+                            {user.full_name?.substring(0, 2) ?? '?'}
+                        </AvatarFallback>
+                    </Avatar>
+                }
+                title={user.full_name}
+                secondaryTitle={
+                    <Badge variant="outline" className="font-normal">
+                        {user.user_type === 'client' ? t('common.client') :
+                            user.user_type === 'guest' ? t('common.guest') : t('common.super_admin')}
+                    </Badge>
+                }
+                id={user.id}
+                createdAt={user.created_at}
+                metaItems={[
+                    ...(user.last_login_at ? [{ value: `${t('userShow.last_login')} ${formatDate(user.last_login_at)}` }] : []),
+                ]}
+                badges={[
+                    { variant: user.is_active ? 'default' : 'secondary', children: user.is_active ? t('status.active') : t('status.inactive') },
+                    ...(user.is_ban ? [{ variant: 'destructive' as const, className: 'flex items-center gap-1', children: (<><HugeiconsIcon icon={Alert01Icon} className="h-3 w-3" />{t('status.banned')}</>) }] : []),
+                    ...(user.tier?.name ? [{ className: 'bg-primary/20 text-primary hover:bg-primary/30 border-none', children: user.tier.name }] : []),
+                ]}
+                actions={
+                    <>
+                        <span className="text-xs text-muted-foreground">
+                            {user.email || user.phone || t('common.noContact')}
+                        </span>
+                        {user.shopify_id && <div className='flex items-center gap-1'>
+                            <div className='text-sm font-medium'>
+                                {t('userShow.shopify_id')}: {user.shopify_id || "unregistered"}
+                            </div>
+                            <ButtonCopy content={user.shopify_id || ''} className='h-6 w-6' />
+                        </div>}
+                    </>
+                }
+            />
 
             {/* Statistics Grid - using specialized StatsCard for premium feel */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -190,7 +247,7 @@ export function UserShow({ user }: Props) {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-sm text-muted-foreground text-center py-4">{t('common.no_data')}</div>
+                            <EmptyState message={t('common.no_data')} className="py-4" />
                         )}
                     </CardContent>
                 </Card>
@@ -258,7 +315,7 @@ export function UserShow({ user }: Props) {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-sm text-muted-foreground text-center py-4">{t('common.no_data')}</div>
+                            <EmptyState message={t('common.no_data')} className="py-4" />
                         )}
                     </CardContent>
                 </Card>
@@ -302,7 +359,7 @@ export function UserShow({ user }: Props) {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-sm text-muted-foreground text-center py-4">{t('common.no_data')}</div>
+                            <EmptyState message={t('common.no_data')} className="py-4" />
                         )}
                     </CardContent>
                 </Card>
@@ -346,7 +403,7 @@ export function UserShow({ user }: Props) {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-sm text-muted-foreground text-center py-4">{t('common.no_data')}</div>
+                            <EmptyState message={t('common.no_data')} className="py-4" />
                         )}
                     </CardContent>
                 </Card>
