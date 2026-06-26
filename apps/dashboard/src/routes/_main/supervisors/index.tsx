@@ -44,7 +44,7 @@ export const Route = createFileRoute('/_main/supervisors/')({
 
 function Index() {
   const search = Route.useLoaderDeps().search
-  const { data } = useFetch<ApiResponse<Supervisor[], 'users'>>({
+  const { data } = useFetch<ApiResponse<Supervisor, 'users'>>({
     queryKey: queryKeys.supervisors.filterd(search),
     endpoint: `supervisors?paginate=1`,
     suspense: true,

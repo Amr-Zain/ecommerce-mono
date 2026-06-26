@@ -37,7 +37,7 @@ export type SliderEntity = {
 const Sliders = ({
   data,
 }: {
-  data: ApiResponse<SliderEntity[]>
+  data: ApiResponse<SliderEntity>
 }) => {
   const { t } = useTranslation()
   const alert = useAlertModal()

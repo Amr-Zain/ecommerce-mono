@@ -23,9 +23,9 @@ export const makePageSchema = (t: TFn) => {
   return z
     .object({
       image: z.any().optional(),
-      type: requiredEnum(
+      slug: requiredEnum(
         t,
-        t('Form.labels.type'),
+        t('Form.labels.slug'),
         STATIC_PAGE_TYPE_OPTIONS.map((item) => item.value) as [
           string,
           ...string[],

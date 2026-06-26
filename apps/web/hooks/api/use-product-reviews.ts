@@ -5,20 +5,14 @@ import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
 import type { ProductReview } from "@/hooks/api/use-products"
 import { clientEndpoints } from "@/lib/client/client-api"
+import type { ApiResponse, PaginatedList, PaginationMeta } from "@/types/api"
 
-type ReviewsResponse = {
-  data: {
-    items: ProductReview[]
-    meta: {
-      page: number
-      limit: number
-      total: number
-      total_pages: number
-      has_next_page: boolean
-      has_previous_page: boolean
-    }
-  }
+type ReviewsMeta = PaginationMeta & {
+  total_pages: number
+  has_next_page: boolean
+  has_previous_page: boolean
 }
+type ReviewsResponse = ApiResponse<PaginatedList<ProductReview, ReviewsMeta>>
 
 type ReviewEligibilityResponse = {
   data: {

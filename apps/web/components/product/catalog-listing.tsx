@@ -1,4 +1,3 @@
-import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 
 import { ProductCard, type Product } from "@/components/product/product-card"
@@ -14,6 +13,7 @@ import type {
 import { publicBackendGet } from "@/lib/server/backend"
 import { cacheTags } from "@/lib/server/cache-tags"
 import { cn } from "@/lib/utils"
+import { ListingPagination } from "@/components/shared/pagination"
 
 type CatalogSearchParams = Record<string, string | string[] | undefined>
 
@@ -43,21 +43,6 @@ function mapProduct(item: CatalogProduct): Product {
     available: item.representative_variant.available,
     attributes: item.representative_variant.attributes,
   }
-}
-
-function pageUrl(
-  pathname: string,
-  searchParams: CatalogSearchParams,
-  page: number
-) {
-  const params = new URLSearchParams()
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (value === undefined || key === "page") continue
-    for (const item of Array.isArray(value) ? value : [value])
-      params.append(key, item)
-  }
-  params.set("page", String(page))
-  return `${pathname}?${params.toString()}`
 }
 
 async function CatalogListing({
@@ -172,69 +157,15 @@ async function CatalogListing({
             </div>
           )}
 
-          {data.meta.total_pages > 1 ? (
-            <div className="mt-auto flex items-center justify-center gap-2 pt-6">
-              <PaginationLink
-                disabled={data.meta.page <= 1}
-                href={pageUrl(pathname, searchParams, data.meta.page - 1)}
-                label="Previous page"
-              >
-                ‹
-              </PaginationLink>
-              {Array.from(
-                { length: data.meta.total_pages },
-                (_, index) => index + 1
-              ).map((page) => (
-                <Link
-                  key={page}
-                  href={pageUrl(pathname, searchParams, page)}
-                  className={cn(
-                    "inline-flex size-9 items-center justify-center rounded-full border text-sm font-semibold transition-all",
-                    data.meta.page === page
-                      ? "border-foreground bg-foreground text-background shadow-sm"
-                      : "bg-background text-muted-foreground hover:border-foreground/30 hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  {page}
-                </Link>
-              ))}
-              <PaginationLink
-                disabled={data.meta.page >= data.meta.total_pages}
-                href={pageUrl(pathname, searchParams, data.meta.page + 1)}
-                label="Next page"
-              >
-                ›
-              </PaginationLink>
-            </div>
-          ) : null}
+          <ListingPagination
+            pathname={pathname}
+            searchParams={searchParams}
+            currentPage={data.meta.page}
+            totalPages={data.meta.total_pages}
+          />
         </div>
       </div>
     </div>
-  )
-}
-
-function PaginationLink({
-  children,
-  disabled,
-  href,
-  label,
-}: {
-  children: React.ReactNode
-  disabled: boolean
-  href: string
-  label: string
-}) {
-  return (
-    <Link
-      href={href}
-      aria-label={label}
-      className={cn(
-        "inline-flex size-9 items-center justify-center rounded-full border bg-background text-lg font-semibold transition-all hover:border-foreground/30 hover:bg-muted",
-        disabled && "pointer-events-none opacity-35"
-      )}
-    >
-      {children}
-    </Link>
   )
 }
 

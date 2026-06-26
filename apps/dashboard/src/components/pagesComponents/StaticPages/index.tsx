@@ -26,7 +26,7 @@ const StaticPages = ({
   const { t } = useTranslation()
   const alert = useAlertModal()
 
-  const rows = ((data as any).data?.static_pages || []) as StaticPage[]
+  const rows = (((data as any).data?.items ?? (data as any).data?.static_pages) || []) as StaticPage[]
   // const meta = (data as any).data?.meta
   const search = useSearch({ from: '/_main/static-pages/' })
 

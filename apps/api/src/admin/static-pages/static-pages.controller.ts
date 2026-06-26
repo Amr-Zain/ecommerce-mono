@@ -27,24 +27,15 @@ export class StaticPagesController {
     return this.staticPageService.getAllStticPagesWithAllSections(query);
   }
 
+  @Get(':id')
+  async getStaticPageByIdWithAllSections(@Param('id', ParseIntPipe) id: number): Promise<StaticPageInterface> {
+    return this.staticPageService.getStaticPageByIdWithAllSections(id);
+  }
+
   @Post()
   @UseLanguageTransform({ recursive: true })
   async createStaticPage(@Body() staticPage: CreateStaticPageDto): Promise<StaticPageInterface> {
     return this.staticPageService.createStaticPage(staticPage as unknown as Prisma.StaticPageCreateInput);
-  }
-
-  @Patch(':id')
-  @UseLanguageTransform({ recursive: true })
-  async updateStaticPage(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateStaticPageDto: UpdateStaticPageDto,
-  ): Promise<StaticPageInterface> {
-    return this.staticPageService.updateStaticPage(updateStaticPageDto as unknown as Prisma.StaticPageUpdateInput, id);
-  }
-
-  @Delete(':id')
-  async deleteStaticPage(@Param('id', ParseIntPipe) id: number): Promise<StaticPageInterface> {
-    return this.staticPageService.deleteStaticPage(id);
   }
 
   // Section Endpoints
@@ -66,5 +57,19 @@ export class StaticPagesController {
   @Delete('sections/:id')
   async deleteSection(@Param('id', ParseIntPipe) id: number) {
     return this.staticPageService.deleteSection(id);
+  }
+
+  @Patch(':id')
+  @UseLanguageTransform({ recursive: true })
+  async updateStaticPage(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateStaticPageDto: UpdateStaticPageDto,
+  ): Promise<StaticPageInterface> {
+    return this.staticPageService.updateStaticPage(updateStaticPageDto as unknown as Prisma.StaticPageUpdateInput, id);
+  }
+
+  @Delete(':id')
+  async deleteStaticPage(@Param('id', ParseIntPipe) id: number): Promise<StaticPageInterface> {
+    return this.staticPageService.deleteStaticPage(id);
   }
 }

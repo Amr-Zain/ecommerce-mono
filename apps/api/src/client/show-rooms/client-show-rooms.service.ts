@@ -6,13 +6,14 @@ import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 export class ClientShowRoomsService {
   constructor(@Inject(SHOW_ROOMS_REPOSITORY) private readonly showRoomsRepo: IShowRoomsRepository) {}
 
-  async findAll(langId: string = 'en') {
-    const query: AdvancedQueryDto = {
-      paginate: false,
-      filters: { isActive: true },
-      sort: { createdAt: 'desc' },
+  async findAll(langId: string = 'en', query: AdvancedQueryDto = {}) {
+    const queryOptions: AdvancedQueryDto = {
+      ...query,
+      paginate: query.paginate ?? true,
+      filters: { ...query.filters, isActive: true },
+      sort: query.sort ?? { createdAt: 'desc' },
     };
-    return this.showRoomsRepo.findAll(query, langId, {
+    return this.showRoomsRepo.findAll(queryOptions, langId, {
       select: {
         id: true,
         countryId: true,

@@ -17,6 +17,7 @@ import type { TabItem } from '@/components/ui/AnimatedTabs'
 import { motion, AnimatePresence } from 'motion/react'
 import { SettingsGeneralSkeleton } from '@/components/pagesComponents/Settings/General/Skeleton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@ecommerce/ui/components/card'
+import type { ApiResponse } from '@/types/api/http'
 
 export const Route = createFileRoute('/_main/settings/general/')({
   component: RouteComponent,

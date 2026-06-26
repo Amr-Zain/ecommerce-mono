@@ -12,7 +12,7 @@ type Category = {
   slug?: string
 }
 
-type ApiResponse<T> = {
+type ApiResponse<T> = BaseApiResponse<T> & {
   success: boolean
   data: T
 }
@@ -128,7 +128,7 @@ type EntityResponse<T> = {
   data: T
 }
 
-type ListResponse<T> = {
+type ListResponse<T> = BaseApiResponse<T[]> & {
   data: T[]
 }
 
@@ -195,3 +195,4 @@ export type {
   VerifyOtpInput,
   WishlistItem,
 }
+import type { ApiResponse as BaseApiResponse } from "@/types/api"

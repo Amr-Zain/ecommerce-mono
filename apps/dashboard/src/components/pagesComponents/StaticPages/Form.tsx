@@ -1,13 +1,26 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
 import { useNavigate } from '@tanstack/react-router'
-import { generateFinalOut, generateInitialValues } from '@/util/helpers'
+import { generateInitialValues } from '@/util/helpers'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { staticPageFields } from './Config'
 import { makePageSchema, StaticPageFormData } from '@/lib/schema'
 import { useTranslation } from 'react-i18next'
 
-
+function staticPagePayload(values: StaticPageFormData) {
+  return {
+    slug: values.slug,
+    en: {
+      title: values.title_en,
+      content: values.content_en,
+    },
+    ar: {
+      title: values.title_ar,
+      content: values.content_ar,
+    },
+    ...(values.image ? { image: typeof values.image === 'object' ? (values.image as any)?.hash ?? (values.image as any)?.uid : values.image } : {}),
+  }
+}
 
 export default function PageForm({ page }: { page?: any }) {
 
@@ -20,7 +33,7 @@ export default function PageForm({ page }: { page?: any }) {
   })
 
   const handleSubmit = (values: StaticPageFormData) => {
-    mutate(generateFinalOut(page, values))
+    mutate(staticPagePayload(values))
   }
   const {t} = useTranslation();
   const schema = makePageSchema(t);

@@ -15,6 +15,8 @@ type StaticPage = Prisma.StaticPageGetPayload<{
   };
 }>;
 
+const PAGE_SECTION_MEDIA_MODEL = 'pagesection';
+
 @Injectable()
 export class StaticPagesRepository extends BaseRepository<StaticPage> implements IStaticPagesRepository {
   protected readonly mediaConfig = {
@@ -52,23 +54,57 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
   ): Promise<StaticPage[] | PaginatedResult<StaticPage>> {
     const where = this.buildWhereClause(query);
     if (options?.select) {
-      return this.paginate(query, where, { select: options.select });
+      return this.mergeSectionMedia(await this.paginate(query, where, { select: options.select }));
     }
-    return this.paginate(query, where, {
-      include: {
-        translations: true,
-        sections: true,
-      },
-    });
+    return this.mergeSectionMedia(
+      await this.paginate(query, where, {
+        include: {
+          translations: true,
+          sections: { include: { translations: true }, orderBy: { sortOrder: 'asc' } },
+        },
+      }),
+    );
   }
 
   async getStaticPageByIdWithAllSections(id: number): Promise<StaticPage | null> {
-    return this.findById(id, {
-      include: {
-        translations: true,
-        sections: true,
-      },
-    });
+    return this.mergeSectionMedia(
+      await this.findById(id, {
+        include: {
+          translations: true,
+          sections: { include: { translations: true }, orderBy: { sortOrder: 'asc' } },
+        },
+      }),
+    );
+  }
+
+  async findActiveBySlugWithSections(slug: string, langId: string = 'en'): Promise<StaticPage | null> {
+    return this.mergeSectionMedia(
+      await this.findOne(
+        { slug, isActive: true },
+        {
+          select: {
+            id: true,
+            slug: true,
+            translations: {
+              where: { langId },
+              select: { title: true, content: true, langId: true },
+            },
+            sections: {
+              where: { isActive: true },
+              orderBy: { sortOrder: 'asc' },
+              select: {
+                id: true,
+                sortOrder: true,
+                translations: {
+                  where: { langId },
+                  select: { title: true, content: true, langId: true },
+                },
+              },
+            },
+          },
+        },
+      ),
+    );
   }
 
   async createStaticPage(data: Prisma.StaticPageCreateInput): Promise<StaticPage> {
@@ -81,6 +117,7 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
           const sectionTranslations = section['translations'] as Record<string, unknown>[];
           const sectionData = { ...section };
           delete sectionData['translations'];
+          delete sectionData['image'];
 
           return {
             ...sectionData,
@@ -107,6 +144,7 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
           const sectionData = { ...section };
           delete sectionData['translations'];
           delete sectionData['id'];
+          delete sectionData['image'];
 
           return {
             where: { id: sectionId || BigInt(0) },
@@ -144,9 +182,11 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
   ): Promise<Prisma.PageSectionGetPayload<{ include: { translations: true } }>> {
     const translations = (data['translations'] as Record<string, unknown>[]) || [];
     const sectionData = { ...data };
+    const image = sectionData['image'] as string | undefined;
     delete sectionData['translations'];
+    delete sectionData['image'];
 
-    return this.prisma.pageSection.create({
+    const section = await this.prisma.pageSection.create({
       data: {
         ...(sectionData as unknown as Prisma.PageSectionUncheckedCreateInput),
         staticPageId: BigInt(pageId),
@@ -156,6 +196,12 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
       },
       include: { translations: true },
     });
+
+    if (image) {
+      await this.handleMediaAttachment(section.id, { image }, undefined, PAGE_SECTION_MEDIA_MODEL);
+    }
+
+    return this.mergeSectionMedia(section);
   }
 
   async updateSection(
@@ -164,9 +210,11 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
   ): Promise<Prisma.PageSectionGetPayload<{ include: { translations: true } }>> {
     const translations = (data['translations'] as Record<string, unknown>[]) || [];
     const sectionData = { ...data };
+    const image = sectionData['image'] as string | undefined;
     delete sectionData['translations'];
+    delete sectionData['image'];
 
-    return this.prisma.pageSection.update({
+    const section = await this.prisma.pageSection.update({
       where: { id: BigInt(id) },
       data: {
         ...(sectionData as unknown as Prisma.PageSectionUpdateInput),
@@ -182,14 +230,67 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
         translations: true,
       },
     });
+
+    if (image) {
+      await this.handleMediaAttachment(BigInt(id), { image }, undefined, PAGE_SECTION_MEDIA_MODEL);
+    }
+
+    return this.mergeSectionMedia(section);
   }
 
   async deleteSection(id: number | bigint): Promise<Prisma.PageSectionGetPayload<{ include: { translations: true } }>> {
+    if (this.mediaService) {
+      await this.mediaService.deleteByEntity(PAGE_SECTION_MEDIA_MODEL, id, 'image');
+    }
     return this.prisma.pageSection.delete({
       where: { id: BigInt(id) },
       include: {
         translations: true,
       },
     });
+  }
+
+  private async mergeSectionMedia<T>(result: T): Promise<T> {
+    if (!this.mediaService || !result) return result;
+
+    const pages = this.extractPages(result);
+    const sections = pages.flatMap((page) => {
+      const pageSections = (page as { sections?: unknown }).sections;
+      return Array.isArray(pageSections) ? pageSections : [];
+    });
+
+    const directSection = this.isSectionLike(result) ? [result as Record<string, unknown>] : [];
+    const allSections = [...sections, ...directSection] as Record<string, unknown>[];
+    const sectionIds = allSections
+      .map((section) => section.id)
+      .filter((id): id is string | number | bigint => id !== undefined && id !== null)
+      .map((id) => BigInt(id));
+
+    if (sectionIds.length === 0) return result;
+
+    const mediaMap = await this.mediaService.findByEntities(PAGE_SECTION_MEDIA_MODEL, sectionIds);
+    for (const section of allSections) {
+      const id = section.id;
+      if (id === undefined || id === null) continue;
+      const media = mediaMap.get(String(id)) ?? [];
+      section.image = media.find((item) => item.collection === 'image') ?? null;
+    }
+
+    return result;
+  }
+
+  private extractPages(result: unknown): Record<string, unknown>[] {
+    if (!result || typeof result !== 'object') return [];
+    if (Array.isArray(result))
+      return result.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    const data = (result as { data?: unknown }).data;
+    if (Array.isArray(data))
+      return data.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object');
+    if ('sections' in (result as Record<string, unknown>)) return [result as Record<string, unknown>];
+    return [];
+  }
+
+  private isSectionLike(result: unknown): result is Record<string, unknown> {
+    return !!result && typeof result === 'object' && 'staticPageId' in (result as Record<string, unknown>);
   }
 }

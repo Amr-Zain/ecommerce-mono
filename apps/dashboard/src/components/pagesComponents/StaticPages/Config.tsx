@@ -10,16 +10,18 @@ import { StaticPage, AdditionalPage } from '@/types/api/staticPages'
 
 
 export const STATIC_PAGE_TYPE_OPTIONS = [
-  { label: 'staticPage.types.about_us', value: 'about_us' },
-  { label: 'staticPage.types.privacy_policy', value: 'privacy_policy' },
-  { label: 'staticPage.types.warranty_policy', value: 'warranty_policy' },
-  { label: 'staticPage.types.return_policy', value: 'return_policy' },
-  { label: 'staticPage.types.shipping_policy', value: 'shipping_policy' },
-  { label: 'staticPage.types.maintenance_guide', value: 'maintenance_guide' },
-  { label: 'staticPage.types.repair_guide', value: 'repair_guide' },
-  { label: 'staticPage.types.terms_of_use', value: 'terms_of_use' },
-  { label: 'staticPage.types.cookies_policy', value: 'cookies_policy' },
-  { label: 'staticPage.types.size_guide', value: 'size_guide' },
+  { label: 'staticPage.types.about_us', value: 'about-us' },
+  { label: 'staticPage.types.privacy_policy', value: 'privacy-policy' },
+  { label: 'staticPage.types.warranty_policy', value: 'warranty' },
+  { label: 'staticPage.types.return_policy', value: 'returns' },
+  { label: 'staticPage.types.shipping_policy', value: 'shipping-policy' },
+  { label: 'staticPage.types.maintenance_guide', value: 'maintenance-guide' },
+  { label: 'staticPage.types.repair_guide', value: 'repair-guide' },
+  { label: 'staticPage.types.terms_of_use', value: 'terms-of-use' },
+  { label: 'staticPage.types.cookies_policy', value: 'cookies-policy' },
+  { label: 'staticPage.types.size_guide', value: 'size-guide' },
+  { label: 'staticPage.types.payment', value: 'payment' },
+  { label: 'staticPage.types.purchase_protection', value: 'purchase-protection' },
 ]
 
 export const staticPagesColumns = (
@@ -30,8 +32,8 @@ export const staticPagesColumns = (
     imageColumn<StaticPage>('image', 'table.columns.image'),
     textColumn<StaticPage>('title', 'table.columns.title'),
     textDesc<StaticPage>('content', 'table.columns.description'),
-    textColumn<StaticPage>('type', 'table.columns.type', {
-      render: (value) => t(`staticPage.types.${value.getValue()}`),
+    textColumn<StaticPage>('slug', 'table.columns.slug', {
+      render: (value) => t(`staticPage.types.${String(value.getValue()).replaceAll('-', '_')}`, { defaultValue: value.getValue() }),
     }),
     booleanControlColumn<StaticPage>(
       'is_active',
@@ -92,27 +94,27 @@ export const AdditionalPagesActions = (
     {
       label: t('actions.edit'),
       onClick: (row: AdditionalPage) => open('edit', row),
-      permission: 'static-page-additionals',
+      permission: 'static-pages',
       action: 'update'
     },
     {
       label: t('actions.show'),
       onClick: (row: AdditionalPage) => open('view', row),
-      permission: 'static-page-additionals',
+      permission: 'static-pages',
       action: 'show'
     },
     {
       label: t('actions.delete'),
       danger: true,
       onClick: (row: AdditionalPage) => open('delete', row),
-      permission: 'static-page-additionals',
+      permission: 'static-pages',
       action: 'destroy'
     },
     {
       label: (row: AdditionalPage) =>
         t(`actions.${row.is_active ? 'deactivate' : 'activate'}`),
       onClick: (row: AdditionalPage) => open('active', row),
-      permission: 'static-page-additionals',
+      permission: 'static-pages',
       action: 'update'
     },
   ] as RowAction<AdditionalPage>[]
@@ -132,7 +134,7 @@ export const staticPageFields = (t: any): FieldProp<StaticPageFormData>[] => [
   },
   {
     type: 'select',
-    name: 'type',
+    name: 'slug',
     label: t('Form.labels.pageType'),
     inputProps: {
       placeholder: t('Form.placeholders.pageType'),

@@ -10,6 +10,7 @@ import {
 } from '@/lib/schema'
 import { generateFinalOut } from '@/util/helpers'
 import { useState } from 'react'
+import type { ApiResponseBase } from '@/types/api/http'
 
 export default function EditProfileForm({
   initialValues,

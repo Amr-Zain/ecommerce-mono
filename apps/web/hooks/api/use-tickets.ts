@@ -7,6 +7,7 @@ import { withSessionRetry } from "@/lib/client/session-request"
 import { useFetch } from "./use-fetch"
 import { useMutate } from "./use-mutate"
 import { queryKeys } from "./query-keys"
+import type { ApiResponse, PaginatedDataList, PaginatedList, PaginationMeta } from "@/types/api"
 
 export type TicketAttachment = {
   uuid: string
@@ -45,21 +46,8 @@ export type Ticket = {
   messages?: TicketMessage[]
 }
 
-type Envelope<T> = {
-  data: T
-}
-
-type PaginatedEnvelope<T> = {
-  data: {
-    items?: T[]
-    data?: T[]
-    meta: {
-      page: number
-      limit: number
-      total: number
-    }
-  }
-}
+type Envelope<T> = ApiResponse<T> & { data: T }
+type PaginatedEnvelope<T> = ApiResponse<PaginatedList<T> | PaginatedDataList<T>>
 
 type ApiTicketAttachment = TicketAttachment & {
   original_name?: string
@@ -221,9 +209,10 @@ function useTicketMessages(id?: string) {
         true
       )
       const payload = response.data
+      const meta = payload?.meta ?? ({ page: pageParam, limit: 20, total: 0 } satisfies PaginationMeta)
       return {
-        messages: (payload.items ?? payload.data ?? []).map(normalizeMessage),
-        meta: payload.meta,
+        messages: (payload && "items" in payload ? payload.items : payload?.data ?? []).map(normalizeMessage),
+        meta,
       }
     },
     getNextPageParam: (lastPage) => {

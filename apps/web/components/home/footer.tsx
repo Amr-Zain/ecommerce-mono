@@ -1,9 +1,21 @@
 import { ShoppingBag01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { getLocale } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
+import { cmsPageTitle, getCmsPages, pickCmsPages } from "@/lib/server/cms-pages"
 
-export function Footer() {
+export async function Footer() {
+  const locale = await getLocale()
+  const cmsPages = await getCmsPages(locale)
+  const policyPages = pickCmsPages(cmsPages, [
+    "returns",
+    "privacy-policy",
+    "purchase-protection",
+    "terms-of-use",
+    "cookies-policy",
+  ])
+
   return (
     <footer className="pt-8 pb-0 text-sm">
       <div className="grid gap-8 border-b pb-8 md:grid-cols-[1.5fr_1fr_1fr_1.3fr]">
@@ -32,9 +44,13 @@ export function Footer() {
         <div>
           <h3 className="mb-4 font-semibold">Terms & Policies</h3>
           <ul className="space-y-2 text-xs text-muted-foreground">
-            <li><Link href={ROUTES.static.returns} className="hover:text-foreground transition-colors">Returns & Exchanges</Link></li>
-            <li><Link href={ROUTES.static.privacyPolicy} className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
-            <li><Link href={ROUTES.static.purchaseProtection} className="hover:text-foreground transition-colors">Purchase Protection</Link></li>
+            {policyPages.map((page) => (
+              <li key={page.slug}>
+                <Link href={`/${page.slug}`} className="hover:text-foreground transition-colors">
+                  {cmsPageTitle(page)}
+                </Link>
+              </li>
+            ))}
             <li><Link href={ROUTES.profile.support.root} className="hover:text-foreground transition-colors">Help</Link></li>
           </ul>
         </div>

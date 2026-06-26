@@ -10,7 +10,6 @@ import { HasPermission } from '@/components/common/HasPermission'
 import { ShowHeader } from '@/components/common/show'
 
 import { LocalizedContentCard } from './LocalizedContentCard'
-
 import { AdditionalViewDialog } from './AdditionalViewDialog'
 import { AdditionalFormDialog } from './AdditionalFormDialog'
 
@@ -22,13 +21,13 @@ export function StaticPageShow({ page }: { page: StaticPage }) {
 
   const {
     id,
-    type,
+    slug,
     image,
     is_active,
     created_at,
     en = {},
     ar = {},
-    additionals = [],
+    sections = [],
   } = page
 
   const [viewOpen, setViewOpen] = React.useState(false)
@@ -60,15 +59,15 @@ export function StaticPageShow({ page }: { page: StaticPage }) {
       <ShowHeader
         variant="card"
         image={image?.url ? { src: image.url, alt: en?.title ?? ar?.title ?? 'Page' } : null}
-        title={en?.title ?? '—'}
-        secondaryTitle={ar?.title ?? '—'}
+        title={en?.title ?? '-'}
+        secondaryTitle={ar?.title ?? '-'}
         id={id}
         createdAt={created_at}
         badges={[
           { variant: is_active ? 'default' : 'secondary', children: is_active ? t('status.active') : t('status.inactive') },
-          ...(type ? [{
+          ...(slug ? [{
             className: 'text-xs text-muted-foreground',
-            children: `${t('menu.pages')} • ${t(`staticPage.types.${type}`) || '—'}`,
+            children: `${t('menu.pages')} - ${t(`staticPage.types.${slug.replaceAll('-', '_')}`, { defaultValue: slug })}`,
           } as any] : []),
         ]}
         preHeader={
@@ -89,7 +88,7 @@ export function StaticPageShow({ page }: { page: StaticPage }) {
 
       <AdditionalsCard
         staticPageId={id}
-        items={additionals}
+        items={sections}
         onCreate={openCreate}
         onEdit={openEdit}
         onView={openView}

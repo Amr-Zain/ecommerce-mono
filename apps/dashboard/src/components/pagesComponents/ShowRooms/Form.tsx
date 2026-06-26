@@ -61,12 +61,12 @@ export default function ShowRoomForm({ showRoom }: { showRoom?: ShowRoomDetail }
       queryKeys.showRooms.all(),
       queryKeys.showRooms.getShowRoom(String(showRoom?.id ?? 'new')),
     ],
-    method: 'post',
+    method: showRoom?.id ? 'patch' : 'post',
     redirectTo: '/show-rooms',
   })
 
   const handleSubmit = (v: ShowRoomFormData) => {
-    mutate({ ...generateFinalOut(showRoom, v), lat: v.map.lat, lng: v.map.lng, _method: showRoom?.id ? 'patch' : 'post' })
+    mutate({ ...generateFinalOut(showRoom, v), lat: v.map.lat, lng: v.map.lng })
   }
 
   return (

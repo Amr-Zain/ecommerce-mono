@@ -1,41 +1,95 @@
-import { I18nTranslations } from '@/generated/i18n.generated';
-import { i18nValidationMessage } from 'nestjs-i18n';
-import { IsString, IsNotEmpty, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { i18nValidationMessage } from 'nestjs-i18n';
 
-export class CreateStaticPageTranslaitonsDto {
+import { I18nTranslations } from '@/generated/i18n.generated';
+
+export class StaticPageTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "en", description: 'langId' })
+  @ApiProperty({ example: 'en', description: 'langId' })
   langId!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "Welcome to Ecommerce", description: 'title' })
+  @ApiProperty({ example: 'Privacy Policy', description: 'title' })
   title!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "This is a sample page content.", description: 'content' })
+  @ApiProperty({ example: 'How we collect, use, and protect customer data.', description: 'content' })
   content!: string;
 }
 
-export class CreateStaticPageDto {
-  @Type(() => CreateStaticPageTranslaitonsDto)
-  @ValidateNested({ each: true })
-  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
-  @ApiProperty({ example: [{ langId: 'en', title: 'Welcome to Ecommerce', content: 'This is a sample page content.' }, { langId: 'ar', title: 'مرحباً بكم في فييندرا', content: 'هذا محتوى صفحة تجريبي.' }], description: 'translations' })
-  translations!: CreateStaticPageTranslaitonsDto[];
+export class StaticPageSectionDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.IS_INT') })
+  @ApiPropertyOptional({ example: 12, description: 'id' })
+  id?: number;
 
-  @Type(() => CreateStaticPageTranslaitonsDto)
-  @ValidateNested({ each: true })
-  @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
-  @ApiProperty({ example: [{ langId: 'en', title: 'Welcome to Ecommerce', content: 'This is a sample page content.' }, { langId: 'ar', title: 'مرحباً بكم في فييندرا', content: 'هذا محتوى صفحة تجريبي.' }], description: 'sections' })
-  sections!: CreateStaticPageTranslaitonsDto[];
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.IS_INT') })
+  @ApiPropertyOptional({ example: 1, description: 'sortOrder' })
+  sortOrder?: number;
 
+  @IsOptional()
+  @IsBoolean({ message: i18nValidationMessage<I18nTranslations>('validation.IS_BOOLEAN') })
+  @ApiPropertyOptional({ example: true, description: 'isActive' })
+  isActive?: boolean;
+
+  @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  @ApiPropertyOptional({ example: 'uploaded-section-image-hash', description: 'image' })
+  image?: string;
+
+  @Type(() => StaticPageTranslationDto)
+  @ValidateNested({ each: true })
+  @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
+  @ApiProperty({
+    example: [
+      { langId: 'en', title: 'What is covered', content: 'Warranty coverage begins on delivery.' },
+      { langId: 'ar', title: 'What is covered', content: 'Warranty coverage begins on delivery.' },
+    ],
+    description: 'translations',
+  })
+  translations!: StaticPageTranslationDto[];
+}
+
+export class CreateStaticPageDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
-  @ApiProperty({ example: "mock-main-image-hash", description: 'image' })
-  image!: string;
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  @ApiProperty({ example: 'privacy-policy', description: 'slug' })
+  slug!: string;
+
+  @Type(() => StaticPageTranslationDto)
+  @ValidateNested({ each: true })
+  @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
+  @ApiProperty({
+    example: [
+      { langId: 'en', title: 'Privacy Policy', content: 'How we collect, use, and protect customer data.' },
+      { langId: 'ar', title: 'Privacy Policy', content: 'How we collect, use, and protect customer data.' },
+    ],
+    description: 'translations',
+  })
+  translations!: StaticPageTranslationDto[];
+
+  @IsOptional()
+  @Type(() => StaticPageSectionDto)
+  @ValidateNested({ each: true })
+  @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
+  @ApiPropertyOptional({ description: 'sections' })
+  sections?: StaticPageSectionDto[];
+
+  @IsOptional()
+  @IsBoolean({ message: i18nValidationMessage<I18nTranslations>('validation.IS_BOOLEAN') })
+  @ApiPropertyOptional({ example: true, description: 'isActive' })
+  isActive?: boolean;
+
+  @IsOptional()
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  @ApiPropertyOptional({ example: 'uploaded-main-image-hash', description: 'image' })
+  image?: string;
 }

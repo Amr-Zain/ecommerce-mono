@@ -11,6 +11,7 @@ import {
   CouponFormData,
   CouponPayload,
 } from '@/types/api/coupon'
+import type { ApiResponseBase } from '@/types/api/http'
 
 export default function CouponForm({ coupon }: { coupon?: Coupon }) {
   const { t } = useTranslation()

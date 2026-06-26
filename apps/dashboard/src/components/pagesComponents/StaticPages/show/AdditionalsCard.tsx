@@ -44,7 +44,7 @@ export function AdditionalsCard({
     useStatusMutation(
       selected?.id?.toString() || '0',
       'delete',
-      'static-page-additionals',
+      'static-pages/sections',
       queryKeys.pages.getPage(String(staticPageId)),
       [queryKeys.pages.getPage(String(staticPageId))],
     )
@@ -53,7 +53,7 @@ export function AdditionalsCard({
     useStatusMutation(
       selected?.id?.toString() || '0',
       'active',
-      'static-page-additionals',
+      'static-pages/sections',
       queryKeys.pages.getPage(String(staticPageId)),
       [queryKeys.pages.getPage(String(staticPageId))],
     )
@@ -118,7 +118,7 @@ export function AdditionalsCard({
             </CardDescription>
           </div>
 
-          <HasPermission entity="static-page-additionals" action="store">
+          <HasPermission entity="static-pages" action="store">
             <Button onClick={onCreate}>
               <Plus className="me-2 h-4 w-4" />
               {t('actions.create', { entity: t('common.additional') })}
@@ -149,11 +149,11 @@ export function AdditionalsCard({
                     />
                   </a>
                 ) : (
-                  <span className="text-muted-foreground">—</span>
+                  <span className="text-muted-foreground">-</span>
                 )}
               </div>
 
-              <div className="col-span-5 font-medium">{it.title || '—'}</div>
+              <div className="col-span-5 font-medium">{it.title || '-'}</div>
 
               <div className="col-span-1 place-self-center">
                 <Badge

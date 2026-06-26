@@ -17,7 +17,7 @@ import { HasPermission } from '@/components/common/HasPermission'
 const Supervisors = ({
   data,
 }: {
-  data: ApiResponse<Supervisor[]>,
+  data: ApiResponse<Supervisor, 'users'>,
 }) => {
   const { t } = useTranslation()
   const alert = useAlertModal()

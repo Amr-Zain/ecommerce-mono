@@ -1,6 +1,6 @@
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
-import { generateFinalOut, generateInitialValues } from '@/util/helpers'
+import { generateInitialValues } from '@/util/helpers'
 import { queryKeys } from '@/util/queryKeysFactory'
 import {
   makePageAdditionalSchema,
@@ -22,20 +22,27 @@ export default function PageAdditonalForm({
 
   const { mutate, isPending } = useMutate({
     endpoint: page?.id
-      ? `static-page-additionals/${page.id}`
-      : 'static-page-additionals',
+      ? `static-pages/sections/${page.id}`
+      : `static-pages/${spIdStr}/sections`,
     mutationKey: queryKeys.pages.getPage(spIdStr),
     invalidates: [queryKeys.pages.getPage(spIdStr)],
-    method: 'post',
-    formData: true,
+    method: page?.id ? 'patch' : 'post',
     onSuccess: () => onDone?.(),
   })
 
   const handleSubmit = (values: PageAdditionalForm) => {
     mutate({
-      ...generateFinalOut(page, values),
-      static_page_id: spIdStr,
-      _method: page?.id ? 'patch' : 'post',
+      en: {
+        title: values.title_en,
+        content: values.content_en,
+      },
+      ar: {
+        title: values.title_ar,
+        content: values.content_ar,
+      },
+      sort_order: page?.sort_order ?? 0,
+      is_active: page?.is_active ?? true,
+      ...(values.image ? { image: typeof values.image === 'object' ? (values.image as any)?.hash ?? (values.image as any)?.uid : values.image } : {}),
     })
   }
 
@@ -50,7 +57,7 @@ export default function PageAdditonalForm({
       inputProps: {
         maxFiles: 1,
         acceptedFileTypes: ['image/*'],
-        model: 'staticpageadditional',
+        model: 'pagesection',
         collection: 'image',
       },
     },

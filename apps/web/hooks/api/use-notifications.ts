@@ -10,6 +10,7 @@ import { useMutate } from "@/hooks/api/use-mutate"
 import { ROUTES } from "@/lib/routes"
 import { clientApiEndpoint, clientEndpoints } from "@/lib/client/client-api"
 import { toast } from "@ecommerce/ui/components/sonner"
+import type { ApiList, ApiResponse } from "@/types/api"
 
 type Notification = {
   id: string
@@ -80,8 +81,14 @@ function normalizeNotification(value: unknown): Notification | null {
 }
 
 function responseItems(response: unknown) {
-  const data = (response as { data?: unknown })?.data
-  const items = (data as { items?: unknown })?.items
+  const data = (response as ApiResponse<ApiList<unknown>>)?.data
+  const items = Array.isArray(data)
+    ? data
+    : data && "items" in data
+      ? data.items
+      : data && "data" in data
+        ? data.data
+        : []
   return Array.isArray(items)
     ? items
         .map(normalizeNotification)

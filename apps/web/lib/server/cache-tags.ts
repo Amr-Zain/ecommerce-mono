@@ -8,6 +8,7 @@ const cacheTags = {
   currentUser: "current-user",
   orders: "orders",
   products: "products",
+  staticPages: "static-pages",
   wishlist: "wishlist",
 } as const
 
@@ -17,12 +18,16 @@ function productTag(id: string) {
   return `${cacheTags.products}:${id}` as const
 }
 
-function revalidateCacheTag(tag: CacheTag | ReturnType<typeof productTag>) {
+function staticPageTag(slug: string) {
+  return `${cacheTags.staticPages}:${slug}` as const
+}
+
+function revalidateCacheTag(tag: CacheTag | ReturnType<typeof productTag> | ReturnType<typeof staticPageTag>) {
   revalidateTag(tag, "max")
 }
 
 function revalidateCacheTags(
-  tags: Array<CacheTag | ReturnType<typeof productTag>>
+  tags: Array<CacheTag | ReturnType<typeof productTag> | ReturnType<typeof staticPageTag>>
 ) {
   for (const tag of tags) {
     revalidateCacheTag(tag)
@@ -30,7 +35,7 @@ function revalidateCacheTags(
 }
 
 function invalidateCacheTags(
-  tags: Array<CacheTag | ReturnType<typeof productTag>>
+  tags: Array<CacheTag | ReturnType<typeof productTag> | ReturnType<typeof staticPageTag>>
 ) {
   for (const tag of tags) {
     updateTag(tag)
@@ -43,5 +48,6 @@ export {
   productTag,
   revalidateCacheTag,
   revalidateCacheTags,
+  staticPageTag,
 }
 export type { CacheTag }

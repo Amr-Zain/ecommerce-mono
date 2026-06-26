@@ -4,6 +4,7 @@ import { useFetch } from "@/hooks/api/use-fetch"
 import { queryKeys } from "@/hooks/api/query-keys"
 import type { EntityResponse, Product } from "@/hooks/api/domain"
 import { clientEndpoints } from "@/lib/client/client-api"
+import type { PaginatedList, PaginationMeta } from "@/types/api"
 
 type CatalogAttributeValue = {
   id: string
@@ -42,10 +43,11 @@ type CatalogProduct = {
     attributes: Array<{ attribute: string; value: string }>
   }
 }
+type CatalogMeta = PaginationMeta & {
+  total_pages: number
+}
 type CatalogResponse = {
-  data: {
-    items: CatalogProduct[]
-    meta: { page: number; limit: number; total: number; total_pages: number }
+  data: PaginatedList<CatalogProduct, CatalogMeta> & {
     facets: {
       attributes: CatalogAttributeFacet[]
       collections: CatalogCollectionFacet[]

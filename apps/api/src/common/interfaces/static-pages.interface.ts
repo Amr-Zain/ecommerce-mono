@@ -27,6 +27,7 @@ export interface PageSection {
   createdAt: Date;
   updatedAt: Date;
   translations?: PageSectionTranslation[];
+  image?: unknown;
 }
 
 export interface StaticPage {
@@ -49,6 +50,7 @@ export interface IStaticPagesRepository extends IBaseRepository<StaticPage> {
     options?: QueryOptions,
   ): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
   getStaticPageByIdWithAllSections(id: number): Promise<StaticPage | null>;
+  findActiveBySlugWithSections(slug: string, langId?: string): Promise<StaticPage | null>;
   createStaticPage(data: unknown): Promise<StaticPage>;
   updateStaticPage(data: unknown, id: number): Promise<StaticPage>;
   deleteStaticPage(id: number): Promise<StaticPage>;

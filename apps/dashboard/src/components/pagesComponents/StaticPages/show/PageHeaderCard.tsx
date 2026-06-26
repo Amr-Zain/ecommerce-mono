@@ -64,13 +64,13 @@ export function PageHeaderCard({
 
           <div>
             <CardTitle className="flex items-center gap-2">
-              {enTitle || '—'}
+              {enTitle || '-'}
               <Separator orientation="vertical" className="h-5" />
-              <span className="text-muted-foreground">{arTitle || '—'}</span>
+              <span className="text-muted-foreground">{arTitle || '-'}</span>
             </CardTitle>
 
             <CardDescription className="mt-1">
-              {/* {t('table.columns.code')} #{id} • {t('table.createdAt')}{' '} */}
+              {/* {t('table.columns.code')} #{id} - {t('table.createdAt')}{' '} */}
               {formatDate(created_at)}
             </CardDescription>
           </div>
@@ -82,7 +82,7 @@ export function PageHeaderCard({
           </Badge>
           {type ? (
             <span className="text-xs text-muted-foreground">
-              {t('menu.pages')} • {t(`staticPage.types.${type}`) || '—'}
+              {t('menu.pages')} - {t(`staticPage.types.${type}`) || '-'}
             </span>
           ) : null}
         </div>

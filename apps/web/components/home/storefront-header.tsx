@@ -4,6 +4,7 @@ import {
   Store04Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { getLocale } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 
@@ -15,14 +16,20 @@ import { cacheTags } from "@/lib/server/cache-tags"
 import { HeaderAccountControls } from "./header-account-controls"
 import { HeaderCommerceControls } from "./header-commerce-controls"
 import { StorefrontNavigation } from "./storefront-navigation"
+import { cmsPageTitle, getCmsPages, pickCmsPages } from "@/lib/server/cms-pages"
 
 export async function StorefrontHeader() {
   const saleItems = Array.from({ length: 8 })
-  const collections = await publicBackendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
-    revalidate: 60,
-    tags: [cacheTags.categories],
-    retries: 0,
-  }).then((response) => response.data).catch(() => [])
+  const locale = await getLocale()
+  const [collections, cmsPages] = await Promise.all([
+    publicBackendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
+      revalidate: 60,
+      tags: [cacheTags.categories],
+      retries: 0,
+    }).then((response) => response.data).catch(() => []),
+    getCmsPages(locale),
+  ])
+  const headerPages = pickCmsPages(cmsPages, ["returns", "payment", "warranty"])
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
@@ -44,24 +51,15 @@ export async function StorefrontHeader() {
       <div className="border-b">
         <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-4 text-xs text-muted-foreground sm:px-6">
           <div className="flex items-center gap-5">
-            <Link
-              href={ROUTES.static.returns}
-              className="transition-colors hover:text-foreground"
-            >
-              Shipping & Returns
-            </Link>
-            <Link
-              href={ROUTES.static.payment}
-              className="transition-colors hover:text-foreground"
-            >
-              Payment
-            </Link>
-            <Link
-              href={ROUTES.static.warranty}
-              className="transition-colors hover:text-foreground"
-            >
-              Warranty
-            </Link>
+            {headerPages.map((page) => (
+              <Link
+                key={page.slug}
+                href={`/${page.slug}`}
+                className="transition-colors hover:text-foreground"
+              >
+                {cmsPageTitle(page)}
+              </Link>
+            ))}
             <Link
               href={ROUTES.static.showRooms}
               className="transition-colors hover:text-foreground"

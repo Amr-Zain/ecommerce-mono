@@ -19,7 +19,7 @@ export class ShowRoomsService {
   ) {}
 
   async getAllShowRooms(query: AdvancedQueryDto, locale?: string): Promise<PaginatedResult<ShowRoom> | ShowRoom[]> {
-    return this.repo.findAll(query, locale, { include: { country: true } });
+    return this.repo.findAll(query, locale);
   }
 
   async createShowRoom(showRoom: CreateShowRoomDto): Promise<ShowRoom> {
