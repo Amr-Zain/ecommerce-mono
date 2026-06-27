@@ -51,6 +51,8 @@ const clientEndpoints = {
   mediaUpload: "media/upload",
   mediaUploadMany: "media/upload-many",
   wallet: "wallet",
+  walletDepositCancel: (id: string) => `wallet/deposits/${id}/cancel`,
+  walletDepositVerify: (id: string) => `wallet/deposits/${id}/verify`,
   walletDeposits: "wallet/deposits",
   walletTransactions: "wallet/transactions",
   walletWithdrawalCancel: (id: string) => `wallet/withdrawals/${id}/cancel`,

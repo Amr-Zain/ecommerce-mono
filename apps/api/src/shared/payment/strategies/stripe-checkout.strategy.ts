@@ -54,8 +54,10 @@ export class StripeCheckoutStrategy implements PaymentStrategy {
         ],
         mode: 'payment',
         expires_at: options?.expiresAt ? Math.floor(options.expiresAt.getTime() / 1000) : undefined,
-        success_url: `${domain}${STRIPE_CONFIG.successPath}?session_id=${STRIPE_CONFIG.checkoutSessionIdPlaceholder}&checkout_id=${referenceId}`,
-        cancel_url: `${domain}${STRIPE_CONFIG.cancelPath}`,
+        success_url:
+          options?.successUrl ||
+          `${domain}${STRIPE_CONFIG.successPath}?session_id=${STRIPE_CONFIG.checkoutSessionIdPlaceholder}&checkout_id=${referenceId}`,
+        cancel_url: options?.cancelUrl || `${domain}${STRIPE_CONFIG.cancelPath}`,
         metadata: {
           ...options?.metadata,
           checkoutId: referenceId,

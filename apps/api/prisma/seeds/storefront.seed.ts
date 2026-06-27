@@ -272,6 +272,20 @@ const countrySeeds = [
   },
 ] as const;
 
+const citySeeds = [
+  { id: 4101n, countryId: 4001n, en: 'Riyadh', ar: 'الرياض' },
+  { id: 4102n, countryId: 4001n, en: 'Jeddah', ar: 'جدة' },
+  { id: 4103n, countryId: 4001n, en: 'Dammam', ar: 'الدمام' },
+  { id: 4104n, countryId: 4001n, en: 'Makkah', ar: 'مكة' },
+  { id: 4105n, countryId: 4001n, en: 'Madinah', ar: 'المدينة' },
+  { id: 4201n, countryId: 4002n, en: 'Dubai', ar: 'دبي' },
+  { id: 4202n, countryId: 4002n, en: 'Abu Dhabi', ar: 'أبو ظبي' },
+  { id: 4203n, countryId: 4002n, en: 'Sharjah', ar: 'الشارقة' },
+  { id: 4301n, countryId: 4003n, en: 'Cairo', ar: 'القاهرة' },
+  { id: 4302n, countryId: 4003n, en: 'Alexandria', ar: 'الإسكندرية' },
+  { id: 4303n, countryId: 4003n, en: 'Giza', ar: 'الجيزة' },
+] as const;
+
 const staticPageSeeds = [
   {
     id: 5001n,
@@ -597,6 +611,31 @@ export async function seedStorefront(prisma: PrismaClient) {
           currencyCode: translation.currencyCode,
         },
         create: { recordId: country.id, ...translation },
+      });
+    }
+  }
+
+  for (const city of citySeeds) {
+    await prisma.city.upsert({
+      where: { id: city.id },
+      update: {
+        countryId: city.countryId,
+        isActive: true,
+      },
+      create: {
+        id: city.id,
+        countryId: city.countryId,
+        isActive: true,
+      },
+    });
+    for (const translation of [
+      { langId: 'en', name: city.en },
+      { langId: 'ar', name: city.ar },
+    ]) {
+      await prisma.cityTranslation.upsert({
+        where: { recordId_langId: { recordId: city.id, langId: translation.langId } },
+        update: { name: translation.name },
+        create: { recordId: city.id, ...translation },
       });
     }
   }

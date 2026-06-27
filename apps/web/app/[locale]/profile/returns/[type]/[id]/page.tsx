@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { useParams } from "next/navigation"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
@@ -175,9 +176,11 @@ function RequestItem({ item, kind }: { item: ReturnExchangeItem; kind: ProfileRe
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex gap-3">
           {item.image_snapshot ? (
-            <img
+            <Image
               src={item.image_snapshot}
               alt={item.product_name_snapshot ?? `Order item ${item.order_item_id}`}
+              width={64}
+              height={64}
               className="size-16 rounded-xl border object-cover"
             />
           ) : (

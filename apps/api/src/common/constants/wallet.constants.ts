@@ -45,6 +45,7 @@ export const WALLET_WITHDRAWAL_METHODS = {
 export const WALLET_REFERENCE_TYPES = {
   walletDeposit: 'wallet_deposit',
   walletWithdrawal: 'wallet_withdrawal',
+  pendingCheckout: 'pending_checkout',
   order: 'order',
   returnRequest: 'return_request',
   exchangeRequest: 'exchange_request',

@@ -18,6 +18,20 @@ type OrderItem = {
   variant_info_snapshot?: Record<string, string> | null
 }
 
+type OrderPayment = {
+  id: string
+  amount: number
+  payment_method: string
+  payment_status: string
+  transaction_ref?: string | null
+  gateway_response?: unknown
+  currency: string
+  paid_at?: string | null
+  created_at: string
+  refund_source?: string | null
+  refund_reason?: string | null
+}
+
 type Order = {
   id: string
   order_number?: string | null
@@ -37,8 +51,13 @@ type Order = {
   subtotal: number
   discount_amount: number
   vat_value: number
+  original_paid_amount?: number
+  refunded_amount?: number
+  reserved_refund_amount?: number
+  remaining_refundable_amount?: number
   status_history: Array<{ new_status: string; created_at: string }>
   items: OrderItem[]
+  payments?: OrderPayment[]
 }
 
 type OrderAction = "cancel" | "return_exchange" | "track" | "view"
@@ -320,4 +339,4 @@ export {
   useUpdateAddress,
 }
 export { isReturnExchangeEligible, orderActions, orderStatusMessage }
-export type { ExchangeRequest, Order, OrderAction, OrderItem, ReturnExchangeItem, ReturnRequest }
+export type { ExchangeRequest, Order, OrderAction, OrderItem, OrderPayment, ReturnExchangeItem, ReturnRequest }

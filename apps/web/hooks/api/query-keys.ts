@@ -27,8 +27,14 @@ const queryKeys = {
     ["products", params ?? {}] as const,
   wishlist: () => ["wishlist"] as const,
   wallet: () => ["wallet"] as const,
-  walletTransactions: () => ["wallet", "transactions"] as const,
-  walletWithdrawals: () => ["wallet", "withdrawals"] as const,
+  walletTransactions: (params?: Record<string, unknown>) =>
+    params === undefined
+      ? (["wallet", "transactions"] as const)
+      : (["wallet", "transactions", params] as const),
+  walletWithdrawals: (params?: Record<string, unknown>) =>
+    params === undefined
+      ? (["wallet", "withdrawals"] as const)
+      : (["wallet", "withdrawals", params] as const),
 }
 
 export { queryKeys }

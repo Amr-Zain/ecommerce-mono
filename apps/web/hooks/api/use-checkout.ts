@@ -49,6 +49,33 @@ type CheckoutPreview = {
     discount_value: number
   } | null
   totals: CheckoutTotals
+  wallet?: {
+    available_balance?: number
+    availableBalance?: number
+    pending_balance?: number
+    pendingBalance?: number
+    requested_amount?: number
+    requestedAmount?: number
+    applied_amount?: number
+    appliedAmount?: number
+    remaining_amount?: number
+    remainingAmount?: number
+    can_cover_full_amount?: boolean
+    canCoverFullAmount?: boolean
+  }
+  payment_breakdown?: {
+    wallet_amount?: number
+    walletAmount?: number
+    external_amount?: number
+    externalAmount?: number
+    total_amount?: number
+    totalAmount?: number
+  }
+  paymentBreakdown?: {
+    walletAmount?: number
+    externalAmount?: number
+    totalAmount?: number
+  }
 }
 
 type PlaceOrderResult = {
@@ -60,6 +87,10 @@ type PlaceOrderResult = {
   payment_status: string
   redirect_url?: string | null
   client_secret?: string | null
+  wallet_amount?: number
+  walletAmount?: number
+  external_amount?: number
+  externalAmount?: number
 }
 
 type VerifyPaymentResult = {
@@ -82,6 +113,7 @@ type CreateAddressInput = {
 type CheckoutPreviewInput = {
   addressId: number
   couponCode?: string
+  walletAmount?: number
 }
 
 type PlaceOrderInput = CheckoutPreviewInput & {

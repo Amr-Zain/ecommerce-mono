@@ -123,7 +123,7 @@ export default function SupportTicketsPage() {
             </EmptyMedia>
             <EmptyTitle className="text-xl">No support tickets</EmptyTitle>
             <EmptyDescription>
-              You haven't opened any support tickets yet. Need help with an
+              You haven&apos;t opened any support tickets yet. Need help with an
               order?
             </EmptyDescription>
           </EmptyHeader>

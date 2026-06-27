@@ -4,7 +4,7 @@ import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '@/prisma';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
-import { PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
+import { PAYMENT_CURRENCIES, PAYMENT_METHODS, PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
 import { PaymentService } from '@/shared/payment/payment.service';
 import {
   WALLET_LIMITS,
@@ -30,6 +30,7 @@ import {
 } from './wallet.repository';
 
 const toPrismaJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
+type WalletDbClient = Prisma.TransactionClient | PrismaService;
 
 @Injectable()
 export class WalletService {
@@ -42,6 +43,249 @@ export class WalletService {
 
   async getClientWallet(userId: bigint) {
     return this.formatWallet(await this.walletRepository.getOrCreateWallet(userId));
+  }
+
+  async reserveForCheckout(
+    tx: WalletDbClient,
+    input: { userId: bigint; amount: number; pendingCheckoutId: bigint; metadata?: Record<string, unknown> },
+  ) {
+    const amount = this.normalizeMoney(input.amount);
+    if (amount <= 0) return null;
+
+    const wallet = await this.getOrCreateWalletForUser(tx, input.userId);
+    this.assertWalletActive(wallet.status);
+
+    const lock = await tx.wallet.updateMany({
+      where: {
+        id: wallet.id,
+        status: WALLET_STATUSES.active,
+        availableBalance: { gte: amount },
+      },
+      data: {
+        availableBalance: { decrement: amount },
+        pendingBalance: { increment: amount },
+      },
+    });
+    if (lock.count !== 1) {
+      throw new BadRequestException(this.i18n.t('errors.wallet_insufficient_balance'));
+    }
+
+    return tx.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        userId: input.userId,
+        type: WALLET_TRANSACTION_TYPES.hold,
+        direction: WALLET_TRANSACTION_DIRECTIONS.debit,
+        amount,
+        currency: wallet.currency,
+        status: WALLET_TRANSACTION_STATUSES.pending,
+        paymentMethod: PAYMENT_METHODS.wallet,
+        referenceType: WALLET_REFERENCE_TYPES.pendingCheckout,
+        referenceId: input.pendingCheckoutId.toString(),
+        description: 'Wallet checkout hold',
+        metadata: toPrismaJson({
+          pendingCheckoutId: input.pendingCheckoutId.toString(),
+          ...(input.metadata || {}),
+        }),
+      },
+      include: { wallet: true, user: true },
+    });
+  }
+
+  async captureCheckoutHold(
+    tx: WalletDbClient,
+    input: { pendingCheckoutId: bigint; orderId: bigint; metadata?: Record<string, unknown> },
+  ) {
+    const hold = await tx.walletTransaction.findFirst({
+      where: {
+        referenceType: WALLET_REFERENCE_TYPES.pendingCheckout,
+        referenceId: input.pendingCheckoutId.toString(),
+        type: WALLET_TRANSACTION_TYPES.hold,
+        status: WALLET_TRANSACTION_STATUSES.pending,
+      },
+    });
+    if (!hold) return null;
+
+    const lock = await tx.wallet.updateMany({
+      where: {
+        id: hold.walletId,
+        pendingBalance: { gte: hold.amount },
+      },
+      data: {
+        pendingBalance: { decrement: hold.amount },
+      },
+    });
+    if (lock.count !== 1) {
+      await tx.walletTransaction.update({
+        where: { id: hold.id },
+        data: {
+          status: WALLET_TRANSACTION_STATUSES.requiresReview,
+          metadata: toPrismaJson({
+            pendingCheckoutId: input.pendingCheckoutId.toString(),
+            orderId: input.orderId.toString(),
+            reason: 'wallet_pending_balance_capture_failed',
+            ...(input.metadata || {}),
+          }),
+        },
+      });
+      throw new BadRequestException(this.i18n.t('errors.wallet_insufficient_balance'));
+    }
+
+    return tx.walletTransaction.update({
+      where: { id: hold.id },
+      data: {
+        type: WALLET_TRANSACTION_TYPES.purchase,
+        status: WALLET_TRANSACTION_STATUSES.completed,
+        referenceType: WALLET_REFERENCE_TYPES.order,
+        referenceId: input.orderId.toString(),
+        description: 'Wallet order payment',
+        completedAt: new Date(),
+        metadata: toPrismaJson({
+          pendingCheckoutId: input.pendingCheckoutId.toString(),
+          orderId: input.orderId.toString(),
+          ...(input.metadata || {}),
+        }),
+      },
+      include: { wallet: true, user: true },
+    });
+  }
+
+  async releaseCheckoutHold(
+    tx: WalletDbClient,
+    input: { pendingCheckoutId: bigint; status?: string; reason?: string; metadata?: Record<string, unknown> },
+  ) {
+    const hold = await tx.walletTransaction.findFirst({
+      where: {
+        referenceType: WALLET_REFERENCE_TYPES.pendingCheckout,
+        referenceId: input.pendingCheckoutId.toString(),
+        type: WALLET_TRANSACTION_TYPES.hold,
+        status: WALLET_TRANSACTION_STATUSES.pending,
+      },
+    });
+    if (!hold) return null;
+
+    await tx.wallet.update({
+      where: { id: hold.walletId },
+      data: {
+        pendingBalance: { decrement: hold.amount },
+        availableBalance: { increment: hold.amount },
+      },
+    });
+
+    const releasedStatus =
+      input.status === PAYMENT_STATUSES.expired
+        ? WALLET_TRANSACTION_STATUSES.expired
+        : input.status === PAYMENT_STATUSES.failed
+          ? WALLET_TRANSACTION_STATUSES.failed
+          : WALLET_TRANSACTION_STATUSES.cancelled;
+
+    return tx.walletTransaction.update({
+      where: { id: hold.id },
+      data: {
+        type: WALLET_TRANSACTION_TYPES.release,
+        status: releasedStatus,
+        description: input.reason || 'Wallet checkout hold released',
+        failedAt:
+          releasedStatus === WALLET_TRANSACTION_STATUSES.failed || releasedStatus === WALLET_TRANSACTION_STATUSES.expired
+            ? new Date()
+            : undefined,
+        metadata: toPrismaJson({
+          pendingCheckoutId: input.pendingCheckoutId.toString(),
+          paymentStatus: input.status,
+          ...(input.metadata || {}),
+        }),
+      },
+      include: { wallet: true, user: true },
+    });
+  }
+
+  async debitForOrder(
+    tx: WalletDbClient,
+    input: { userId: bigint; orderId: bigint; amount: number; metadata?: Record<string, unknown> },
+  ) {
+    const amount = this.normalizeMoney(input.amount);
+    if (amount <= 0) return null;
+
+    const wallet = await this.getOrCreateWalletForUser(tx, input.userId);
+    this.assertWalletActive(wallet.status);
+
+    const lock = await tx.wallet.updateMany({
+      where: {
+        id: wallet.id,
+        status: WALLET_STATUSES.active,
+        availableBalance: { gte: amount },
+      },
+      data: {
+        availableBalance: { decrement: amount },
+      },
+    });
+    if (lock.count !== 1) {
+      throw new BadRequestException(this.i18n.t('errors.wallet_insufficient_balance'));
+    }
+
+    return tx.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        userId: input.userId,
+        type: WALLET_TRANSACTION_TYPES.purchase,
+        direction: WALLET_TRANSACTION_DIRECTIONS.debit,
+        amount,
+        currency: wallet.currency,
+        status: WALLET_TRANSACTION_STATUSES.completed,
+        paymentMethod: PAYMENT_METHODS.wallet,
+        referenceType: WALLET_REFERENCE_TYPES.order,
+        referenceId: input.orderId.toString(),
+        description: 'Wallet order payment',
+        completedAt: new Date(),
+        metadata: toPrismaJson({
+          orderId: input.orderId.toString(),
+          ...(input.metadata || {}),
+        }),
+      },
+      include: { wallet: true, user: true },
+    });
+  }
+
+  async creditRefund(
+    tx: WalletDbClient,
+    input: {
+      userId: bigint;
+      amount: number;
+      referenceType: string;
+      referenceId: string;
+      description?: string;
+      metadata?: Record<string, unknown>;
+    },
+  ) {
+    const amount = this.normalizeMoney(input.amount);
+    if (amount <= 0) return null;
+
+    const wallet = await this.getOrCreateWalletForUser(tx, input.userId);
+    this.assertWalletActive(wallet.status);
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { availableBalance: { increment: amount } },
+    });
+
+    return tx.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        userId: input.userId,
+        type: WALLET_TRANSACTION_TYPES.refund,
+        direction: WALLET_TRANSACTION_DIRECTIONS.credit,
+        amount,
+        currency: wallet.currency,
+        status: WALLET_TRANSACTION_STATUSES.completed,
+        paymentMethod: PAYMENT_METHODS.wallet,
+        referenceType: input.referenceType,
+        referenceId: input.referenceId,
+        description: input.description || 'Wallet refund',
+        completedAt: new Date(),
+        metadata: input.metadata ? toPrismaJson(input.metadata) : undefined,
+      },
+      include: { wallet: true, user: true },
+    });
   }
 
   async createDeposit(userId: bigint, dto: CreateWalletDepositDto) {
@@ -79,6 +323,8 @@ export class WalletService {
           walletId: wallet.id.toString(),
           userId: userId.toString(),
         },
+        successUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/profile/wallet?deposit_id=${transaction.id.toString()}&deposit_status=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/profile/wallet?deposit_id=${transaction.id.toString()}&deposit_status=cancelled`,
       },
     );
 
@@ -149,6 +395,35 @@ export class WalletService {
     }
 
     return this.formatTransaction(transaction);
+  }
+
+  async cancelClientDeposit(userId: bigint, id: bigint) {
+    const transaction = await this.walletRepository.findDepositForUser(userId, id, WALLET_TRANSACTION_TYPES.deposit);
+    if (!transaction) throw new NotFoundException(this.i18n.t('errors.wallet_transaction_not_found'));
+
+    if (transaction.status === WALLET_TRANSACTION_STATUSES.completed) {
+      return this.formatTransaction(transaction);
+    }
+    if (transaction.status !== WALLET_TRANSACTION_STATUSES.pending) {
+      return this.formatTransaction(transaction);
+    }
+
+    let gatewayResponse: unknown = { cancelledByClient: true };
+    if (transaction.paymentMethod && transaction.transactionRef) {
+      gatewayResponse = await this.paymentService.cancelPayment(transaction.paymentMethod, transaction.transactionRef);
+    }
+
+    const cancelled = await this.prisma.walletTransaction.update({
+      where: { id: transaction.id },
+      data: {
+        status: WALLET_TRANSACTION_STATUSES.cancelled,
+        failedAt: new Date(),
+        gatewayResponse: toPrismaJson(gatewayResponse),
+      },
+      include: { wallet: true, user: true },
+    });
+
+    return this.formatTransaction(cancelled);
   }
 
   async completeDepositTransaction(id: bigint, transactionRef: string, gatewayResponse: unknown) {
@@ -433,6 +708,30 @@ export class WalletService {
     if (status !== WALLET_STATUSES.active) {
       throw new BadRequestException(this.i18n.t('errors.wallet_not_active'));
     }
+  }
+
+  private normalizeMoney(amount: number) {
+    return Number(Math.max(0, amount || 0).toFixed(2));
+  }
+
+  private async getOrCreateWalletForUser(tx: WalletDbClient, userId: bigint) {
+    return tx.wallet.upsert({
+      where: {
+        userId_currency: {
+          userId,
+          currency: PAYMENT_CURRENCIES.sar,
+        },
+      },
+      create: {
+        userId,
+        currency: PAYMENT_CURRENCIES.sar,
+        availableBalance: 0,
+        pendingBalance: 0,
+        status: WALLET_STATUSES.active,
+      },
+      update: {},
+      include: { user: true },
+    });
   }
 
   private async findWithdrawalOrThrow(id: bigint, tx: Prisma.TransactionClient | PrismaService = this.prisma) {

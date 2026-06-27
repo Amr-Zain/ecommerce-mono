@@ -5,12 +5,16 @@ import { PrismaService } from '@/prisma';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { INVENTORY_REASONS } from '@/common/constants/commerce.constants';
 import {
+  ONLINE_PAYMENT_METHODS,
   ORDER_STATUS_ACTORS,
   PAYMENT_CURRENCIES,
+  PAYMENT_METHODS,
   PAYMENT_STATUSES,
   REFUND_SOURCES,
 } from '@/shared/payment/payment.constants';
 import { PaymentService } from '@/shared/payment/payment.service';
+import { WALLET_REFERENCE_TYPES } from '@/common/constants/wallet.constants';
+import { WalletService } from '@/shared/wallet/wallet.service';
 import {
   IOrdersRepository,
   ORDERS_REPOSITORY,
@@ -32,12 +36,18 @@ import {
 const toJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 type ActorType = (typeof ORDER_STATUS_ACTORS)[keyof typeof ORDER_STATUS_ACTORS];
+type RefundAllocation = {
+  destination: 'wallet' | 'original_payment' | 'manual';
+  amount: number;
+  paymentTransactionId?: string;
+};
 
 @Injectable()
 export class OrderLifecycleService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paymentService: PaymentService,
+    private readonly walletService: WalletService,
     private readonly i18n: I18nService<I18nTranslations>,
     @Inject(ORDERS_REPOSITORY) private readonly ordersRepository: IOrdersRepository,
     @Inject(PAYMENT_TRANSACTIONS_REPOSITORY)
@@ -81,6 +91,7 @@ export class OrderLifecycleService {
     actorType: ActorType;
     actorUserId?: bigint;
     reason?: string;
+    refundAllocations?: RefundAllocation[];
   }) {
     const reservation = await this.prisma.$transaction(async (tx) => {
       await this.ordersRepository.lock(input.orderId, tx);
@@ -107,6 +118,49 @@ export class OrderLifecycleService {
       if (summary.remainingRefundableAmount <= 0) {
         await this.finalizeCancellation(tx, order, input);
         return null;
+      }
+
+      if (input.refundAllocations?.length) {
+        const allocations = this.normalizeRefundAllocations(summary.remainingRefundableAmount, input.refundAllocations);
+        const attempts = [];
+        for (const [index, allocation] of allocations.entries()) {
+          if (allocation.destination !== 'original_payment') continue;
+          const originalPayment = this.findOriginalPayment(order.payments, allocation);
+          if (!(ONLINE_PAYMENT_METHODS as readonly string[]).includes(originalPayment.paymentMethod)) continue;
+          if (!originalPayment.transactionRef) {
+            throw new BadRequestException(this.i18n.t('errors.order_completed_payment_not_found'));
+          }
+          const idempotencyKey = `cancel_order_${order.id.toString()}_${index}_${Date.now()}`;
+          const attempt = await this.paymentTransactionsRepository.create(
+            {
+              orderId: order.id,
+              amount: allocation.amount,
+              paymentMethod: originalPayment.paymentMethod,
+              paymentStatus: PAYMENT_STATUSES.processingPayment,
+              transactionRef: `cancel_refund_${order.id.toString()}_${index}`,
+              gatewayResponse: toJson({ originalTransactionRef: originalPayment.transactionRef }),
+              currency: originalPayment.currency || PAYMENT_CURRENCIES.sar,
+              refundSource: REFUND_SOURCES.cancellation,
+              refundReason: input.reason,
+              idempotencyKey,
+              requestedById: input.actorUserId,
+            },
+            tx,
+          );
+          attempts.push({ attempt, originalPayment, allocation });
+        }
+        if (attempts.length > 0) {
+          await this.ordersRepository.updateOrder(order.id, { paymentStatus: PAYMENT_STATUSES.processingPayment }, tx);
+        }
+        return {
+          allocated: true as const,
+          orderId: order.id,
+          allocations,
+          attempts,
+          actorType: input.actorType,
+          actorUserId: input.actorUserId,
+          reason: input.reason,
+        };
       }
 
       const completedPayment = order.payments.find(
@@ -148,7 +202,14 @@ export class OrderLifecycleService {
     });
 
     if (!reservation) return;
-    await this.processCancellationRefund(reservation.attemptId, reservation);
+    if ((reservation as { allocated?: boolean }).allocated) {
+      await this.processAllocatedCancellationRefund(reservation as Parameters<OrderLifecycleService['processAllocatedCancellationRefund']>[0]);
+      return;
+    }
+    const gatewayReservation = reservation as Parameters<OrderLifecycleService['processCancellationRefund']>[1] & {
+      attemptId: bigint;
+    };
+    await this.processCancellationRefund(gatewayReservation.attemptId, gatewayReservation);
   }
 
   async retryCancellationRefund(orderId: bigint, refundId: bigint, adminId?: bigint) {
@@ -332,6 +393,187 @@ export class OrderLifecycleService {
         reason: input.reason,
       });
     });
+  }
+
+  private async processAllocatedCancellationRefund(input: {
+    orderId: bigint;
+    allocations: RefundAllocation[];
+    attempts: Array<{ attempt: any; originalPayment: any; allocation: RefundAllocation }>;
+    actorType: ActorType;
+    actorUserId?: bigint;
+    reason?: string;
+  }) {
+    for (const item of input.attempts) {
+      try {
+        const refund = await this.paymentService.refundPayment(
+          item.originalPayment.paymentMethod,
+          item.originalPayment.transactionRef,
+          item.allocation.amount,
+          { idempotencyKey: item.attempt.idempotencyKey },
+        );
+        if (refund.status !== PAYMENT_STATUSES.refunded) {
+          await this.markCancellationRefundRequiresReview(
+            item.attempt.id,
+            item.originalPayment.transactionRef,
+            refund.gatewayResponse || {},
+          );
+          throw new BadRequestException(this.i18n.t('errors.order_cancellation_refund_requires_review'));
+        }
+        item.attempt.gatewayRefundResponse = refund.gatewayResponse || {};
+      } catch (error) {
+        await this.markCancellationRefundRequiresReview(item.attempt.id, item.originalPayment.transactionRef, {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw new BadRequestException(this.i18n.t('errors.order_cancellation_refund_requires_review'));
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.ordersRepository.lock(input.orderId, tx);
+      const order = await this.ordersRepository.findLifecycleOrder(input.orderId, tx);
+      if (!order) throw new NotFoundException(this.i18n.t('errors.order_not_found'));
+      if (order.status === 'cancelled') return;
+
+      const attemptByAllocation = new Map<RefundAllocation, { attempt: any; originalPayment: any }>();
+      for (const item of input.attempts) {
+        attemptByAllocation.set(item.allocation, item);
+      }
+
+      for (const [index, allocation] of input.allocations.entries()) {
+        let paymentId: bigint | null = null;
+        if (allocation.destination === 'wallet') {
+          const walletTransaction = await this.walletService.creditRefund(tx, {
+            userId: order.userId,
+            amount: allocation.amount,
+            referenceType: WALLET_REFERENCE_TYPES.order,
+            referenceId: order.id.toString(),
+            description: 'Cancellation refund to wallet',
+            metadata: {
+              refundSource: REFUND_SOURCES.cancellation,
+              adminId: input.actorUserId?.toString() || null,
+            },
+          });
+          const payment = await this.paymentTransactionsRepository.create(
+            {
+              orderId: order.id,
+              amount: allocation.amount,
+              paymentMethod: PAYMENT_METHODS.wallet,
+              paymentStatus: PAYMENT_STATUSES.refunded,
+              transactionRef: `cancel_wallet_refund_${order.id.toString()}_${index}`,
+              gatewayResponse: toJson({ walletTransactionId: walletTransaction?.id.toString() }),
+              currency: PAYMENT_CURRENCIES.sar,
+              refundSource: REFUND_SOURCES.cancellation,
+              refundReason: input.reason,
+              requestedById: input.actorUserId,
+              paidAt: new Date(),
+            },
+            tx,
+          );
+          paymentId = payment.id;
+        } else if (allocation.destination === 'manual') {
+          const payment = await this.paymentTransactionsRepository.create(
+            {
+              orderId: order.id,
+              amount: allocation.amount,
+              paymentMethod: 'manual',
+              paymentStatus: PAYMENT_STATUSES.refunded,
+              transactionRef: `cancel_manual_refund_${order.id.toString()}_${index}`,
+              gatewayResponse: toJson({ manual: true }),
+              currency: PAYMENT_CURRENCIES.sar,
+              refundSource: REFUND_SOURCES.cancellation,
+              refundReason: input.reason,
+              requestedById: input.actorUserId,
+              paidAt: new Date(),
+            },
+            tx,
+          );
+          paymentId = payment.id;
+        } else {
+          const attempt = attemptByAllocation.get(allocation);
+          if (attempt) {
+            await this.paymentTransactionsRepository.update(
+              attempt.attempt.id,
+              {
+                paymentStatus: PAYMENT_STATUSES.refunded,
+                gatewayResponse: toJson({
+                  originalTransactionRef: attempt.originalPayment.transactionRef,
+                  refundResponse: attempt.attempt.gatewayRefundResponse || {},
+                }),
+                paidAt: new Date(),
+              },
+              tx,
+            );
+            paymentId = attempt.attempt.id;
+          } else {
+            const originalPayment = this.findOriginalPayment(order.payments, allocation);
+            const payment = await this.paymentTransactionsRepository.create(
+              {
+                orderId: order.id,
+                amount: allocation.amount,
+                paymentMethod: originalPayment.paymentMethod,
+                paymentStatus: PAYMENT_STATUSES.refunded,
+                transactionRef: `cancel_original_refund_${order.id.toString()}_${index}`,
+                gatewayResponse: toJson({ manual: true, originalTransactionRef: originalPayment.transactionRef }),
+                currency: originalPayment.currency || PAYMENT_CURRENCIES.sar,
+                refundSource: REFUND_SOURCES.cancellation,
+                refundReason: input.reason,
+                requestedById: input.actorUserId,
+                paidAt: new Date(),
+              },
+              tx,
+            );
+            paymentId = payment.id;
+          }
+        }
+
+        if (paymentId) {
+          await this.domainEvents.publish(
+            createDomainEvent<PaymentCompletedPayload>({
+              eventName: DOMAIN_EVENTS.paymentCompleted,
+              aggregateType: 'order',
+              aggregateId: order.id.toString(),
+              actor: { type: input.actorType, userId: input.actorUserId?.toString() },
+              payload: {
+                orderId: order.id.toString(),
+                userId: order.userId.toString(),
+                status: PAYMENT_STATUSES.refunded,
+                paymentId: paymentId.toString(),
+                amount: allocation.amount,
+                refundSource: REFUND_SOURCES.cancellation,
+              },
+            }),
+            tx,
+          );
+        }
+      }
+
+      await this.finalizeCancellation(tx, order, {
+        actorType: input.actorType,
+        actorUserId: input.actorUserId,
+        reason: input.reason,
+      });
+    });
+  }
+
+  private normalizeRefundAllocations(totalAmount: number, allocations: RefundAllocation[]) {
+    const normalized = allocations
+      .map((allocation) => ({ ...allocation, amount: this.round(allocation.amount) }))
+      .filter((allocation) => allocation.amount > 0);
+    const sum = this.round(normalized.reduce((total, allocation) => total + allocation.amount, 0));
+    if (sum !== this.round(totalAmount)) {
+      throw new BadRequestException('Refund allocations must equal the refundable amount');
+    }
+    return normalized;
+  }
+
+  private findOriginalPayment(orderPayments: any[], allocation: RefundAllocation) {
+    const payment = allocation.paymentTransactionId
+      ? orderPayments.find((item) => item.id.toString() === allocation.paymentTransactionId)
+      : orderPayments.find((item) => !item.refundSource && item.paymentStatus === PAYMENT_STATUSES.completed);
+    if (!payment || payment.paymentStatus !== PAYMENT_STATUSES.completed) {
+      throw new BadRequestException(this.i18n.t('errors.order_completed_payment_not_found'));
+    }
+    return payment;
   }
 
   private async markCancellationRefundRequiresReview(

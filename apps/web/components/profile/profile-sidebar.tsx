@@ -12,14 +12,10 @@ import {
   PackageIcon,
   Location01Icon,
   Wallet01Icon,
-  CreditCardIcon,
-  GiftIcon,
   ArrowLeftRightIcon,
-  Mail01Icon,
   Ticket01Icon,
   Logout01Icon,
   Camera01Icon,
-  DocumentValidationIcon,
   FavouriteIcon,
 } from "@hugeicons/core-free-icons"
 

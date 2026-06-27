@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import {
   COUPON_RESERVATION_STATUSES,
   PAYMENT_CURRENCIES,
+  PAYMENT_METHODS,
   PAYMENT_STATUSES,
   STOCK_RESERVATION_STATUSES,
   STRIPE_CONFIG,
@@ -22,6 +23,7 @@ import { Prisma } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import {
   WALLET_PAYMENT_PURPOSES,
+  WALLET_REFERENCE_TYPES,
   WALLET_TRANSACTION_DIRECTIONS,
   WALLET_TRANSACTION_STATUSES,
   WALLET_TRANSACTION_TYPES,
@@ -86,6 +88,11 @@ type CheckoutSnapshot = {
     vatRate: number;
     vatType?: string | null;
     totalPrice: number;
+  };
+  paymentBreakdown?: {
+    walletAmount?: number;
+    externalAmount?: number;
+    totalAmount?: number;
   };
   items: CheckoutSnapshotItem[];
 };
@@ -596,18 +603,50 @@ export class StripeWebhookService {
         },
       });
 
-      const payment = await tx.paymentTransaction.create({
-        data: {
-          orderId: order.id,
-          amount: pendingCheckout.amount,
-          paymentMethod: pendingCheckout.paymentMethod,
-          paymentStatus: PAYMENT_STATUSES.completed,
-          transactionRef,
-          gatewayResponse: toPrismaJson(gatewayResponse),
-          currency: pendingCheckout.currency || PAYMENT_CURRENCIES.sar,
-          paidAt: new Date(),
-        },
-      });
+      const walletAmount = Number(snapshot.paymentBreakdown?.walletAmount || 0);
+      const walletTransaction =
+        walletAmount > 0
+          ? await this.captureCheckoutWalletHold(tx, pendingCheckout.id, order.id, {
+              transactionRef,
+              externalPaymentMethod: pendingCheckout.paymentMethod,
+              externalAmount: Number(pendingCheckout.amount),
+            })
+          : null;
+
+      let payment: { id: bigint } | null = null;
+      if (walletTransaction) {
+        payment = await tx.paymentTransaction.create({
+          data: {
+            orderId: order.id,
+            amount: walletAmount,
+            paymentMethod: PAYMENT_METHODS.wallet,
+            paymentStatus: PAYMENT_STATUSES.completed,
+            transactionRef: `wallet_${walletTransaction.id.toString()}`,
+            gatewayResponse: toPrismaJson({
+              walletTransactionId: walletTransaction.id.toString(),
+              pendingCheckoutId: pendingCheckout.id.toString(),
+            }),
+            currency: pendingCheckout.currency || PAYMENT_CURRENCIES.sar,
+            paidAt: new Date(),
+          },
+        });
+      }
+
+      const externalAmount = Number(pendingCheckout.amount);
+      if (externalAmount > 0) {
+        payment = await tx.paymentTransaction.create({
+          data: {
+            orderId: order.id,
+            amount: externalAmount,
+            paymentMethod: pendingCheckout.paymentMethod,
+            paymentStatus: PAYMENT_STATUSES.completed,
+            transactionRef,
+            gatewayResponse: toPrismaJson(gatewayResponse),
+            currency: pendingCheckout.currency || PAYMENT_CURRENCIES.sar,
+            paidAt: new Date(),
+          },
+        });
+      }
 
       await tx.stockReservation.updateMany({
         where: {
@@ -662,22 +701,24 @@ export class StripeWebhookService {
         }),
         tx,
       );
-      await this.domainEvents.publish(
-        createDomainEvent<PaymentCompletedPayload>({
-          eventName: DOMAIN_EVENTS.paymentCompleted,
-          aggregateType: 'order',
-          aggregateId: order.id.toString(),
-          actor: { type: 'system' },
-          payload: {
-            orderId: order.id.toString(),
-            userId: snapshot.userId,
-            status: PAYMENT_STATUSES.completed,
-            paymentId: payment.id.toString(),
-            amount: Number(pendingCheckout.amount),
-          },
-        }),
-        tx,
-      );
+      if (payment) {
+        await this.domainEvents.publish(
+          createDomainEvent<PaymentCompletedPayload>({
+            eventName: DOMAIN_EVENTS.paymentCompleted,
+            aggregateType: 'order',
+            aggregateId: order.id.toString(),
+            actor: { type: 'system' },
+            payload: {
+              orderId: order.id.toString(),
+              userId: snapshot.userId,
+              status: PAYMENT_STATUSES.completed,
+              paymentId: payment.id.toString(),
+              amount: externalAmount || walletAmount,
+            },
+          }),
+          tx,
+        );
+      }
 
       return { received: true, orderId: order.id.toString(), orderNumber: order.orderNumber };
     });
@@ -790,6 +831,8 @@ export class StripeWebhookService {
       },
     });
 
+    await this.releaseCheckoutWalletHold(tx, pendingCheckout.id, paymentStatus, gatewayResponse);
+
     await tx.pendingCheckout.update({
       where: { id: pendingCheckout.id },
       data: {
@@ -803,5 +846,112 @@ export class StripeWebhookService {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomStr = Math.floor(10000 + Math.random() * 90000).toString();
     return `${ORDER_NUMBER_PREFIX}-${dateStr}-${randomStr}`;
+  }
+
+  private async captureCheckoutWalletHold(
+    tx: Prisma.TransactionClient,
+    pendingCheckoutId: bigint,
+    orderId: bigint,
+    metadata: Record<string, unknown>,
+  ) {
+    const hold = await tx.walletTransaction.findFirst({
+      where: {
+        referenceType: WALLET_REFERENCE_TYPES.pendingCheckout,
+        referenceId: pendingCheckoutId.toString(),
+        type: WALLET_TRANSACTION_TYPES.hold,
+        status: WALLET_TRANSACTION_STATUSES.pending,
+      },
+    });
+    if (!hold) return null;
+
+    const walletClaim = await tx.wallet.updateMany({
+      where: {
+        id: hold.walletId,
+        pendingBalance: { gte: hold.amount },
+      },
+      data: {
+        pendingBalance: { decrement: hold.amount },
+      },
+    });
+    if (walletClaim.count !== 1) {
+      await tx.walletTransaction.update({
+        where: { id: hold.id },
+        data: {
+          status: WALLET_TRANSACTION_STATUSES.requiresReview,
+          metadata: toPrismaJson({
+            pendingCheckoutId: pendingCheckoutId.toString(),
+            orderId: orderId.toString(),
+            reason: 'wallet_pending_balance_capture_failed',
+            ...metadata,
+          }),
+        },
+      });
+      throw new BadRequestException('Wallet checkout hold could not be captured');
+    }
+
+    return tx.walletTransaction.update({
+      where: { id: hold.id },
+      data: {
+        type: WALLET_TRANSACTION_TYPES.purchase,
+        status: WALLET_TRANSACTION_STATUSES.completed,
+        referenceType: WALLET_REFERENCE_TYPES.order,
+        referenceId: orderId.toString(),
+        description: 'Wallet order payment',
+        completedAt: new Date(),
+        metadata: toPrismaJson({
+          pendingCheckoutId: pendingCheckoutId.toString(),
+          orderId: orderId.toString(),
+          ...metadata,
+        }),
+      },
+    });
+  }
+
+  private async releaseCheckoutWalletHold(
+    tx: Prisma.TransactionClient,
+    pendingCheckoutId: bigint,
+    paymentStatus: string,
+    gatewayResponse?: unknown,
+  ) {
+    const hold = await tx.walletTransaction.findFirst({
+      where: {
+        referenceType: WALLET_REFERENCE_TYPES.pendingCheckout,
+        referenceId: pendingCheckoutId.toString(),
+        type: WALLET_TRANSACTION_TYPES.hold,
+        status: WALLET_TRANSACTION_STATUSES.pending,
+      },
+    });
+    if (!hold) return;
+
+    await tx.wallet.update({
+      where: { id: hold.walletId },
+      data: {
+        pendingBalance: { decrement: hold.amount },
+        availableBalance: { increment: hold.amount },
+      },
+    });
+
+    await tx.walletTransaction.update({
+      where: { id: hold.id },
+      data: {
+        type: WALLET_TRANSACTION_TYPES.release,
+        status:
+          paymentStatus === PAYMENT_STATUSES.expired
+            ? WALLET_TRANSACTION_STATUSES.expired
+            : paymentStatus === PAYMENT_STATUSES.failed
+              ? WALLET_TRANSACTION_STATUSES.failed
+              : WALLET_TRANSACTION_STATUSES.cancelled,
+        description: 'Wallet checkout hold released',
+        failedAt:
+          paymentStatus === PAYMENT_STATUSES.expired || paymentStatus === PAYMENT_STATUSES.failed
+            ? new Date()
+            : undefined,
+        gatewayResponse: gatewayResponse ? toPrismaJson(gatewayResponse) : undefined,
+        metadata: toPrismaJson({
+          pendingCheckoutId: pendingCheckoutId.toString(),
+          paymentStatus,
+        }),
+      },
+    });
   }
 }

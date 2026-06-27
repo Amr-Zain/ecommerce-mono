@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
+import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { WalletService } from '@/shared/wallet/wallet.service';
 import { CreateWalletDepositDto, CreateWalletWithdrawalDto } from '@/shared/wallet/dto/wallet.dto';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -19,7 +20,7 @@ export class ClientWalletController {
   }
 
   @Get('transactions')
-  getTransactions(@CurrentUser() user: { id: bigint }, @Query() query: AdvancedQueryDto) {
+  getTransactions(@CurrentUser() user: { id: bigint }, @ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto) {
     return this.walletService.listClientTransactions(user.id, query);
   }
 
@@ -38,8 +39,13 @@ export class ClientWalletController {
     return this.walletService.verifyClientDeposit(user.id, BigInt(id));
   }
 
+  @Post('deposits/:id/cancel')
+  cancelDeposit(@CurrentUser() user: { id: bigint }, @Param('id') id: string) {
+    return this.walletService.cancelClientDeposit(user.id, BigInt(id));
+  }
+
   @Get('withdrawals')
-  getWithdrawals(@CurrentUser() user: { id: bigint }, @Query() query: AdvancedQueryDto) {
+  getWithdrawals(@CurrentUser() user: { id: bigint }, @ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto) {
     return this.walletService.listClientWithdrawals(user.id, query);
   }
 

@@ -14,7 +14,7 @@ import {
   Alert01Icon,
   Loading02Icon,
 } from '@hugeicons/core-free-icons'
-import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
+import { HugeiconsIcon, type HugeiconsIconProps, type IconSvgElement } from '@hugeicons/react'
 import {
   Card,
   CardContent,
@@ -23,6 +23,7 @@ import {
 } from '@ecommerce/ui/components/card'
 import { Badge } from '@ecommerce/ui/components/badge'
 import { Button } from '@ecommerce/ui/components/button'
+import { Input } from '@ecommerce/ui/components/input'
 import { Textarea } from '@ecommerce/ui/components/textarea'
 import { Separator } from '@ecommerce/ui/components/separator'
 import {
@@ -50,9 +51,12 @@ import { cn, hasPermission } from '@/lib/utils'
 import { StatusBadge, getStatusColor } from './Config'
 import { ShowHeader, ShowInfoCard } from '@/components/common/show'
 
-const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
-  <HugeiconsIcon icon={icon} {...props} />
-)
+const H = (icon: IconSvgElement) => {
+  const Comp = (props: Omit<HugeiconsIconProps, 'icon'>) => (
+    <HugeiconsIcon icon={icon} {...props} />
+  )
+  return Comp
+}
 const Package = H(Package01Icon)
 const CreditCard = H(CreditCardIcon)
 const MapPin = H(Location01Icon)
@@ -72,17 +76,87 @@ interface OrderShowProps {
 const money = (value: number, currency = 'SAR') =>
   `${value.toFixed(2)} ${currency}`
 
+const paymentLabel = (value?: string | null) =>
+  value ? value.replaceAll('_', ' ') : '-'
+
+const paymentMethodSummary = (methods: string[], fallback: string) => {
+  const uniqueMethods = Array.from(new Set(methods.filter(Boolean).map(paymentLabel)))
+  if (uniqueMethods.length === 0) return fallback
+  if (uniqueMethods.length === 1) return uniqueMethods[0]
+  return 'External methods'
+}
+
+const sumPayments = (payments: OrderDetail['payments']) =>
+  payments.reduce((total, payment) => total + Number(payment.amount || 0), 0)
+
+const pendingPaymentStatuses = [
+  PAYMENT_STATUSES.pending,
+  PAYMENT_STATUSES.awaitingConfirmation,
+  PAYMENT_STATUSES.processingPayment,
+  PAYMENT_STATUSES.requiresReview,
+] as readonly string[]
+
+const verificationPaymentStatuses = [
+  PAYMENT_STATUSES.awaitingConfirmation,
+  PAYMENT_STATUSES.processingPayment,
+  PAYMENT_STATUSES.requiresReview,
+] as readonly string[]
+
+function buildPaymentBreakdown(order: OrderDetail) {
+  const originalPayments = order.payments.filter((payment) => !payment.refund_source)
+  const completed = originalPayments.filter(
+    (payment) => payment.payment_status === PAYMENT_STATUSES.completed,
+  )
+  const pending = originalPayments.filter((payment) => pendingPaymentStatuses.includes(payment.payment_status))
+  const externalCompleted = completed.filter(
+    (payment) => payment.payment_method !== 'wallet',
+  )
+  const pendingExternal = pending.filter(
+    (payment) => payment.payment_method !== 'wallet',
+  )
+  const walletPaid = sumPayments(
+    completed.filter((payment) => payment.payment_method === 'wallet'),
+  )
+  const externalPaid = sumPayments(externalCompleted)
+  const awaiting = sumPayments(pending)
+  const paidTotal = walletPaid + externalPaid
+  const remainingDue = Math.max(0, Number(order.total_price || 0) - paidTotal)
+  const needsVerification = pending.some(
+    (payment) =>
+      (MANUAL_PAYMENT_METHODS as readonly string[]).includes(payment.payment_method) ||
+      verificationPaymentStatuses.includes(payment.payment_status),
+  )
+  const externalPaidLabel = `${paymentMethodSummary(
+    externalCompleted.map((payment) => payment.payment_method),
+    'External method',
+  )} paid`
+  const awaitingLabel = pendingExternal.length
+    ? `${paymentMethodSummary(
+        pendingExternal.map((payment) => payment.payment_method),
+        'External method',
+      )} awaiting verification`
+    : 'Awaiting payment or verification'
+
+  return { awaiting, awaitingLabel, completed, externalPaid, externalPaidLabel, needsVerification, paidTotal, pending, remainingDue, walletPaid }
+}
+
 export default function OrderShow({ order }: OrderShowProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | ''>('')
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+  const [cancelWalletRefund, setCancelWalletRefund] = useState(0)
+  const [cancelOriginalRefund, setCancelOriginalRefund] = useState(
+    order.remaining_refundable_amount,
+  )
+  const [cancelManualRefund, setCancelManualRefund] = useState(0)
   const currency = order.payments?.[0]?.currency ?? 'SAR'
   const allowedTransitions = useMemo(
     () => getAllowedOrderTransitions(order.status),
     [order.status],
   )
+  const paymentBreakdown = useMemo(() => buildPaymentBreakdown(order), [order])
   const cancellationRefundAttempt = order.payments.find(
     (payment) =>
       payment.refund_source === 'cancellation' &&
@@ -110,6 +184,13 @@ export default function OrderShow({ order }: OrderShowProps) {
         (payment.payment_status === PAYMENT_STATUSES.pending ||
           payment.payment_status === PAYMENT_STATUSES.awaitingConfirmation),
     )
+  const cancelRefundAllocationTotal = Number(
+    (cancelWalletRefund + cancelOriginalRefund + cancelManualRefund).toFixed(2),
+  )
+  const cancelRefundAllocationValid =
+    order.remaining_refundable_amount <= 0 ||
+    cancelRefundAllocationTotal ===
+      Number(order.remaining_refundable_amount.toFixed(2))
   const invalidateOrder = () => {
     queryClient.invalidateQueries({
       queryKey: queryKeys.orders.getOrder(order.id),
@@ -129,6 +210,9 @@ export default function OrderShow({ order }: OrderShowProps) {
       setSelectedStatus('')
       setCancelDialogOpen(false)
       setCancelReason('')
+      setCancelWalletRefund(0)
+      setCancelOriginalRefund(order.remaining_refundable_amount)
+      setCancelManualRefund(0)
       invalidateOrder()
     },
     onError: () => {
@@ -155,6 +239,9 @@ export default function OrderShow({ order }: OrderShowProps) {
   const submitStatusChange = () => {
     if (!selectedStatus || cancellationRefundBlocked || !canUpdateOrder) return
     if (selectedStatus === ORDER_STATUSES.cancelled) {
+      setCancelWalletRefund(0)
+      setCancelOriginalRefund(order.remaining_refundable_amount)
+      setCancelManualRefund(0)
       setCancelDialogOpen(true)
       return
     }
@@ -242,6 +329,59 @@ export default function OrderShow({ order }: OrderShowProps) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 p-5">
+              <div className="rounded-lg border bg-muted/20 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black">Payment breakdown</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {paymentBreakdown.remainingDue > 0
+                        ? `${money(paymentBreakdown.paidTotal, currency)} paid from ${money(order.total_price, currency)}.`
+                        : `${money(paymentBreakdown.paidTotal, currency)} paid in full.`}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={
+                      paymentBreakdown.remainingDue > 0 ||
+                      paymentBreakdown.needsVerification
+                        ? 'outline'
+                        : 'default'
+                    }
+                    className="capitalize"
+                  >
+                    {paymentBreakdown.needsVerification
+                      ? 'Needs verification'
+                      : paymentBreakdown.remainingDue > 0
+                        ? 'Partially paid'
+                        : 'Paid'}
+                  </Badge>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <PaymentMetric label="Wallet paid" value={paymentBreakdown.walletPaid} currency={currency} />
+                  <PaymentMetric label={paymentBreakdown.externalPaidLabel} value={paymentBreakdown.externalPaid} currency={currency} />
+                  <PaymentMetric label={paymentBreakdown.awaitingLabel} value={paymentBreakdown.awaiting || paymentBreakdown.remainingDue} currency={currency} />
+                  <PaymentMetric label="Refunded or reserved" value={order.refunded_amount + order.reserved_refund_amount} currency={currency} />
+                </div>
+                {paymentBreakdown.pending.length > 0 && (
+                  <div className="mt-4 space-y-2 rounded-md border bg-background p-3">
+                    <p className="text-xs font-bold uppercase text-muted-foreground">
+                      Still not completed
+                    </p>
+                    {paymentBreakdown.pending.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                      >
+                        <span className="capitalize">
+                          {paymentLabel(payment.payment_method)} - {paymentLabel(payment.payment_status)}
+                        </span>
+                        <span className="font-black">
+                          {money(payment.amount, payment.currency)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               {order.payments.length ? (
                 order.payments.map((payment) => (
                   <div key={payment.id} className="rounded-md border p-3">
@@ -513,6 +653,51 @@ export default function OrderShow({ order }: OrderShowProps) {
             placeholder={t('orders.labels.cancel_reason')}
             className="min-h-24"
           />
+          {order.remaining_refundable_amount > 0 && (
+            <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+              <div>
+                <p className="text-sm font-semibold">Refund allocation</p>
+                <p className="text-xs text-muted-foreground">
+                  Split exactly {money(order.remaining_refundable_amount, currency)} before cancelling.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="space-y-1 text-xs font-medium">
+                  Wallet
+                  <Input
+                    type="number"
+                    min={0}
+                    max={order.remaining_refundable_amount}
+                    step="0.01"
+                    value={cancelWalletRefund}
+                    onChange={(event) => setCancelWalletRefund(Number(event.target.value || 0))}
+                  />
+                </label>
+                <label className="space-y-1 text-xs font-medium">
+                  Original
+                  <Input
+                    type="number"
+                    min={0}
+                    max={order.remaining_refundable_amount}
+                    step="0.01"
+                    value={cancelOriginalRefund}
+                    onChange={(event) => setCancelOriginalRefund(Number(event.target.value || 0))}
+                  />
+                </label>
+                <label className="space-y-1 text-xs font-medium">
+                  Manual
+                  <Input
+                    type="number"
+                    min={0}
+                    max={order.remaining_refundable_amount}
+                    step="0.01"
+                    value={cancelManualRefund}
+                    onChange={(event) => setCancelManualRefund(Number(event.target.value || 0))}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
               {t('actions.cancel')}
@@ -522,12 +707,27 @@ export default function OrderShow({ order }: OrderShowProps) {
               disabled={
                 statusMutation.isPending ||
                 cancellationRefundBlocked ||
-                !canUpdateOrder
+                !canUpdateOrder ||
+                !cancelRefundAllocationValid
               }
               onClick={() =>
                 statusMutation.mutate({
                   status: ORDER_STATUSES.cancelled,
                   reason: cancelReason.trim() || undefined,
+                  refund_allocations:
+                    order.remaining_refundable_amount > 0
+                      ? [
+                          cancelWalletRefund
+                            ? { destination: 'wallet', amount: cancelWalletRefund }
+                            : null,
+                          cancelOriginalRefund
+                            ? { destination: 'original_payment', amount: cancelOriginalRefund }
+                            : null,
+                          cancelManualRefund
+                            ? { destination: 'manual', amount: cancelManualRefund }
+                            : null,
+                        ].filter(Boolean) as AdminOrderTransitionPayload['refund_allocations']
+                      : undefined,
                 })
               }
             >
@@ -570,6 +770,28 @@ function RetryCancellationRefund({
       <RefreshCcw className="h-4 w-4" />
       {t('orders.actions.retry_refund')}
     </Button>
+  )
+}
+
+function PaymentMetric({
+  label,
+  value,
+  currency,
+}: {
+  label: string
+  value: number
+  currency: string
+}) {
+  return (
+    <div className="rounded-md border bg-background p-3">
+      <p className="text-[10px] font-bold uppercase text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 flex items-center gap-1 text-sm font-black tabular-nums">
+        {money(value, currency)}
+        {currency === 'SAR' && <SARIcon className="h-3.5 w-3.5" />}
+      </p>
+    </div>
   )
 }
 

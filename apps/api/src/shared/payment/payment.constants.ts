@@ -1,12 +1,14 @@
 export const PAYMENT_METHODS = {
   cod: 'cod',
   bankTransfer: 'bank_transfer',
+  wallet: 'wallet',
   stripeCheckout: 'stripe_checkout',
   stripeIntent: 'stripe_intent',
 } as const;
 
 export const ONLINE_PAYMENT_METHODS = [PAYMENT_METHODS.stripeCheckout, PAYMENT_METHODS.stripeIntent] as const;
 export const MANUAL_PAYMENT_METHODS = [PAYMENT_METHODS.cod, PAYMENT_METHODS.bankTransfer] as const;
+export const WALLET_PAYMENT_METHODS = [PAYMENT_METHODS.wallet] as const;
 
 export const PAYMENT_STATUSES = {
   pending: 'pending',

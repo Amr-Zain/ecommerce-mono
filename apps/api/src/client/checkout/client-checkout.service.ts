@@ -17,11 +17,13 @@ import {
   ONLINE_PAYMENT_METHODS,
   COUPON_RESERVATION_STATUSES,
   PAYMENT_CURRENCIES,
+  PAYMENT_METHODS,
   PAYMENT_REFERENCE_PREFIXES,
   PAYMENT_STATUSES,
   STOCK_RESERVATION_STATUSES,
   STRIPE_CONFIG,
 } from '@/shared/payment/payment.constants';
+import { WalletService } from '@/shared/wallet/wallet.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { StripeWebhookService } from '@/shared/payment/stripe-webhook.service';
@@ -109,6 +111,7 @@ export class ClientCheckoutService {
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly stripeWebhookService: StripeWebhookService,
+    private readonly walletService: WalletService,
     private readonly domainEvents: DomainEventPublisher,
     private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
   ) {}
@@ -255,6 +258,14 @@ export class ClientCheckoutService {
     return (ONLINE_PAYMENT_METHODS as readonly string[]).includes(paymentMethod);
   }
 
+  private normalizeWalletAmount(amount: number | undefined, total: number) {
+    return Number(Math.min(Math.max(amount || 0, 0), total).toFixed(2));
+  }
+
+  private remainingAfterWallet(total: number, walletAmount: number) {
+    return Number(Math.max(0, total - walletAmount).toFixed(2));
+  }
+
   private getPendingCheckoutExpiry() {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + STRIPE_CONFIG.checkoutExpiryMinutes);
@@ -325,6 +336,19 @@ export class ClientCheckoutService {
       phoneCode,
       countryShortName,
     );
+    const wallet = await this.prisma.wallet.findUnique({
+      where: {
+        userId_currency: {
+          userId,
+          currency: PAYMENT_CURRENCIES.sar,
+        },
+      },
+    });
+    const walletAvailableBalance = Number(wallet?.availableBalance || 0);
+    const walletPendingBalance = Number(wallet?.pendingBalance || 0);
+    const requestedWalletAmount = this.normalizeWalletAmount(dto.walletAmount, totals.totalPrice);
+    const walletAppliedAmount = Number(Math.min(walletAvailableBalance, requestedWalletAmount).toFixed(2));
+    const remainingAmount = this.remainingAfterWallet(totals.totalPrice, walletAppliedAmount);
 
     return {
       items: cart.items,
@@ -345,6 +369,19 @@ export class ClientCheckoutService {
           }
         : null,
       totals,
+      wallet: {
+        availableBalance: walletAvailableBalance,
+        pendingBalance: walletPendingBalance,
+        requestedAmount: requestedWalletAmount,
+        appliedAmount: walletAppliedAmount,
+        remainingAmount,
+        canCoverFullAmount: walletAvailableBalance >= totals.totalPrice,
+      },
+      paymentBreakdown: {
+        walletAmount: walletAppliedAmount,
+        externalAmount: remainingAmount,
+        totalAmount: totals.totalPrice,
+      },
     };
   }
 
@@ -497,6 +534,11 @@ export class ClientCheckoutService {
           phoneCode,
           countryShortName,
         );
+        const walletAmount = this.normalizeWalletAmount(dto.walletAmount, totals.totalPrice);
+        const externalAmount = this.remainingAfterWallet(totals.totalPrice, walletAmount);
+        if (externalAmount <= 0) {
+          throw new BadRequestException('Use wallet payment method for full wallet checkout');
+        }
         const onlineItemAllocations = this.allocateOrderItemPricing(orderItems, couponDiscount, totals.vatAmount);
         const allocatedOrderItems = orderItems.map((item, index) => ({
           ...item,
@@ -526,6 +568,11 @@ export class ClientCheckoutService {
             ...totals,
             vatType: totals.vatRate > 0 ? `${VAT_TYPE_PREFIX}_${totals.vatRate * 100}` : null,
           },
+          paymentBreakdown: {
+            walletAmount,
+            externalAmount,
+            totalAmount: totals.totalPrice,
+          },
           items: allocatedOrderItems,
         };
 
@@ -535,7 +582,7 @@ export class ClientCheckoutService {
             addressId: address.id,
             paymentMethod: dto.paymentMethod,
             paymentStatus: PAYMENT_STATUSES.pending,
-            amount: totals.totalPrice,
+            amount: externalAmount,
             currency: PAYMENT_CURRENCIES.sar,
             couponCode: dto.couponCode,
             notes: dto.notes,
@@ -606,10 +653,21 @@ export class ClientCheckoutService {
           });
         }
 
+        await this.walletService.reserveForCheckout(tx, {
+          userId,
+          amount: walletAmount,
+          pendingCheckoutId: pendingCheckout.id,
+          metadata: {
+            externalPaymentMethod: dto.paymentMethod,
+            externalAmount,
+            totalAmount: totals.totalPrice,
+          },
+        });
+
         const paymentInit = await this.paymentService.initiatePayment(
           dto.paymentMethod,
           pendingCheckout.id.toString(),
-          totals.totalPrice,
+          externalAmount,
           {
             metadata: {
               [STRIPE_CONFIG.pendingCheckoutMetadataKey]: pendingCheckout.id.toString(),
@@ -636,6 +694,8 @@ export class ClientCheckoutService {
           orderId: null,
           orderNumber: null,
           totalPrice: totals.totalPrice,
+          walletAmount,
+          externalAmount,
           paymentMethod: dto.paymentMethod,
           paymentStatus: paymentInit.status,
           redirectUrl: paymentInit.redirectUrl,
@@ -849,6 +909,14 @@ export class ClientCheckoutService {
           phoneCode,
           countryShortName,
         );
+        const walletAmount = this.normalizeWalletAmount(dto.walletAmount, totals.totalPrice);
+        const externalAmount = this.remainingAfterWallet(totals.totalPrice, walletAmount);
+        if (dto.paymentMethod === PAYMENT_METHODS.wallet && externalAmount > 0) {
+          throw new BadRequestException('Wallet payment cannot cover the full order amount');
+        }
+        if (dto.paymentMethod !== PAYMENT_METHODS.wallet && walletAmount <= 0 && externalAmount <= 0) {
+          throw new BadRequestException('Invalid payment amount');
+        }
         const itemAllocations = this.allocateOrderItemPricing(orderItemsToCreate, couponDiscount, totals.vatAmount);
         const allocatedOrderItemsToCreate = orderItemsToCreate.map((item, index) => ({
           ...item,
@@ -889,8 +957,8 @@ export class ClientCheckoutService {
             vatType: totals.vatRate > 0 ? `${VAT_TYPE_PREFIX}_${totals.vatRate * 100}` : null,
             totalPrice: totals.totalPrice,
             status: ORDER_STATUSES.pending,
-            paymentMethod: dto.paymentMethod,
-            paymentStatus: PAYMENT_STATUSES.pending,
+            paymentMethod: externalAmount > 0 ? dto.paymentMethod : PAYMENT_METHODS.wallet,
+            paymentStatus: externalAmount > 0 ? PAYMENT_STATUSES.pending : PAYMENT_STATUSES.completed,
             notes: dto.notes,
             statusHistory: {
               create: {
@@ -924,34 +992,70 @@ export class ClientCheckoutService {
           },
         });
 
-        // 8. Dynamic Payment strategy initiation
-        const paymentInit = await this.paymentService.initiatePayment(
-          dto.paymentMethod,
-          order.id.toString(),
-          totals.totalPrice,
-        );
-
-        // Create PaymentTransaction
-        await tx.paymentTransaction.create({
-          data: {
-            orderId: order.id,
-            amount: totals.totalPrice,
-            paymentMethod: dto.paymentMethod,
-            paymentStatus: paymentInit.status,
-            transactionRef: paymentInit.transactionRef,
-            gatewayResponse: paymentInit.gatewayResponse ? toPrismaJson(paymentInit.gatewayResponse) : undefined,
-            currency: PAYMENT_CURRENCIES.sar,
+        const walletTransaction = await this.walletService.debitForOrder(tx, {
+          userId,
+          orderId: order.id,
+          amount: walletAmount,
+          metadata: {
+            externalPaymentMethod: externalAmount > 0 ? dto.paymentMethod : null,
+            externalAmount,
+            totalAmount: totals.totalPrice,
           },
         });
 
-        if (
-          paymentInit.status === PAYMENT_STATUSES.completed ||
-          paymentInit.status === PAYMENT_STATUSES.awaitingConfirmation
-        ) {
-          await tx.order.update({
-            where: { id: order.id },
-            data: { paymentStatus: paymentInit.status },
+        if (walletTransaction) {
+          await tx.paymentTransaction.create({
+            data: {
+              orderId: order.id,
+              amount: walletAmount,
+              paymentMethod: PAYMENT_METHODS.wallet,
+              paymentStatus: PAYMENT_STATUSES.completed,
+              transactionRef: `wallet_${walletTransaction.id.toString()}`,
+              gatewayResponse: toPrismaJson({
+                walletTransactionId: walletTransaction.id.toString(),
+              }),
+              currency: PAYMENT_CURRENCIES.sar,
+              paidAt: new Date(),
+            },
           });
+        }
+
+        let paymentStatus: string = PAYMENT_STATUSES.completed;
+        let redirectUrl: string | undefined;
+
+        if (externalAmount > 0) {
+          // 8. Dynamic Payment strategy initiation for the non-wallet remainder
+          const paymentInit = await this.paymentService.initiatePayment(
+            dto.paymentMethod,
+            order.id.toString(),
+            externalAmount,
+          );
+
+          // Create PaymentTransaction
+          await tx.paymentTransaction.create({
+            data: {
+              orderId: order.id,
+              amount: externalAmount,
+              paymentMethod: dto.paymentMethod,
+              paymentStatus: paymentInit.status,
+              transactionRef: paymentInit.transactionRef,
+              gatewayResponse: paymentInit.gatewayResponse ? toPrismaJson(paymentInit.gatewayResponse) : undefined,
+              currency: PAYMENT_CURRENCIES.sar,
+            },
+          });
+
+          paymentStatus = paymentInit.status;
+          redirectUrl = paymentInit.redirectUrl;
+
+          if (
+            paymentInit.status === PAYMENT_STATUSES.completed ||
+            paymentInit.status === PAYMENT_STATUSES.awaitingConfirmation
+          ) {
+            await tx.order.update({
+              where: { id: order.id },
+              data: { paymentStatus: paymentInit.status },
+            });
+          }
         }
 
         await this.domainEvents.publish(
@@ -965,7 +1069,7 @@ export class ClientCheckoutService {
               orderNumber: order.orderNumber,
               userId: userId.toString(),
               status: order.status,
-              paymentStatus: paymentInit.status,
+              paymentStatus,
               totalPrice: Number(order.totalPrice),
             },
           }),
@@ -982,8 +1086,10 @@ export class ClientCheckoutService {
           orderNumber: order.orderNumber,
           totalPrice: Number(order.totalPrice),
           paymentMethod: order.paymentMethod,
-          paymentStatus: paymentInit.status,
-          redirectUrl: paymentInit.redirectUrl,
+          paymentStatus,
+          walletAmount,
+          externalAmount,
+          redirectUrl,
         };
       })
       .then((result) => {

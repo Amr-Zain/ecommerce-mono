@@ -12,6 +12,8 @@ export interface PaymentInitResult {
 export interface PaymentInitiateOptions {
   metadata?: Record<string, string>;
   expiresAt?: Date;
+  successUrl?: string;
+  cancelUrl?: string;
 }
 
 export interface PaymentVerifyResult {

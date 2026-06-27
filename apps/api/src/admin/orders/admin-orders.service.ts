@@ -103,6 +103,7 @@ export class AdminOrdersService {
         actorType: ORDER_STATUS_ACTORS.admin,
         actorUserId: adminUser.id,
         reason: dto.reason,
+        refundAllocations: dto.refundAllocations,
       });
       return this.findOne(id, langId);
     }

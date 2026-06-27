@@ -229,6 +229,23 @@ export const queryKeys = {
       [...queryKeys.paymentGateways.all(), 'one', String(id)] as const,
   },
 
+  wallets: {
+    all: () => ['wallets'] as const,
+    filterd: (filters?: Record<string, any>) =>
+      ['wallets', 'filterd', filters] as const,
+    getWallet: (id: string | number) => ['wallets', 'one', id] as const,
+    transactions: (filters?: Record<string, any>) =>
+      ['wallet-transactions', 'filterd', filters] as const,
+  },
+
+  walletWithdrawals: {
+    all: () => ['wallet-withdrawals'] as const,
+    filterd: (filters?: Record<string, any>) =>
+      ['wallet-withdrawals', 'filterd', filters] as const,
+    getWithdrawal: (id: string | number) =>
+      ['wallet-withdrawals', 'one', id] as const,
+  },
+
   smsProviders: {
     all: () => ['sms-providers'] as const,
     filterd: (params?: unknown) =>

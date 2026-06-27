@@ -13,6 +13,11 @@ export class CheckoutPreviewDto {
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @ApiPropertyOptional({ example: "SUMMER20", description: 'couponCode' })
   couponCode?: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
+  @ApiPropertyOptional({ example: 150, description: 'walletAmount' })
+  walletAmount?: number;
 }
 
 export class PlaceOrderDto {
@@ -29,6 +34,11 @@ export class PlaceOrderDto {
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @ApiPropertyOptional({ example: "SUMMER20", description: 'couponCode' })
   couponCode?: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
+  @ApiPropertyOptional({ example: 150, description: 'walletAmount' })
+  walletAmount?: number;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })

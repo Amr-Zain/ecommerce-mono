@@ -5,17 +5,9 @@ import { useSearchParams } from "next/navigation"
 import { usePathname, useRouter } from "@/i18n/navigation"
 import { Checkbox } from "@ecommerce/ui/components/checkbox"
 import { Slider } from "@ecommerce/ui/components/slider"
-import { RadioGroup } from "@ecommerce/ui/components/radio-group"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Search01Icon } from "@hugeicons/core-free-icons"
 import { cn } from "@/lib/utils"
-
-const BRANDS = [
-  { label: "Apple", value: "apple" },
-  { label: "Samsung", value: "samsung" },
-  { label: "Xiaomi", value: "xiaomi" },
-  { label: "Noise", value: "noise" },
-]
 
 const DISPLAY_TYPES = [
   { label: "AMOLED", value: "amoled" },
@@ -77,7 +69,11 @@ export function ListingSidebar() {
 
   // Sync local price state when URL search parameters change externally
   React.useEffect(() => {
-    setLocalPrice([priceMin, priceMax])
+    const timer = window.setTimeout(() => {
+      setLocalPrice([priceMin, priceMax])
+    }, 0)
+
+    return () => window.clearTimeout(timer)
   }, [priceMin, priceMax])
 
   // Debounced router update for price changes

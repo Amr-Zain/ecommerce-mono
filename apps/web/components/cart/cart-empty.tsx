@@ -18,7 +18,7 @@ export function CartEmpty() {
             </EmptyMedia>
           <EmptyTitle className="text-2xl font-bold">Your cart is empty</EmptyTitle>
           <EmptyDescription className="text-sm text-muted-foreground max-w-xs">
-            Looks like you haven't added anything to your cart yet. Explore our collections and find something you'll love!
+            Looks like you haven&apos;t added anything to your cart yet. Explore our collections and find something you&apos;ll love!
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent className="mt-6">

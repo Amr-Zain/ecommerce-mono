@@ -94,14 +94,12 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
   const [localWater, setLocalWater] = React.useState<string[]>(selectedWater)
   const [localCompatibility, setLocalCompatibility] = React.useState<string[]>(selectedCompatibility)
 
-  // Sync modal local state with URL params when modal opens
-  React.useEffect(() => {
-    if (isAdvancedOpen) {
-      setLocalStrap(selectedStrap)
-      setLocalWater(selectedWater)
-      setLocalCompatibility(selectedCompatibility)
-    }
-  }, [isAdvancedOpen, selectedStrap, selectedWater, selectedCompatibility])
+  const openAdvancedFilters = () => {
+    setLocalStrap(selectedStrap)
+    setLocalWater(selectedWater)
+    setLocalCompatibility(selectedCompatibility)
+    setIsAdvancedOpen(true)
+  }
 
   const activeFilters = React.useMemo(() => {
     const filters: Array<{ key: string; val: string; label: string }> = []
@@ -406,7 +404,7 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
 
           {/* +13 more Pill */}
           <button
-            onClick={() => setIsAdvancedOpen(true)}
+            onClick={openAdvancedFilters}
             type="button"
             className="flex items-center gap-1.5 rounded-full border border-dashed text-primary border-primary/40 bg-primary/5 px-3 py-1 text-xs font-semibold hover:bg-primary/10 transition-all cursor-pointer"
           >

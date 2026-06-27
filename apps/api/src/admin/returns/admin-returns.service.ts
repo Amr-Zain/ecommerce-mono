@@ -15,8 +15,15 @@ import {
   type ExchangeRequestStatus,
   type ReturnRequestStatus,
 } from '@/common/constants/return-exchange.constants';
-import { ONLINE_PAYMENT_METHODS, PAYMENT_CURRENCIES, PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
+import {
+  ONLINE_PAYMENT_METHODS,
+  PAYMENT_CURRENCIES,
+  PAYMENT_METHODS,
+  PAYMENT_STATUSES,
+} from '@/shared/payment/payment.constants';
 import { REFUND_SOURCES } from '@/shared/payment/payment.constants';
+import { WALLET_REFERENCE_TYPES } from '@/common/constants/wallet.constants';
+import { WalletService } from '@/shared/wallet/wallet.service';
 import { OrderLifecycleService } from '@/shared/orders/order-lifecycle.service';
 import {
   AdminExchangePaymentDto,
@@ -62,6 +69,8 @@ const ACTIVE_EXCHANGE_STOCK_STATUSES = [
   EXCHANGE_REQUEST_STATUSES.itemReceived,
 ] as const;
 
+const toPrismaJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
+
 type ReturnRequestWithRelations = Prisma.ReturnRequestGetPayload<{
   include: {
     order: true;
@@ -96,6 +105,12 @@ type ExchangeRequestWithRelations = Prisma.ExchangeRequestGetPayload<{
   }>;
 };
 
+type RefundAllocation = {
+  destination: 'wallet' | 'original_payment' | 'manual';
+  amount: number;
+  paymentTransactionId?: string;
+};
+
 @Injectable()
 export class AdminReturnsService {
   constructor(
@@ -108,6 +123,7 @@ export class AdminReturnsService {
     @Inject(PAYMENT_TRANSACTIONS_REPOSITORY)
     private readonly paymentTransactionsRepository: IPaymentTransactionsRepository,
     @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
+    private readonly walletService: WalletService,
     private readonly domainEvents: DomainEventPublisher,
   ) {}
 
@@ -408,6 +424,9 @@ export class AdminReturnsService {
     }
 
     const refundAmount = Number(request.finalRefundAmount);
+    if (dto.refundAllocations?.length) {
+      return this.refundReturnWithAllocations(request, dto, refundAmount, adminId);
+    }
     if (refundAmount <= 0) {
       const updated = await this.returnRequestsRepository.update({
         where: { id },
@@ -954,6 +973,9 @@ export class AdminReturnsService {
       throw new BadRequestException(this.i18n.t('errors.exchange_refund_not_required'));
     }
     const amount = Math.abs(Number(request.settlementAmount));
+    if (dto.refundAllocations?.length) {
+      return this.refundExchangeWithAllocations(request, dto, amount, adminId);
+    }
     const completedPayment = request.order.payments.find(
       (payment: any) => payment.paymentStatus === PAYMENT_STATUSES.completed,
     );
@@ -1151,6 +1173,369 @@ export class AdminReturnsService {
       );
     });
     return this.findExchange(id);
+  }
+
+  private async refundReturnWithAllocations(
+    request: any,
+    dto: AdminReturnRefundDto,
+    refundAmount: number,
+    adminId?: bigint,
+  ) {
+    const allocations = this.normalizeRefundAllocations(refundAmount, dto.refundAllocations);
+    const originalAttempts = await this.createOriginalRefundAttempts({
+      source: REFUND_SOURCES.return,
+      sourceId: request.id,
+      orderId: request.orderId,
+      orderPayments: request.order.payments,
+      allocations,
+      note: dto.note,
+      adminId,
+      lock: async (tx) => {
+        await this.returnRequestsRepository.lock(request.id, tx);
+        const current = await this.returnRequestsRepository.findUniqueOrThrow(
+          { where: { id: request.id }, include: { payments: true } },
+          tx,
+        );
+        if (
+          current.status !== RETURN_REQUEST_STATUSES.itemReceived ||
+          ![REFUND_STATUSES.requiresRefund, REFUND_STATUSES.requiresReview].includes(current.refundStatus as never)
+        ) {
+          throw new BadRequestException(this.i18n.t('errors.return_request_invalid_transition'));
+        }
+        await this.returnRequestsRepository.update(
+          { where: { id: request.id }, data: { refundStatus: REFUND_STATUSES.processing } },
+          tx,
+        );
+      },
+    });
+
+    await this.runOriginalGatewayRefunds(originalAttempts, async (attemptId, error) =>
+      this.markReturnRefundReview(request.id, attemptId, error),
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.returnRequestsRepository.lock(request.id, tx);
+      await this.completeAllocatedRefunds(tx, {
+        source: REFUND_SOURCES.return,
+        sourceId: request.id,
+        orderId: request.orderId,
+        userId: request.userId,
+        orderPayments: request.order.payments,
+        allocations,
+        attempts: originalAttempts,
+        note: dto.note,
+        adminId,
+      });
+      await this.returnRequestsRepository.update(
+        {
+          where: { id: request.id },
+          data: {
+            status: RETURN_REQUEST_STATUSES.refunded,
+            refundStatus: allocations.some((allocation) => allocation.destination === 'manual')
+              ? REFUND_STATUSES.manualRefunded
+              : REFUND_STATUSES.refunded,
+            refundedAt: new Date(),
+            adminNote: dto.note,
+          },
+        },
+        tx,
+      );
+      await this.addHistory(tx, {
+        returnRequestId: request.id,
+        previousStatus: request.status,
+        newStatus: RETURN_REQUEST_STATUSES.refunded,
+        actorUserId: adminId,
+        reason: dto.note,
+      });
+      await this.orderLifecycleService.syncOrderPaymentStatus(tx, request.orderId);
+    });
+    return this.findReturn(request.id);
+  }
+
+  private async refundExchangeWithAllocations(
+    request: any,
+    dto: AdminReturnRefundDto,
+    amount: number,
+    adminId?: bigint,
+  ) {
+    const allocations = this.normalizeRefundAllocations(amount, dto.refundAllocations);
+    const originalAttempts = await this.createOriginalRefundAttempts({
+      source: REFUND_SOURCES.exchange,
+      sourceId: request.id,
+      orderId: request.orderId,
+      orderPayments: request.order.payments,
+      allocations,
+      note: dto.note,
+      adminId,
+      lock: async (tx) => {
+        await this.exchangeRequestsRepository.lock(request.id, tx);
+        const current = await this.exchangeRequestsRepository.findUniqueOrThrow(
+          { where: { id: request.id }, include: { payments: true } },
+          tx,
+        );
+        const existing = current.payments.find(
+          (payment: any) =>
+            payment.refundSource === REFUND_SOURCES.exchange &&
+            [PAYMENT_STATUSES.processingPayment, PAYMENT_STATUSES.requiresReview].includes(
+              payment.paymentStatus as never,
+            ),
+        );
+        if (current.priceAdjustmentStatus !== PRICE_ADJUSTMENT_STATUSES.requiresRefund && !existing) {
+          throw new BadRequestException(this.i18n.t('errors.exchange_refund_not_required'));
+        }
+      },
+    });
+
+    await this.runOriginalGatewayRefunds(originalAttempts, async (attemptId, error) =>
+      this.markExchangeRefundReview(request.id, attemptId, error),
+    );
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.exchangeRequestsRepository.lock(request.id, tx);
+      await this.completeAllocatedRefunds(tx, {
+        source: REFUND_SOURCES.exchange,
+        sourceId: request.id,
+        orderId: request.orderId,
+        userId: request.userId,
+        orderPayments: request.order.payments,
+        allocations,
+        attempts: originalAttempts,
+        note: dto.note,
+        adminId,
+      });
+      await this.exchangeRequestsRepository.update(
+        {
+          where: { id: request.id },
+          data: { priceAdjustmentStatus: PRICE_ADJUSTMENT_STATUSES.refunded, adminNote: dto.note },
+        },
+        tx,
+      );
+      await this.orderLifecycleService.syncOrderPaymentStatus(tx, request.orderId);
+    });
+    return this.findExchange(request.id);
+  }
+
+  private normalizeRefundAllocations(totalAmount: number, allocations: RefundAllocation[] | undefined) {
+    const normalized = (allocations || [])
+      .map((allocation) => ({
+        ...allocation,
+        amount: this.round(allocation.amount),
+      }))
+      .filter((allocation) => allocation.amount > 0);
+    const sum = this.round(normalized.reduce((total, allocation) => total + allocation.amount, 0));
+    if (sum !== this.round(totalAmount)) {
+      throw new BadRequestException('Refund allocations must equal the refundable amount');
+    }
+    return normalized;
+  }
+
+  private async createOriginalRefundAttempts(input: {
+    source: string;
+    sourceId: bigint;
+    orderId: bigint;
+    orderPayments: any[];
+    allocations: RefundAllocation[];
+    note?: string;
+    adminId?: bigint;
+    lock: (tx: Prisma.TransactionClient) => Promise<void>;
+  }) {
+    const originalAllocations = input.allocations.filter((allocation) => allocation.destination === 'original_payment');
+    return this.prisma.$transaction(async (tx) => {
+      await input.lock(tx);
+      await this.orderLifecycleService.assertRemainingRefundCapacityTx(
+        tx,
+        input.orderId,
+        this.round(input.allocations.reduce((total, allocation) => total + allocation.amount, 0)),
+      );
+      const attempts = [];
+      for (const [index, allocation] of originalAllocations.entries()) {
+        const originalPayment = this.findOriginalPayment(input.orderPayments, allocation);
+        if ((ONLINE_PAYMENT_METHODS as readonly string[]).includes(originalPayment.paymentMethod)) {
+          if (!originalPayment.transactionRef) {
+            throw new BadRequestException(this.i18n.t('errors.order_completed_payment_not_found'));
+          }
+          const idempotencyKey = `${input.source}_refund_${input.sourceId.toString()}_${index}`;
+          const attempt = await tx.paymentTransaction.create({
+            data: {
+              orderId: input.orderId,
+              returnRequestId: input.source === REFUND_SOURCES.return ? input.sourceId : undefined,
+              exchangeRequestId: input.source === REFUND_SOURCES.exchange ? input.sourceId : undefined,
+              amount: allocation.amount,
+              paymentMethod: originalPayment.paymentMethod,
+              paymentStatus: PAYMENT_STATUSES.processingPayment,
+              transactionRef: `${input.source}_refund_${input.sourceId.toString()}_${index}`,
+              gatewayResponse: toPrismaJson({ originalTransactionRef: originalPayment.transactionRef }),
+              currency: originalPayment.currency || PAYMENT_CURRENCIES.sar,
+              refundSource: input.source,
+              refundReason: input.note,
+              idempotencyKey,
+              requestedById: input.adminId,
+            },
+          });
+          attempts.push({ attempt, originalPayment, allocation });
+        }
+      }
+      return attempts;
+    });
+  }
+
+  private async runOriginalGatewayRefunds(
+    attempts: Array<{ attempt: any; originalPayment: any; allocation: RefundAllocation }>,
+    markReview: (attemptId: bigint, error: unknown) => Promise<void>,
+  ) {
+    for (const item of attempts) {
+      try {
+        const result = await this.paymentService.refundPayment(
+          item.originalPayment.paymentMethod,
+          item.originalPayment.transactionRef,
+          item.allocation.amount,
+          { idempotencyKey: item.attempt.idempotencyKey },
+        );
+        if (result.status !== PAYMENT_STATUSES.refunded) throw new Error('REFUND_NOT_CONFIRMED');
+        item.attempt.gatewayRefundResponse = result.gatewayResponse;
+      } catch (error) {
+        await markReview(item.attempt.id, error);
+        throw new BadRequestException(this.i18n.t('errors.payment_refund_failed'));
+      }
+    }
+  }
+
+  private async completeAllocatedRefunds(
+    tx: Prisma.TransactionClient,
+    input: {
+      source: string;
+      sourceId: bigint;
+      orderId: bigint;
+      userId: bigint;
+      orderPayments: any[];
+      allocations: RefundAllocation[];
+      attempts: Array<{ attempt: any; originalPayment: any; allocation: RefundAllocation }>;
+      note?: string;
+      adminId?: bigint;
+    },
+  ) {
+    const attemptByAllocation = new Map<RefundAllocation, { attempt: any; originalPayment: any }>();
+    for (const item of input.attempts) {
+      attemptByAllocation.set(item.allocation, item);
+    }
+
+    for (const [index, allocation] of input.allocations.entries()) {
+      let paymentId: bigint | null = null;
+      if (allocation.destination === 'wallet') {
+        const walletTransaction = await this.walletService.creditRefund(tx, {
+          userId: input.userId,
+          amount: allocation.amount,
+          referenceType:
+            input.source === REFUND_SOURCES.return
+              ? WALLET_REFERENCE_TYPES.returnRequest
+              : WALLET_REFERENCE_TYPES.exchangeRequest,
+          referenceId: input.sourceId.toString(),
+          description: `${input.source} refund to wallet`,
+          metadata: {
+            orderId: input.orderId.toString(),
+            refundSource: input.source,
+            adminId: input.adminId?.toString() || null,
+          },
+        });
+        const payment = await tx.paymentTransaction.create({
+          data: {
+            orderId: input.orderId,
+            returnRequestId: input.source === REFUND_SOURCES.return ? input.sourceId : undefined,
+            exchangeRequestId: input.source === REFUND_SOURCES.exchange ? input.sourceId : undefined,
+            amount: allocation.amount,
+            paymentMethod: PAYMENT_METHODS.wallet,
+            paymentStatus: PAYMENT_STATUSES.refunded,
+            transactionRef: `${input.source}_wallet_refund_${input.sourceId.toString()}_${index}`,
+            gatewayResponse: toPrismaJson({ walletTransactionId: walletTransaction?.id.toString() }),
+            currency: PAYMENT_CURRENCIES.sar,
+            refundSource: input.source,
+            refundReason: input.note,
+            requestedById: input.adminId,
+            paidAt: new Date(),
+          },
+        });
+        paymentId = payment.id;
+      } else if (allocation.destination === 'manual') {
+        const payment = await tx.paymentTransaction.create({
+          data: {
+            orderId: input.orderId,
+            returnRequestId: input.source === REFUND_SOURCES.return ? input.sourceId : undefined,
+            exchangeRequestId: input.source === REFUND_SOURCES.exchange ? input.sourceId : undefined,
+            amount: allocation.amount,
+            paymentMethod: 'manual',
+            paymentStatus: PAYMENT_STATUSES.refunded,
+            transactionRef: `${input.source}_manual_refund_${input.sourceId.toString()}_${index}`,
+            gatewayResponse: toPrismaJson({ manual: true }),
+            currency: PAYMENT_CURRENCIES.sar,
+            refundSource: input.source,
+            refundReason: input.note,
+            requestedById: input.adminId,
+            paidAt: new Date(),
+          },
+        });
+        paymentId = payment.id;
+      } else {
+        const attempt = attemptByAllocation.get(allocation);
+        if (attempt) {
+          await tx.paymentTransaction.update({
+            where: { id: attempt.attempt.id },
+            data: {
+              paymentStatus: PAYMENT_STATUSES.refunded,
+              gatewayResponse: toPrismaJson({
+                originalTransactionRef: attempt.originalPayment.transactionRef,
+                refundResponse: attempt.attempt.gatewayRefundResponse || {},
+              }),
+              paidAt: new Date(),
+            },
+          });
+          paymentId = attempt.attempt.id;
+        } else {
+          const originalPayment = this.findOriginalPayment(input.orderPayments, allocation);
+          const payment = await tx.paymentTransaction.create({
+            data: {
+              orderId: input.orderId,
+              returnRequestId: input.source === REFUND_SOURCES.return ? input.sourceId : undefined,
+              exchangeRequestId: input.source === REFUND_SOURCES.exchange ? input.sourceId : undefined,
+              amount: allocation.amount,
+              paymentMethod: originalPayment.paymentMethod,
+              paymentStatus: PAYMENT_STATUSES.refunded,
+              transactionRef: `${input.source}_original_refund_${input.sourceId.toString()}_${index}`,
+              gatewayResponse: toPrismaJson({ manual: true, originalTransactionRef: originalPayment.transactionRef }),
+              currency: originalPayment.currency || PAYMENT_CURRENCIES.sar,
+              refundSource: input.source,
+              refundReason: input.note,
+              requestedById: input.adminId,
+              paidAt: new Date(),
+            },
+          });
+          paymentId = payment.id;
+        }
+      }
+
+      if (paymentId) {
+        await this.publishPaymentEvent(tx, {
+          eventName: DOMAIN_EVENTS.paymentCompleted,
+          aggregateType: input.source,
+          aggregateId: input.sourceId,
+          orderId: input.orderId,
+          userId: input.userId,
+          paymentId,
+          status: PAYMENT_STATUSES.refunded,
+          amount: allocation.amount,
+          actorUserId: input.adminId,
+        });
+      }
+    }
+  }
+
+  private findOriginalPayment(orderPayments: any[], allocation: RefundAllocation) {
+    const payment = allocation.paymentTransactionId
+      ? orderPayments.find((item) => item.id.toString() === allocation.paymentTransactionId)
+      : orderPayments.find((item) => !item.refundSource && item.paymentStatus === PAYMENT_STATUSES.completed);
+    if (!payment || payment.paymentStatus !== PAYMENT_STATUSES.completed) {
+      throw new BadRequestException(this.i18n.t('errors.order_completed_payment_not_found'));
+    }
+    return payment;
   }
 
   private assertRefundCeiling(adjusted: number, calculated: number) {

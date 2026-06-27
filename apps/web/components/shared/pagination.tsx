@@ -6,18 +6,19 @@ type PaginationSearchParams = Record<string, string | string[] | undefined>
 function pageUrl(
   pathname: string,
   searchParams: PaginationSearchParams,
-  page: number
+  page: number,
+  pageParam = "page"
 ) {
   const params = new URLSearchParams()
 
   for (const [key, value] of Object.entries(searchParams)) {
-    if (value === undefined || key === "page") continue
+    if (value === undefined || key === pageParam) continue
     for (const item of Array.isArray(value) ? value : [value]) {
       params.append(key, item)
     }
   }
 
-  params.set("page", String(page))
+  params.set(pageParam, String(page))
   return `${pathname}?${params.toString()}`
 }
 
@@ -52,12 +53,14 @@ function ListingPagination({
   currentPage,
   totalPages,
   className,
+  pageParam = "page",
 }: {
   pathname: string
   searchParams: PaginationSearchParams
   currentPage: number
   totalPages: number
   className?: string
+  pageParam?: string
 }) {
   if (totalPages <= 1) return null
 
@@ -65,7 +68,7 @@ function ListingPagination({
     <div className={cn("mt-auto flex items-center justify-center gap-2 pt-6", className)}>
       <PaginationLink
         disabled={currentPage <= 1}
-        href={pageUrl(pathname, searchParams, currentPage - 1)}
+        href={pageUrl(pathname, searchParams, currentPage - 1, pageParam)}
         label="Previous page"
       >
         {"<"}
@@ -73,7 +76,7 @@ function ListingPagination({
       {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
         <Link
           key={page}
-          href={pageUrl(pathname, searchParams, page)}
+          href={pageUrl(pathname, searchParams, page, pageParam)}
           className={cn(
             "inline-flex size-9 items-center justify-center rounded-full border text-sm font-semibold transition-all",
             currentPage === page
@@ -86,7 +89,7 @@ function ListingPagination({
       ))}
       <PaginationLink
         disabled={currentPage >= totalPages}
-        href={pageUrl(pathname, searchParams, currentPage + 1)}
+        href={pageUrl(pathname, searchParams, currentPage + 1, pageParam)}
         label="Next page"
       >
         {">"}

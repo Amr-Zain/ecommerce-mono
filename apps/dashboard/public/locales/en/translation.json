@@ -53,6 +53,8 @@
     "revenueReport": "Revenue Report",
     "customers": "Customers",
     "orders": "Orders",
+    "wallets": "Wallets",
+    "wallet_withdrawals": "Wallet Withdrawals",
     "products": "Products",
     "allProducts": "Products",
     "categories": "Categories",

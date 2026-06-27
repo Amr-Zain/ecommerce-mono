@@ -1,25 +1,30 @@
 "use client"
 
-import { ArrowLeft01Icon, BankIcon, CheckmarkCircle01Icon, CreditCardIcon } from "@hugeicons/core-free-icons"
+import { ArrowLeft01Icon, BankIcon, CheckmarkCircle01Icon, CreditCardIcon, Wallet01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 import * as React from "react"
 
 import { Button } from "@ecommerce/ui/components/button"
+import { Input } from "@ecommerce/ui/components/input"
 import { Textarea } from "@ecommerce/ui/components/textarea"
 import { PricingSummary, type Pricing } from "@/components/cart/step-cart"
 import type { PlaceOrderResult } from "@/hooks/api/use-checkout"
 import { cn } from "@/lib/utils"
 
-type PaymentMethod = "cod" | "bank_transfer" | "stripe_checkout"
+type PaymentMethod = "cod" | "bank_transfer" | "stripe_checkout" | "wallet"
 
 interface PaymentStepProps {
   pricing: Pricing
   isLoading: boolean
   result?: PlaceOrderResult
+  walletAvailable: number
+  walletPending: number
+  walletAmount: number
+  onWalletAmountChange: (amount: number) => void
   onBack: () => void
-  onPlaceOrder: (paymentMethod: PaymentMethod, notes?: string) => void
+  onPlaceOrder: (paymentMethod: PaymentMethod, notes?: string, walletAmount?: number) => void
 }
 
 function SuccessScreen({ result }: { result: PlaceOrderResult }) {
@@ -54,6 +59,10 @@ export function PaymentStep({
   pricing,
   isLoading,
   result,
+  walletAvailable,
+  walletPending,
+  walletAmount,
+  onWalletAmountChange,
   onBack,
   onPlaceOrder,
 }: PaymentStepProps) {
@@ -62,23 +71,79 @@ export function PaymentStep({
 
   if (result?.order_number) return <SuccessScreen result={result} />
 
-  const methods: Array<{ id: PaymentMethod; label: string; sub: string; icon: typeof CreditCardIcon }> = [
+  const walletApplied = Math.min(Math.max(walletAmount, 0), walletAvailable, pricing.total)
+  const remainingDue = Math.max(0, Number((pricing.total - walletApplied).toFixed(2)))
+  const walletCoversOrder = walletApplied >= pricing.total && pricing.total > 0
+  const selectedMethod = walletCoversOrder ? "wallet" : method === "wallet" ? "stripe_checkout" : method
+
+  const methods: Array<{ id: PaymentMethod; label: string; sub: string; icon: typeof CreditCardIcon }> = walletCoversOrder
+    ? [{ id: "wallet", label: "Wallet", sub: "Pay the full order from wallet balance", icon: Wallet01Icon }]
+    : [
     { id: "stripe_checkout", label: "Credit / Debit Card", sub: "Secure Stripe Checkout", icon: CreditCardIcon },
     { id: "bank_transfer", label: "Bank Transfer", sub: "Awaiting admin confirmation", icon: BankIcon },
     { id: "cod", label: "Cash on Delivery", sub: "Pay when your order arrives", icon: BankIcon },
   ]
+  const actionLabel = isLoading
+    ? "Processing..."
+    : walletCoversOrder
+      ? "Place Order"
+      : selectedMethod === "stripe_checkout"
+        ? "Continue to Stripe"
+        : "Place Order"
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
         <h2 className="text-base font-bold">Payment Method</h2>
+        <div className="rounded-2xl border bg-card p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <HugeiconsIcon icon={Wallet01Icon} className="size-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-bold">Use wallet balance</p>
+                  <p className="text-xs text-muted-foreground">
+                    Available SAR {walletAvailable.toFixed(2)}
+                    {walletPending > 0 ? ` · Reserved SAR ${walletPending.toFixed(2)}` : ""}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={walletAvailable <= 0}
+                  onClick={() => onWalletAmountChange(Math.min(walletAvailable, pricing.total))}
+                >
+                  Apply all
+                </Button>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-[180px_1fr]">
+                <Input
+                  type="number"
+                  min={0}
+                  max={Math.min(walletAvailable, pricing.total)}
+                  step="0.01"
+                  value={walletAmount || ""}
+                  placeholder="0.00"
+                  onChange={(event) => onWalletAmountChange(Number(event.target.value || 0))}
+                />
+                <div className="rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  Use SAR {walletApplied.toFixed(2)} from wallet and pay SAR {remainingDue.toFixed(2)}
+                  {walletCoversOrder ? " from wallet." : ` by ${selectedMethod.replaceAll("_", " ")}.`}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         {methods.map(({ id, label, sub, icon }) => (
           <button
             key={id}
-            onClick={() => setMethod(id)}
+            onClick={() => !walletCoversOrder && setMethod(id)}
             className={cn(
               "flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left",
-              method === id ? "border-primary bg-primary/5" : "border-border bg-card"
+              selectedMethod === id ? "border-primary bg-primary/5" : "border-border bg-card"
             )}
           >
             <HugeiconsIcon icon={icon} className="size-5" />
@@ -86,13 +151,13 @@ export function PaymentStep({
               <p className="text-sm font-bold">{label}</p>
               <p className="text-xs text-muted-foreground">{sub}</p>
             </div>
-            <div className={cn("size-4 rounded-full border-2", method === id && "border-primary bg-primary")} />
+            <div className={cn("size-4 rounded-full border-2", selectedMethod === id && "border-primary bg-primary")} />
           </button>
         ))}
 
-        {method === "stripe_checkout" && (
+        {selectedMethod === "stripe_checkout" && remainingDue > 0 && (
           <p className="rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
-            You will be redirected to Stripe. Your order is created only after Stripe confirms payment.
+            Wallet funds are reserved while Stripe is pending. Your order is created only after Stripe confirms payment.
           </p>
         )}
         <Textarea placeholder="Order notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -104,8 +169,8 @@ export function PaymentStep({
 
       <PricingSummary
         pricing={pricing}
-        onNext={() => onPlaceOrder(method, notes.trim() || undefined)}
-        actionLabel={isLoading ? "Processing..." : method === "stripe_checkout" ? "Continue to Stripe" : "Place Order"}
+        onNext={() => onPlaceOrder(selectedMethod, notes.trim() || undefined, walletApplied)}
+        actionLabel={actionLabel}
         disabled={isLoading}
       />
     </div>

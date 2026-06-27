@@ -38,6 +38,11 @@ export type PaymentStatus =
 export type AdminOrderTransitionPayload = {
   status: OrderStatus
   reason?: string
+  refund_allocations?: Array<{
+    destination: 'wallet' | 'original_payment' | 'manual'
+    amount: number
+    payment_transaction_id?: string
+  }>
 }
 
 export type JsonPrimitive = string | number | boolean | null

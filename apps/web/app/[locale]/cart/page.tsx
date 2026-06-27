@@ -24,6 +24,7 @@ import {
   type CheckoutPreview,
   type PlaceOrderResult,
 } from "@/hooks/api/use-checkout"
+import { useWallet } from "@/hooks/api/use-wallet"
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,7 @@ export default function CartPage() {
   const [appliedCoupon, setAppliedCoupon] = React.useState("")
   const [selectedAddressId, setSelectedAddressId] = React.useState<string>()
   const [preview, setPreview] = React.useState<CheckoutPreview>()
+  const [walletAmount, setWalletAmount] = React.useState(0)
   const [orderResult, setOrderResult] = React.useState<PlaceOrderResult>()
   const { status } = useSession()
   const router = useRouter()
@@ -64,6 +66,7 @@ export default function CartPage() {
   const addresses = useAddresses()
   const checkoutPreview = useCheckoutPreview()
   const placeOrder = usePlaceOrder()
+  const wallet = useWallet()
   const updateItem = useUpdateCartItem()
   const removeItem = useRemoveCartItem()
   const setStep = React.useCallback(
@@ -110,6 +113,17 @@ export default function CartPage() {
     vat: totals?.vat_amount ?? 0,
     total: totals?.total_price ?? subtotal,
   }
+  const walletAvailable = Number(
+    wallet.data?.available_balance ?? wallet.data?.availableBalance ?? 0
+  )
+  const walletPending = Number(
+    wallet.data?.pending_balance ?? wallet.data?.pendingBalance ?? 0
+  )
+  const appliedWalletAmount = Math.min(
+    Math.max(walletAmount, 0),
+    walletAvailable,
+    pricing.total
+  )
 
   const effectiveAddressId =
     selectedAddressId ??
@@ -178,8 +192,9 @@ export default function CartPage() {
   }
 
   const submitOrder = (
-    paymentMethod: "cod" | "bank_transfer" | "stripe_checkout",
-    notes?: string
+    paymentMethod: "cod" | "bank_transfer" | "stripe_checkout" | "wallet",
+    notes?: string,
+    requestedWalletAmount = appliedWalletAmount
   ) => {
     if (status !== "authenticated") {
       requireLogin()
@@ -189,6 +204,10 @@ export default function CartPage() {
       {
         addressId: Number(effectiveAddressId),
         paymentMethod,
+        walletAmount:
+          Math.min(Math.max(requestedWalletAmount, 0), walletAvailable, pricing.total) > 0
+            ? Math.min(Math.max(requestedWalletAmount, 0), walletAvailable, pricing.total)
+            : undefined,
         couponCode: appliedCoupon || undefined,
         notes,
       },
@@ -239,6 +258,10 @@ export default function CartPage() {
             pricing={pricing}
             isLoading={placeOrder.isPending}
             result={orderResult}
+            walletAvailable={walletAvailable}
+            walletPending={walletPending}
+            walletAmount={appliedWalletAmount}
+            onWalletAmountChange={setWalletAmount}
             onBack={() => setStep("address")}
             onPlaceOrder={submitOrder}
           />
@@ -295,6 +318,10 @@ export default function CartPage() {
                 pricing={pricing}
                 isLoading={placeOrder.isPending}
                 result={orderResult}
+                walletAvailable={walletAvailable}
+                walletPending={walletPending}
+                walletAmount={appliedWalletAmount}
+                onWalletAmountChange={setWalletAmount}
                 onBack={() => setStep("address")}
                 onPlaceOrder={submitOrder}
               />

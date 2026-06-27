@@ -22,6 +22,7 @@ import {
   SlidersHorizontalIcon,
   Store01Icon,
   UserMultipleIcon,
+  Wallet01Icon,
 } from '@hugeicons/core-free-icons'
 import { MenuItem } from '@/types/components/sidebar'
 
@@ -50,6 +51,7 @@ const ShoppingCart = H(ShoppingCart01Icon)
 const Sliders = H(SlidersHorizontalIcon)
 const Store = H(Store01Icon)
 const Users2 = H(UserMultipleIcon)
+const Wallet = H(Wallet01Icon)
 
 export const getDashboardMenuItems: MenuItem[] = [
   // {
@@ -133,6 +135,19 @@ export const getProductsAndShowRoomsMenuItems: MenuItem[] = [
     icon: ShoppingCart,
     // badge: '23',
     checkPermission: true,
+  },
+  {
+    title: 'menu.wallets',
+    url: '/wallets',
+    icon: Wallet,
+    checkPermission: true,
+  },
+  {
+    title: 'menu.wallet_withdrawals',
+    url: '/wallet-withdrawals',
+    icon: Wallet,
+    checkPermission: true,
+    permissionEntity: 'wallet-withdrawals',
   },
   {
     title: 'menu.returns',

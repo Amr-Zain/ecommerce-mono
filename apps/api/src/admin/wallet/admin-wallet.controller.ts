@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
+import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { WalletService } from '@/shared/wallet/wallet.service';
 import { AdminMarkWithdrawalPaidDto, AdminWithdrawalActionDto } from '@/shared/wallet/dto/wallet.dto';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -15,7 +16,7 @@ export class AdminWalletController {
 
   @Get('wallets')
   @RequirePermissions({ resource: 'wallets', action: 'list' })
-  listWallets(@Query() query: AdvancedQueryDto) {
+  listWallets(@ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto) {
     return this.walletService.listAdminWallets(query);
   }
 
@@ -27,13 +28,13 @@ export class AdminWalletController {
 
   @Get('wallet-transactions')
   @RequirePermissions({ resource: 'wallet-transactions', action: 'list' })
-  listTransactions(@Query() query: AdvancedQueryDto) {
+  listTransactions(@ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto) {
     return this.walletService.listAdminTransactions(query);
   }
 
   @Get('wallet-withdrawals')
   @RequirePermissions({ resource: 'wallet-withdrawals', action: 'list' })
-  listWithdrawals(@Query() query: AdvancedQueryDto) {
+  listWithdrawals(@ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto) {
     return this.walletService.listAdminWithdrawals(query);
   }
 

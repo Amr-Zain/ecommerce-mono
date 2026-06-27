@@ -4,12 +4,15 @@ import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
 import { clientEndpoints } from "@/lib/client/client-api"
+import type { PaginationMeta } from "@/types/api"
 
 type Wallet = {
   id: string
   currency: string
   available_balance: number
+  availableBalance?: number
   pending_balance: number
+  pendingBalance?: number
   status: string
 }
 
@@ -22,6 +25,7 @@ type WalletTransaction = {
   status: string
   description?: string | null
   created_at: string
+  createdAt?: string
 }
 
 type WalletWithdrawal = {
@@ -31,6 +35,17 @@ type WalletWithdrawal = {
   method: string
   status: string
   requested_at: string
+  requestedAt?: string
+}
+
+type WalletWithdrawalsResult = {
+  items: WalletWithdrawal[]
+  meta: PaginationMeta
+}
+
+type WalletTransactionsResult = {
+  items: WalletTransaction[]
+  meta: PaginationMeta
 }
 
 type DepositResult = {
@@ -39,11 +54,23 @@ type DepositResult = {
   client_secret?: string | null
 }
 
-function responseItems<T>(response: unknown): T[] {
+function responsePaginatedItems<T>(response: unknown, fallbackPage: number, fallbackLimit: number) {
   const data = (response as { data?: unknown })?.data
-  if (Array.isArray(data)) return data as T[]
-  const items = (data as { items?: unknown })?.items
-  return Array.isArray(items) ? (items as T[]) : []
+  const nestedData = (data as { data?: unknown })?.data
+  const items = Array.isArray(nestedData)
+    ? (nestedData as T[])
+    : Array.isArray((data as { items?: unknown })?.items)
+      ? ((data as { items?: unknown }).items as T[])
+      : Array.isArray(data)
+        ? (data as T[])
+        : []
+  const meta = ((data as { meta?: PaginationMeta })?.meta ?? {
+    page: fallbackPage,
+    limit: fallbackLimit,
+    total: items.length,
+  }) as PaginationMeta
+
+  return { items, meta }
 }
 
 function useWallet() {
@@ -55,23 +82,23 @@ function useWallet() {
   })
 }
 
-function useWalletTransactions() {
-  return useFetch<unknown, WalletTransaction[]>({
+function useWalletTransactions(page = 1, limit = 10, status?: string | null) {
+  return useFetch<unknown, WalletTransactionsResult>({
     authRequired: true,
     endpoint: clientEndpoints.walletTransactions,
-    params: { limit: 50 },
-    queryKey: queryKeys.walletTransactions(),
-    select: responseItems<WalletTransaction>,
+    params: { page, limit, "filters[status]": status || undefined },
+    queryKey: queryKeys.walletTransactions({ page, limit, status: status || "" }),
+    select: (response) => responsePaginatedItems<WalletTransaction>(response, page, limit),
   })
 }
 
-function useWalletWithdrawals() {
-  return useFetch<unknown, WalletWithdrawal[]>({
+function useWalletWithdrawals(page = 1, limit = 5, status?: string | null) {
+  return useFetch<unknown, WalletWithdrawalsResult>({
     authRequired: true,
     endpoint: clientEndpoints.walletWithdrawals,
-    params: { limit: 50 },
-    queryKey: queryKeys.walletWithdrawals(),
-    select: responseItems<WalletWithdrawal>,
+    params: { page, limit, "filters[status]": status || undefined },
+    queryKey: queryKeys.walletWithdrawals({ page, limit, status: status || "" }),
+    select: (response) => responsePaginatedItems<WalletWithdrawal>(response, page, limit),
   })
 }
 
@@ -81,6 +108,26 @@ function useCreateWalletDeposit() {
     endpoint: clientEndpoints.walletDeposits,
     mutationKey: ["wallet", "deposit"],
     method: "POST",
+  })
+}
+
+function useVerifyWalletDeposit(id?: string | null) {
+  return useMutate<unknown, Record<string, never>>({
+    authRequired: true,
+    endpoint: id ? clientEndpoints.walletDepositVerify(id) : clientEndpoints.walletDeposits,
+    mutationKey: ["wallet", "deposit", "verify", id],
+    method: "POST",
+    mutationOptions: { meta: { invalidates: [queryKeys.wallet(), queryKeys.walletTransactions()] } },
+  })
+}
+
+function useCancelWalletDeposit(id?: string | null) {
+  return useMutate<unknown, Record<string, never>>({
+    authRequired: true,
+    endpoint: id ? clientEndpoints.walletDepositCancel(id) : clientEndpoints.walletDeposits,
+    mutationKey: ["wallet", "deposit", "cancel", id],
+    method: "POST",
+    mutationOptions: { meta: { invalidates: [queryKeys.wallet(), queryKeys.walletTransactions()] } },
   })
 }
 
@@ -106,10 +153,12 @@ function useCancelWalletWithdrawal(id: string) {
 
 export {
   useCancelWalletWithdrawal,
+  useCancelWalletDeposit,
   useCreateWalletDeposit,
   useCreateWalletWithdrawal,
+  useVerifyWalletDeposit,
   useWallet,
   useWalletTransactions,
   useWalletWithdrawals,
 }
-export type { WalletTransaction, WalletWithdrawal }
+export type { Wallet, WalletTransaction, WalletWithdrawal }

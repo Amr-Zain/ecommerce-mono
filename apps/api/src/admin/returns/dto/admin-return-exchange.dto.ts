@@ -118,11 +118,37 @@ export class AdminReceiveExchangeDto {
   note?: string;
 }
 
+export class RefundAllocationDto {
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  @IsIn(['wallet', 'original_payment', 'manual'], {
+    message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM'),
+  })
+  @ApiProperty({ example: 'wallet', description: 'destination' })
+  destination!: 'wallet' | 'original_payment' | 'manual';
+
+  @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
+  @Min(0, { message: i18nValidationMessage<I18nTranslations>('validation.MIN') })
+  @ApiProperty({ example: 50, description: 'amount' })
+  amount!: number;
+
+  @IsOptional()
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  @ApiPropertyOptional({ example: '1', description: 'paymentTransactionId' })
+  paymentTransactionId?: string;
+}
+
 export class AdminReturnRefundDto {
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @ApiPropertyOptional({ example: "Return request rejected after review", description: 'note' })
   note?: string;
+
+  @IsOptional()
+  @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
+  @ValidateNested({ each: true })
+  @Type(() => RefundAllocationDto)
+  @ApiPropertyOptional({ example: [], description: 'refundAllocations' })
+  refundAllocations?: RefundAllocationDto[];
 }
 
 export class AdminExchangePaymentDto {

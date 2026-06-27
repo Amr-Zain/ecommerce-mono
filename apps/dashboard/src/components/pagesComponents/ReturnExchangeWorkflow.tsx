@@ -69,6 +69,9 @@ type DialogState = {
   note: string
   shipping_amount?: number
   shipping_reason: string
+  wallet_refund_amount?: number
+  original_refund_amount?: number
+  manual_refund_amount?: number
   items: ReceiveItemState[]
 }
 
@@ -77,6 +80,9 @@ const actionDialogSchema = z.object({
   note: z.string().optional(),
   shipping_amount: z.coerce.number().min(0).optional(),
   shipping_reason: z.string().optional(),
+  wallet_refund_amount: z.coerce.number().min(0).optional(),
+  original_refund_amount: z.coerce.number().min(0).optional(),
+  manual_refund_amount: z.coerce.number().min(0).optional(),
   items: z.array(
     z.object({
       id: z.string(),
@@ -134,6 +140,14 @@ export function ReturnExchangeShow({
         ? (request as ReturnRequest).suggested_shipping_refund_amount
         : (request as ExchangeRequest).suggested_replacement_shipping_fee,
       shipping_reason: '',
+      wallet_refund_amount: 0,
+      original_refund_amount:
+        action === 'refund'
+          ? (request as ReturnRequest).final_refund_amount
+          : action === 'refund-difference'
+            ? Math.abs((request as ExchangeRequest).settlement_amount)
+            : 0,
+      manual_refund_amount: 0,
       items: request.items.map((item: any) => ({
         id: item.id,
         accepted_quantity: item.accepted_quantity || item.quantity,
@@ -658,6 +672,42 @@ function buildActionFields({
   }
 
   if (requiresNote || requiresReceivePayload) {
+    if (dialog.action === 'refund' || dialog.action === 'refund-difference') {
+      const amount =
+        dialog.action === 'refund'
+          ? (request as ReturnRequest).final_refund_amount
+          : Math.abs((request as ExchangeRequest).settlement_amount)
+      fields.push({
+        type: 'custom',
+        span: 2,
+        customItem: (
+          <div className="rounded-xl border bg-muted/20 p-4 text-sm">
+            <p className="font-semibold">Refund allocation</p>
+            <p className="mt-1 text-muted-foreground">
+              Split exactly {money(amount)} between wallet, original payment, and manual refund.
+            </p>
+          </div>
+        ),
+      })
+      fields.push({
+        type: 'number',
+        name: 'wallet_refund_amount',
+        label: 'Refund to wallet',
+        inputProps: { min: 0, max: amount, step: 0.01 },
+      })
+      fields.push({
+        type: 'number',
+        name: 'original_refund_amount',
+        label: 'Refund to original payment',
+        inputProps: { min: 0, max: amount, step: 0.01 },
+      })
+      fields.push({
+        type: 'number',
+        name: 'manual_refund_amount',
+        label: 'Manual refund',
+        inputProps: { min: 0, max: amount, step: 0.01 },
+      })
+    }
     fields.push({
       type: 'textarea',
       name: 'note',
@@ -719,6 +769,20 @@ function buildPayload(kind: WorkflowKind, dialog: DialogState) {
     dialog.action === 'refund-difference' ||
     dialog.action === 'waive-adjustment'
   ) {
+    if (dialog.action === 'refund' || dialog.action === 'refund-difference') {
+      const refund_allocations = [
+        dialog.wallet_refund_amount
+          ? { destination: 'wallet', amount: dialog.wallet_refund_amount }
+          : null,
+        dialog.original_refund_amount
+          ? { destination: 'original_payment', amount: dialog.original_refund_amount }
+          : null,
+        dialog.manual_refund_amount
+          ? { destination: 'manual', amount: dialog.manual_refund_amount }
+          : null,
+      ].filter(Boolean)
+      return { note: emptyToUndefined(dialog.note), refund_allocations }
+    }
     return { note: emptyToUndefined(dialog.note) }
   }
 

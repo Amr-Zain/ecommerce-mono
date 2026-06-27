@@ -14,6 +14,8 @@ import { Route as AuthRouteRouteImport } from './routes/auth/route'
 import { Route as MainRouteRouteImport } from './routes/_main/route'
 import { Route as MainIndexRouteImport } from './routes/_main/index'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as MainWalletsIndexRouteImport } from './routes/_main/wallets/index'
+import { Route as MainWalletWithdrawalsIndexRouteImport } from './routes/_main/wallet-withdrawals/index'
 import { Route as MainUsersIndexRouteImport } from './routes/_main/users/index'
 import { Route as MainTiersIndexRouteImport } from './routes/_main/tiers/index'
 import { Route as MainTicketsIndexRouteImport } from './routes/_main/tickets/index'
@@ -62,6 +64,7 @@ import { Route as MainSettingsGeneralIndexRouteImport } from './routes/_main/set
 import { Route as MainSettingsCountriesIndexRouteImport } from './routes/_main/settings/countries/index'
 import { Route as MainSettingsCitiesIndexRouteImport } from './routes/_main/settings/cities/index'
 import { Route as MainAttributesValuesIndexRouteImport } from './routes/_main/attributes/values/index'
+import { Route as MainWalletsShowIdRouteImport } from './routes/_main/wallets/show/$id'
 import { Route as MainUsersShowIdRouteImport } from './routes/_main/users/show/$id'
 import { Route as MainTiersEditIdRouteImport } from './routes/_main/tiers/edit/$id'
 import { Route as MainTicketsShowIdRouteImport } from './routes/_main/tickets/show/$id'
@@ -128,6 +131,17 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const MainWalletsIndexRoute = MainWalletsIndexRouteImport.update({
+  id: '/wallets/',
+  path: '/wallets/',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainWalletWithdrawalsIndexRoute =
+  MainWalletWithdrawalsIndexRouteImport.update({
+    id: '/wallet-withdrawals/',
+    path: '/wallet-withdrawals/',
+    getParentRoute: () => MainRouteRoute,
+  } as any)
 const MainUsersIndexRoute = MainUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
@@ -376,6 +390,11 @@ const MainAttributesValuesIndexRoute =
     path: '/attributes/values/',
     getParentRoute: () => MainRouteRoute,
   } as any)
+const MainWalletsShowIdRoute = MainWalletsShowIdRouteImport.update({
+  id: '/wallets/show/$id',
+  path: '/wallets/show/$id',
+  getParentRoute: () => MainRouteRoute,
+} as any)
 const MainUsersShowIdRoute = MainUsersShowIdRouteImport.update({
   id: '/users/show/$id',
   path: '/users/show/$id',
@@ -642,6 +661,8 @@ export interface FileRoutesByFullPath {
   '/tickets/': typeof MainTicketsIndexRoute
   '/tiers/': typeof MainTiersIndexRoute
   '/users/': typeof MainUsersIndexRoute
+  '/wallet-withdrawals/': typeof MainWalletWithdrawalsIndexRoute
+  '/wallets/': typeof MainWalletsIndexRoute
   '/admin-notifications/show/$id': typeof MainAdminNotificationsShowIdRoute
   '/attributes/edit/$id': typeof MainAttributesEditIdRoute
   '/attributes/show/$id': typeof MainAttributesShowIdRoute
@@ -677,6 +698,7 @@ export interface FileRoutesByFullPath {
   '/tickets/show/$id': typeof MainTicketsShowIdRoute
   '/tiers/edit/$id': typeof MainTiersEditIdRoute
   '/users/show/$id': typeof MainUsersShowIdRoute
+  '/wallets/show/$id': typeof MainWalletsShowIdRoute
   '/attributes/values/': typeof MainAttributesValuesIndexRoute
   '/settings/cities/': typeof MainSettingsCitiesIndexRoute
   '/settings/countries/': typeof MainSettingsCountriesIndexRoute
@@ -737,6 +759,8 @@ export interface FileRoutesByTo {
   '/tickets': typeof MainTicketsIndexRoute
   '/tiers': typeof MainTiersIndexRoute
   '/users': typeof MainUsersIndexRoute
+  '/wallet-withdrawals': typeof MainWalletWithdrawalsIndexRoute
+  '/wallets': typeof MainWalletsIndexRoute
   '/admin-notifications/show/$id': typeof MainAdminNotificationsShowIdRoute
   '/attributes/edit/$id': typeof MainAttributesEditIdRoute
   '/attributes/show/$id': typeof MainAttributesShowIdRoute
@@ -772,6 +796,7 @@ export interface FileRoutesByTo {
   '/tickets/show/$id': typeof MainTicketsShowIdRoute
   '/tiers/edit/$id': typeof MainTiersEditIdRoute
   '/users/show/$id': typeof MainUsersShowIdRoute
+  '/wallets/show/$id': typeof MainWalletsShowIdRoute
   '/attributes/values': typeof MainAttributesValuesIndexRoute
   '/settings/cities': typeof MainSettingsCitiesIndexRoute
   '/settings/countries': typeof MainSettingsCountriesIndexRoute
@@ -834,6 +859,8 @@ export interface FileRoutesById {
   '/_main/tickets/': typeof MainTicketsIndexRoute
   '/_main/tiers/': typeof MainTiersIndexRoute
   '/_main/users/': typeof MainUsersIndexRoute
+  '/_main/wallet-withdrawals/': typeof MainWalletWithdrawalsIndexRoute
+  '/_main/wallets/': typeof MainWalletsIndexRoute
   '/_main/admin-notifications/show/$id': typeof MainAdminNotificationsShowIdRoute
   '/_main/attributes/edit/$id': typeof MainAttributesEditIdRoute
   '/_main/attributes/show/$id': typeof MainAttributesShowIdRoute
@@ -869,6 +896,7 @@ export interface FileRoutesById {
   '/_main/tickets/show/$id': typeof MainTicketsShowIdRoute
   '/_main/tiers/edit/$id': typeof MainTiersEditIdRoute
   '/_main/users/show/$id': typeof MainUsersShowIdRoute
+  '/_main/wallets/show/$id': typeof MainWalletsShowIdRoute
   '/_main/attributes/values/': typeof MainAttributesValuesIndexRoute
   '/_main/settings/cities/': typeof MainSettingsCitiesIndexRoute
   '/_main/settings/countries/': typeof MainSettingsCountriesIndexRoute
@@ -931,6 +959,8 @@ export interface FileRouteTypes {
     | '/tickets/'
     | '/tiers/'
     | '/users/'
+    | '/wallet-withdrawals/'
+    | '/wallets/'
     | '/admin-notifications/show/$id'
     | '/attributes/edit/$id'
     | '/attributes/show/$id'
@@ -966,6 +996,7 @@ export interface FileRouteTypes {
     | '/tickets/show/$id'
     | '/tiers/edit/$id'
     | '/users/show/$id'
+    | '/wallets/show/$id'
     | '/attributes/values/'
     | '/settings/cities/'
     | '/settings/countries/'
@@ -1026,6 +1057,8 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/tiers'
     | '/users'
+    | '/wallet-withdrawals'
+    | '/wallets'
     | '/admin-notifications/show/$id'
     | '/attributes/edit/$id'
     | '/attributes/show/$id'
@@ -1061,6 +1094,7 @@ export interface FileRouteTypes {
     | '/tickets/show/$id'
     | '/tiers/edit/$id'
     | '/users/show/$id'
+    | '/wallets/show/$id'
     | '/attributes/values'
     | '/settings/cities'
     | '/settings/countries'
@@ -1122,6 +1156,8 @@ export interface FileRouteTypes {
     | '/_main/tickets/'
     | '/_main/tiers/'
     | '/_main/users/'
+    | '/_main/wallet-withdrawals/'
+    | '/_main/wallets/'
     | '/_main/admin-notifications/show/$id'
     | '/_main/attributes/edit/$id'
     | '/_main/attributes/show/$id'
@@ -1157,6 +1193,7 @@ export interface FileRouteTypes {
     | '/_main/tickets/show/$id'
     | '/_main/tiers/edit/$id'
     | '/_main/users/show/$id'
+    | '/_main/wallets/show/$id'
     | '/_main/attributes/values/'
     | '/_main/settings/cities/'
     | '/_main/settings/countries/'
@@ -1213,6 +1250,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/login'
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
+    }
+    '/_main/wallets/': {
+      id: '/_main/wallets/'
+      path: '/wallets'
+      fullPath: '/wallets/'
+      preLoaderRoute: typeof MainWalletsIndexRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/wallet-withdrawals/': {
+      id: '/_main/wallet-withdrawals/'
+      path: '/wallet-withdrawals'
+      fullPath: '/wallet-withdrawals/'
+      preLoaderRoute: typeof MainWalletWithdrawalsIndexRouteImport
+      parentRoute: typeof MainRouteRoute
     }
     '/_main/users/': {
       id: '/_main/users/'
@@ -1550,6 +1601,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainAttributesValuesIndexRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/_main/wallets/show/$id': {
+      id: '/_main/wallets/show/$id'
+      path: '/wallets/show/$id'
+      fullPath: '/wallets/show/$id'
+      preLoaderRoute: typeof MainWalletsShowIdRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/_main/users/show/$id': {
       id: '/_main/users/show/$id'
       path: '/users/show/$id'
@@ -1884,6 +1942,8 @@ interface MainRouteRouteChildren {
   MainTicketsIndexRoute: typeof MainTicketsIndexRoute
   MainTiersIndexRoute: typeof MainTiersIndexRoute
   MainUsersIndexRoute: typeof MainUsersIndexRoute
+  MainWalletWithdrawalsIndexRoute: typeof MainWalletWithdrawalsIndexRoute
+  MainWalletsIndexRoute: typeof MainWalletsIndexRoute
   MainAdminNotificationsShowIdRoute: typeof MainAdminNotificationsShowIdRoute
   MainAttributesEditIdRoute: typeof MainAttributesEditIdRoute
   MainAttributesShowIdRoute: typeof MainAttributesShowIdRoute
@@ -1919,6 +1979,7 @@ interface MainRouteRouteChildren {
   MainTicketsShowIdRoute: typeof MainTicketsShowIdRoute
   MainTiersEditIdRoute: typeof MainTiersEditIdRoute
   MainUsersShowIdRoute: typeof MainUsersShowIdRoute
+  MainWalletsShowIdRoute: typeof MainWalletsShowIdRoute
   MainAttributesValuesIndexRoute: typeof MainAttributesValuesIndexRoute
   MainSettingsCitiesIndexRoute: typeof MainSettingsCitiesIndexRoute
   MainSettingsCountriesIndexRoute: typeof MainSettingsCountriesIndexRoute
@@ -1977,6 +2038,8 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainTicketsIndexRoute: MainTicketsIndexRoute,
   MainTiersIndexRoute: MainTiersIndexRoute,
   MainUsersIndexRoute: MainUsersIndexRoute,
+  MainWalletWithdrawalsIndexRoute: MainWalletWithdrawalsIndexRoute,
+  MainWalletsIndexRoute: MainWalletsIndexRoute,
   MainAdminNotificationsShowIdRoute: MainAdminNotificationsShowIdRoute,
   MainAttributesEditIdRoute: MainAttributesEditIdRoute,
   MainAttributesShowIdRoute: MainAttributesShowIdRoute,
@@ -2012,6 +2075,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainTicketsShowIdRoute: MainTicketsShowIdRoute,
   MainTiersEditIdRoute: MainTiersEditIdRoute,
   MainUsersShowIdRoute: MainUsersShowIdRoute,
+  MainWalletsShowIdRoute: MainWalletsShowIdRoute,
   MainAttributesValuesIndexRoute: MainAttributesValuesIndexRoute,
   MainSettingsCitiesIndexRoute: MainSettingsCitiesIndexRoute,
   MainSettingsCountriesIndexRoute: MainSettingsCountriesIndexRoute,
