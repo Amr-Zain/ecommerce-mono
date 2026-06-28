@@ -16,6 +16,7 @@ import NetworkWrapper from './components/common/uiComponents/NetworkWrapper'
 import { queryClient } from './components/providers/tabstackQueryProvider'
 import { ThemeProvider } from './components/providers/themeProvider'
 import { AuthBootstrapProvider } from './components/providers/AuthBootstrapProvider'
+import { DashboardHttpProvider } from './components/providers/HttpAdapterProvider'
 
 export type RouterContext = {
   queryClient: QueryClient
@@ -44,7 +45,9 @@ ReactDOM.createRoot(document.getElementById('app') as HTMLElement).render(
         <ThemeProvider defaultTheme="dark" storageKey="dashboard-theme">
           <NetworkWrapper>
             <AuthBootstrapProvider>
-              <RouterProvider router={router} />
+              <DashboardHttpProvider>
+                <RouterProvider router={router} />
+              </DashboardHttpProvider>
             </AuthBootstrapProvider>
             <Toaster />
           </NetworkWrapper>

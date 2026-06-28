@@ -113,7 +113,7 @@ export default function SendMessageForm() {
       channel,
       variables,
     })
-    setPreview(result.data.data)
+    setPreview(result.data)
   }
 
   return (

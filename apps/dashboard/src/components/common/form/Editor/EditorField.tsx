@@ -18,10 +18,12 @@ import DOMPurify from "dompurify";
 import '@/styles/editor.css'
 
 import {
-  AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Code2, Highlighter, Italic,
-  Link as LinkIcon, List, ListOrdered, ListTodo, Quote, Redo2, Strikethrough,
-  Subscript as SubIcon, Superscript as SupIcon, Underline as UnderlineIcon, Undo2
-} from "lucide-react";
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Edit01Icon,
+  Link01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import HighlightColorPicker from "./highlightColorPicker";
 import ImageUploadButton from "./ImageUploadButton";
@@ -150,19 +152,23 @@ function EditorField<T extends FieldValues>({
     { value: "6", label: "H6" },
   ];
 
+  const toolbarIcon = (icon: any) => (
+    <HugeiconsIcon icon={icon} strokeWidth={2} className="h-[18px] w-[18px]" />
+  )
+
   const toolbarItems = [
-  { icon: <Undo2 size={18} />, action: () => editor.chain().focus().undo().run(), isActive: false, title: "Undo" },
-  { icon: <Redo2 size={18} />, action: () => editor.chain().focus().redo().run(), isActive: false, title: "Redo" },
-  { icon: <Bold size={18} />, action: () => editor.chain().focus().toggleBold().run(), isActive: editor.isActive("bold"), title: "Bold" },
-  { icon: <Italic size={18} />, action: () => editor.chain().focus().toggleItalic().run(), isActive: editor.isActive("italic"), title: "Italic" },
-  { icon: <UnderlineIcon size={18} />, action: () => editor.chain().focus().toggleUnderline().run(), isActive: editor.isActive("underline"), title: "Underline" },
-  { icon: <Strikethrough size={18} />, action: () => editor.chain().focus().toggleStrike().run(), isActive: editor.isActive("strike"), title: "Strikethrough" },
-  { icon: <Code2 size={18} />, action: () => editor.chain().focus().toggleCode().run(), isActive: editor.isActive("code"), title: "Code" },
-  { icon: <Highlighter size={18} />, action: () => editor.chain().focus().toggleHighlight().run(), isActive: editor.isActive("highlight"), title: "Highlight" },
-  { icon: <SupIcon size={18} />, action: () => editor.chain().focus().toggleSuperscript().run(), isActive: editor.isActive("superscript"), title: "Superscript" },
-  { icon: <SubIcon size={18} />, action: () => editor.chain().focus().toggleSubscript().run(), isActive: editor.isActive("subscript"), title: "Subscript" },
+  { icon: toolbarIcon(ArrowLeft01Icon), action: () => editor.chain().focus().undo().run(), isActive: false, title: "Undo" },
+  { icon: toolbarIcon(ArrowRight01Icon), action: () => editor.chain().focus().redo().run(), isActive: false, title: "Redo" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleBold().run(), isActive: editor.isActive("bold"), title: "Bold" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleItalic().run(), isActive: editor.isActive("italic"), title: "Italic" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleUnderline().run(), isActive: editor.isActive("underline"), title: "Underline" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleStrike().run(), isActive: editor.isActive("strike"), title: "Strikethrough" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleCode().run(), isActive: editor.isActive("code"), title: "Code" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleHighlight().run(), isActive: editor.isActive("highlight"), title: "Highlight" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleSuperscript().run(), isActive: editor.isActive("superscript"), title: "Superscript" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleSubscript().run(), isActive: editor.isActive("subscript"), title: "Subscript" },
   {
-    icon: <LinkIcon size={18} />,
+    icon: toolbarIcon(Link01Icon),
     action: () => {
       const url = window.prompt("Enter the URL");
       if (url) editor.chain().focus().setLink({ href: url }).run();
@@ -170,14 +176,14 @@ function EditorField<T extends FieldValues>({
     isActive: editor.isActive("link"),
     title: "Link",
   },
-  { icon: <Quote size={18} />, action: () => editor.chain().focus().toggleBlockquote().run(), isActive: editor.isActive("blockquote"), title: "Quote" },
-  { icon: <List size={18} />, action: () => editor.chain().focus().toggleBulletList().run(), isActive: editor.isActive("bulletList"), title: "Bullet List" },
-  { icon: <ListOrdered size={18} />, action: () => editor.chain().focus().toggleOrderedList().run(), isActive: editor.isActive("orderedList"), title: "Ordered List" },
-  { icon: <ListTodo size={18} />, action: () => editor.chain().focus().toggleTaskList().run(), isActive: editor.isActive("taskList"), title: "Task List" },
-  { icon: <AlignLeft size={18} />, action: () => editor.chain().focus().setTextAlign("left").run(), isActive: editor.isActive({ textAlign: "left" }), title: "Align Left" },
-  { icon: <AlignCenter size={18} />, action: () => editor.chain().focus().setTextAlign("center").run(), isActive: editor.isActive({ textAlign: "center" }), title: "Align Center" },
-  { icon: <AlignRight size={18} />, action: () => editor.chain().focus().setTextAlign("right").run(), isActive: editor.isActive({ textAlign: "right" }), title: "Align Right" },
-  { icon: <AlignJustify size={18} />, action: () => editor.chain().focus().setTextAlign("justify").run(), isActive: editor.isActive({ textAlign: "justify" }), title: "Justify" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleBlockquote().run(), isActive: editor.isActive("blockquote"), title: "Quote" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleBulletList().run(), isActive: editor.isActive("bulletList"), title: "Bullet List" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleOrderedList().run(), isActive: editor.isActive("orderedList"), title: "Ordered List" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().toggleTaskList().run(), isActive: editor.isActive("taskList"), title: "Task List" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().setTextAlign("left").run(), isActive: editor.isActive({ textAlign: "left" }), title: "Align Left" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().setTextAlign("center").run(), isActive: editor.isActive({ textAlign: "center" }), title: "Align Center" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().setTextAlign("right").run(), isActive: editor.isActive({ textAlign: "right" }), title: "Align Right" },
+  { icon: toolbarIcon(Edit01Icon), action: () => editor.chain().focus().setTextAlign("justify").run(), isActive: editor.isActive({ textAlign: "justify" }), title: "Justify" },
 ];
 
 

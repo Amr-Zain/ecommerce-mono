@@ -1,4 +1,11 @@
-import { Eye, File, FileText, Image as ImageIcon, Loader2, Video, X } from "lucide-react";
+import {
+  Attachment01Icon,
+  Cancel01Icon,
+  Image01Icon,
+  Loading03Icon,
+  ViewIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@ecommerce/ui/components/button";
 import { Badge } from "@ecommerce/ui/components/badge";
 import { formatFileSize } from "@/util/helpers";
@@ -17,19 +24,23 @@ const getFileIcon = (file: UploadFile) => {
   const mimeType = file.response?.data?.mime_type || file.type;
 
   if (mimeType?.startsWith('image/'))
-    return <ImageIcon className="w-8 h-8 text-blue-500" />
+    return <HugeiconsIcon icon={Image01Icon} strokeWidth={2} className="h-8 w-8 text-blue-500" />
   if (mimeType?.startsWith('video/'))
-    return <Video className="w-8 h-8 text-purple-500" />
+    return <HugeiconsIcon icon={Attachment01Icon} strokeWidth={2} className="h-8 w-8 text-purple-500" />
   if (mimeType?.includes('pdf'))
-    return <FileText className="w-8 h-8 text-red-500" />
-  return <File className="w-8 h-8 text-gray-500" />;
+    return <HugeiconsIcon icon={Attachment01Icon} strokeWidth={2} className="h-8 w-8 text-red-500" />
+  return <HugeiconsIcon icon={Attachment01Icon} strokeWidth={2} className="h-8 w-8 text-gray-500" />;
 };
 
 const renderFilePreview = (file: UploadFile) => {
   if (file.isUploading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <HugeiconsIcon
+          icon={Loading03Icon}
+          strokeWidth={2}
+          className="h-8 w-8 animate-spin text-blue-500"
+        />
       </div>
     );
   }
@@ -85,7 +96,7 @@ function FilePreview({
                 onClick={() => handlePreview(file)}
                 className="h-8 w-8 p-0 bg-background/90 hover:bg-background"
               >
-                <Eye className="w-4 h-4" />
+                <HugeiconsIcon icon={ViewIcon} strokeWidth={2} className="h-4 w-4" />
               </Button>
             )}
 
@@ -96,7 +107,7 @@ function FilePreview({
               onClick={() => handleRemove(file)}
               className="h-8 w-8 p-0"
             >
-              <X className="w-4 h-4" />
+              <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -143,7 +154,11 @@ function FilePreview({
       <div className="flex items-center gap-2">
         {file.isUploading && (
           <div className="flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <HugeiconsIcon
+              icon={Loading03Icon}
+              strokeWidth={2}
+              className="h-4 w-4 animate-spin text-primary"
+            />
             <Badge variant="secondary" className="text-xs">
               {t('Text.uploading')}
             </Badge>
@@ -158,7 +173,7 @@ function FilePreview({
             onClick={() => handlePreview(file)}
             className="h-8 w-8 p-0 hover:bg-muted"
           >
-            <Eye className="w-4 h-4" />
+            <HugeiconsIcon icon={ViewIcon} strokeWidth={2} className="h-4 w-4" />
           </Button>
         )}
 
@@ -169,7 +184,7 @@ function FilePreview({
           onClick={() => handleRemove(file)}
           className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
         >
-          <X className="w-4 h-4" />
+          <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="h-4 w-4" />
         </Button>
       </div>
     </div>

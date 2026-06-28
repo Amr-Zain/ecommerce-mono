@@ -3,19 +3,16 @@
 import { ArrowLeft01Icon, CheckmarkCircle01Icon, Location01Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import * as React from "react"
+import { useForm } from "react-hook-form"
 
 import { Badge } from "@ecommerce/ui/components/badge"
-import { Button } from "@ecommerce/ui/components/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@ecommerce/ui/components/dialog"
-import { Input } from "@ecommerce/ui/components/input"
-import { Textarea } from "@ecommerce/ui/components/textarea"
 import { PricingSummary, type Pricing } from "@/components/cart/step-cart"
 import {
   locationName,
@@ -25,6 +22,7 @@ import {
   useCreateAddress,
 } from "@/hooks/api/use-checkout"
 import { cn } from "@/lib/utils"
+import { AppFormComplete, type FormField } from "@ecommerce/forms"
 
 interface AddressStepProps {
   pricing: Pricing
@@ -34,6 +32,16 @@ interface AddressStepProps {
   onNext: () => void
   onSelect: (id: string) => void
 }
+
+const EMPTY_ADDRESS_FORM = {
+  address: "",
+  streetName: "",
+  buildingNumber: "",
+  countryId: "",
+  cityId: "",
+}
+
+type AddressFormValues = typeof EMPTY_ADDRESS_FORM
 
 export function AddressStep({
   pricing,
@@ -47,27 +55,27 @@ export function AddressStep({
   const countries = useCountries()
   const createAddress = useCreateAddress()
   const [isAddOpen, setIsAddOpen] = React.useState(false)
-  const [form, setForm] = React.useState({
-    address: "",
-    streetName: "",
-    buildingNumber: "",
-    countryId: "",
-    cityId: "",
+  const addressForm = useForm<AddressFormValues>({
+    defaultValues: EMPTY_ADDRESS_FORM,
+    mode: "onChange",
   })
-  const cities = useCities(form.countryId)
+  const countryIdValue = addressForm.watch("countryId")
+  const cityIdValue = addressForm.watch("cityId")
+  const addressValue = addressForm.watch("address")
+  const cities = useCities(countryIdValue)
 
-  const saveAddress = () => {
-    const countryId = Number(form.countryId)
-    const cityId = Number(form.cityId)
+  const saveAddress = (values: AddressFormValues) => {
+    const countryId = Number(values.countryId)
+    const cityId = Number(values.cityId)
     if (!Number.isSafeInteger(countryId) || countryId <= 0 || !Number.isSafeInteger(cityId) || cityId <= 0) {
       return
     }
 
     createAddress.mutate(
       {
-        address: form.address,
-        streetName: form.streetName || undefined,
-        buildingNumber: form.buildingNumber || undefined,
+        address: values.address,
+        streetName: values.streetName || undefined,
+        buildingNumber: values.buildingNumber || undefined,
         countryId,
         cityId,
         isDefault: (addresses.data?.length ?? 0) === 0,
@@ -77,11 +85,80 @@ export function AddressStep({
           const created = response as { data?: { id?: string } }
           if (created.data?.id) onSelect(String(created.data.id))
           setIsAddOpen(false)
-          setForm({ address: "", streetName: "", buildingNumber: "", countryId: "", cityId: "" })
+          addressForm.reset(EMPTY_ADDRESS_FORM)
         },
       }
     )
   }
+
+  const addressFields: FormField<AddressFormValues>[] = [
+    {
+      type: "textarea",
+      name: "address",
+      label: "Address",
+      required: true,
+      inputProps: {
+        required: true,
+        disabled: createAddress.isPending,
+      },
+    },
+    {
+      type: "text",
+      name: "streetName",
+      label: "Street name",
+      inputProps: {
+        disabled: createAddress.isPending,
+      },
+    },
+    {
+      type: "text",
+      name: "buildingNumber",
+      label: "Building number",
+      inputProps: {
+        disabled: createAddress.isPending,
+      },
+    },
+    {
+      type: "select",
+      name: "countryId",
+      label: "Country",
+      required: true,
+      placeholder: "Select country",
+      options: (countries.data ?? []).map((country) => ({
+        value: country.id,
+        label: locationName(country),
+      })),
+      inputProps: {
+        required: true,
+        disabled: createAddress.isPending,
+        onChange: (event) => {
+          addressForm.setValue("countryId", event.currentTarget.value, {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+          addressForm.setValue("cityId", "", {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+        },
+      },
+    },
+    {
+      type: "select",
+      name: "cityId",
+      label: "City",
+      required: true,
+      placeholder: "Select city",
+      options: (cities.data ?? []).map((city) => ({
+        value: city.id,
+        label: locationName(city),
+      })),
+      inputProps: {
+        required: true,
+        disabled: createAddress.isPending || !countryIdValue,
+      },
+    },
+  ]
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -145,32 +222,25 @@ export function AddressStep({
             <DialogTitle>Add Delivery Address</DialogTitle>
             <DialogDescription>This address will be saved to your profile.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-3">
-            <Textarea placeholder="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-            <div className="grid grid-cols-2 gap-3">
-              <Input placeholder="Street name" value={form.streetName} onChange={(e) => setForm({ ...form, streetName: e.target.value })} />
-              <Input placeholder="Building number" value={form.buildingNumber} onChange={(e) => setForm({ ...form, buildingNumber: e.target.value })} />
-            </div>
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.countryId} onChange={(e) => setForm({ ...form, countryId: e.target.value, cityId: "" })}>
-              <option value="">Select country</option>
-              {(countries.data ?? []).map((country) => <option key={country.id} value={country.id}>{locationName(country)}</option>)}
-            </select>
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.cityId} disabled={!form.countryId} onChange={(e) => setForm({ ...form, cityId: e.target.value })}>
-              <option value="">Select city</option>
-              {(cities.data ?? []).map((city) => <option key={city.id} value={city.id}>{locationName(city)}</option>)}
-            </select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-            <Button
-              onClick={saveAddress}
-              disabled={!form.address || !form.countryId || !form.cityId || createAddress.isPending}
-            >
-              {createAddress.isPending ? "Saving..." : "Save Address"}
-            </Button>
-          </DialogFooter>
+          <AppFormComplete
+            form={addressForm}
+            fields={addressFields}
+            onSubmit={saveAddress}
+            isLoading={createAddress.isPending}
+            submitDisabled={!addressValue || !countryIdValue || !cityIdValue}
+            submitButtonText="Save Address"
+            loadingButtonText="Saving..."
+            showResetButton
+            resetButtonText="Cancel"
+            onReset={() => setIsAddOpen(false)}
+            resetButtonClassName="w-full sm:w-auto"
+            submitButtonClassName="w-full sm:w-auto"
+            buttonContainerClassName="sm:justify-end"
+            onError={() => undefined}
+          />
         </DialogContent>
       </Dialog>
     </div>
   )
 }
+

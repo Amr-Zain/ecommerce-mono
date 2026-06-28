@@ -4,7 +4,7 @@ import { MapFieldProps, Position } from "@/components/common/form/MapField";
 import { EditorProps } from "@/components/common/form/Editor/EditorField";
 import { FileUploadInputProps } from "./uploader";
 import { DateRange } from "react-day-picker";
-import { SelectInputProps } from "@/components/common/form/Select";
+import { SelectFieldProps as SelectInputProps } from "@ecommerce/forms";
 
 // Base interfaces for common props
 interface BaseFieldProps<T extends FieldValues> {

@@ -2,7 +2,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFormState, useWatch } from 'react-hook-form'
-import { Check } from 'lucide-react'
+import { Tick02Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import EditorField from './Editor/EditorField'
 import type { Control, FieldPath, FieldValues } from 'react-hook-form'
 import { Input } from '@/components/ui/Input'
@@ -237,7 +238,11 @@ function MultiLangField<T extends FieldValues>({
               className={`flex items-center gap-2 h-6 text-sm rounded-0`}
             >
               {completed && !hasError && (
-                <Check className="w-3 h-3 text-green-600" />
+                <HugeiconsIcon
+                  icon={Tick02Icon}
+                  strokeWidth={2}
+                  className="h-3 w-3 text-green-600"
+                />
               )}
               <span>{lang.label}</span>
             </Button>

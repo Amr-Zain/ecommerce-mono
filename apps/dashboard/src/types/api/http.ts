@@ -94,3 +94,12 @@ export interface Meta {
   per_page?: number
   to?: number
 }
+
+// Re-export shared pagination types from @ecommerce/http for new code
+export type {
+  PaginationMeta,
+  PaginationLinks,
+  PaginationLink,
+  EntityResponse,
+  ListResponse,
+} from '@ecommerce/http'

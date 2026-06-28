@@ -1,118 +1,123 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
 import { useRouter } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 
-import { Button } from "@ecommerce/ui/components/button"
-import { Input } from "@ecommerce/ui/components/input"
-import { Label } from "@ecommerce/ui/components/label"
 import { registerAction } from "@/actions/auth"
+import {
+  isPhoneIdentifier,
+  AppFormComplete,
+  type FormField,
+} from "@ecommerce/forms"
 import type { RegisterInput } from "@/hooks/api/domain"
+import { Button } from "@ecommerce/ui/components/button"
+
+type RegisterFormValues = {
+  name: string
+  identifier: string
+  phoneCode: string
+}
 
 function RegisterForm({ loginPath }: { loginPath: string }) {
   const t = useTranslations("Auth")
   const router = useRouter()
-  const [name, setName] = useState("")
-  const [identifier, setIdentifier] = useState("")
-  const [phoneCode, setPhoneCode] = useState("966")
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const isPhone = /^\d+$/.test(identifier.trim())
+  const form = useForm<RegisterFormValues>({
+    defaultValues: {
+      name: "",
+      identifier: "",
+      phoneCode: "966",
+    },
+    mode: "onChange",
+  })
+  const identifier = form.watch("identifier")
+  const isPhone = isPhoneIdentifier(identifier)
 
-  function registrationPayload(): RegisterInput {
-    const identity = isPhone
-      ? { type: "phone" as const, phone: identifier.trim(), phoneCode }
-      : { type: "email" as const, email: identifier.trim() }
+  function registrationPayload(values: RegisterFormValues): RegisterInput {
+    const trimmedIdentifier = values.identifier.trim()
+    const identity = isPhoneIdentifier(trimmedIdentifier)
+      ? {
+          type: "phone" as const,
+          phone: trimmedIdentifier,
+          phoneCode: values.phoneCode,
+        }
+      : { type: "email" as const, email: trimmedIdentifier }
 
-    return { ...identity, name: name.trim() }
+    return { ...identity, name: values.name.trim() }
   }
 
-  async function register(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function register(values: RegisterFormValues) {
     setPending(true)
-    setError(null)
 
     try {
-      const result = await registerAction(registrationPayload())
+      const result = await registerAction(registrationPayload(values))
       if (!result.ok) throw new Error(result.message)
 
+      const trimmedIdentifier = values.identifier.trim()
       const search = new URLSearchParams({
-        identifier: identifier.trim(),
+        identifier: trimmedIdentifier,
         otpSent: "true",
-        ...(isPhone ? { phoneCode } : {}),
+        ...(isPhoneIdentifier(trimmedIdentifier)
+          ? { phoneCode: values.phoneCode }
+          : {}),
       })
       router.push(`${loginPath}?${search}`)
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error ? requestError.message : t("requestError")
-      )
     } finally {
       setPending(false)
     }
   }
 
+  const fields: FormField<RegisterFormValues>[] = [
+    {
+      type: "text",
+      name: "name",
+      label: t("name"),
+      required: true,
+      inputProps: {
+        required: true,
+        disabled: pending,
+        autoComplete: "name",
+      },
+    },
+    {
+      type: "identifier",
+      name: "identifier",
+      phoneCodeName: "phoneCode",
+      phoneCodeLabel: t("phoneCode"),
+      label: t("emailOrPhone"),
+      required: true,
+      disabled: pending,
+      detectedPhoneText: t("detectedPhone"),
+      detectedEmailText: t("detectedEmail"),
+      inputProps: {
+        required: true,
+      },
+    },
+  ]
+
   return (
-    <form onSubmit={register} className="grid gap-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">{t("name")}</Label>
-        <Input
-          id="name"
-          value={name}
-          required
-          disabled={pending}
-          autoComplete="name"
-          onChange={(event) => setName(event.target.value)}
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="identifier">{t("emailOrPhone")}</Label>
-        <div className={isPhone ? "flex gap-2" : undefined}>
-          {isPhone && (
-            <Input
-              aria-label={t("phoneCode")}
-              className="w-24"
-              type="number"
-              inputMode="numeric"
-              value={phoneCode}
-              disabled={pending}
-              onChange={(event) =>
-                setPhoneCode(event.target.value.replace(/\D/g, ""))
-              }
-            />
-          )}
-          <Input
-            id="identifier"
-            type={isPhone ? "number" : "email"}
-            value={identifier}
-            required
-            disabled={pending}
-            autoComplete={isPhone ? "tel-national" : "email"}
-            inputMode={isPhone ? "numeric" : "email"}
-            onChange={(event) => setIdentifier(event.target.value)}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {isPhone ? t("detectedPhone") : t("detectedEmail")}
-        </p>
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? t("pleaseWait") : t("registerSubmit")}
-      </Button>
-
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={() => router.push(loginPath)}
-      >
-        {t("alreadyRegistered")}
-      </Button>
-    </form>
+    <AppFormComplete
+      form={form}
+      fields={fields}
+      onSubmit={register}
+      isLoading={pending}
+      submitButtonText={t("registerSubmit")}
+      loadingButtonText={t("pleaseWait")}
+      submitButtonClassName="w-full"
+      footer={
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => router.push(loginPath)}
+        >
+          {t("alreadyRegistered")}
+        </Button>
+      }
+    />
   )
 }
 
 export { RegisterForm }
+

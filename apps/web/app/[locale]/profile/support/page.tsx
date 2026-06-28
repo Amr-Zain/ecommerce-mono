@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useForm } from "react-hook-form"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 import {
@@ -10,7 +11,6 @@ import {
 } from "@/hooks/api/use-tickets"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
-  Attachment01Icon,
   CustomerService01Icon,
 } from "@hugeicons/core-free-icons"
 import {
@@ -22,33 +22,79 @@ import {
   EmptyContent,
 } from "@ecommerce/ui/components/empty"
 import { Button } from "@ecommerce/ui/components/button"
-import { Input } from "@ecommerce/ui/components/input"
-import { Textarea } from "@ecommerce/ui/components/textarea"
 import { Badge } from "@ecommerce/ui/components/badge"
+import { AppFormComplete, type FormField } from "@ecommerce/forms"
+
+type CreateTicketFormValues = {
+  title: string
+  description: string
+  files: File[]
+}
 
 export default function SupportTicketsPage() {
   const { data: tickets = [], isLoading } = useTickets()
   const createTicket = useCreateTicket()
   const [isCreating, setIsCreating] = React.useState(false)
-  const [title, setTitle] = React.useState("")
-  const [description, setDescription] = React.useState("")
-  const [files, setFiles] = React.useState<File[]>([])
+  const form = useForm<CreateTicketFormValues>({
+    defaultValues: {
+      title: "",
+      description: "",
+      files: [],
+    },
+    mode: "onChange",
+  })
+  const files = form.watch("files")
 
-  const canSubmit = title.trim() && description.trim()
-
-  const submitTicket = async () => {
-    if (!canSubmit) return
-    const attachments = await uploadTicketFiles(files)
+  const submitTicket = async (values: CreateTicketFormValues) => {
+    if (!values.title.trim() || !values.description.trim()) return
+    const attachments = await uploadTicketFiles(values.files)
     await createTicket.mutateAsync({
-      title: title.trim(),
-      description: description.trim(),
+      title: values.title.trim(),
+      description: values.description.trim(),
       attachments,
     })
-    setTitle("")
-    setDescription("")
-    setFiles([])
+    form.reset()
     setIsCreating(false)
   }
+
+  const createTicketFields: FormField<CreateTicketFormValues>[] = [
+    {
+      type: "text",
+      name: "title",
+      label: "Title",
+      required: true,
+      inputProps: {
+        required: true,
+        disabled: createTicket.isPending,
+        className: "h-11 rounded-xl",
+      },
+    },
+    {
+      type: "textarea",
+      name: "description",
+      label: "Description",
+      required: true,
+      placeholder: "Describe what happened...",
+      inputProps: {
+        required: true,
+        disabled: createTicket.isPending,
+        className: "min-h-32 rounded-xl",
+      },
+    },
+    {
+      type: "file",
+      name: "files",
+      label: "Attachments",
+      description:
+        files.length > 0
+          ? `${files.length} file${files.length === 1 ? "" : "s"} selected`
+          : "Attach files",
+      inputProps: {
+        multiple: true,
+        disabled: createTicket.isPending,
+      },
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -67,44 +113,17 @@ export default function SupportTicketsPage() {
 
       {isCreating && (
         <div className="space-y-4 rounded-lg border bg-card p-4">
-          <Input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Title"
-            className="h-11 rounded-xl"
+          <AppFormComplete
+            form={form}
+            fields={createTicketFields}
+            onSubmit={submitTicket}
+            isLoading={createTicket.isPending}
+            submitDisabled={
+              !form.watch("title").trim() || !form.watch("description").trim()
+            }
+            submitButtonText="Send"
+            submitButtonClassName="gap-2 rounded-xl sm:w-auto"
           />
-          <Textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Describe what happened..."
-            className="min-h-32 rounded-xl"
-          />
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground">
-              <HugeiconsIcon icon={Attachment01Icon} className="size-4" />
-              Attach files
-              <input
-                type="file"
-                multiple
-                className="sr-only"
-                onChange={(event) =>
-                  setFiles(Array.from(event.currentTarget.files ?? []))
-                }
-              />
-            </label>
-            {files.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {files.length} file{files.length === 1 ? "" : "s"} selected
-              </span>
-            )}
-            <Button
-              className="gap-2 rounded-xl"
-              disabled={!canSubmit || createTicket.isPending}
-              onClick={submitTicket}
-            >
-              Send
-            </Button>
-          </div>
         </div>
       )}
 

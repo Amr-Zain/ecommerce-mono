@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react"
 import { useQueryClient } from "@tanstack/react-query"
 import { queryKeys } from "@/hooks/api/query-keys"
 import { toast } from "@ecommerce/ui/components/sonner"
+import { WebHttpProvider } from "@/components/providers/http-adapter-provider"
 
 type MutationMeta = {
   disableErrorToast?: boolean
@@ -88,8 +89,10 @@ function TanstackQueryProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CommerceSessionSync />
-      {children}
+      <WebHttpProvider>
+        <CommerceSessionSync />
+        {children}
+      </WebHttpProvider>
     </QueryClientProvider>
   )
 }

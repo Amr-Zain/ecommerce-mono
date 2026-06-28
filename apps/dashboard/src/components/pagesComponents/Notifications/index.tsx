@@ -44,7 +44,7 @@ const NotificationsTable = ({
         queryKey: queryKeys.notifications.all,
       })
     },
-    customBaseUrl: API_BASE_URL,
+    general: true,
     enabled: false,
   })
 
@@ -55,7 +55,7 @@ const NotificationsTable = ({
       'notifications',
       queryKeys.notifications.getNotification(currentId),
       [queryKeys.notifications.filterd(search)],
-      API_BASE_URL,
+      true,
     )
 
   useEffect(() => {

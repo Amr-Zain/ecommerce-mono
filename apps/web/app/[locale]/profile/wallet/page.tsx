@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import * as React from "react"
 import { useSearchParams } from "next/navigation"
 import { Link } from "@/i18n/navigation"
+import { useForm } from "react-hook-form"
 
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -12,21 +13,28 @@ import {
 } from "@ecommerce/ui/components/alert-dialog"
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@ecommerce/ui/components/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@ecommerce/ui/components/dialog"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@ecommerce/ui/components/empty"
-import { Input } from "@ecommerce/ui/components/input"
-import { Textarea } from "@ecommerce/ui/components/textarea"
 import { ListingPagination } from "@/components/shared/pagination"
 import {
   useCancelWalletWithdrawal, useCreateWalletDeposit, useCreateWalletWithdrawal,
   useCancelWalletDeposit, useVerifyWalletDeposit,
   useWallet, useWalletTransactions, useWalletWithdrawals, type WalletWithdrawal,
 } from "@/hooks/api/use-wallet"
+import { AppFormComplete, type FormField } from "@ecommerce/forms"
 
 const money = (amount: number, currency = "SAR") => `${currency} ${Number(amount).toFixed(2)}`
 const date = (value?: string) => value ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "-"
 const withdrawalStatuses = ["requested", "approved", "paid", "rejected", "failed", "cancelled_by_client"]
 const transactionStatuses = ["pending", "completed", "failed", "cancelled", "expired", "reversed", "requires_review"]
+type DepositFormValues = { amount: string }
+type WithdrawalFormValues = {
+  amount: string
+  bank: string
+  accountName: string
+  iban: string
+  note: string
+}
 
 function CancelWithdrawalDialog({ withdrawal }: { withdrawal: WalletWithdrawal }) {
   const cancel = useCancelWalletWithdrawal(withdrawal.id)
@@ -62,12 +70,25 @@ export default function WalletPage() {
   const verifyDeposit = useVerifyWalletDeposit(depositId)
   const cancelDeposit = useCancelWalletDeposit(depositId)
   const withdrawal = useCreateWalletWithdrawal()
-  const [depositAmount, setDepositAmount] = React.useState("")
-  const [withdrawAmount, setWithdrawAmount] = React.useState("")
-  const [bank, setBank] = React.useState("")
-  const [accountName, setAccountName] = React.useState("")
-  const [iban, setIban] = React.useState("")
-  const [note, setNote] = React.useState("")
+  const depositForm = useForm<DepositFormValues>({
+    defaultValues: { amount: "" },
+    mode: "onChange",
+  })
+  const withdrawalForm = useForm<WithdrawalFormValues>({
+    defaultValues: {
+      amount: "",
+      bank: "",
+      accountName: "",
+      iban: "",
+      note: "",
+    },
+    mode: "onChange",
+  })
+  const depositAmount = depositForm.watch("amount")
+  const withdrawAmount = withdrawalForm.watch("amount")
+  const bank = withdrawalForm.watch("bank")
+  const accountName = withdrawalForm.watch("accountName")
+  const iban = withdrawalForm.watch("iban")
   const handledDepositReturn = React.useRef(false)
 
   React.useEffect(() => {
@@ -82,28 +103,32 @@ export default function WalletPage() {
     }
   }, [cancelDeposit, depositId, depositStatus, verifyDeposit])
 
-  const submitDeposit = () => {
+  const data = wallet.data
+  const availableBalance = data?.available_balance ?? data?.availableBalance ?? 0
+  const pendingBalance = data?.pending_balance ?? data?.pendingBalance ?? 0
+  const submitDeposit = (values: DepositFormValues) => {
     deposit.mutate(
-      { amount: Number(depositAmount), paymentMethod: "stripe_checkout" },
+      { amount: Number(values.amount), paymentMethod: "stripe_checkout" },
       { onSuccess: (response) => { if (response.data.redirect_url) window.location.assign(response.data.redirect_url) } }
     )
   }
 
-  const submitWithdrawal = () => {
-    const amount = Number(withdrawAmount || 0)
+  const submitWithdrawal = (values: WithdrawalFormValues) => {
+    const amount = Number(values.amount || 0)
     if (amount < 1 || amount > availableBalance) return
     withdrawal.mutate({
       amount,
       method: "bank_transfer",
-      details: { bank, accountName, iban },
-      note: note || undefined,
+      details: {
+        bank: values.bank,
+        accountName: values.accountName,
+        iban: values.iban,
+      },
+      note: values.note || undefined,
     })
   }
 
   if (wallet.isPending) return <p className="text-sm text-muted-foreground">Loading wallet...</p>
-  const data = wallet.data
-  const availableBalance = data?.available_balance ?? data?.availableBalance ?? 0
-  const pendingBalance = data?.pending_balance ?? data?.pendingBalance ?? 0
   const withdrawalAmountNumber = Number(withdrawAmount || 0)
   const withdrawalExceedsBalance = withdrawalAmountNumber > availableBalance
   const withdrawalSubmitDisabled =
@@ -140,6 +165,76 @@ export default function WalletPage() {
     const query = params.toString()
     return query ? `/profile/wallet?${query}` : "/profile/wallet"
   }
+  const depositFields: FormField<DepositFormValues>[] = [
+    {
+      type: "number",
+      name: "amount",
+      placeholder: "Amount",
+      required: true,
+      inputProps: {
+        required: true,
+        min: 1,
+        disabled: deposit.isPending,
+      },
+    },
+  ]
+  const withdrawalFields: FormField<WithdrawalFormValues>[] = [
+    {
+      type: "number",
+      name: "amount",
+      placeholder: "Amount",
+      required: true,
+      description: `Available to withdraw: ${money(availableBalance, data?.currency)}${
+        withdrawalExceedsBalance
+          ? " - Amount exceeds your available balance."
+          : ""
+      }`,
+      inputProps: {
+        required: true,
+        min: 1,
+        max: availableBalance,
+        disabled: withdrawal.isPending,
+      },
+    },
+    {
+      type: "text",
+      name: "bank",
+      placeholder: "Bank name",
+      required: true,
+      inputProps: {
+        required: true,
+        disabled: withdrawal.isPending,
+      },
+    },
+    {
+      type: "text",
+      name: "accountName",
+      placeholder: "Account holder name",
+      required: true,
+      inputProps: {
+        required: true,
+        disabled: withdrawal.isPending,
+      },
+    },
+    {
+      type: "text",
+      name: "iban",
+      placeholder: "IBAN / account number",
+      required: true,
+      inputProps: {
+        required: true,
+        disabled: withdrawal.isPending,
+      },
+    },
+    {
+      type: "textarea",
+      name: "note",
+      placeholder: "Optional note",
+      inputProps: {
+        disabled: withdrawal.isPending,
+      },
+    },
+  ]
 
   return (
     <div className="space-y-8">
@@ -160,35 +255,30 @@ export default function WalletPage() {
           <DialogTrigger render={<Button />}><HugeiconsIcon icon={PlusSignIcon} /> Add Funds</DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Add Funds</DialogTitle><DialogDescription>Deposit through Stripe Checkout.</DialogDescription></DialogHeader>
-            <Input type="number" min={1} placeholder="Amount" value={depositAmount} onChange={(event) => setDepositAmount(event.target.value)} />
-            <DialogFooter><Button onClick={submitDeposit} disabled={deposit.isPending || Number(depositAmount) < 1}>{deposit.isPending ? "Starting..." : "Continue to Payment"}</Button></DialogFooter>
+            <AppFormComplete
+              form={depositForm}
+              fields={depositFields}
+              onSubmit={submitDeposit}
+              isLoading={deposit.isPending}
+              submitDisabled={Number(depositAmount) < 1}
+              submitButtonText="Continue to Payment"
+              loadingButtonText="Starting..."
+            />
           </DialogContent>
         </Dialog>
         <Dialog>
           <DialogTrigger render={<Button variant="outline" />}>Request Withdrawal</DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Request Withdrawal</DialogTitle><DialogDescription>Withdrawals are reviewed and paid manually.</DialogDescription></DialogHeader>
-            <div className="grid gap-3">
-              <div className="space-y-1.5">
-                <Input
-                  type="number"
-                  min={1}
-                  max={availableBalance}
-                  placeholder="Amount"
-                  value={withdrawAmount}
-                  onChange={(event) => setWithdrawAmount(event.target.value)}
-                />
-                <p className={withdrawalExceedsBalance ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
-                  Available to withdraw: {money(availableBalance, data?.currency)}
-                  {withdrawalExceedsBalance ? " - Amount exceeds your available balance." : ""}
-                </p>
-              </div>
-              <Input placeholder="Bank name" value={bank} onChange={(event) => setBank(event.target.value)} />
-              <Input placeholder="Account holder name" value={accountName} onChange={(event) => setAccountName(event.target.value)} />
-              <Input placeholder="IBAN / account number" value={iban} onChange={(event) => setIban(event.target.value)} />
-              <Textarea placeholder="Optional note" value={note} onChange={(event) => setNote(event.target.value)} />
-            </div>
-            <DialogFooter><Button onClick={submitWithdrawal} disabled={withdrawalSubmitDisabled}>{withdrawal.isPending ? "Submitting..." : "Submit Request"}</Button></DialogFooter>
+            <AppFormComplete
+              form={withdrawalForm}
+              fields={withdrawalFields}
+              onSubmit={submitWithdrawal}
+              isLoading={withdrawal.isPending}
+              submitDisabled={withdrawalSubmitDisabled}
+              submitButtonText="Submit Request"
+              loadingButtonText="Submitting..."
+            />
           </DialogContent>
         </Dialog>
       </div>

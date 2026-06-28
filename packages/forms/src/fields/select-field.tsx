@@ -1,14 +1,20 @@
-'use client'
+"use client"
 
-import { useMemo, useState } from 'react'
-import { ControllerRenderProps, FieldValues, Path } from 'react-hook-form'
-import { ChevronsUpDown, Check, Loader2, X } from 'lucide-react'
-import { Button } from '@ecommerce/ui/components/button'
+import { useMemo, useState } from "react"
+import type { ControllerRenderProps, FieldValues, Path } from "react-hook-form"
+import {
+  Cancel01Icon,
+  Loading03Icon,
+  Tick02Icon,
+  UnfoldMoreIcon,
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Button } from "@ecommerce/ui/components/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@ecommerce/ui/components/popover'
+} from "@ecommerce/ui/components/popover"
 import {
   Command,
   CommandInput,
@@ -16,34 +22,37 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-} from '@ecommerce/ui/components/command'
+} from "@ecommerce/ui/components/command"
+import { cn } from "@ecommerce/ui/lib/utils"
+import { useFetch } from "@ecommerce/http"
+import type { QueryKey } from "@tanstack/react-query"
+import { useDebounce } from "../hooks/use-debounce"
 
-import useFetch from '@/hooks/UseFetch'
-import { FieldOption } from '@/types/components/form'
-import { ApiResponse } from '@/types/api/http'
-import { cn } from '@/lib/utils'
-import { useDebounce } from '@/hooks/useDebounce'
-import { QueryKey } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
+export interface SelectFieldOption {
+  value: string | number
+  label: React.ReactNode
+  disabled?: boolean
+}
 
-export type SelectInputProps<T extends FieldValues, TData = unknown> = {
-  placeholder: string
+export type SelectFieldProps<T extends FieldValues = FieldValues, TData = unknown> = {
+  placeholder?: string
   field: ControllerRenderProps<T, Path<T>>
   disabled?: boolean
-  options?: FieldOption[]
+  options?: SelectFieldOption[]
   endpoint?: string
   general?: boolean
   queryKey?: QueryKey
-  select?: (data: ApiResponse<TData[]>) => FieldOption[]
+  select?: (data: any) => SelectFieldOption[]
   debounceMs?: number
   multiple?: boolean
   clearable?: boolean
   isRemoteSearch?: boolean
   searchParam?: string
+  className?: string
 }
 
-function AppSelect<T extends FieldValues, TData>({
-  placeholder,
+function SelectField<T extends FieldValues, TData = unknown>({
+  placeholder = "",
   field,
   disabled,
   options,
@@ -55,25 +64,25 @@ function AppSelect<T extends FieldValues, TData>({
   debounceMs = 300,
   clearable = false,
   isRemoteSearch = false,
-  searchParam = 'search',
-}: SelectInputProps<T, TData>) {
+  searchParam = "search",
+  className,
+}: SelectFieldProps<T, TData>) {
   const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState("")
 
   const debouncedQuery = useDebounce(query, debounceMs)
 
-  const { data, isPending } = useFetch<ApiResponse<TData[]>, FieldOption[]>({
+  const { data, isPending } = useFetch<any, SelectFieldOption[]>({
     endpoint,
-    queryKey: queryKey || [endpoint, isRemoteSearch ? debouncedQuery : ''],
+    queryKey: queryKey || [endpoint, isRemoteSearch ? debouncedQuery : ""],
     staleTime: isRemoteSearch ? 60_000 : 1200_000,
-    general,
     select,
     enabled: !!endpoint,
     params: isRemoteSearch ? { [searchParam]: debouncedQuery } : undefined,
+    adapterOptions: general ? { general: true } : undefined,
   })
-  const { t } = useTranslation()
 
-  const dataOptions = useMemo<FieldOption[]>(() => {
+  const dataOptions = useMemo<SelectFieldOption[]>(() => {
     if (endpoint) return data ?? []
     return options ?? []
   }, [endpoint, data, options])
@@ -83,18 +92,17 @@ function AppSelect<T extends FieldValues, TData>({
     const lower = debouncedQuery.toLowerCase()
     return dataOptions.filter(
       (o) =>
-        String(o.label ?? '')
+        String(o.label ?? "")
           .toLowerCase()
           .includes(lower) || String(o.value).toLowerCase().includes(lower),
     )
   }, [debouncedQuery, dataOptions, isRemoteSearch])
 
-  // normalize value depending on mode
   const singleValue = !multiple
     ? field.value !== undefined && field.value !== null
       ? String(field.value)
-      : ''
-    : ''
+      : ""
+    : ""
   const multiValue = multiple
     ? Array.isArray(field.value)
       ? field.value
@@ -108,47 +116,32 @@ function AppSelect<T extends FieldValues, TData>({
       const selected = dataOptions?.find(
         (o) => String(o.value) === String(singleValue),
       )
-      return selected?.label ?? ''
+      return selected?.label ?? ""
     }
 
-    if (!multiValue.length) return ''
+    if (!multiValue.length) return ""
     const selected = dataOptions.filter((o) =>
       multiValue.map(String).includes(String(o.value)),
     )
-    return selected.map((o) => o.label).join(', ')
+    return selected.map((o) => o.label).join(", ")
   }, [multiple, dataOptions, singleValue, multiValue])
 
   const hasValue = multiple
     ? multiValue.length > 0
-    : !!singleValue && singleValue !== ''
+    : !!singleValue && singleValue !== ""
 
   const handleClear = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-
-    if (multiple) {
-      field.onChange([])
-    } else {
-      // Try both undefined and empty string to ensure compatibility
-      field.onChange(null)
-    }
-
-    // Trigger blur to ensure form state updates
-    if (field.onBlur) {
-      field.onBlur()
-    }
-
+    field.onChange(multiple ? [] : null)
+    if (field.onBlur) field.onBlur()
     setOpen(false)
   }
 
   const handleSelectSingle = (valueStr: string) => {
-    // If clicking the same value, deselect it (toggle behavior)
     if (valueStr === singleValue) {
       field.onChange(null)
-      // Trigger blur to ensure form state updates
-      if (field.onBlur) {
-        field.onBlur()
-      }
+      if (field.onBlur) field.onBlur()
     } else {
       field.onChange(valueStr)
     }
@@ -163,32 +156,26 @@ function AppSelect<T extends FieldValues, TData>({
         : []
 
     const exists = current.includes(valueStr)
-
-    let next: string[]
-    if (exists) {
-      next = current.filter((v: any) => v !== valueStr)
-    } else {
-      next = [...current, valueStr]
-    }
+    const next = exists
+      ? current.filter((v: string) => v !== valueStr)
+      : [...current, valueStr]
 
     field.onChange(next)
-    // don't close on multi
   }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger >
+      <PopoverTrigger>
         <Button
           type="button"
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between h-10 bg-background!"
+          className={cn("w-full justify-between h-10 bg-background!", className)}
           disabled={disabled}
           onClick={(e) => {
-            // Prevent button click if clicking on clear button area
             const target = e.target as HTMLElement
-            if (target.closest('[data-clear-button]')) {
+            if (target.closest("[data-clear-button]")) {
               e.preventDefault()
               return
             }
@@ -207,10 +194,18 @@ function AppSelect<T extends FieldValues, TData>({
                 onClick={handleClear}
                 className="hover:bg-muted rounded-sm p-0.5 transition-colors"
               >
-                <X className="h-3.5 w-3.5 opacity-50 hover:opacity-100" />
+                <HugeiconsIcon
+                  icon={Cancel01Icon}
+                  strokeWidth={2}
+                  className="h-3.5 w-3.5 opacity-50 hover:opacity-100"
+                />
               </div>
             )}
-            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+            <HugeiconsIcon
+              icon={UnfoldMoreIcon}
+              strokeWidth={2}
+              className="h-4 w-4 opacity-50"
+            />
           </div>
         </Button>
       </PopoverTrigger>
@@ -218,33 +213,36 @@ function AppSelect<T extends FieldValues, TData>({
       <PopoverContent className="p-0 overflow-hidden w-[--radix-popover-trigger-width] min-w-56">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder={t('Text.search')}
             value={query}
             onValueChange={setQuery}
           />
 
           {isPending && !!endpoint && (
-            <div className="p-3 text-sm flex items-center gap-2 opacity-80">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t('Text.loading') ?? 'Loading...'}
+            <div className="p-3 flex items-center justify-center">
+              <HugeiconsIcon
+                icon={Loading03Icon}
+                strokeWidth={2}
+                className="h-5 w-5 animate-spin text-muted-foreground"
+              />
             </div>
           )}
 
           {filteredOptions.length === 0 && !isPending ? (
-            <CommandEmpty>{t('Text.noResults')}</CommandEmpty>
+            <CommandEmpty>
+              <span className="text-muted-foreground text-sm">—</span>
+            </CommandEmpty>
           ) : (
             <CommandList
               style={{
                 maxHeight: 300,
-                overflowY: 'auto',
+                overflowY: "auto",
                 padding: 0,
-                margin: "4px"
+                margin: "4px",
               }}
             >
               <CommandGroup className="p-0">
                 {filteredOptions.map((option) => {
                   const valueStr = String(option.value)
-
                   const isSelected = multiple
                     ? multiValue.map(String).includes(valueStr)
                     : valueStr === singleValue
@@ -262,10 +260,12 @@ function AppSelect<T extends FieldValues, TData>({
                       }}
                       className="cursor-pointer flex items-center gap-2 data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[selected=false]:bg-transparent hover:bg-accent hover:text-accent-foreground"
                     >
-                      <Check
+                      <HugeiconsIcon
+                        icon={Tick02Icon}
+                        strokeWidth={2}
                         className={cn(
-                          'h-4 w-4',
-                          isSelected ? 'opacity-100' : 'opacity-0',
+                          "h-4 w-4",
+                          isSelected ? "opacity-100" : "opacity-0",
                         )}
                       />
                       <span className="truncate">{option.label}</span>
@@ -281,4 +281,4 @@ function AppSelect<T extends FieldValues, TData>({
   )
 }
 
-export default AppSelect
+export { SelectField }

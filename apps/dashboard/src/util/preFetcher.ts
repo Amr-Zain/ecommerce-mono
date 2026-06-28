@@ -1,21 +1,18 @@
 import axiosInstance from "@/services/instance";
-import { QueryClient, QueryKey } from "@tanstack/react-query";
+import { QueryKey } from "@tanstack/react-query";
 import axios from "axios";
 import { redirect } from "@tanstack/react-router";
-import i18n from '@/i18n';
 import { useAuthStore } from "@/stores/authStore";
 import { ADMIN_API_BASE_URL, API_BASE_URL } from "@/lib/env";
 
 
 
 export function prefetchOptions(
-    { queryKey, endpoint, params = {}, general = false, customBaseUrl }: {
+    { queryKey, endpoint, params = {}, general = false }: {
         queryKey: QueryKey,
         endpoint: string,
         params?: Record<string, any>,
         general?: boolean,
-        customBaseUrl?: string,
-
     }
 ) {
     const paginationParams = {
@@ -23,16 +20,10 @@ export function prefetchOptions(
         limit: params.limit || 10,
         ...params,
     }
-    const baseURL = customBaseUrl
-      ? customBaseUrl
-      : general
-        ? API_BASE_URL
-        : ADMIN_API_BASE_URL
-        
-    const isRTL = (i18n.language || 'ar').startsWith('ar')
-    const fullQueryKey = [...queryKey, isRTL];
+    const baseURL = general ? API_BASE_URL : ADMIN_API_BASE_URL
+
     return {
-        queryKey: fullQueryKey,
+        queryKey,
         staleTime: 6000_000,
         queryFn: async () => {
             try {

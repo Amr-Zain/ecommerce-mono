@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { ImagePlus } from "lucide-react";
+import { Image01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 interface ImageUploadButtonProps {
   onImageAdd: (src: string) => void;
@@ -29,7 +30,7 @@ const ImageUploadButton = ({ onImageAdd }: ImageUploadButtonProps) => {
   return (
     <>
       <button type="button" onClick={handleButtonClick}>
-       <ImagePlus size={18}/>
+        <HugeiconsIcon icon={Image01Icon} strokeWidth={2} className="h-[18px] w-[18px]" />
       </button>
       <input
         type="file"

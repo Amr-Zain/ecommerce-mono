@@ -15,7 +15,8 @@ import {
   PopoverTrigger,
 } from "@ecommerce/ui/components/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
+import { Calendar01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 import {
   DateRange,
@@ -89,7 +90,11 @@ function DateFields<T extends FieldValues>({
 
             >
               <span>{displayText}</span>
-              <CalendarIcon className="ms-auto h-4 w-4 !text-text" />
+              <HugeiconsIcon
+                icon={Calendar01Icon}
+                strokeWidth={2}
+                className="ms-auto h-4 w-4"
+              />
             </Button>
           </FormControl>
         </PopoverTrigger>

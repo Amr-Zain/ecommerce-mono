@@ -143,7 +143,7 @@ export default function MessageTemplateForm({
       locale: previewLocale,
       variables,
     })
-    setPreview(result.data.data)
+    setPreview(result.data)
   }
 
   return (

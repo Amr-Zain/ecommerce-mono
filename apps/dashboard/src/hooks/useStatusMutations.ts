@@ -17,14 +17,14 @@ export const useStatusMutation = (
   endpoint: string,
   mutationKey: QueryKey,
   invalidates: QueryKey[],
-  baseURL?: string,
+  general?: boolean,
 ) => {
   const { mutateAsync, isPending } = useMutate({
     mutationKey,
     endpoint: `${endpoint}/${id}`,
     method: type === 'delete' ? 'delete' : 'patch',
     invalidates,
-    customBaseUrl: baseURL,
+    general,
   })
 
   return { mutateAsync, isPending }

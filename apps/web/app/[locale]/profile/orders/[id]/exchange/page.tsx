@@ -4,15 +4,30 @@ import { useParams } from "next/navigation"
 import { useRouter } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 import * as React from "react"
+import { useForm } from "react-hook-form"
 
 import { Button } from "@ecommerce/ui/components/button"
-import { Input } from "@ecommerce/ui/components/input"
-import { Textarea } from "@ecommerce/ui/components/textarea"
 import { useProduct } from "@/hooks/api/use-products"
 import { isReturnExchangeEligible, useCreateExchange, useCreateReturn, useOrder } from "@/hooks/api/use-profile-commerce"
 import { cn } from "@/lib/utils"
+import { AppFormComplete, type FormField } from "@ecommerce/forms"
 
 type ProductVariant = { id: string; stock_quantity?: number; attributes?: Array<{ attribute?: { name?: string }; value?: { name?: string } }> }
+type ReturnExchangeFormValues = {
+  itemId: string
+  quantity: number
+  reason: string
+  note: string
+  newVariantId: string
+}
+
+const DEFAULT_FORM_VALUES: ReturnExchangeFormValues = {
+  itemId: "",
+  quantity: 1,
+  reason: "",
+  note: "",
+  newVariantId: "",
+}
 
 export default function ExchangeReturnPage() {
   const { id } = useParams<{ id: string }>()
@@ -21,11 +36,13 @@ export default function ExchangeReturnPage() {
   const createReturn = useCreateReturn()
   const createExchange = useCreateExchange()
   const [mode, setMode] = React.useState<"return" | "exchange">("return")
-  const [itemId, setItemId] = React.useState("")
-  const [quantity, setQuantity] = React.useState(1)
-  const [reason, setReason] = React.useState("")
-  const [note, setNote] = React.useState("")
-  const [newVariantId, setNewVariantId] = React.useState("")
+  const form = useForm<ReturnExchangeFormValues>({
+    defaultValues: DEFAULT_FORM_VALUES,
+    mode: "onChange",
+  })
+  const itemId = form.watch("itemId")
+  const reason = form.watch("reason")
+  const newVariantId = form.watch("newVariantId")
   const activeItemId = itemId || order.data?.items[0]?.id || ""
   const selectedItem = order.data?.items.find((item) => item.id === activeItemId)
   const product = useProduct(selectedItem?.product_id)
@@ -33,12 +50,36 @@ export default function ExchangeReturnPage() {
     (variant) => variant.id !== selectedItem?.variant_id && (variant.stock_quantity ?? 1) > 0
   )
 
-  const submit = () => {
-    if (!selectedItem || !reason.trim()) return
-    const common = { orderItemId: selectedItem.id, quantity, reason, note: note || undefined }
+  React.useEffect(() => {
+    const firstItemId = order.data?.items[0]?.id
+    if (firstItemId && !form.getValues("itemId")) {
+      form.setValue("itemId", firstItemId)
+    }
+  }, [form, order.data?.items])
+
+  const submit = (values: ReturnExchangeFormValues) => {
+    if (!selectedItem || !values.reason.trim()) return
+    const common = {
+      orderItemId: selectedItem.id,
+      quantity: values.quantity,
+      reason: values.reason,
+      note: values.note || undefined,
+    }
     const onSuccess = () => router.push(ROUTES.profile.orders.detail(id))
-    if (mode === "return") createReturn.mutate({ items: [common], note: note || undefined }, { onSuccess })
-    else if (newVariantId) createExchange.mutate({ items: [{ ...common, newVariantId }], note: note || undefined }, { onSuccess })
+    if (mode === "return") {
+      createReturn.mutate(
+        { items: [common], note: values.note || undefined },
+        { onSuccess },
+      )
+    } else if (values.newVariantId) {
+      createExchange.mutate(
+        {
+          items: [{ ...common, newVariantId: values.newVariantId }],
+          note: values.note || undefined,
+        },
+        { onSuccess },
+      )
+    }
   }
 
   if (order.isPending) return <p className="text-sm text-muted-foreground">Loading order...</p>
@@ -54,6 +95,103 @@ export default function ExchangeReturnPage() {
   }
 
   const pending = createReturn.isPending || createExchange.isPending
+  const fields: FormField<ReturnExchangeFormValues>[] = [
+    {
+      type: "select",
+      name: "itemId",
+      label: "Order item",
+      options: order.data.items.map((item) => ({
+        value: item.id,
+        label: item.product_name_snapshot,
+      })),
+      inputProps: {
+        disabled: pending,
+        onChange: (event) => {
+          form.setValue("itemId", event.currentTarget.value, {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+          form.setValue("newVariantId", "", {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+          form.setValue("quantity", 1, {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+        },
+      },
+    },
+    {
+      type: "number",
+      name: "quantity",
+      label: "Quantity",
+      required: true,
+      inputProps: {
+        required: true,
+        min: 1,
+        max: selectedItem?.quantity ?? 1,
+        disabled: pending,
+        onChange: (event) => {
+          const nextQuantity = Math.max(
+            1,
+            Math.min(
+              selectedItem?.quantity ?? 1,
+              Number(event.currentTarget.value),
+            ),
+          )
+          form.setValue("quantity", nextQuantity, {
+            shouldDirty: true,
+            shouldValidate: true,
+          })
+        },
+      },
+    },
+    {
+      type: "text",
+      name: "reason",
+      label: "Reason",
+      required: true,
+      placeholder: "wrong_size, damaged, wrong_item...",
+      inputProps: {
+        required: true,
+        disabled: pending,
+      },
+    },
+    {
+      type: "textarea",
+      name: "note",
+      label: "Note",
+      placeholder: "Describe the issue",
+      inputProps: {
+        disabled: pending,
+      },
+    },
+    ...(mode === "exchange"
+      ? [
+          {
+            type: "select" as const,
+            name: "newVariantId" as const,
+            label: "Replacement variant",
+            required: true,
+            placeholder: "Select replacement",
+            options: variants.map((variant) => ({
+              value: variant.id,
+              label:
+                variant.attributes
+                  ?.map((attribute) => attribute.value?.name)
+                  .filter(Boolean)
+                  .join(" / ") || `Variant ${variant.id}`,
+            })),
+            inputProps: {
+              required: true,
+              disabled: pending,
+            },
+          },
+        ]
+      : []),
+  ]
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Return or Exchange</h1>
@@ -62,33 +200,17 @@ export default function ExchangeReturnPage() {
           <button key={value} onClick={() => setMode(value)} className={cn("flex-1 border-b-2 pb-3 text-sm font-semibold capitalize", mode === value ? "border-foreground" : "border-transparent text-muted-foreground")}>{value}</button>
         ))}
       </div>
-      <div className="grid gap-4">
-        <label className="grid gap-2 text-sm font-semibold">Order item
-          <select className="h-10 rounded-md border bg-background px-3 font-normal" value={activeItemId} onChange={(event) => { setItemId(event.target.value); setNewVariantId("") }}>
-            {order.data.items.map((item) => <option key={item.id} value={item.id}>{item.product_name_snapshot}</option>)}
-          </select>
-        </label>
-        <label className="grid gap-2 text-sm font-semibold">Quantity
-          <Input type="number" min={1} max={selectedItem?.quantity ?? 1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Math.min(selectedItem?.quantity ?? 1, Number(event.target.value))))} />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold">Reason
-          <Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="wrong_size, damaged, wrong_item..." />
-        </label>
-        <label className="grid gap-2 text-sm font-semibold">Note
-          <Textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Describe the issue" />
-        </label>
-        {mode === "exchange" && (
-          <label className="grid gap-2 text-sm font-semibold">Replacement variant
-            <select className="h-10 rounded-md border bg-background px-3 font-normal" value={newVariantId} onChange={(event) => setNewVariantId(event.target.value)}>
-              <option value="">Select replacement</option>
-              {variants.map((variant) => <option key={variant.id} value={variant.id}>{variant.attributes?.map((attribute) => attribute.value?.name).filter(Boolean).join(" / ") || `Variant ${variant.id}`}</option>)}
-            </select>
-          </label>
-        )}
-      </div>
-      <Button className="w-full" onClick={submit} disabled={pending || !reason.trim() || (mode === "exchange" && !newVariantId)}>
-        {pending ? "Submitting..." : `Confirm ${mode}`}
-      </Button>
+      <AppFormComplete
+        form={form}
+        fields={fields}
+        onSubmit={submit}
+        isLoading={pending}
+        submitDisabled={
+          !reason.trim() || (mode === "exchange" && !newVariantId)
+        }
+        submitButtonText={`Confirm ${mode}`}
+        loadingButtonText="Submitting..."
+      />
     </div>
   )
 }

@@ -1,4 +1,5 @@
-import { Plus } from "lucide-react";
+import { PlusSignIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useDropzone } from "react-dropzone";
 import CardPreview from "./CardPreview";
 import { getAcceptTypes } from "@/util/helpers";
@@ -89,7 +90,11 @@ export default function UploadedPreview({
           >
             <div className="flex flex-col justify-center items-center gap-2 text-gray-500">
               <div className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center">
-                <Plus className="w-4 h-4" />
+                <HugeiconsIcon
+                  icon={PlusSignIcon}
+                  strokeWidth={2}
+                  className="h-4 w-4"
+                />
               </div>
               <span className="text-sm text-center">
                 {draggable ? t('Text.uploadText') : t('Text.clickToUpload')}

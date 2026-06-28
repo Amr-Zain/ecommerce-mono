@@ -27,7 +27,8 @@ import {
 } from '@ecommerce/ui/components/popover'
 import { ScrollArea } from '@ecommerce/ui/components/scroll-area'
 import { Input } from '@ecommerce/ui/components/input'
-import { MapPin } from 'lucide-react'
+import { MapsLocation01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 
 export interface Position {
   lat: number
@@ -273,7 +274,11 @@ export default function MapField<T extends FieldValues>({
                   disabled={disabled}
                   className="ps-10"
                 />
-                <MapPin className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <HugeiconsIcon
+                  icon={MapsLocation01Icon}
+                  strokeWidth={2}
+                  className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                />
               </div>
             </PopoverTrigger>
 
@@ -299,7 +304,11 @@ export default function MapField<T extends FieldValues>({
                             onSelect={() => selectPrediction(p)}
                           >
                             <div className="flex items-start gap-3 w-full">
-                              <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                              <HugeiconsIcon
+                                icon={MapsLocation01Icon}
+                                strokeWidth={2}
+                                className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                              />
                               <div className="flex flex-col flex-1 min-w-0">
                                 <span className="text-sm font-medium truncate">
                                   {p.structured_formatting.main_text}

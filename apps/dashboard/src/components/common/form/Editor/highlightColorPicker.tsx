@@ -1,5 +1,6 @@
 import { Popover, PopoverTrigger, PopoverContent } from "@ecommerce/ui/components/popover";
-import { Highlighter } from "lucide-react";
+import { Edit01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@ecommerce/ui/components/button";
 
 interface Props {
@@ -13,7 +14,7 @@ const HighlightColorPicker = ({ onSelect }: Props) => {
     <Popover>
       <PopoverTrigger >
         <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Highlighter size={18} />
+          <HugeiconsIcon icon={Edit01Icon} strokeWidth={2} className="h-[18px] w-[18px]" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-1 flex items-center gap-1">

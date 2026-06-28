@@ -5,27 +5,28 @@ import {
   FieldValues,
   Path,
 } from 'react-hook-form'
-import {
-  FormControl,
-  FormLabel,
-} from '@ecommerce/ui/components/form'
-import { Input } from '@/components/ui/Input'
+import { FormControl, FormLabel } from '@ecommerce/ui/components/form'
 import { Checkbox } from '@ecommerce/ui/components/checkbox'
-import { Textarea } from '@/components/ui/Textarea'
 import { RadioGroup, RadioGroupItem } from '@ecommerce/ui/components/radio-group'
+import { Switch } from '@ecommerce/ui/components/switch'
 import { FieldProp } from '@/types/components/form'
-import OTPField from '@/components/common/form/OTPField'
+
+// Shared fields from @ecommerce/forms
+import {
+  TextField,
+  TextareaField,
+  PasswordField,
+  OTPField,
+  SelectField,
+} from '@ecommerce/forms'
+
+// Dashboard-only fields
 import PhoneField from '@/components/common/form/PhoneField'
-import PasswordField from '@/components/common/form/PasswordField'
 import DateFields from '@/components/common/form/DatePicker'
 import MapField from '@/components/common/form/MapField'
 import MultiLangField from '@/components/common/form/MultiLangField'
-import EditorField from '@/components/common/form/Editor/EditorField'
 import FileUploadField from '@/components/common/form/Uploader/FileUploadField'
-import AppSelect from '@/components/common/form/Select'
-import { Switch } from '@ecommerce/ui/components/switch'
 import { ColorPicker } from '@/components/common/form/ColorPicker'
-
 
 type FieldTypeOf<T extends FieldValues> = FieldProp<T>['type']
 
@@ -38,19 +39,21 @@ type FieldRenderArgs<T extends FieldValues, K extends FieldTypeOf<T>> = {
   field: ControllerRenderProps<T, FieldPath<T>>
 }
 
-const ensureObj = <U extends object>(u: U | undefined): U => u ?? ({} as U);
+const ensureObj = <U extends object>(u: U | undefined): U => u ?? ({} as U)
 
 type InputMapper<T extends FieldValues> = {
   [K in Exclude<FieldTypeOf<T>, 'custom'>]: (
     args: FieldRenderArgs<T, K>,
   ) => React.ReactNode
 }
+
 export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
+  // --- Shared fields (from @ecommerce/forms) ---
   text: ({ props, field }) => {
     const inputProps = ensureObj(props.inputProps)
     return (
-      <Input
-        type="text"
+      <TextField
+        fieldType="text"
         placeholder={props.placeholder}
         disabled={inputProps.disabled}
         {...field}
@@ -61,8 +64,8 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
   number: ({ props, field }) => {
     const inputProps = ensureObj(props.inputProps)
     return (
-      <Input
-        type="number"
+      <TextField
+        fieldType="number"
         placeholder={props.placeholder}
         {...field}
         {...inputProps}
@@ -72,8 +75,8 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
   email: ({ props, field }) => {
     const inputProps = ensureObj(props.inputProps)
     return (
-      <Input
-        type="email"
+      <TextField
+        fieldType="email"
         placeholder={props.placeholder}
         {...field}
         {...inputProps}
@@ -93,13 +96,32 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
   textarea: ({ props, field }) => {
     const inputProps = ensureObj(props.inputProps)
     return (
-      <Textarea
+      <TextareaField
         placeholder={props.placeholder}
         rows={(inputProps as any).rows ?? 4}
         {...field}
         {...inputProps}
       />
     )
+  },
+  otp: ({ props, field }) => {
+    const inputProps = ensureObj(props.inputProps)
+    return (
+      <OTPField
+        value={field.value || ''}
+        onChange={(value) => {
+          inputProps.handleOTPChange?.(value)
+          field.onChange(value)
+        }}
+        length={inputProps.length ?? 6}
+        disabled={inputProps.disabled}
+        type={inputProps.type}
+      />
+    )
+  },
+  select: ({ props, field }) => {
+    const inputProps = ensureObj(props.inputProps)
+    return <SelectField field={field} {...inputProps} />
   },
   checkbox: ({ props, field }) => {
     const inputProps = ensureObj(props.inputProps)
@@ -147,10 +169,6 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
       </div>
     )
   },
-  select: ({ props, field }) => {
-    const inputProps = ensureObj(props.inputProps)
-    return <AppSelect field={field} {...inputProps} />
-  },
   radio: ({ props, field }) => {
     const inputProps = ensureObj(props.inputProps)
     const radioOptions = props.options ?? []
@@ -176,22 +194,8 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
       </RadioGroup>
     )
   },
-  otp: ({ props, field }) => {
-    const inputProps = ensureObj(props.inputProps)
-    return (
-      <OTPField
-        value={field.value || ''}
-        onChange={(value) => {
-          inputProps.handleOTPChange?.(value)
-          field.onChange(value)
-        }}
-        length={inputProps.length ?? 6}
-        disabled={inputProps.disabled}
-        type={inputProps.type}
-        {...inputProps}
-      />
-    )
-  },
+
+  // --- Dashboard-only fields ---
   phone: ({ props }) => {
     const inputProps = ensureObj(props.inputProps)
     return (
@@ -250,20 +254,12 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
   editor: ({ props, field }) => {
     const inputProps = ensureObj(props.inputProps)
     return (
-      <Textarea
+      <TextareaField
         placeholder={props.placeholder}
         rows={(inputProps as any).rows ?? 4}
         {...field}
         {...inputProps}
       />
-      // <EditorField
-      //   field={field}
-      //   placeholder={props.placeholder}
-      //   height={inputProps.height}
-      //   toolbar={inputProps.toolbar}
-      //   disabled={inputProps.disabled}
-      //   className={inputProps.className}
-      // />
     )
   },
   multiLangField: ({ props }) => {
@@ -272,8 +268,7 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
       <MultiLangField
         control={props.control!}
         name={String(props.name)}
-        // type={inputProps.type ?? 'input'}
-        type={inputProps.type === "editor" ? "textarea" : "input"}
+        type={inputProps.type === 'editor' ? 'textarea' : 'input'}
         label={inputProps.labeling}
         placeholder={props.placeholder}
         languages={inputProps.languages}
@@ -366,5 +361,4 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
       />
     )
   },
-}
-)
+})

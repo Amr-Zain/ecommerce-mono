@@ -13,16 +13,11 @@ import {
   FormMessage,
 } from '@ecommerce/ui/components/form'
 import { FieldProp } from '@/types/components/form'
-
 import { inputMapper } from '@/util/inputMapper'
 
 function Field<T extends FieldValues>(props: FieldProp<T>) {
   if (props.type === 'custom') {
-    return (
-      <>
-        {/* props.label && (<FormLabel>{props.label}</FormLabel>) */ }{props.customItem}
-      </>
-    )
+    return <>{props.customItem}</>
   }
 
   return (
@@ -30,9 +25,8 @@ function Field<T extends FieldValues>(props: FieldProp<T>) {
       control={props.control}
       name={props.name as FieldPath<T>}
       render={({ field }) => {
-        //const spanClass = props.span ? `col-span-${props.span} self-center` : ''
         const mapper = inputMapper<T>()
-        const content = (mapper[props.type ] as any)({ props, field })
+        const content = (mapper[props.type] as any)({ props, field })
         return (
           <FormItem
             className={`${props.type === 'checkbox' || props.type === 'switch' ? 'mt-6' : 'space-y-2'}`}

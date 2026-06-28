@@ -1,15 +1,25 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
 import { Link, useRouter } from "@/i18n/navigation"
 import { useTranslations } from "next-intl"
 
-import { Button } from "@ecommerce/ui/components/button"
-import { Input } from "@ecommerce/ui/components/input"
-import { Label } from "@ecommerce/ui/components/label"
 import { sendOtpAction, verifyOtpAction } from "@/actions/auth"
 import type { SendOtpInput, VerifyOtpInput } from "@/hooks/api/domain"
 import { useCommerceSessionSync } from "@/hooks/api/use-commerce-session-sync"
+import {
+  isPhoneIdentifier,
+  AppFormComplete,
+  type FormField,
+} from "@ecommerce/forms"
+import { Button } from "@ecommerce/ui/components/button"
+
+type OtpLoginFormValues = {
+  identifier: string
+  phoneCode: string
+  code: string
+}
 
 function OtpLoginForm({
   defaultIdentifier = "",
@@ -27,146 +37,120 @@ function OtpLoginForm({
   const t = useTranslations("Auth")
   const router = useRouter()
   const syncCommerceSession = useCommerceSessionSync()
-  const [identifier, setIdentifier] = useState(defaultIdentifier)
-  const [phoneCode, setPhoneCode] = useState(defaultPhoneCode)
-  const [code, setCode] = useState("")
   const [otpSent, setOtpSent] = useState(defaultOtpSent)
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const isPhone = /^\d+$/.test(identifier.trim())
+  const form = useForm<OtpLoginFormValues>({
+    defaultValues: {
+      identifier: defaultIdentifier,
+      phoneCode: defaultPhoneCode,
+      code: "",
+    },
+    mode: "onChange",
+  })
 
-  function identifierPayload(): SendOtpInput {
-    return isPhone
-      ? { type: "phone", phone: identifier.trim(), phoneCode }
-      : { type: "email", email: identifier.trim() }
+  function identifierPayload(values: OtpLoginFormValues): SendOtpInput {
+    const trimmedIdentifier = values.identifier.trim()
+    return isPhoneIdentifier(trimmedIdentifier)
+      ? {
+          type: "phone",
+          phone: trimmedIdentifier,
+          phoneCode: values.phoneCode,
+        }
+      : { type: "email", email: trimmedIdentifier }
   }
 
-  async function sendOtp() {
+  async function submit(values: OtpLoginFormValues) {
     setPending(true)
-    setError(null)
     try {
-      const result = await sendOtpAction(identifierPayload())
-      if (!result.ok) throw new Error(result.message)
-      setOtpSent(true)
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error ? requestError.message : t("requestError")
-      )
-    } finally {
-      setPending(false)
-    }
-  }
+      if (!otpSent) {
+        const result = await sendOtpAction(identifierPayload(values))
+        if (!result.ok) throw new Error(result.message)
+        setOtpSent(true)
+        return
+      }
 
-  async function login(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!otpSent) {
-      await sendOtp()
-      return
-    }
-
-    setPending(true)
-    setError(null)
-    try {
       const result = await verifyOtpAction({
-        ...identifierPayload(),
-        code,
+        ...identifierPayload(values),
+        code: values.code,
       } satisfies VerifyOtpInput)
       if (!result.ok) throw new Error(result.message)
 
       await syncCommerceSession()
       router.replace(redirectTo)
       router.refresh()
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error ? requestError.message : t("requestError")
-      )
     } finally {
       setPending(false)
     }
   }
 
+  const fields: FormField<OtpLoginFormValues>[] = [
+    {
+      type: "identifier",
+      name: "identifier",
+      phoneCodeName: "phoneCode",
+      phoneCodeLabel: t("phoneCode"),
+      label: t("emailOrPhone"),
+      required: true,
+      disabled: otpSent || pending,
+      detectedPhoneText: t("detectedPhone"),
+      detectedEmailText: t("detectedEmail"),
+      inputProps: {
+        required: true,
+      },
+    },
+    ...(otpSent
+      ? [
+          {
+            type: "otp" as const,
+            name: "code" as const,
+            label: t("otpCode"),
+            required: true,
+            length: 4,
+            inputProps: {
+              required: true,
+              disabled: pending,
+            },
+          },
+        ]
+      : []),
+  ]
+
   return (
-    <form onSubmit={login} className="grid gap-4">
-      <div className="grid gap-2">
-        <Label htmlFor="identifier">{t("emailOrPhone")}</Label>
-        <div className={isPhone ? "flex gap-2" : undefined}>
-          {isPhone && (
-            <Input
-              aria-label={t("phoneCode")}
-              className="w-24"
-              type="number"
-              inputMode="numeric"
-              value={phoneCode}
-              disabled={otpSent || pending}
-              onChange={(event) =>
-                setPhoneCode(event.target.value.replace(/\D/g, ""))
-              }
-            />
+    <AppFormComplete
+      form={form}
+      fields={fields}
+      onSubmit={submit}
+      isLoading={pending}
+      submitButtonText={otpSent ? t("verifyAndSignIn") : t("sendOtp")}
+      loadingButtonText={t("pleaseWait")}
+      submitButtonClassName="w-full"
+      footer={
+        <>
+          {otpSent ? (
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={pending}
+              onClick={() => {
+                form.setValue("code", "")
+                setOtpSent(false)
+              }}
+            >
+              {t("changeIdentifier")}
+            </Button>
+          ) : (
+            <Link
+              href={registerPath}
+              className="text-center text-sm text-muted-foreground hover:text-foreground"
+            >
+              {t("createAccountLink")}
+            </Link>
           )}
-          <Input
-            id="identifier"
-            type={isPhone ? "number" : "email"}
-            value={identifier}
-            required
-            disabled={otpSent || pending}
-            autoComplete={isPhone ? "tel-national" : "email"}
-            inputMode={isPhone ? "numeric" : "email"}
-            onChange={(event) => setIdentifier(event.target.value)}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {isPhone ? t("detectedPhone") : t("detectedEmail")}
-        </p>
-      </div>
-
-      {otpSent && (
-        <div className="grid gap-2">
-          <Label htmlFor="code">{t("otpCode")}</Label>
-          <Input
-            id="code"
-            inputMode="numeric"
-            maxLength={4}
-            value={code}
-            required
-            autoComplete="one-time-code"
-            onChange={(event) =>
-              setCode(event.target.value.replace(/\D/g, "").slice(0, 4))
-            }
-          />
-        </div>
-      )}
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending
-          ? t("pleaseWait")
-          : otpSent
-            ? t("verifyAndSignIn")
-            : t("sendOtp")}
-      </Button>
-
-      {otpSent && (
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={pending}
-          onClick={() => setOtpSent(false)}
-        >
-          {t("changeIdentifier")}
-        </Button>
-      )}
-
-      {!otpSent && (
-        <Link
-          href={registerPath}
-          className="text-center text-sm text-muted-foreground hover:text-foreground"
-        >
-          {t("createAccountLink")}
-        </Link>
-      )}
-    </form>
+        </>
+      }
+    />
   )
 }
 
 export { OtpLoginForm }
+
