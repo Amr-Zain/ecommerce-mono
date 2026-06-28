@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import * as React from "react"
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
@@ -58,6 +59,7 @@ function ImageSlider({
   alt: string
   productId: string
 }) {
+  const t = useTranslations("Product")
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)
 
@@ -133,7 +135,7 @@ function ImageSlider({
                 ? "scale-125 bg-foreground ring-foreground/20"
                 : "bg-foreground/30 hover:bg-foreground/60"
             )}
-            aria-label={`Go to image ${idx + 1}`}
+            aria-label={t("goToImage", { number: idx + 1 })}
           />
         ))}
       </div>
@@ -146,6 +148,7 @@ export function ProductCard({
   view,
   hideActions = false,
 }: ProductCardProps) {
+  const t = useTranslations("Product")
   const allImages = React.useMemo(() => {
     if (product.images && product.images.length > 0) return product.images
     return [product.image, product.image]
@@ -205,11 +208,11 @@ export function ProductCard({
             <div className="mt-3 flex items-center gap-3">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-base font-bold text-foreground">
-                  ${product.price.toFixed(2)}
+                  {t("sar")}{product.price.toFixed(2)}
                 </span>
                 {product.oldPrice && (
                   <span className="text-xs text-muted-foreground line-through">
-                    ${product.oldPrice.toFixed(2)}
+                    {t("sar")}{product.oldPrice.toFixed(2)}
                   </span>
                 )}
               </div>
@@ -275,11 +278,11 @@ export function ProductCard({
           <>
             <div className="mt-3 flex items-baseline gap-2">
               <span className="text-sm font-bold text-foreground">
-                ${product.price.toFixed(2)}
+                {t("sar")}{product.price.toFixed(2)}
               </span>
               {product.oldPrice && (
                 <span className="text-[10px] text-muted-foreground line-through">
-                  ${product.oldPrice.toFixed(2)}
+                  {t("sar")}{product.oldPrice.toFixed(2)}
                 </span>
               )}
             </div>

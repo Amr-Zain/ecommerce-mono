@@ -25,6 +25,7 @@ import {
   type PlaceOrderResult,
 } from "@/hooks/api/use-checkout"
 import { useWallet } from "@/hooks/api/use-wallet"
+import { useLoyalty } from "@/hooks/api/use-loyalty"
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,7 @@ export default function CartPage() {
   const [couponCode, setCouponCode] = React.useState("")
   const [appliedCoupon, setAppliedCoupon] = React.useState("")
   const [selectedAddressId, setSelectedAddressId] = React.useState<string>()
+  const [selectedRewardId, setSelectedRewardId] = React.useState<string>()
   const [preview, setPreview] = React.useState<CheckoutPreview>()
   const [walletAmount, setWalletAmount] = React.useState(0)
   const [orderResult, setOrderResult] = React.useState<PlaceOrderResult>()
@@ -67,6 +69,7 @@ export default function CartPage() {
   const checkoutPreview = useCheckoutPreview()
   const placeOrder = usePlaceOrder()
   const wallet = useWallet()
+  const loyalty = useLoyalty()
   const updateItem = useUpdateCartItem()
   const removeItem = useRemoveCartItem()
   const setStep = React.useCallback(
@@ -89,7 +92,7 @@ export default function CartPage() {
     cart.data?.data.items.map((item) => ({
       id: item.id,
       name: item.productName,
-      brand: "Shopix",
+      brand: "Ecommerce",
       price: item.price,
       oldPrice: item.compareAtPrice ?? item.originalPrice,
       image: item.image ?? FALLBACK_IMAGE,
@@ -105,6 +108,8 @@ export default function CartPage() {
     0
   )
   const totals = preview?.totals
+  const loyaltyDiscount = Number(preview?.loyalty?.discount_amount ?? preview?.loyalty?.discountAmount ?? 0)
+  const redeemedPoints = Number(preview?.loyalty?.points ?? 0)
   const pricing = {
     subtotal: totals?.subtotal ?? subtotal,
     savings,
@@ -141,23 +146,25 @@ export default function CartPage() {
 
   const loadPreview = (
     addressId: string,
-    coupon = appliedCoupon,
-    onSuccess?: () => void
+    options: { coupon?: string; rewardId?: string; onSuccess?: () => void } = {}
   ) => {
     if (status !== "authenticated") {
       requireLogin()
       return
     }
     if (!addressId) return
+    const coupon = options.coupon ?? appliedCoupon
+    const reward = options.rewardId ?? selectedRewardId
     checkoutPreview.mutate(
       {
         addressId: Number(addressId),
         couponCode: coupon || undefined,
+        rewardId: reward ? Number(reward) : undefined,
       },
       {
         onSuccess: (response) => {
           setPreview(response.data)
-          onSuccess?.()
+          options.onSuccess?.()
         },
       }
     )
@@ -175,20 +182,23 @@ export default function CartPage() {
       setStep("address")
       return
     }
-    checkoutPreview.mutate(
-      { addressId: Number(effectiveAddressId), couponCode: code },
-      {
-        onSuccess: (response) => {
-          setAppliedCoupon(code)
-          setPreview(response.data)
-        },
-      }
-    )
+    loadPreview(effectiveAddressId, {
+      coupon: code,
+      rewardId: selectedRewardId,
+      onSuccess: () => setAppliedCoupon(code),
+    })
   }
 
   const selectAddress = (id: string) => {
     setSelectedAddressId(id)
     loadPreview(id)
+  }
+
+  const selectReward = (rewardId?: string) => {
+    setSelectedRewardId(rewardId)
+    if (effectiveAddressId) {
+      loadPreview(effectiveAddressId, { coupon: appliedCoupon, rewardId })
+    }
   }
 
   const submitOrder = (
@@ -209,6 +219,7 @@ export default function CartPage() {
             ? Math.min(Math.max(requestedWalletAmount, 0), walletAvailable, pricing.total)
             : undefined,
         couponCode: appliedCoupon || undefined,
+        rewardId: selectedRewardId ? Number(selectedRewardId) : undefined,
         notes,
       },
       {
@@ -245,7 +256,7 @@ export default function CartPage() {
         description={t("cartLoadDescription")}
         action={{ label: t("tryAgain"), onClick: () => void cart.refetch() }}
         secondaryHref={ROUTES.collections.root}
-        secondaryLabel="Continue shopping"
+        secondaryLabel={t("continueShopping")}
       />
     )
   }
@@ -261,7 +272,12 @@ export default function CartPage() {
             walletAvailable={walletAvailable}
             walletPending={walletPending}
             walletAmount={appliedWalletAmount}
+            rewards={loyalty.data?.rewards ?? []}
+            selectedRewardId={selectedRewardId}
+            loyaltyDiscount={loyaltyDiscount}
+            redeemedPoints={redeemedPoints}
             onWalletAmountChange={setWalletAmount}
+            onRewardChange={selectReward}
             onBack={() => setStep("address")}
             onPlaceOrder={submitOrder}
           />
@@ -307,9 +323,11 @@ export default function CartPage() {
                 onBack={() => setStep("cart")}
                 onSelect={selectAddress}
                 onNext={() =>
-                  loadPreview(effectiveAddressId, appliedCoupon, () =>
-                    setStep("payment")
-                  )
+                  loadPreview(effectiveAddressId, {
+                    coupon: appliedCoupon,
+                    rewardId: selectedRewardId,
+                    onSuccess: () => setStep("payment"),
+                  })
                 }
               />
             )}
@@ -321,7 +339,12 @@ export default function CartPage() {
                 walletAvailable={walletAvailable}
                 walletPending={walletPending}
                 walletAmount={appliedWalletAmount}
+                rewards={loyalty.data?.rewards ?? []}
+                selectedRewardId={selectedRewardId}
+                loyaltyDiscount={loyaltyDiscount}
+                redeemedPoints={redeemedPoints}
                 onWalletAmountChange={setWalletAmount}
+                onRewardChange={selectReward}
                 onBack={() => setStep("address")}
                 onPlaceOrder={submitOrder}
               />

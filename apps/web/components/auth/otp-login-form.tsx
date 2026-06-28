@@ -13,12 +13,11 @@ import {
   AppFormComplete,
   type FormField,
 } from "@ecommerce/forms"
-import { Button } from "@ecommerce/ui/components/button"
+import { OtpDialog } from "./otp-dialog"
 
 type OtpLoginFormValues = {
   identifier: string
   phoneCode: string
-  code: string
 }
 
 function OtpLoginForm({
@@ -37,13 +36,16 @@ function OtpLoginForm({
   const t = useTranslations("Auth")
   const router = useRouter()
   const syncCommerceSession = useCommerceSessionSync()
-  const [otpSent, setOtpSent] = useState(defaultOtpSent)
+  const [otpOpen, setOtpOpen] = useState(defaultOtpSent)
   const [pending, setPending] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const form = useForm<OtpLoginFormValues>({
     defaultValues: {
       identifier: defaultIdentifier,
       phoneCode: defaultPhoneCode,
-      code: "",
     },
     mode: "onChange",
   })
@@ -61,17 +63,34 @@ function OtpLoginForm({
 
   async function submit(values: OtpLoginFormValues) {
     setPending(true)
+    setError(null)
     try {
-      if (!otpSent) {
-        const result = await sendOtpAction(identifierPayload(values))
-        if (!result.ok) throw new Error(result.message)
-        setOtpSent(true)
-        return
-      }
+      const result = await sendOtpAction(identifierPayload(values))
+      if (!result.ok) throw new Error(result.message)
+      setOtpOpen(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("requestError"))
+    } finally {
+      setPending(false)
+    }
+  }
 
+  async function handleResend() {
+    setResending(true)
+    try {
+      const result = await sendOtpAction(identifierPayload(form.getValues()))
+      if (!result.ok) throw new Error(result.message)
+    } finally {
+      setResending(false)
+    }
+  }
+
+  async function handleVerify(code: string) {
+    setVerifying(true)
+    try {
       const result = await verifyOtpAction({
-        ...identifierPayload(values),
-        code: values.code,
+        ...identifierPayload(form.getValues()),
+        code,
       } satisfies VerifyOtpInput)
       if (!result.ok) throw new Error(result.message)
 
@@ -79,7 +98,7 @@ function OtpLoginForm({
       router.replace(redirectTo)
       router.refresh()
     } finally {
-      setPending(false)
+      setVerifying(false)
     }
   }
 
@@ -91,66 +110,49 @@ function OtpLoginForm({
       phoneCodeLabel: t("phoneCode"),
       label: t("emailOrPhone"),
       required: true,
-      disabled: otpSent || pending,
+      disabled: pending,
       detectedPhoneText: t("detectedPhone"),
       detectedEmailText: t("detectedEmail"),
       inputProps: {
         required: true,
       },
     },
-    ...(otpSent
-      ? [
-          {
-            type: "otp" as const,
-            name: "code" as const,
-            label: t("otpCode"),
-            required: true,
-            length: 4,
-            inputProps: {
-              required: true,
-              disabled: pending,
-            },
-          },
-        ]
-      : []),
   ]
 
   return (
-    <AppFormComplete
-      form={form}
-      fields={fields}
-      onSubmit={submit}
-      isLoading={pending}
-      submitButtonText={otpSent ? t("verifyAndSignIn") : t("sendOtp")}
-      loadingButtonText={t("pleaseWait")}
-      submitButtonClassName="w-full"
-      footer={
-        <>
-          {otpSent ? (
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={pending}
-              onClick={() => {
-                form.setValue("code", "")
-                setOtpSent(false)
-              }}
-            >
-              {t("changeIdentifier")}
-            </Button>
-          ) : (
-            <Link
-              href={registerPath}
-              className="text-center text-sm text-muted-foreground hover:text-foreground"
-            >
-              {t("createAccountLink")}
-            </Link>
-          )}
-        </>
-      }
-    />
+    <>
+      {error && !otpOpen && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
+      <AppFormComplete
+        form={form}
+        fields={fields}
+        onSubmit={submit}
+        isLoading={pending}
+        submitButtonText={t("sendOtp")}
+        loadingButtonText={t("pleaseWait")}
+        submitButtonClassName="w-full"
+        footer={
+          <Link
+            href={registerPath}
+            className="text-center text-sm text-muted-foreground hover:text-foreground"
+          >
+            {t("createAccountLink")}
+          </Link>
+        }
+      />
+
+      <OtpDialog
+        open={otpOpen}
+        onOpenChange={setOtpOpen}
+        description={t("loginDescription")}
+        onResend={handleResend}
+        onVerify={handleVerify}
+        resending={resending}
+        verifying={verifying}
+      />
+    </>
   )
 }
 
 export { OtpLoginForm }
-

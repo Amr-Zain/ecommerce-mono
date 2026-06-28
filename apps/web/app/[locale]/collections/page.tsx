@@ -1,5 +1,7 @@
 import { Link } from "@/i18n/navigation"
 import Image from "next/image"
+import type { Metadata } from "next"
+import { getTranslations, setRequestLocale } from "next-intl/server"
 
 import { Button } from "@ecommerce/ui/components/button"
 import {
@@ -13,8 +15,34 @@ import {
 import type { CollectionTreeItem } from "@/hooks/api/use-products"
 import { publicBackendGet } from "@/lib/server/backend"
 import { cacheTags } from "@/lib/server/cache-tags"
+import { localeAlternates } from "@/lib/server/seo"
+import { ROUTES } from "@/lib/routes"
 
-export default async function CollectionsPage() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  setRequestLocale(locale)
+  const t = await getTranslations("Seo")
+  return {
+    ...localeAlternates(ROUTES.collections.root, locale),
+    title: t("collectionsTitle"),
+    description: t("collectionsDescription"),
+  }
+}
+
+export default async function CollectionsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
+  setRequestLocale(locale)
+  const t = await getTranslations("Seo")
+  const tc = await getTranslations("Collections")
+
   const response = await publicBackendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
     revalidate: 60,
     tags: [cacheTags.categories],
@@ -24,8 +52,8 @@ export default async function CollectionsPage() {
   return (
     <div className="space-y-10 py-8">
       <div>
-        <h1 className="text-3xl font-bold">Collections</h1>
-        <p className="text-sm text-muted-foreground">Browse the complete collection hierarchy.</p>
+        <h1 className="text-3xl font-bold">{t("collectionsTitle")}</h1>
+        <p className="text-sm text-muted-foreground">{t("collectionsDescription")}</p>
       </div>
       {response.data.map((root) => (
         <section key={root.id} className="space-y-4">
@@ -46,7 +74,7 @@ export default async function CollectionsPage() {
               </div>
             </div>
             <Button render={<Link href={`/collections/${root.slug}`} />} variant="outline">
-              View all ({root._count?.products ?? 0})
+              {tc("viewAll")} ({root._count?.products ?? 0})
             </Button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -63,7 +91,7 @@ export default async function CollectionsPage() {
                 ) : null}
                 <CardHeader>
                   <CardTitle><Link href={`/collections/${child.slug}`} className="hover:underline">{child.name}</Link></CardTitle>
-                  <CardDescription>{child._count?.products ?? 0} products</CardDescription>
+                  <CardDescription>{tc("productCount", { count: child._count?.products ?? 0 })}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-2">
                   {child.children?.map((leaf) => (
@@ -73,7 +101,7 @@ export default async function CollectionsPage() {
                   ))}
                 </CardContent>
                 <CardFooter>
-                  <Button render={<Link href={`/collections/${child.slug}`} />} variant="link">View {child.name}</Button>
+                  <Button render={<Link href={`/collections/${child.slug}`} />} variant="link">{tc("viewCollection", { name: child.name })}</Button>
                 </CardFooter>
               </Card>
             ))}

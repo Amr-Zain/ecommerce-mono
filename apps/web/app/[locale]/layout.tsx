@@ -1,6 +1,7 @@
-import { Geist, JetBrains_Mono } from "next/font/google"
+import { Geist, JetBrains_Mono, Noto_Kufi_Arabic } from "next/font/google"
 import { hasLocale, NextIntlClientProvider } from "next-intl"
-import { getMessages, setRequestLocale } from "next-intl/server"
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server"
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
@@ -14,6 +15,7 @@ import { DirectionProvider } from "@ecommerce/ui/components/direction"
 import { Toaster } from "@ecommerce/ui/components/sonner"
 import { TooltipProvider } from "@ecommerce/ui/components/tooltip"
 import { routing, type Locale } from "@/i18n/routing"
+import { siteUrl } from "@/lib/server/seo"
 import { cn } from "@/lib/utils"
 
 const fontSans = Geist({
@@ -26,12 +28,59 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 })
 
+const notoKufiArabic = Noto_Kufi_Arabic({
+  subsets: ["arabic", "latin"],
+  variable: "--font-arabic",
+  weight: ["400", "500", "600", "700"],
+})
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
 }
 
 function getTextDirection(locale: Locale) {
   return locale === "ar" ? "rtl" : "ltr"
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  setRequestLocale(locale)
+  const t = await getTranslations("Seo")
+  return {
+    metadataBase: new URL(siteUrl()),
+    title: {
+      default: t("defaultTitle"),
+      template: t("titleTemplate"),
+    },
+    description: t("defaultDescription"),
+    applicationName: t("siteName"),
+    keywords: t("keywords").split(",").map((s) => s.trim()),
+    openGraph: {
+      type: "website",
+      siteName: t("siteName"),
+      title: t("defaultTitle"),
+      description: t("defaultDescription"),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("defaultTitle"),
+      description: t("defaultDescription"),
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+  }
 }
 
 export default async function LocaleLayout({
@@ -61,7 +110,9 @@ export default async function LocaleLayout({
         "antialiased",
         fontSans.variable,
         "font-mono",
-        jetbrainsMono.variable
+        jetbrainsMono.variable,
+        notoKufiArabic.variable,
+        direction === "rtl" && "font-arabic"
       )}
     >
       <body>

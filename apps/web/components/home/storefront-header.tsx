@@ -1,10 +1,9 @@
 import {
-  ArrowDown01Icon,
   Search01Icon,
   Store04Icon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { getLocale } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 
@@ -15,12 +14,14 @@ import { publicBackendGet } from "@/lib/server/backend"
 import { cacheTags } from "@/lib/server/cache-tags"
 import { HeaderAccountControls } from "./header-account-controls"
 import { HeaderCommerceControls } from "./header-commerce-controls"
+import { LocaleSwitch } from "./locale-switch"
 import { StorefrontNavigation } from "./storefront-navigation"
 import { cmsPageTitle, getCmsPages, pickCmsPages } from "@/lib/server/cms-pages"
 
 export async function StorefrontHeader() {
   const saleItems = Array.from({ length: 8 })
   const locale = await getLocale()
+  const t = await getTranslations("Header")
   const [collections, cmsPages] = await Promise.all([
     publicBackendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
       revalidate: 60,
@@ -41,7 +42,7 @@ export async function StorefrontHeader() {
                 key={index}
                 className="flex min-w-max items-center gap-3 px-5 text-primary-foreground/90"
               >
-                <span>Black Friday sale 22% off</span>
+                <span>{t("saleTag")}</span>
                 {/* <span className="text-primary-foreground/70">+</span> */}
               </div>
             ))}
@@ -60,28 +61,21 @@ export async function StorefrontHeader() {
                 {cmsPageTitle(page)}
               </Link>
             ))}
-            <Link
+              <Link
               href={ROUTES.static.showRooms}
               className="transition-colors hover:text-foreground"
             >
-              Show Rooms
+              {t("showRooms")}
             </Link>
             <Link
               href={ROUTES.profile.support.root}
               className="transition-colors hover:text-foreground"
             >
-              Contact
+              {t("contact")}
             </Link>
           </div>
           <div className="flex items-center gap-5">
-            <button className="inline-flex items-center gap-1 text-foreground">
-              English
-              <HugeiconsIcon icon={ArrowDown01Icon} className="size-3" />
-            </button>
-            <button className="inline-flex items-center gap-1 text-foreground">
-              USD
-              <HugeiconsIcon icon={ArrowDown01Icon} className="size-3" />
-            </button>
+            <LocaleSwitch />
             <ThemeSwitch />
           </div>
         </div>
@@ -91,7 +85,7 @@ export async function StorefrontHeader() {
           <div className="grid size-8 place-items-center rounded-full bg-foreground text-background">
             <HugeiconsIcon icon={Store04Icon} strokeWidth={2} />
           </div>
-          <span className="text-base font-semibold">Shopix</span>
+          <span className="text-base font-semibold">{t("brandName")}</span>
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium lg:flex">
           <StorefrontNavigation collections={collections} />
@@ -99,26 +93,26 @@ export async function StorefrontHeader() {
             href={ROUTES.products.root}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
           >
-            Today&apos;s Deal
+            {t("todaysDeal")}
           </Link>
           <Link
             href={`${ROUTES.products.root}?sort=rating-desc`}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
           >
-            New Arrivals
+            {t("newArrivals")}
           </Link>
           <Link
             href={`${ROUTES.products.root}?sort=rating-desc`}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
           >
-            New Arrivals
+            {t("newArrivals")}
             {/* <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" /> */}
           </Link>
           <Link
             href={ROUTES.collections.root}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
           >
-            Pages
+            {t("pages")}
             {/* <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" /> */}
           </Link>
         </nav>
@@ -129,15 +123,15 @@ export async function StorefrontHeader() {
               className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             />
             <Input
-              aria-label="Search"
-              placeholder="Type here"
+              aria-label={t("searchLabel")}
+              placeholder={t("searchPlaceholder")}
               className="h-9 ps-9 text-xs"
             />
           </div>
         </div>
         <div className="flex items-center gap-2.5">
           <HeaderCommerceControls />
-          <HeaderAccountControls />
+          <HeaderAccountControls locale={locale} />
           <div className="lg:hidden"><StorefrontNavigation collections={collections} /></div>
         </div>
       </div>

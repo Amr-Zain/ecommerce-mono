@@ -1,74 +1,67 @@
+"use client"
+
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import Image from "next/image"
+import { Link } from "@/i18n/navigation"
 
 import { Button } from "@ecommerce/ui/components/button"
-import { cn } from "@/lib/utils"
-import { heroPromos } from "./data"
+import {
+  CarouselContent,
+  CarouselItem,
+} from "@ecommerce/ui/components/carousel"
+import { AutoSlider } from "@/components/shared/auto-slider"
+import { ROUTES } from "@/lib/routes"
 
-type Promo = (typeof heroPromos)[number]
-
-function PromoCard({ promo, compact }: { promo: Promo; compact?: boolean }) {
-  return (
-    <article
-      className={cn(
-        "relative isolate overflow-hidden rounded-lg p-6",
-        compact ? "min-h-48" : "min-h-[330px]",
-        promo.className
-      )}
-    >
-      <div className={cn("relative z-10 max-w-[17rem]", compact && "max-w-48")}>
-        <h2
-          className={cn(
-            "leading-tight font-semibold text-foreground",
-            compact ? "text-xl" : "text-3xl"
-          )}
-        >
-          {promo.title}
-        </h2>
-        {"copy" in promo ? (
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {promo.copy}
-          </p>
-        ) : null}
-        <Button
-          size="sm"
-          variant="outline"
-          className="mt-5 rounded-full bg-background/80 text-xs"
-        >
-          {promo.cta}
-          <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
-        </Button>
-      </div>
-      <Image
-        src={promo.image}
-        alt=""
-        width={680}
-        height={420}
-        className={cn(
-          "absolute object-cover",
-          compact
-            ? "end-0 bottom-0 h-36 w-44"
-            : "end-0 bottom-0 h-56 w-full object-bottom",
-          "featured" in promo &&
-            promo.featured &&
-            "end-8 top-4 h-44 w-52 rounded-full object-cover"
-        )}
-      />
-    </article>
-  )
+export type SliderItem = {
+  id: string
+  title: string
+  image: string
 }
 
-export function PromoSection({ promos }: { promos: Promo[] }) {
-  if (promos.length === 0) return null
-
-  const visiblePromos = promos.slice(0, 2)
+export function PromoSection({ sliders }: { sliders: SliderItem[] }) {
+  if (sliders.length === 0) return null
 
   return (
-    <section className="grid gap-4 lg:grid-cols-2">
-      {visiblePromos.map((promo) => (
-        <PromoCard key={promo.title} promo={promo} />
-      ))}
+    <section className="overflow-hidden rounded-lg">
+      <AutoSlider delay={5000} loop>
+        <CarouselContent>
+          {sliders.map((slider) => (
+            <CarouselItem key={slider.id}>
+              <div className="relative flex min-h-[320px] items-center sm:min-h-[420px]">
+                <Image
+                  src={slider.image}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="relative z-10 mx-auto w-full max-w-7xl px-6 sm:px-10">
+                  <div className="max-w-xl">
+                    <h2 className="text-3xl font-semibold leading-tight text-white drop-shadow-lg sm:text-4xl">
+                      {slider.title}
+                    </h2>
+                    <Button
+                      
+                      size="sm"
+                      className="mt-6 rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
+                    >
+                      <Link href={ROUTES.collections.root}>
+                        Shop Now
+                        <HugeiconsIcon
+                          icon={ArrowRight01Icon}
+                          className="size-3.5"
+                        />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </AutoSlider>
     </section>
   )
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Menu02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import Image from "next/image"
@@ -36,12 +37,13 @@ function StorefrontNavigation({
 }: {
   collections: CollectionTreeItem[]
 }) {
+  const t = useTranslations("Header")
   return (
     <>
       <NavigationMenu className="hidden lg:flex">
         <NavigationMenuList>
           <NavigationMenuItem>
-            <NavigationMenuTrigger>Collections</NavigationMenuTrigger>
+            <NavigationMenuTrigger>{t("collections")}</NavigationMenuTrigger>
             <NavigationMenuContent>
               <div className="grid w-[760px] grid-cols-4 gap-5 p-5">
                 {collections.map((root) => (

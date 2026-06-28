@@ -27,4 +27,17 @@ export type AuthUserFields = {
   is_suspended?: boolean
   permissions?: UserPermission[]
   settings?: UserSettings
+  tier?: {
+    id: string
+    name: string
+    multiplier?: number
+    min_lifetime_points?: number
+    color?: string | null
+  } | null
+  loyalty?: {
+    available_points: number
+    pending_points: number
+    lifetime_points: number
+    tier?: AuthUserFields["tier"]
+  }
 }

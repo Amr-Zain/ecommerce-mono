@@ -1,5 +1,7 @@
 "use client"
 
+import { useTranslations } from "next-intl"
+
 import { StarIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link } from "@/i18n/navigation"
@@ -40,6 +42,7 @@ function ReviewCard({ review }: { review: ProductReview }) {
 }
 
 function ProductReviews({ product }: { product: ProductDetail }) {
+  const t = useTranslations("Product")
   const { status } = useSession()
   const loggedIn = status === "authenticated"
   const eligibility = useProductReviewEligibility(product.id, loggedIn)
@@ -71,11 +74,11 @@ function ProductReviews({ product }: { product: ProductDetail }) {
   return (
     <section className="grid gap-8 py-10 lg:grid-cols-[0.75fr_1.5fr]">
       <div>
-        <h2 className="mb-4 text-xl font-semibold">Reviews</h2>
+        <h2 className="mb-4 text-xl font-semibold">{t("reviews")}</h2>
         <div className="rounded-xl bg-muted p-6 text-center">
           <div className="text-4xl font-semibold">{product.reviews.average}/5</div>
           <div className="mt-2 flex justify-center"><Stars rating={product.reviews.average} /></div>
-          <p className="mt-2 text-xs text-muted-foreground">Based on {product.reviews.total} verified reviews</p>
+          <p className="mt-2 text-xs text-muted-foreground">{t("basedOnVerified", { count: product.reviews.total })}</p>
           <div className="mt-5 space-y-2">
             {[5, 4, 3, 2, 1].map((star) => {
               const count = product.reviews.distribution[star - 1] ?? 0
@@ -84,24 +87,24 @@ function ProductReviews({ product }: { product: ProductDetail }) {
             })}
           </div>
           <div className="mt-5 space-y-2">
-            {!loggedIn ? <Button render={<Link href={ROUTES.auth.login} />} className="rounded-full">Login to review</Button> :
+            {!loggedIn ? <Button render={<Link href={ROUTES.auth.login} />} className="rounded-full">{t("loginToReview")}</Button> :
               eligibility.isLoading ? <Skeleton className="mx-auto h-8 w-32" /> :
-              mine ? <><Badge variant={mine.is_verified ? "default" : "secondary"}>{mine.is_verified ? "Approved" : "Pending approval"}</Badge><div className="flex justify-center gap-2"><Button variant="outline" onClick={openForm}>Edit review</Button><Button variant="destructive" onClick={() => setDeleteOpen(true)}>Delete</Button></div></> :
-              eligibility.data?.data.can_review ? <Button onClick={openForm} className="rounded-full">Write Review</Button> :
-              <Button disabled variant="outline">Delivered purchase required</Button>}
+              mine ? <><Badge variant={mine.is_verified ? "default" : "secondary"}>{mine.is_verified ? t("approved") : t("pendingApproval")}</Badge><div className="flex justify-center gap-2"><Button variant="outline" onClick={openForm}>{t("editReview")}</Button><Button variant="destructive" onClick={() => setDeleteOpen(true)}>{t("delete")}</Button></div></> :
+              eligibility.data?.data.can_review ? <Button onClick={openForm} className="rounded-full">{t("writeReview")}</Button> :
+              <Button disabled variant="outline">{t("deliveredPurchaseRequired")}</Button>}
           </div>
         </div>
       </div>
       <div className="flex flex-col justify-between gap-5">
-        <div className="space-y-5">{product.reviews.items.length ? product.reviews.items.map((review) => <ReviewCard key={review.id} review={review} />) : <p className="text-sm text-muted-foreground">No verified reviews yet.</p>}</div>
-        {product.reviews.total > 3 ? <Button variant="outline" onClick={() => setAllOpen(true)} className="self-start">View All Reviews</Button> : null}
+        <div className="space-y-5">{product.reviews.items.length ? product.reviews.items.map((review) => <ReviewCard key={review.id} review={review} />) : <p className="text-sm text-muted-foreground">{t("noVerifiedReviews")}</p>}</div>
+        {product.reviews.total > 3 ? <Button variant="outline" onClick={() => setAllOpen(true)} className="self-start">{t("viewAllReviews")}</Button> : null}
       </div>
 
-      <Dialog open={formOpen} onOpenChange={setFormOpen}><DialogContent><DialogHeader><DialogTitle>{mine ? "Edit review" : "Write review"}</DialogTitle><DialogDescription>Your review will be visible after admin approval.</DialogDescription></DialogHeader><div className="space-y-4"><div><Label>Rating</Label><div className="mt-2 flex gap-1">{[1,2,3,4,5].map((value) => <Button key={value} size="icon-sm" variant="ghost" onClick={() => setRating(value)}><HugeiconsIcon icon={StarIcon} className={cn(value <= rating && "fill-current text-primary [&_path]:fill-current")} /></Button>)}</div></div><div><Label htmlFor="review-comment">Review</Label><Textarea id="review-comment" value={comment} onChange={(event) => setComment(event.target.value)} /></div></div><DialogFooter><Button onClick={submit} disabled={createReview.isPending || updateReview.isPending}>Submit review</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={formOpen} onOpenChange={setFormOpen}><DialogContent><DialogHeader><DialogTitle>{mine ? t("editReview") : t("writeReview")}</DialogTitle><DialogDescription>Your review will be visible after admin approval.</DialogDescription></DialogHeader><div className="space-y-4"><div><Label>{t("rating")}</Label><div className="mt-2 flex gap-1">{[1,2,3,4,5].map((value) => <Button key={value} size="icon-sm" variant="ghost" onClick={() => setRating(value)}><HugeiconsIcon icon={StarIcon} className={cn(value <= rating && "fill-current text-primary [&_path]:fill-current")} /></Button>)}</div></div><div><Label htmlFor="review-comment">{t("reviewLabel")}</Label><Textarea id="review-comment" value={comment} onChange={(event) => setComment(event.target.value)} /></div></div><DialogFooter><Button onClick={submit} disabled={createReview.isPending || updateReview.isPending}>{t("submitReview")}</Button></DialogFooter></DialogContent></Dialog>
 
-      <Dialog open={allOpen} onOpenChange={setAllOpen}><DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>All Reviews</DialogTitle><DialogDescription>{product.reviews.total} verified reviews</DialogDescription></DialogHeader><div className="space-y-5">{reviews.isLoading ? Array.from({length:3},(_,i)=><Skeleton key={i} className="h-24 w-full" />) : reviews.data?.data.items.map((review)=><ReviewCard key={review.id} review={review} />)}</div><DialogFooter><Button variant="outline" disabled={!reviews.data?.data.meta.has_previous_page} onClick={()=>setPage((value)=>value-1)}>Previous</Button><span className="self-center text-sm">Page {page}</span><Button variant="outline" disabled={!reviews.data?.data.meta.has_next_page} onClick={()=>setPage((value)=>value+1)}>Next</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={allOpen} onOpenChange={setAllOpen}><DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>{t("allReviews")}</DialogTitle><DialogDescription>{product.reviews.total} verified reviews</DialogDescription></DialogHeader><div className="space-y-5">{reviews.isLoading ? Array.from({length:3},(_,i)=><Skeleton key={i} className="h-24 w-full" />) : reviews.data?.data.items.map((review)=><ReviewCard key={review.id} review={review} />)}</div><DialogFooter><Button variant="outline" disabled={!reviews.data?.data.meta.has_previous_page} onClick={()=>setPage((value)=>value-1)}>{t("previous")}</Button><span className="self-center text-sm">{t("page", { number: page })}</span><Button variant="outline" disabled={!reviews.data?.data.meta.has_next_page} onClick={()=>setPage((value)=>value+1)}>{t("next")}</Button></DialogFooter></DialogContent></Dialog>
 
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete review?</AlertDialogTitle><AlertDialogDescription>This permanently removes your review.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => deleteReview.mutate({}, { onSuccess: () => setDeleteOpen(false) })}>Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t("deleteReviewConfirm")}</AlertDialogTitle><AlertDialogDescription>{t("deleteReviewDescription")}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t("cancel")}</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={() => deleteReview.mutate({}, { onSuccess: () => setDeleteOpen(false) })}>{t("delete")}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </section>
   )
 }

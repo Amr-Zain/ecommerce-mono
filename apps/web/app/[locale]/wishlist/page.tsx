@@ -2,6 +2,7 @@
 
 import { FavouriteIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 
@@ -23,7 +24,7 @@ const FALLBACK_IMAGE =
 function mapWishlistProduct(item: {
   productId: string
   product?: Record<string, unknown>
-}): Product {
+}, t: (key: string) => string): Product {
   const product = item.product ?? {}
   const variants = Array.isArray(product.variants)
     ? (product.variants as Array<Record<string, unknown>>)
@@ -37,10 +38,10 @@ function mapWishlistProduct(item: {
 
   return {
     id: item.productId,
-    name: String(product.name ?? translation.name ?? "Product"),
-    brand: "Shopix",
+    name: String(product.name ?? translation.name ?? t("fallbackProductName")),
+    brand: "Ecommerce",
     description: String(
-      product.description ?? translation.description ?? "Explore this product."
+      product.description ?? translation.description ?? t("fallbackProductDescription")
     ),
     price: Number(variant?.price ?? product.price ?? 0),
     oldPrice:
@@ -62,13 +63,14 @@ function mapWishlistProduct(item: {
 }
 
 export default function WishlistPage() {
+  const t = useTranslations("Wishlist")
   const wishlist = useWishlist()
-  const items = wishlist.data?.data.map(mapWishlistProduct) ?? []
+  const items = wishlist.data?.data.map((item) => mapWishlistProduct(item, t)) ?? []
 
   if (wishlist.isPending) {
     return (
       <div className="py-20 text-center text-muted-foreground">
-        Loading wishlist...
+        {t("loading")}
       </div>
     )
   }
@@ -76,14 +78,14 @@ export default function WishlistPage() {
   if (wishlist.isError) {
     return (
       <div className="py-20 text-center text-destructive">
-        Unable to load wishlist. Please refresh and try again.
+        {t("loadError")}
       </div>
     )
   }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight">My Wishlist</h1>
+      <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
 
       {items.length === 0 ? (
         <Empty className="py-24">
@@ -98,10 +100,9 @@ export default function WishlistPage() {
                 strokeWidth={1.5}
               />
             </EmptyMedia>
-            <EmptyTitle className="text-xl">Your wishlist is empty</EmptyTitle>
+            <EmptyTitle className="text-xl">{t("empty")}</EmptyTitle>
             <EmptyDescription>
-              Start saving your favorite items. We have something special
-              waiting for you!
+              {t("emptyDescription")}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
@@ -109,7 +110,7 @@ export default function WishlistPage() {
               render={<Link href={ROUTES.collections.root} />}
               className="mt-4 h-11 rounded-xl bg-primary px-8 hover:bg-primary/90"
             >
-              Continue Shopping
+              {t("continueShopping")}
             </Button>
           </EmptyContent>
         </Empty>

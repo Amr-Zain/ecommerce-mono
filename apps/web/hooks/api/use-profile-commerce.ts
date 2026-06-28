@@ -50,6 +50,10 @@ type Order = {
   shipping_fee: number
   subtotal: number
   discount_amount: number
+  loyalty_discount_amount?: number
+  loyalty_points_redeemed?: number
+  loyalty_reward_id?: string | null
+  loyalty_reward_snapshot?: Record<string, unknown> | null
   vat_value: number
   original_paid_amount?: number
   refunded_amount?: number

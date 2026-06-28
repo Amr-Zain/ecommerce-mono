@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server"
+import type { Metadata } from "next"
 
 import {
   Card,
@@ -11,6 +12,12 @@ import type { Locale } from "@/i18n/routing"
 import { ROUTES } from "@/lib/routes"
 import { OtpLoginForm } from "@/components/auth/otp-login-form"
 import { safeReturnPath } from "@/lib/return-path"
+import { localeAlternates, noindexMetadata } from "@/lib/server/seo"
+
+export const metadata: Metadata = {
+  ...noindexMetadata,
+  ...localeAlternates(ROUTES.auth.login, "en"),
+}
 
 export default async function LoginPage({
   params,
@@ -32,7 +39,7 @@ export default async function LoginPage({
   const t = await getTranslations("Auth")
 
   return (
-    <main className="flex min-h-svh items-center justify-center p-6">
+    <main className="flex min-h-[70svh] items-center justify-center p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>{t("loginTitle")}</CardTitle>

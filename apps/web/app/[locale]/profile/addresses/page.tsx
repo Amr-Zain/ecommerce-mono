@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Location01Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import * as React from "react"
@@ -17,6 +18,7 @@ const EMPTY_FORM = { address: "", streetName: "", buildingNumber: "", countryId:
 type AddressFormValues = typeof EMPTY_FORM
 
 export default function AddressesPage() {
+  const t = useTranslations("Addresses")
   const addresses = useAddresses()
   const countries = useCountries()
   const createAddress = useCreateAddress()
@@ -78,28 +80,28 @@ export default function AddressesPage() {
     {
       type: "textarea",
       name: "address",
-      label: "Address",
+      label: t("address"),
       required: true,
       inputProps: { required: true, disabled: pending },
     },
     {
       type: "text",
       name: "streetName",
-      label: "Street name",
+      label: t("streetName"),
       inputProps: { disabled: pending },
     },
     {
       type: "text",
       name: "buildingNumber",
-      label: "Building number",
+      label: t("buildingNumber"),
       inputProps: { disabled: pending },
     },
     {
       type: "select",
       name: "countryId",
-      label: "Country",
+      label: t("country"),
       required: true,
-      placeholder: "Select country",
+      placeholder: t("selectCountry"),
       options: (countries.data ?? []).map((country) => ({
         value: country.id,
         label: locationName(country),
@@ -122,9 +124,9 @@ export default function AddressesPage() {
     {
       type: "select",
       name: "cityId",
-      label: "City",
+      label: t("city"),
       required: true,
-      placeholder: "Select city",
+      placeholder: t("selectCity"),
       options: (cities.data ?? []).map((city) => ({
         value: city.id,
         label: locationName(city),
@@ -139,46 +141,46 @@ export default function AddressesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">My Addresses</h1>
-        <Button size="sm" onClick={openAdd}><HugeiconsIcon icon={PlusSignIcon} className="size-4" /> Add Address</Button>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <Button size="sm" onClick={openAdd}><HugeiconsIcon icon={PlusSignIcon} className="size-4" /> {t("addAddress")}</Button>
       </div>
 
       {addresses.isPending ? (
-        <p className="text-sm text-muted-foreground">Loading addresses...</p>
+        <p className="text-sm text-muted-foreground">{t("loading")}</p>
       ) : (addresses.data?.length ?? 0) === 0 ? (
         <Empty className="py-24">
           <EmptyHeader>
             <EmptyMedia variant="icon"><HugeiconsIcon icon={Location01Icon} className="size-8" /></EmptyMedia>
-            <EmptyTitle>No addresses saved</EmptyTitle>
-            <EmptyDescription>Add a delivery address to make checkout faster.</EmptyDescription>
+            <EmptyTitle>{t("empty")}</EmptyTitle>
+            <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
           </EmptyHeader>
-          <EmptyContent><Button onClick={openAdd}>Add New Address</Button></EmptyContent>
+          <EmptyContent><Button onClick={openAdd}>{t("addNewAddress")}</Button></EmptyContent>
         </Empty>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {addresses.data?.map((address) => (
             <article key={address.id} className="rounded-xl border bg-card p-5">
               <div className="flex items-start justify-between gap-3">
-                <h2 className="font-semibold">{address.street_name || "Delivery Address"}</h2>
-                {address.is_default && <Badge variant="outline">Default</Badge>}
+                <h2 className="font-semibold">{address.street_name || t("deliveryAddress")}</h2>
+                {address.is_default && <Badge variant="outline">{t("default")}</Badge>}
               </div>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {[address.building_number, address.address, locationName(address.city), locationName(address.country)].filter(Boolean).join(", ")}
               </p>
               <div className="mt-5 flex flex-wrap gap-3 text-xs font-semibold">
-                <button onClick={() => openEdit(address)}>Edit</button>
+                <button onClick={() => openEdit(address)}>{t("edit")}</button>
                 <button
                   onClick={() => {
-                    if (window.confirm("Delete this address?")) {
+                    if (window.confirm(t("deleteConfirm"))) {
                       deleteAddress.mutate({ id: address.id })
                     }
                   }}
                 >
-                  Remove
+                  {t("remove")}
                 </button>
                 {!address.is_default && (
                   <button className="ms-auto" onClick={() => setDefaultAddress.mutate({ id: address.id })}>
-                    Set as default
+                    {t("setAsDefault")}
                   </button>
                 )}
               </div>
@@ -190,8 +192,8 @@ export default function AddressesPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Address" : "Add Address"}</DialogTitle>
-            <DialogDescription>Enter your delivery address details.</DialogDescription>
+            <DialogTitle>{editing ? t("editTitle") : t("addTitle")}</DialogTitle>
+            <DialogDescription>{t("dialogDescription")}</DialogDescription>
           </DialogHeader>
           <AppFormComplete
             form={addressForm}
@@ -199,8 +201,8 @@ export default function AddressesPage() {
             onSubmit={save}
             isLoading={pending}
             submitDisabled={!addressValue || !countryIdValue || !cityIdValue}
-            submitButtonText="Save Address"
-            loadingButtonText="Saving..."
+            submitButtonText={t("save")}
+            loadingButtonText={t("saving")}
           />
         </DialogContent>
       </Dialog>

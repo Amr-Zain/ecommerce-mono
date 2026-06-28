@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import * as React from "react"
 
@@ -56,6 +57,7 @@ function CatalogControls({
   const router = useRouter()
   const pathname = usePathname()
   const view = searchParams.view === "list" ? "list" : "grid"
+  const t = useTranslations("Product")
   const update = (key: string, value: string) => {
     const params = toUrlSearchParams(searchParams)
     params.set(key, value)
@@ -93,9 +95,9 @@ function CatalogControls({
                 size="sm"
                 variant={view === mode ? "secondary" : "ghost"}
                 onClick={() => update("view", mode)}
-                className="h-7 capitalize"
+                className="h-7"
               >
-                {mode}
+                {t(mode)}
               </Button>
             ))}
           </div>
@@ -103,12 +105,12 @@ function CatalogControls({
             value={String(searchParams.catalog_sort ?? "newest")}
             onValueChange={(value) => value && update("catalog_sort", value)}
           >
-            <SelectTrigger size="sm"><SelectValue /></SelectTrigger>
+            <SelectTrigger size="sm"><SelectValue placeholder={t("sortBy")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Sort: Newest</SelectItem>
-              <SelectItem value="price_asc">Price: Low to High</SelectItem>
-              <SelectItem value="price_desc">Price: High to Low</SelectItem>
-              <SelectItem value="rating_desc">Customer Rating</SelectItem>
+              <SelectItem value="newest">{t("sortNewest")}</SelectItem>
+              <SelectItem value="price_asc">{t("priceLowToHigh")}</SelectItem>
+              <SelectItem value="price_desc">{t("priceHighToLow")}</SelectItem>
+              <SelectItem value="rating_desc">{t("customerRating")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -134,6 +136,7 @@ function Sidebar({
   const selectedMin = Number(searchParams.min_price ?? facets.price.min)
   const selectedMax = Number(searchParams.max_price ?? facets.price.max)
   const [price, setPrice] = React.useState([selectedMin, selectedMax])
+  const t = useTranslations("Product")
   const collectionCounts = new Map(
     facets.collections.map((facet) => [facet.id, facet.count])
   )
@@ -155,7 +158,7 @@ function Sidebar({
   return (
     <aside className="w-full space-y-6 rounded-xl border bg-card/60 p-5 backdrop-blur-md lg:col-span-1">
       <div className="flex items-center justify-between border-b pb-4">
-        <h2 className="text-lg font-semibold tracking-tight">Filter</h2>
+        <h2 className="text-lg font-semibold tracking-tight">{t("filter")}</h2>
         <Button
           type="button"
           variant="ghost"
@@ -163,12 +166,12 @@ function Sidebar({
           onClick={() => router.push(pathname, { scroll: false })}
           className="text-destructive"
         >
-          Clear All
+          {t("clearAll")}
         </Button>
       </div>
       <Input
         defaultValue={String(searchParams.search ?? "")}
-        placeholder="Search products"
+        placeholder={t("searchProducts")}
         onKeyDown={(event) => {
           if (event.key === "Enter")
             navigate((params) =>
@@ -177,7 +180,7 @@ function Sidebar({
         }}
       />
       {!collectionLocked && collectionTree.length ? (
-        <FilterSection title="Collections">
+        <FilterSection title={t("collectionsLabel")}>
           <Accordion>
             {collectionTree.map((collection) => (
               <CollectionFilterNode
@@ -208,9 +211,9 @@ function Sidebar({
           ))}
         </FilterSection>
       ))}
-      <FilterSection title="Price">
+      <FilterSection title={t("priceLabel")}>
         <div className="rounded-md bg-secondary/80 px-2 py-1 text-center text-xs font-semibold">
-          SAR {price[0]} - SAR {price[1]}
+          {t("sar")} {price[0]} - {t("sar")} {price[1]}
         </div>
         <Slider
           min={facets.price.min}
@@ -229,10 +232,10 @@ function Sidebar({
             })
           }
         >
-          Apply price
+          {t("applyPrice")}
         </Button>
       </FilterSection>
-      <FilterSection title="Discount Range">
+      <FilterSection title={t("discountRange")}>
         <RadioGroup
           value={String(searchParams.min_discount ?? "")}
           onValueChange={(value) =>
@@ -245,7 +248,7 @@ function Sidebar({
             className="flex cursor-pointer items-center gap-2.5 text-sm"
           >
             <RadioGroupItem value={String(discount)} />
-            <span className="font-medium">{discount}% or more</span>
+            <span className="font-medium">{t("orMore", { value: discount })}</span>
           </label>
         ))}
         </RadioGroup>
@@ -265,6 +268,7 @@ function CollectionFilterNode({
   selected: string[]
   onChange: (slug: string, checked: boolean) => void
 }) {
+  const t = useTranslations("Product")
   const count = collectionCount(collection, counts)
   const children = collection.children ?? []
 
@@ -291,10 +295,9 @@ function CollectionFilterNode({
           />
         </div>
         <AccordionTrigger
-          aria-label={`Show ${collection.name} subcollections`}
+          aria-label={t("show", { name: collection.name })}
           className="flex-none px-2"
         >
-          <span className="sr-only">Show subcollections</span>
         </AccordionTrigger>
       </div>
       <AccordionContent className="space-y-2 ps-3">
@@ -336,6 +339,7 @@ function ActiveFilters({
 }) {
   const router = useRouter()
   const pathname = usePathname()
+  const t = useTranslations("Product")
   const labels = new Map<string, string>()
   facets.collections.forEach((facet) => labels.set(facet.slug, facet.name))
   facets.attributes.forEach((facet) =>
@@ -386,9 +390,9 @@ function ActiveFilters({
           className="inline-flex items-center gap-1 rounded-full border bg-muted px-3 py-0.5 text-xs font-bold shadow-2xs"
         >
           {filter.key === "price"
-            ? `SAR ${searchParams.min_price ?? facets.price.min} - ${searchParams.max_price ?? facets.price.max}`
+            ? `${t("sar")} ${searchParams.min_price ?? facets.price.min} - ${t("sar")} ${searchParams.max_price ?? facets.price.max}`
             : filter.key === "min_discount"
-              ? `${filter.value}% or more`
+              ? t("orMore", { value: filter.value })
               : (labels.get(filter.value) ?? filter.value)}
           <span aria-hidden>×</span>
         </button>

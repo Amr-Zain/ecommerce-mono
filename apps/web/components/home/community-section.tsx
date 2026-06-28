@@ -25,7 +25,7 @@ export function CommunitySection() {
         </CarouselContent>
       </AutoSlider>
       <Button variant="outline" size="sm" className="mt-5 rounded-full text-xs">
-        Follow Us @shopix
+        Follow Us @Ecommerce
       </Button>
     </section>
   )

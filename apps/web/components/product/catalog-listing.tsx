@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import { ROUTES } from "@/lib/routes"
 
 import { ProductCard, type Product } from "@/components/product/product-card"
@@ -17,12 +18,12 @@ import { ListingPagination } from "@/components/shared/pagination"
 
 type CatalogSearchParams = Record<string, string | string[] | undefined>
 
-function mapProduct(item: CatalogProduct): Product {
+function mapProduct(item: CatalogProduct, t: (key: string, values?: Record<string, string | number>) => string): Product {
   const image = item.image || "/product-placeholder.svg"
   return {
     id: item.id,
     name: item.name,
-    brand: item.collection?.name ?? "Shopix",
+    brand: item.collection?.name ?? "",
     description: item.description,
     price: item.price,
     oldPrice: item.compare_at_price ?? undefined,
@@ -37,7 +38,7 @@ function mapProduct(item: CatalogProduct): Product {
     discount: item.discount_percentage,
     badge:
       item.discount_percentage > 0
-        ? `${item.discount_percentage}% off`
+        ? t("percentOff", { value: item.discount_percentage })
         : undefined,
     firstVariationId: item.representative_variant.id,
     available: item.representative_variant.available,
@@ -54,6 +55,7 @@ async function CatalogListing({
   locale: string
   searchParams: CatalogSearchParams
 }) {
+  const t = await getTranslations({ locale, namespace: "Product" })
   const query = {
     ...searchParams,
     ...(collectionSlug ? { collection_slug: collectionSlug } : {}),
@@ -86,15 +88,15 @@ async function CatalogListing({
     ? ROUTES.collections.bySlug(collectionSlug)
     : ROUTES.products.root
   const breadcrumbs = [
-    { label: "Home", href: ROUTES.home },
+    { label: t("home"), href: ROUTES.home },
     ...(collectionSlug
-      ? [{ label: "Collections", href: ROUTES.collections.root }]
+      ? [{ label: t("collections"), href: ROUTES.collections.root }]
       : []),
     ...(data.collection?.ancestors.map((ancestor) => ({
       label: ancestor.name,
       href: ROUTES.collections.bySlug(ancestor.slug),
     })) ?? []),
-    { label: data.collection?.name ?? "All Products" },
+    { label: data.collection?.name ?? t("allProducts") },
   ]
 
   return (
@@ -140,7 +142,7 @@ async function CatalogListing({
               {data.items.map((item) => (
                 <ProductCard
                   key={item.id}
-                  product={mapProduct(item)}
+                  product={mapProduct(item, t)}
                   view={view}
                 />
               ))}
@@ -148,11 +150,10 @@ async function CatalogListing({
           ) : (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-card/40 p-12 text-center backdrop-blur-md">
               <h3 className="text-lg font-semibold tracking-tight">
-                No products found
+                {t("noProductsFound")}
               </h3>
               <p className="mt-1.5 max-w-xs text-sm text-muted-foreground">
-                No products match the current filters. Try clearing one or more
-                filters.
+                {t("noProductsMatch")}
               </p>
             </div>
           )}

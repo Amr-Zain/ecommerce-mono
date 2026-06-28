@@ -49,6 +49,14 @@ type CheckoutPreview = {
     discount_value: number
   } | null
   totals: CheckoutTotals
+  loyalty?: {
+    reward?: Record<string, unknown>
+    points?: number
+    discount_amount?: number
+    discountAmount?: number
+    available_points?: number
+    pending_points?: number
+  } | null
   wallet?: {
     available_balance?: number
     availableBalance?: number
@@ -91,6 +99,12 @@ type PlaceOrderResult = {
   walletAmount?: number
   external_amount?: number
   externalAmount?: number
+  loyalty_reward_id?: string | null
+  loyaltyRewardId?: string | null
+  loyalty_points?: number
+  loyaltyPoints?: number
+  loyalty_discount_amount?: number
+  loyaltyDiscountAmount?: number
 }
 
 type VerifyPaymentResult = {
@@ -114,6 +128,7 @@ type CheckoutPreviewInput = {
   addressId: number
   couponCode?: string
   walletAmount?: number
+  rewardId?: number
 }
 
 type PlaceOrderInput = CheckoutPreviewInput & {

@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ecommerce/ui/components/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@ecommerce/ui/components/popover"
 import { Checkbox } from "@ecommerce/ui/components/checkbox"
@@ -17,55 +18,56 @@ export type Breadcrumb = {
   href?: string
 }
 
-const DEFAULT_BREADCRUMBS: Breadcrumb[] = [
-  { label: "Home", href: "/" },
-  { label: "Accessories" },
-  { label: "Watches" },
-]
-
-const TRACKING_OPTIONS = [
-  { label: "GPS Tracking", value: "gps" },
-  { label: "SpO2 Monitor", value: "spo2" },
-  { label: "Heart Rate Tracker", value: "heart-rate" },
-  { label: "Sleep Monitor", value: "sleep" },
-]
-
-const BATTERY_OPTIONS = [
-  { label: "Up to 7 Days", value: "7-days" },
-  { label: "Up to 14 Days", value: "14-days" },
-  { label: "24-48 Hours", value: "24-48" },
-]
-
-const BLUETOOTH_OPTIONS = [
-  { label: "Bluetooth Calling", value: "calling" },
-  { label: "Bluetooth 5.3", value: "5.3" },
-  { label: "Bluetooth 5.0", value: "5.0" },
-]
-
-// Extra filters shown in "+13 more" modal
-const STRAP_OPTIONS = [
-  { label: "Silicone Strap", value: "silicone" },
-  { label: "Leather Band", value: "leather" },
-  { label: "Metal Mesh Strap", value: "metal" },
-]
-
-const WATER_OPTIONS = [
-  { label: "5 ATM Waterproof", value: "5atm" },
-  { label: "IP68 Dust/Water Resistant", value: "ip68" },
-]
-
-const COMPATIBILITY_OPTIONS = [
-  { label: "iOS Compatible", value: "ios" },
-  { label: "Android Compatible", value: "android" },
-]
-
 export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const t = useTranslations("Product")
 
   const view = searchParams.get("view") || "grid"
   const sort = searchParams.get("sort") || "recommended"
+
+  const DEFAULT_BREADCRUMBS: Breadcrumb[] = [
+    { label: t("home"), href: "/" },
+    { label: "Accessories" },
+    { label: "Watches" },
+  ]
+
+  const TRACKING_OPTIONS = [
+    { label: t("gpsTracking"), value: "gps" },
+    { label: t("spo2Monitor"), value: "spo2" },
+    { label: t("heartRateTracker"), value: "heart-rate" },
+    { label: t("sleepMonitor"), value: "sleep" },
+  ]
+
+  const BATTERY_OPTIONS = [
+    { label: t("upTo7Days"), value: "7-days" },
+    { label: t("upTo14Days"), value: "14-days" },
+    { label: t("hours24to48"), value: "24-48" },
+  ]
+
+  const BLUETOOTH_OPTIONS = [
+    { label: t("bluetoothCalling"), value: "calling" },
+    { label: t("bluetooth53"), value: "5.3" },
+    { label: t("bluetooth50"), value: "5.0" },
+  ]
+
+  // Extra filters shown in "+x more" modal
+  const STRAP_OPTIONS = [
+    { label: t("siliconeStrap"), value: "silicone" },
+    { label: t("leatherBand"), value: "leather" },
+    { label: t("metalMeshStrap"), value: "metal" },
+  ]
+
+  const WATER_OPTIONS = [
+    { label: t("atm5Waterproof"), value: "5atm" },
+    { label: t("ip68WaterResistant"), value: "ip68" },
+  ]
+
+  const COMPATIBILITY_OPTIONS = [
+    { label: t("iosCompatible"), value: "ios" },
+    { label: t("androidCompatible"), value: "android" },
+  ]
 
   // Active parameter arrays
   const selectedTracking = searchParams.getAll("tracking")
@@ -103,7 +105,7 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
 
   const activeFilters = React.useMemo(() => {
     const filters: Array<{ key: string; val: string; label: string }> = []
-    
+
     selectedGenders.forEach((g) => {
       filters.push({ key: "gender", val: g, label: g.charAt(0).toUpperCase() + g.slice(1) })
     })
@@ -114,7 +116,7 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
       filters.push({ key: "display", val: d, label: d.toUpperCase() })
     })
     selectedScreens.forEach((s) => {
-      const label = s === "up-to-32" ? "Up to 32.9 mm" : s === "33-35" ? "33.0 to 35.9 mm" : "36.0 to 38.9 mm"
+      const label = s === "up-to-32" ? t("upTo329mm") : s === "33-35" ? t("mm330to359") : t("mm360to389")
       filters.push({ key: "screen", val: s, label })
     })
     selectedShapes.forEach((sh) => {
@@ -180,7 +182,7 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
 
   const handleApplyAdvanced = () => {
     const params = new URLSearchParams(searchParams.toString())
-    
+
     // Clear old advanced params
     params.delete("strap")
     params.delete("water")
@@ -274,7 +276,7 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
                   ? "bg-muted text-foreground shadow-xs"
                   : "text-muted-foreground"
               )}
-              title="Grid View"
+              title={t("gridView")}
             >
               {/* Grid 2x2 SVG */}
               <svg className="size-3.5" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -283,7 +285,7 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
                 <rect x="1" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
                 <rect x="8" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
               </svg>
-              Grid
+              {t("grid")}
             </button>
             <button
               onClick={() => handleViewChange("list")}
@@ -293,7 +295,7 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
                   ? "bg-muted text-foreground shadow-xs"
                   : "text-muted-foreground"
               )}
-              title="List View"
+              title={t("listView")}
             >
               {/* List rows SVG */}
               <svg className="size-3.5" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -304,20 +306,20 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
                 <rect x="1" y="10.5" width="3" height="2" rx="0.5" stroke="currentColor" strokeWidth="1.5" />
                 <rect x="6" y="11" width="7" height="1" rx="0.5" fill="currentColor" />
               </svg>
-              List
+              {t("list")}
             </button>
           </div>
 
           {/* Sort Select */}
           <Select value={sort} onValueChange={handleSortChange}>
             <SelectTrigger className="h-8 text-xs font-semibold bg-background/50 border">
-              <SelectValue placeholder="Sort By" />
+              <SelectValue placeholder={t("sortBy")} />
             </SelectTrigger>
             <SelectContent className="text-xs">
-              <SelectItem value="recommended">Sort : Recommended</SelectItem>
-              <SelectItem value="price-asc">Price: Low to High</SelectItem>
-              <SelectItem value="price-desc">Price: High to Low</SelectItem>
-              <SelectItem value="rating-desc">Customer Rating</SelectItem>
+              <SelectItem value="recommended">{t("sortRecommended")}</SelectItem>
+              <SelectItem value="price-asc">{t("priceLowToHigh")}</SelectItem>
+              <SelectItem value="price-desc">{t("priceHighToLow")}</SelectItem>
+              <SelectItem value="rating-desc">{t("customerRating")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -335,11 +337,11 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
                 selectedTracking.length > 0 ? "border-primary text-primary bg-primary/5" : "text-muted-foreground"
               )}
             >
-              <span>Active Tracking {selectedTracking.length > 0 && `(${selectedTracking.length})`}</span>
+              <span>{t("activeTracking")} {selectedTracking.length > 0 && `(${selectedTracking.length})`}</span>
               <HugeiconsIcon icon={ArrowDown01Icon} className="size-3 text-current/80" />
             </PopoverTrigger>
             <PopoverContent className="w-56 p-3 flex flex-col gap-2">
-              <span className="text-xs font-bold text-foreground pb-1 border-b">Active Tracking</span>
+              <span className="text-xs font-bold text-foreground pb-1 border-b">{t("activeTracking")}</span>
               {TRACKING_OPTIONS.map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer text-xs py-1 hover:text-foreground">
                   <Checkbox
@@ -360,11 +362,11 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
                 selectedBattery.length > 0 ? "border-primary text-primary bg-primary/5" : "text-muted-foreground"
               )}
             >
-              <span>Battery Life {selectedBattery.length > 0 && `(${selectedBattery.length})`}</span>
+              <span>{t("batteryLife")} {selectedBattery.length > 0 && `(${selectedBattery.length})`}</span>
               <HugeiconsIcon icon={ArrowDown01Icon} className="size-3 text-current/80" />
             </PopoverTrigger>
             <PopoverContent className="w-52 p-3 flex flex-col gap-2">
-              <span className="text-xs font-bold text-foreground pb-1 border-b">Battery Life</span>
+              <span className="text-xs font-bold text-foreground pb-1 border-b">{t("batteryLife")}</span>
               {BATTERY_OPTIONS.map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer text-xs py-1 hover:text-foreground">
                   <Checkbox
@@ -385,11 +387,11 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
                 selectedBluetooth.length > 0 ? "border-primary text-primary bg-primary/5" : "text-muted-foreground"
               )}
             >
-              <span>Bluetooth {selectedBluetooth.length > 0 && `(${selectedBluetooth.length})`}</span>
+              <span>{t("bluetooth")} {selectedBluetooth.length > 0 && `(${selectedBluetooth.length})`}</span>
               <HugeiconsIcon icon={ArrowDown01Icon} className="size-3 text-current/80" />
             </PopoverTrigger>
             <PopoverContent className="w-52 p-3 flex flex-col gap-2">
-              <span className="text-xs font-bold text-foreground pb-1 border-b">Bluetooth Specifications</span>
+              <span className="text-xs font-bold text-foreground pb-1 border-b">{t("bluetoothSpecifications")}</span>
               {BLUETOOTH_OPTIONS.map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer text-xs py-1 hover:text-foreground">
                   <Checkbox
@@ -402,13 +404,13 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
             </PopoverContent>
           </Popover>
 
-          {/* +13 more Pill */}
+          {/* +x more Pill */}
           <button
             onClick={openAdvancedFilters}
             type="button"
             className="flex items-center gap-1.5 rounded-full border border-dashed text-primary border-primary/40 bg-primary/5 px-3 py-1 text-xs font-semibold hover:bg-primary/10 transition-all cursor-pointer"
           >
-            <span>+13 more</span>
+            <span>{t("xMore", { count: STRAP_OPTIONS.length + WATER_OPTIONS.length + COMPATIBILITY_OPTIONS.length })}</span>
           </button>
         </div>
 
@@ -425,7 +427,7 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
                   type="button"
                   onClick={() => handleRemoveBadge(filter.key, filter.val)}
                   className="rounded-full p-0.5 hover:bg-foreground/10 text-muted-foreground hover:text-foreground transition-colors"
-                  title={`Remove ${filter.label}`}
+                  title={t("removeFilter", { label: filter.label })}
                 >
                   <HugeiconsIcon icon={Cancel01Icon} className="size-2.5" strokeWidth={2.5} />
                 </button>
@@ -439,7 +441,7 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
       <Dialog open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>More Filters</DialogTitle>
+            <DialogTitle>{t("filter")}</DialogTitle>
             <DialogDescription>
               Select advanced specifications to refine your search.
             </DialogDescription>
@@ -501,10 +503,10 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
               variant="outline"
               onClick={() => setIsAdvancedOpen(false)}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="button" onClick={handleApplyAdvanced}>
-              Apply Filters
+              {t("applyFilters")}
             </Button>
           </DialogFooter>
         </DialogContent>

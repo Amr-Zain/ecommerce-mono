@@ -6,6 +6,7 @@ import * as React from "react"
 import { useSearchParams } from "next/navigation"
 import { Link } from "@/i18n/navigation"
 import { useForm } from "react-hook-form"
+import { useTranslations } from "next-intl"
 
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
@@ -38,17 +39,18 @@ type WithdrawalFormValues = {
 
 function CancelWithdrawalDialog({ withdrawal }: { withdrawal: WalletWithdrawal }) {
   const cancel = useCancelWalletWithdrawal(withdrawal.id)
+  const t2 = useTranslations("Wallet")
   return (
     <AlertDialog>
-      <AlertDialogTrigger render={<Button size="sm" variant="outline" disabled={cancel.isPending} />}>Cancel</AlertDialogTrigger>
+      <AlertDialogTrigger render={<Button size="sm" variant="outline" disabled={cancel.isPending} />}>{t2("cancel")}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Cancel withdrawal request?</AlertDialogTitle>
-          <AlertDialogDescription>The reserved amount will return to your available balance.</AlertDialogDescription>
+          <AlertDialogTitle>{t2("cancelWithdrawalTitle")}</AlertDialogTitle>
+          <AlertDialogDescription>{t2("cancelWithdrawalDescription")}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Keep Request</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={() => cancel.mutate({})}>Confirm Cancellation</AlertDialogAction>
+          <AlertDialogCancel>{t2("keepRequest")}</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" onClick={() => cancel.mutate({})}>{t2("confirmCancellation")}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -63,6 +65,7 @@ export default function WalletPage() {
   const withdrawalStatus = searchParams.get("withdrawals_status")
   const transactionPage = Math.max(1, Number(searchParams.get("transactions_page") || 1))
   const transactionStatus = searchParams.get("transactions_status")
+  const t = useTranslations("Wallet")
   const wallet = useWallet()
   const transactions = useWalletTransactions(transactionPage, 10, transactionStatus)
   const withdrawals = useWalletWithdrawals(withdrawalPage, 5, withdrawalStatus)
@@ -128,7 +131,7 @@ export default function WalletPage() {
     })
   }
 
-  if (wallet.isPending) return <p className="text-sm text-muted-foreground">Loading wallet...</p>
+  if (wallet.isPending) return <p className="text-sm text-muted-foreground">{t("loading")}</p>
   const withdrawalAmountNumber = Number(withdrawAmount || 0)
   const withdrawalExceedsBalance = withdrawalAmountNumber > availableBalance
   const withdrawalSubmitDisabled =
@@ -169,7 +172,7 @@ export default function WalletPage() {
     {
       type: "number",
       name: "amount",
-      placeholder: "Amount",
+      placeholder: t("amount"),
       required: true,
       inputProps: {
         required: true,
@@ -182,11 +185,11 @@ export default function WalletPage() {
     {
       type: "number",
       name: "amount",
-      placeholder: "Amount",
+      placeholder: t("amount"),
       required: true,
-      description: `Available to withdraw: ${money(availableBalance, data?.currency)}${
+      description: `${t("availableToWithdraw", { amount: money(availableBalance, data?.currency) })}${
         withdrawalExceedsBalance
-          ? " - Amount exceeds your available balance."
+          ? t("exceedsBalance")
           : ""
       }`,
       inputProps: {
@@ -199,7 +202,7 @@ export default function WalletPage() {
     {
       type: "text",
       name: "bank",
-      placeholder: "Bank name",
+      placeholder: t("bankName"),
       required: true,
       inputProps: {
         required: true,
@@ -209,7 +212,7 @@ export default function WalletPage() {
     {
       type: "text",
       name: "accountName",
-      placeholder: "Account holder name",
+      placeholder: t("accountHolderName"),
       required: true,
       inputProps: {
         required: true,
@@ -219,7 +222,7 @@ export default function WalletPage() {
     {
       type: "text",
       name: "iban",
-      placeholder: "IBAN / account number",
+      placeholder: t("iban"),
       required: true,
       inputProps: {
         required: true,
@@ -229,7 +232,7 @@ export default function WalletPage() {
     {
       type: "textarea",
       name: "note",
-      placeholder: "Optional note",
+      placeholder: t("optionalNote"),
       inputProps: {
         disabled: withdrawal.isPending,
       },
@@ -240,44 +243,44 @@ export default function WalletPage() {
     <div className="space-y-8">
       <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-primary/10 px-8 py-10">
         <h1 className="text-4xl font-extrabold">{money(availableBalance, data?.currency)}</h1>
-        <p className="text-sm text-muted-foreground">Available Balance</p>
-        <p className="mt-3 text-sm font-semibold">Reserved or pending: {money(pendingBalance, data?.currency)}</p>
-        <Badge className="mt-3" variant="outline">{data?.status ?? "unknown"}</Badge>
+        <p className="text-sm text-muted-foreground">{t("availableBalance")}</p>
+        <p className="mt-3 text-sm font-semibold">{t("reservedOrPending", { amount: money(pendingBalance, data?.currency) })}</p>
+        <Badge className="mt-3" variant="outline">{data?.status ?? t("unknown")}</Badge>
       </div>
       {(verifyDeposit.isPending || cancelDeposit.isPending) && (
         <p className="rounded-xl border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-          Updating your wallet deposit status...
+          {t("updatingDeposit")}
         </p>
       )}
 
       <div className="flex flex-wrap gap-3">
         <Dialog>
-          <DialogTrigger render={<Button />}><HugeiconsIcon icon={PlusSignIcon} /> Add Funds</DialogTrigger>
+          <DialogTrigger render={<Button />}><HugeiconsIcon icon={PlusSignIcon} /> {t("addFunds")}</DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Add Funds</DialogTitle><DialogDescription>Deposit through Stripe Checkout.</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle>{t("addFundsTitle")}</DialogTitle><DialogDescription>{t("addFundsDescription")}</DialogDescription></DialogHeader>
             <AppFormComplete
               form={depositForm}
               fields={depositFields}
               onSubmit={submitDeposit}
               isLoading={deposit.isPending}
               submitDisabled={Number(depositAmount) < 1}
-              submitButtonText="Continue to Payment"
-              loadingButtonText="Starting..."
+              submitButtonText={t("continueToPayment")}
+              loadingButtonText={t("starting")}
             />
           </DialogContent>
         </Dialog>
         <Dialog>
-          <DialogTrigger render={<Button variant="outline" />}>Request Withdrawal</DialogTrigger>
+          <DialogTrigger render={<Button variant="outline" />}>{t("requestWithdrawal")}</DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Request Withdrawal</DialogTitle><DialogDescription>Withdrawals are reviewed and paid manually.</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle>{t("requestWithdrawalTitle")}</DialogTitle><DialogDescription>{t("requestWithdrawalDescription")}</DialogDescription></DialogHeader>
             <AppFormComplete
               form={withdrawalForm}
               fields={withdrawalFields}
               onSubmit={submitWithdrawal}
               isLoading={withdrawal.isPending}
               submitDisabled={withdrawalSubmitDisabled}
-              submitButtonText="Submit Request"
-              loadingButtonText="Submitting..."
+              submitButtonText={t("submitRequest")}
+              loadingButtonText={t("submitting")}
             />
           </DialogContent>
         </Dialog>
@@ -285,11 +288,11 @@ export default function WalletPage() {
 
       <section className="space-y-4">
         <div className="space-y-3">
-          <h2 className="font-bold">Withdrawal Requests</h2>
+          <h2 className="font-bold">{t("withdrawalRequests")}</h2>
           <div className="flex flex-wrap gap-2">
             <Link href={walletPageHref({ withdrawals_status: null, withdrawals_page: null })}>
               <Badge variant={!withdrawalStatus ? "default" : "outline"} className="cursor-pointer">
-                All
+                {t("all")}
               </Badge>
             </Link>
             {withdrawalStatuses.map((status) => (
@@ -305,8 +308,8 @@ export default function WalletPage() {
           </div>
         </div>
         {withdrawals.isPending ? (
-          <p className="text-sm text-muted-foreground">Loading withdrawal requests...</p>
-        ) : withdrawalItems.length === 0 ? <p className="text-sm text-muted-foreground">No withdrawal requests.</p> : withdrawalItems.map((item) => (
+          <p className="text-sm text-muted-foreground">{t("loadingWithdrawals")}</p>
+        ) : withdrawalItems.length === 0 ? <p className="text-sm text-muted-foreground">{t("noWithdrawals")}</p> : withdrawalItems.map((item) => (
           <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
             <div><p className="font-semibold">{money(item.amount, item.currency)}</p><p className="text-xs text-muted-foreground">{date(item.requested_at ?? item.requestedAt)}</p></div>
             <div className="flex items-center gap-2"><Badge variant="outline">{item.status}</Badge>{item.status === "requested" && <CancelWithdrawalDialog withdrawal={item} />}</div>
@@ -327,11 +330,11 @@ export default function WalletPage() {
 
       <section className="space-y-4 border-t pt-6">
         <div className="space-y-3">
-          <h2 className="font-bold">Transaction History</h2>
+          <h2 className="font-bold">{t("transactionHistory")}</h2>
           <div className="flex flex-wrap gap-2">
             <Link href={walletPageHref({ transactions_status: null, transactions_page: null })}>
               <Badge variant={!transactionStatus ? "default" : "outline"} className="cursor-pointer">
-                All
+                {t("all")}
               </Badge>
             </Link>
             {transactionStatuses.map((status) => (
@@ -347,9 +350,9 @@ export default function WalletPage() {
           </div>
         </div>
         {transactions.isPending ? (
-          <p className="text-sm text-muted-foreground">Loading transaction history...</p>
+          <p className="text-sm text-muted-foreground">{t("loadingTransactions")}</p>
         ) : transactionItems.length === 0 ? (
-          <Empty className="border-0 bg-muted/20 py-12"><EmptyHeader><EmptyMedia variant="icon"><HugeiconsIcon icon={History} /></EmptyMedia><EmptyTitle>No transactions yet</EmptyTitle><EmptyDescription>Your wallet activity will appear here.</EmptyDescription></EmptyHeader></Empty>
+          <Empty className="border-0 bg-muted/20 py-12"><EmptyHeader><EmptyMedia variant="icon"><HugeiconsIcon icon={History} /></EmptyMedia><EmptyTitle>{t("noTransactions")}</EmptyTitle><EmptyDescription>{t("noTransactionsDescription")}</EmptyDescription></EmptyHeader></Empty>
         ) : transactionItems.map((item) => (
           <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl border p-4">
             <div className="flex items-center gap-3"><HugeiconsIcon icon={Wallet01Icon} /><div><p className="font-semibold capitalize">{item.description || item.type}</p><p className="text-xs text-muted-foreground">{date(item.created_at ?? item.createdAt)}</p></div></div>

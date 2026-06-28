@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Share08Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import Image from "next/image"
@@ -27,6 +28,7 @@ function variantImages(variant: Variant | undefined, productImages: string[]) {
 }
 
 function ProductDetails({ product }: { product: ProductDetail }) {
+  const t = useTranslations("Product")
   const initial = defaultVariant(product.variants)
   const [selected, setSelected] = React.useState(initial)
   const [selectedImage, setSelectedImage] = React.useState(
@@ -125,7 +127,7 @@ function ProductDetails({ product }: { product: ProductDetail }) {
             <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
               <Stars rating={product.reviews.average} />
               <span>{product.reviews.average}</span>
-              <span>{product.reviews.total} reviews</span>
+              <span>{t("reviews")}</span>
             </div>
           </div>
           <div className="flex gap-1">
@@ -143,16 +145,16 @@ function ProductDetails({ product }: { product: ProductDetail }) {
 
         <div>
           <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-semibold">SAR {selected.price.toFixed(2)}</span>
-            {selected.compare_at_price ? <span className="text-sm text-muted-foreground line-through">SAR {selected.compare_at_price.toFixed(2)}</span> : null}
+            <span className="text-3xl font-semibold">{t("sar")} {selected.price.toFixed(2)}</span>
+            {selected.compare_at_price ? <span className="text-sm text-muted-foreground line-through">{t("sar")} {selected.compare_at_price.toFixed(2)}</span> : null}
           </div>
           {product.description ? <p className="mt-3 text-sm leading-6 text-muted-foreground">{product.description}</p> : null}
         </div>
 
         <div className="space-y-5 rounded-xl border p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold">Select variant</p>
-            <Badge variant="outline">{selected.sku ?? `Variant ${selected.id}`}</Badge>
+            <p className="text-sm font-semibold">{t("selectVariant")}</p>
+            <Badge variant="outline">{selected.sku ?? t("variantId", { id: selected.id })}</Badge>
           </div>
           {[...groups].map(([attributeId, group]) => (
             <div key={attributeId} className="space-y-2">
@@ -172,8 +174,8 @@ function ProductDetails({ product }: { product: ProductDetail }) {
         </div>
 
         <div className="grid gap-2 rounded-xl border p-4 text-sm sm:grid-cols-2">
-          <div><span className="text-muted-foreground">SKU</span><p className="font-semibold">{selected.sku ?? "Not available"}</p></div>
-          <div><span className="text-muted-foreground">Availability</span><p className="font-semibold">{selected.available ? `${selected.stock_quantity} in stock` : "Unavailable"}</p></div>
+          <div><span className="text-muted-foreground">SKU</span><p className="font-semibold">{selected.sku ?? t("notAvailable")}</p></div>
+          <div><span className="text-muted-foreground">Availability</span><p className="font-semibold">{selected.available ? t("inStock", { count: selected.stock_quantity }) : t("unavailable")}</p></div>
         </div>
 
         <AddToCartButton

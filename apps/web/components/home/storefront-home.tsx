@@ -4,7 +4,7 @@ import { CategoryStrip } from "./category-strip"
 import { type Category, type Product } from "./data"
 import { PhoneBanner } from "./phone-banner"
 import { ProductSection } from "./product-section"
-import { PromoSection } from "./promo-section"
+import { PromoSection, type SliderItem } from "./promo-section"
 
 type HomeProduct = {
   id: string
@@ -28,12 +28,12 @@ type HomeCollection = {
 
 type HomeResponse = {
   data: {
-    sliders: Array<{ id: string; title: string; image?: string | null }>
+    sliders: Array<{ id: string; title: string; image?: string | null; sort_order: number }>
     collections: HomeCollection[]
     new_arrivals: HomeProduct[]
     best_selling: HomeProduct[]
     looking_for: HomeCollection[]
-    show_rooms: { title: string; body: string; image?: string | null }
+    show_rooms: { count: number; title: string; body: string; image?: string | null }
     recently_viewed: HomeProduct[]
   }
 }
@@ -45,7 +45,7 @@ function mapProducts(products: HomeProduct[]): Product[] {
   return products.map((product) => ({
     id: product.id,
     name: product.name,
-    brand: product.category?.name || "Shopix",
+    brand: product.category?.name || "Ecommerce",
     description: product.description ?? undefined,
     price: `$${product.pricing.discount.final_price.toFixed(2)}`,
     oldPrice:
@@ -86,21 +86,19 @@ async function getHomeData() {
 
 export async function StorefrontHome() {
   const home = (await getHomeData())?.data
-  const promos =
+  const sliders: SliderItem[] =
     home?.sliders
       .filter((slider) => slider.image)
-      .map((slider, index) => ({
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((slider) => ({
+        id: slider.id,
         title: slider.title || "Discover our latest collection",
-        copy: "Explore products selected for you.",
-        cta: "Shop Now",
         image: slider.image!,
-        className: index % 2 === 0 ? "bg-muted" : "bg-secondary",
-        featured: index === 1,
       })) ?? []
 
   return (
     <>
-      <PromoSection promos={promos} />
+      <PromoSection sliders={sliders} />
       <CategoryStrip categories={mapCollections(home?.collections ?? [])} />
       <ProductSection
         title="Best Selling"
@@ -120,6 +118,7 @@ export async function StorefrontHome() {
         title={home?.show_rooms.title}
         body={home?.show_rooms.body}
         image={home?.show_rooms.image}
+        count={home?.show_rooms.count}
       />
       {(home?.recently_viewed.length ?? 0) > 0 && (
         <ProductSection

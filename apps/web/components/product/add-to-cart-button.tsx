@@ -1,5 +1,7 @@
 "use client"
 
+import { useTranslations } from "next-intl"
+
 import {
   Delete02Icon,
   MinusSignIcon,
@@ -35,6 +37,7 @@ function AddToCartButton({
   className?: string
   available?: boolean
 }) {
+  const t = useTranslations("Product")
   const addToCart = useAddToCart(productId)
   const cart = useCart()
   const removeItem = useRemoveCartItem()
@@ -126,7 +129,7 @@ function AddToCartButton({
         <Button
           type="button"
           variant="destructive"
-          aria-label={`Remove ${productName} from cart`}
+          aria-label={t("removeFromCart", { name: productName })}
           disabled={pending}
           onClick={deleteFromCart}
           className={'mt-4 h-full' }
@@ -164,10 +167,10 @@ function AddToCartButton({
       }}
     >
       {addToCart.isPending
-        ? "Adding..."
+        ? t("adding")
         : available
-          ? "Add to Cart"
-          : "Unavailable"}
+          ? t("addToCart")
+          : t("unavailable")}
       <HugeiconsIcon
         icon={ShoppingCart01Icon}
         className="size-4"

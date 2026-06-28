@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 import { cacheLife, cacheTag } from "next/cache"
@@ -56,7 +57,7 @@ function mapRelated(item: CatalogProduct): Product {
   return {
     id: item.id,
     name: item.name,
-    brand: item.collection?.name ?? "Shopix",
+    brand: item.collection?.name ?? "Ecommerce",
     description: item.description,
     price: item.price,
     oldPrice: item.compare_at_price ?? undefined,
@@ -76,6 +77,7 @@ function mapRelated(item: CatalogProduct): Product {
 }
 
 async function RelatedProducts({ id, locale }: { id: string; locale: string }) {
+  const t = await getTranslations({ locale, namespace: "Product" })
   const response = await publicBackendGet<RelatedResponse>(
     `/client/products/${id}/related`,
     {
@@ -90,7 +92,7 @@ async function RelatedProducts({ id, locale }: { id: string; locale: string }) {
   if (!response.data.length) return null
   return (
     <section className="space-y-5 py-10">
-      <h2 className="text-xl font-semibold">You may also like</h2>
+      <h2 className="text-xl font-semibold">{t("youMayAlsoLike")}</h2>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {response.data.map((item) => (
           <ProductCard key={item.id} product={mapRelated(item)} view="grid" />
@@ -116,6 +118,7 @@ function RelatedSkeleton() {
 async function ProductShow({ id, locale }: { id: string; locale: string }) {
   const product = await getProductDetail(id, locale)
   if (!product) return null
+  const t = await getTranslations({ locale, namespace: "Product" })
   const crumbs = [
     ...(product.collection?.ancestors ?? []),
     ...(product.collection ? [product.collection] : []),
@@ -126,13 +129,13 @@ async function ProductShow({ id, locale }: { id: string; locale: string }) {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink render={<Link href={ROUTES.home} />}>
-              Home
+              {t("home")}
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink render={<Link href={ROUTES.collections.root} />}>
-              Collections
+              {t("collections")}
             </BreadcrumbLink>
           </BreadcrumbItem>
           {crumbs.map((crumb) => (
@@ -155,15 +158,15 @@ async function ProductShow({ id, locale }: { id: string; locale: string }) {
       </Breadcrumb>
       <ProductDetails product={product} />
       <section className="py-10">
-        <h2 className="mb-4 text-xl font-semibold">Variant Highlights</h2>
+        <h2 className="mb-4 text-xl font-semibold">{t("variantHighlights")}</h2>
         <div className="overflow-x-auto rounded-xl border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Attributes</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Availability</TableHead>
+                <TableHead>{t("attributes")}</TableHead>
+                <TableHead>{t("sku")}</TableHead>
+                <TableHead>{t("price")}</TableHead>
+                <TableHead>{t("availability")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -172,14 +175,14 @@ async function ProductShow({ id, locale }: { id: string; locale: string }) {
                   <TableCell>
                     {variant.attributes
                       .map((item) => `${item.attribute}: ${item.value}`)
-                      .join(", ") || "Standard"}
+                      .join(", ") || t("standard")}
                   </TableCell>
                   <TableCell>{variant.sku ?? "-"}</TableCell>
-                  <TableCell>SAR {variant.price.toFixed(2)}</TableCell>
+                  <TableCell>{t("sar")} {variant.price.toFixed(2)}</TableCell>
                   <TableCell>
                     {variant.available
-                      ? `${variant.stock_quantity} in stock`
-                      : "Unavailable"}
+                      ? t("inStock", { count: variant.stock_quantity })
+                      : t("unavailable")}
                   </TableCell>
                 </TableRow>
               ))}

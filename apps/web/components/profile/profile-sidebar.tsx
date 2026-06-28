@@ -6,6 +6,7 @@ import { ROUTES } from "@/lib/routes"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { Badge } from "@ecommerce/ui/components/badge"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   UserCircleIcon,
@@ -17,7 +18,9 @@ import {
   Logout01Icon,
   Camera01Icon,
   FavouriteIcon,
+  GiftIcon,
 } from "@hugeicons/core-free-icons"
+import { useCurrentUser } from "@/hooks/api/use-current-user"
 
 const SIDEBAR_LINKS = [
   { name: "My account", href: ROUTES.profile.root, icon: UserCircleIcon },
@@ -30,6 +33,7 @@ const SIDEBAR_LINKS = [
   // },
   { name: "My Addresses", href: ROUTES.profile.addresses, icon: Location01Icon },
   { name: "My Wallet", href: ROUTES.profile.wallet, icon: Wallet01Icon },
+  { name: "My Loyalty", href: ROUTES.profile.loyalty, icon: GiftIcon },
   // { name: "Payment", href: "/profile/payment", icon: CreditCardIcon },
   // { name: "Gift Cards", href: "/profile/gift-cards", icon: GiftIcon },
   {
@@ -44,6 +48,9 @@ const SIDEBAR_LINKS = [
 export function ProfileSidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const { data: currentUser } = useCurrentUser()
+  const profile = currentUser?.data
+  const tier = profile?.tier ?? profile?.loyalty?.tier
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-6 rounded-xl border bg-card p-6 sm:w-[280px]">
@@ -65,9 +72,18 @@ export function ProfileSidebar() {
         </div>
         <div>
           <h2 className="text-lg font-bold">
-            {session?.user.name || "User"}
+            {profile?.name || session?.user.name || "User"}
           </h2>
-          <p className="text-sm text-muted-foreground">{session?.user.email}</p>
+          <p className="text-sm text-muted-foreground">{profile?.email || session?.user.email}</p>
+          {tier?.name && (
+            <Badge
+              variant="secondary"
+              className="mt-2 w-fit"
+              style={tier.color ? { borderColor: tier.color, color: tier.color } : undefined}
+            >
+              {tier.name} {tier.multiplier ? `${tier.multiplier}x` : ""}
+            </Badge>
+          )}
         </div>
       </div>
 

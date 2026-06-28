@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft01Icon, BankIcon, CheckmarkCircle01Icon, CreditCardIcon, Wallet01Icon } from "@hugeicons/core-free-icons"
+import { ArrowLeft01Icon, BankIcon, CheckmarkCircle01Icon, CreditCardIcon, GiftIcon, Wallet01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
@@ -11,6 +11,7 @@ import { Input } from "@ecommerce/ui/components/input"
 import { Textarea } from "@ecommerce/ui/components/textarea"
 import { PricingSummary, type Pricing } from "@/components/cart/step-cart"
 import type { PlaceOrderResult } from "@/hooks/api/use-checkout"
+import type { LoyaltyReward } from "@/hooks/api/use-loyalty"
 import { cn } from "@/lib/utils"
 
 type PaymentMethod = "cod" | "bank_transfer" | "stripe_checkout" | "wallet"
@@ -22,12 +23,19 @@ interface PaymentStepProps {
   walletAvailable: number
   walletPending: number
   walletAmount: number
+  rewards?: LoyaltyReward[]
+  selectedRewardId?: string
+  loyaltyDiscount?: number
+  redeemedPoints?: number
   onWalletAmountChange: (amount: number) => void
+  onRewardChange?: (rewardId?: string) => void
   onBack: () => void
   onPlaceOrder: (paymentMethod: PaymentMethod, notes?: string, walletAmount?: number) => void
 }
 
 function SuccessScreen({ result }: { result: PlaceOrderResult }) {
+  const loyaltyDiscount = Number(result.loyalty_discount_amount ?? result.loyaltyDiscountAmount ?? 0)
+  const loyaltyPoints = Number(result.loyalty_points ?? result.loyaltyPoints ?? 0)
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="mx-auto flex max-w-sm flex-col items-center gap-5 text-center">
@@ -44,6 +52,11 @@ function SuccessScreen({ result }: { result: PlaceOrderResult }) {
           <div className="w-full rounded-2xl border bg-muted/40 px-6 py-4">
             <p className="text-xs text-muted-foreground">Order Number</p>
             <p className="font-black">{result.order_number}</p>
+            {loyaltyPoints > 0 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Redeemed {loyaltyPoints} points for SAR {loyaltyDiscount.toFixed(2)} off.
+              </p>
+            )}
           </div>
         )}
         <div className="flex w-full gap-3">
@@ -62,7 +75,12 @@ export function PaymentStep({
   walletAvailable,
   walletPending,
   walletAmount,
+  rewards = [],
+  selectedRewardId,
+  loyaltyDiscount = 0,
+  redeemedPoints = 0,
   onWalletAmountChange,
+  onRewardChange,
   onBack,
   onPlaceOrder,
 }: PaymentStepProps) {
@@ -94,6 +112,61 @@ export function PaymentStep({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
+        <h2 className="text-base font-bold">Loyalty Reward</h2>
+        <div className="rounded-2xl border bg-card p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <HugeiconsIcon icon={GiftIcon} className="size-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold">Use loyalty points</p>
+                <p className="text-xs text-muted-foreground">One reward can be used per order.</p>
+              </div>
+            </div>
+            {selectedRewardId && (
+              <Button type="button" size="sm" variant="ghost" onClick={() => onRewardChange?.(undefined)}>
+                Remove
+              </Button>
+            )}
+          </div>
+          {rewards.length > 0 ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {rewards.map((reward) => {
+                const active = selectedRewardId === reward.id
+                return (
+                  <button
+                    key={reward.id}
+                    type="button"
+                    onClick={() => onRewardChange?.(active ? undefined : reward.id)}
+                    className={cn(
+                      "rounded-xl border p-3 text-left transition",
+                      active ? "border-primary bg-primary/5" : "hover:bg-muted/40"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-bold">{reward.name}</p>
+                      <span className="text-xs font-semibold text-primary">{reward.points_required} pts</span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {reward.reward_type === "percentage"
+                        ? `${reward.reward_value}% off${reward.max_discount_amount ? ` up to SAR ${Number(reward.max_discount_amount).toFixed(2)}` : ""}`
+                        : `SAR ${Number(reward.reward_value).toFixed(2)} off`}
+                    </p>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="rounded-xl bg-muted/40 p-3 text-sm text-muted-foreground">No loyalty rewards available yet.</p>
+          )}
+          {redeemedPoints > 0 && (
+            <p className="mt-3 rounded-xl bg-emerald-500/10 p-3 text-xs font-medium text-emerald-700">
+              {redeemedPoints} points selected. Loyalty discount SAR {loyaltyDiscount.toFixed(2)}.
+            </p>
+          )}
+        </div>
+
         <h2 className="text-base font-bold">Payment Method</h2>
         <div className="rounded-2xl border bg-card p-4">
           <div className="flex items-start gap-3">

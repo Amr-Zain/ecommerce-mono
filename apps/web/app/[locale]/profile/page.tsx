@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { useForm } from "react-hook-form"
 
 import { AppFormComplete, type FormField } from "@ecommerce/forms"
@@ -23,6 +24,7 @@ const defaultValues: ProfileFormValues = {
 }
 
 export default function ProfilePage() {
+  const t = useTranslations("Profile")
   const form = useForm<ProfileFormValues>({
     defaultValues,
     mode: "onChange",
@@ -32,46 +34,46 @@ export default function ProfilePage() {
     {
       type: "text",
       name: "firstName",
-      label: "First Name",
+      label: t("firstName"),
       required: true,
       inputProps: { required: true, className: "h-11" },
     },
     {
       type: "text",
       name: "lastName",
-      label: "Last Name",
+      label: t("lastName"),
       required: true,
       inputProps: { required: true, className: "h-11" },
     },
     {
       type: "email",
       name: "email",
-      label: "Email Address",
+      label: t("emailAddress"),
       required: true,
       inputProps: { required: true, className: "h-11" },
     },
     {
       type: "tel",
       name: "phone",
-      label: "Phone",
+      label: t("phone"),
       required: true,
       inputProps: { required: true, className: "h-11" },
     },
     {
       type: "date",
       name: "birthday",
-      label: "Birthday",
+      label: t("birthday"),
       inputProps: { className: "h-11" },
     },
     {
       type: "select",
       name: "gender",
-      label: "Gender",
-      placeholder: "Select Gender",
+      label: t("gender"),
+      placeholder: t("selectGender"),
       options: [
-        { value: "male", label: "Male" },
-        { value: "female", label: "Female" },
-        { value: "other", label: "Other" },
+        { value: "male", label: t("male") },
+        { value: "female", label: t("female") },
+        { value: "other", label: t("other") },
       ],
       inputProps: { className: "h-11" },
     },
@@ -81,14 +83,14 @@ export default function ProfilePage() {
     <div className="space-y-12">
       <section className="space-y-6">
         <h2 className="text-xl font-bold tracking-tight text-foreground">
-          Personal Information
+          {t("title")}
         </h2>
         <AppFormComplete
           form={form}
           fields={fields}
           onSubmit={() => undefined}
           layout={{ columns: 2 }}
-          submitButtonText="Save changes"
+          submitButtonText={t("saveChanges")}
           submitButtonClassName="h-11 rounded-xl px-8 font-semibold sm:w-auto"
         />
       </section>

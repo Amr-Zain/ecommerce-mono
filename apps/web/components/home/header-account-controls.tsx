@@ -2,6 +2,7 @@ import { Login01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
+import { getTranslations } from "next-intl/server"
 
 import { auth } from "@/auth"
 import { Button } from "@ecommerce/ui/components/button"
@@ -45,7 +46,8 @@ async function getAccountData(accessToken: string) {
   }
 }
 
-async function HeaderAccountControls() {
+async function HeaderAccountControls({ locale }: { locale: string }) {
+  const t = await getTranslations({ locale, namespace: "Header" })
   const session = await auth()
   const loggedIn = Boolean(session?.accessToken) && Boolean(session?.user)
 
@@ -53,7 +55,7 @@ async function HeaderAccountControls() {
     return (
       <Button render={<Link href={ROUTES.auth.login} />} size="sm">
         <HugeiconsIcon icon={Login01Icon} />
-        Login
+        {t("login")}
       </Button>
     )
   }

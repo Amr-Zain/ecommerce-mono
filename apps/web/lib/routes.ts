@@ -20,6 +20,7 @@ export const ROUTES = {
     root: "/profile",
     addresses: "/profile/addresses",
     wallet: "/profile/wallet",
+    loyalty: "/profile/loyalty",
     wishlist: "/profile/wishlist",
     returns: "/profile/returns",
     returnRequest: (type: "return" | "exchange", id: string | number | bigint) =>

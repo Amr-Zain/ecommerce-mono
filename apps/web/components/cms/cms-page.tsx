@@ -46,7 +46,7 @@ export async function CmsPageView({ locale, slug }: CmsPageProps) {
   return (
     <main className="mx-auto max-w-5xl space-y-10 px-4 py-10 sm:px-6 lg:px-8">
       <header className="max-w-3xl space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-4xl">
           {page.title}
         </h1>
         <HtmlBlock

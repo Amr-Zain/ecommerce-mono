@@ -1,10 +1,14 @@
 import * as React from "react"
+import type { Metadata } from "next"
 import { ProfileSidebar } from "@/components/profile/profile-sidebar"
 import { auth } from "@/auth"
 import { redirect } from "@/i18n/navigation"
 import { loginPath } from "@/lib/return-path"
 import { headers } from "next/headers"
 import { safeReturnPath } from "@/lib/return-path"
+import { noindexMetadata } from "@/lib/server/seo"
+
+export const metadata: Metadata = noindexMetadata
 
 export default async function ProfileLayout({
   children,

@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server"
+
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 
@@ -47,7 +49,7 @@ function PaginationLink({
   )
 }
 
-function ListingPagination({
+async function ListingPagination({
   pathname,
   searchParams,
   currentPage,
@@ -62,6 +64,7 @@ function ListingPagination({
   className?: string
   pageParam?: string
 }) {
+  const t = await getTranslations("Product")
   if (totalPages <= 1) return null
 
   return (
@@ -69,7 +72,7 @@ function ListingPagination({
       <PaginationLink
         disabled={currentPage <= 1}
         href={pageUrl(pathname, searchParams, currentPage - 1, pageParam)}
-        label="Previous page"
+        label={t("previousPage")}
       >
         {"<"}
       </PaginationLink>
@@ -90,7 +93,7 @@ function ListingPagination({
       <PaginationLink
         disabled={currentPage >= totalPages}
         href={pageUrl(pathname, searchParams, currentPage + 1, pageParam)}
-        label="Next page"
+        label={t("nextPage")}
       >
         {">"}
       </PaginationLink>

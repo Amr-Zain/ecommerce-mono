@@ -1,5 +1,7 @@
 "use client"
 
+import { useTranslations } from "next-intl"
+
 import { FavouriteIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import * as React from "react"
@@ -19,6 +21,7 @@ function WishlistButton({
   className?: string
   iconClassName?: string
 }) {
+  const t = useTranslations("Product")
   const wishlist = useWishlist()
   const toggleWishlist = useToggleWishlist(productId)
   const submitting = React.useRef(false)
@@ -30,7 +33,7 @@ function WishlistButton({
 
   return (
     <IconButton
-      label={`${favored ? "Remove" : "Save"} ${productName}`}
+      label={`${favored ? t("remove") : t("save")} ${productName}`}
       className={cn(
         className,
         "disabled:pointer-events-none disabled:cursor-default disabled:opacity-100",

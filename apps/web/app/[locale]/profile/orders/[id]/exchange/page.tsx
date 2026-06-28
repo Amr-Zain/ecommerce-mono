@@ -1,6 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useRouter } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 import * as React from "react"
@@ -36,6 +37,7 @@ export default function ExchangeReturnPage() {
   const createReturn = useCreateReturn()
   const createExchange = useCreateExchange()
   const [mode, setMode] = React.useState<"return" | "exchange">("return")
+  const t = useTranslations("ExchangeReturn")
   const form = useForm<ReturnExchangeFormValues>({
     defaultValues: DEFAULT_FORM_VALUES,
     mode: "onChange",
@@ -82,14 +84,14 @@ export default function ExchangeReturnPage() {
     }
   }
 
-  if (order.isPending) return <p className="text-sm text-muted-foreground">Loading order...</p>
-  if (!order.data) return <p className="text-sm text-muted-foreground">Order not found.</p>
+  if (order.isPending) return <p className="text-sm text-muted-foreground">{t("loading")}</p>
+  if (!order.data) return <p className="text-sm text-muted-foreground">{t("notFound")}</p>
   if (!isReturnExchangeEligible(order.data)) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Return or Exchange unavailable</h1>
-        <p className="text-sm text-muted-foreground">Available only for delivered orders within 14 days of delivery.</p>
-        <Button variant="outline" onClick={() => router.push(ROUTES.profile.orders.detail(id))}>Back to Order</Button>
+        <h1 className="text-2xl font-bold">{t("unavailableTitle")}</h1>
+        <p className="text-sm text-muted-foreground">{t("unavailableDescription")}</p>
+        <Button variant="outline" onClick={() => router.push(ROUTES.profile.orders.detail(id))}>{t("backToOrder")}</Button>
       </div>
     )
   }
@@ -99,7 +101,7 @@ export default function ExchangeReturnPage() {
     {
       type: "select",
       name: "itemId",
-      label: "Order item",
+      label: t("orderItem"),
       options: order.data.items.map((item) => ({
         value: item.id,
         label: item.product_name_snapshot,
@@ -125,7 +127,7 @@ export default function ExchangeReturnPage() {
     {
       type: "number",
       name: "quantity",
-      label: "Quantity",
+      label: t("quantity"),
       required: true,
       inputProps: {
         required: true,
@@ -150,9 +152,9 @@ export default function ExchangeReturnPage() {
     {
       type: "text",
       name: "reason",
-      label: "Reason",
+      label: t("reason"),
       required: true,
-      placeholder: "wrong_size, damaged, wrong_item...",
+      placeholder: t("reasonPlaceholder"),
       inputProps: {
         required: true,
         disabled: pending,
@@ -161,8 +163,8 @@ export default function ExchangeReturnPage() {
     {
       type: "textarea",
       name: "note",
-      label: "Note",
-      placeholder: "Describe the issue",
+      label: t("note"),
+      placeholder: t("notePlaceholder"),
       inputProps: {
         disabled: pending,
       },
@@ -172,9 +174,9 @@ export default function ExchangeReturnPage() {
           {
             type: "select" as const,
             name: "newVariantId" as const,
-            label: "Replacement variant",
+            label: t("replacementVariant"),
             required: true,
-            placeholder: "Select replacement",
+            placeholder: t("selectReplacement"),
             options: variants.map((variant) => ({
               value: variant.id,
               label:
@@ -194,7 +196,7 @@ export default function ExchangeReturnPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Return or Exchange</h1>
+      <h1 className="text-2xl font-bold">{t("title")}</h1>
       <div className="flex border-b">
         {(["return", "exchange"] as const).map((value) => (
           <button key={value} onClick={() => setMode(value)} className={cn("flex-1 border-b-2 pb-3 text-sm font-semibold capitalize", mode === value ? "border-foreground" : "border-transparent text-muted-foreground")}>{value}</button>
@@ -208,8 +210,8 @@ export default function ExchangeReturnPage() {
         submitDisabled={
           !reason.trim() || (mode === "exchange" && !newVariantId)
         }
-        submitButtonText={`Confirm ${mode}`}
-        loadingButtonText="Submitting..."
+        submitButtonText={t("confirmMode", { mode })}
+        loadingButtonText={t("submitting")}
       />
     </div>
   )

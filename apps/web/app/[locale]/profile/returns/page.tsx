@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "next-intl"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   AlertCircleIcon,
@@ -42,13 +43,13 @@ type ProfileRequest =
   | ({ kind: "return" } & ReturnRequest)
   | ({ kind: "exchange" } & ExchangeRequest)
 
-const TYPE_FILTERS: Array<{ label: string; value: RequestType }> = [
-  { label: "All", value: "all" },
-  { label: "Returns", value: "return" },
-  { label: "Exchanges", value: "exchange" },
-]
-
 export default function ReturnsPage() {
+  const t = useTranslations("Returns")
+  const TYPE_FILTERS: Array<{ label: string; value: RequestType }> = [
+    { label: t("all"), value: "all" },
+    { label: t("returns"), value: "return" },
+    { label: t("exchanges"), value: "exchange" },
+  ]
   const returns = useReturns()
   const exchanges = useExchanges()
   const cancelReturn = useCancelReturn()
@@ -96,14 +97,14 @@ export default function ReturnsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Returns & Exchanges</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Review request status and open details when you need the full refund or exchange breakdown.
+            {t("description")}
           </p>
         </div>
-        <Button variant="outline" className="rounded-xl" render={<Link href={ROUTES.profile.orders.root} />}>
-          View orders
-        </Button>
+          <Button variant="outline" className="rounded-xl" render={<Link href={ROUTES.profile.orders.root} />}>
+            {t("viewOrders")}
+          </Button>
       </div>
 
       {isPending ? (
@@ -115,21 +116,22 @@ export default function ReturnsPage() {
       ) : isError ? (
         <EmptyState
           icon={AlertCircleIcon}
-          title="We could not load your requests"
-          description="Please try again. Your orders and existing requests are still safe."
-          action={<Button onClick={retry} className="rounded-xl">Retry</Button>}
+          title={t("loadError")}
+          description={t("loadErrorDescription")}
+          action={<Button onClick={retry} className="rounded-xl">{t("retry")}</Button>}
           destructive
         />
       ) : requests.length === 0 ? (
         <EmptyState
           icon={Exchange01Icon}
-          title="No returns or exchanges yet"
-          description="Delivered orders that are still inside the return window can be returned or exchanged from your orders page."
-          action={<Button className="rounded-xl" render={<Link href={ROUTES.profile.orders.root} />}>View my orders</Button>}
+          title={t("empty")}
+          description={t("emptyDescription")}
+          action={<Button className="rounded-xl" render={<Link href={ROUTES.profile.orders.root} />}>{t("viewMyOrders")}</Button>}
         />
       ) : (
         <>
           <Filters
+            typeFilters={TYPE_FILTERS}
             status={status}
             statusFilters={statusFilters}
             type={type}
@@ -140,9 +142,9 @@ export default function ReturnsPage() {
           {filteredRequests.length === 0 ? (
             <EmptyState
               icon={Exchange01Icon}
-              title="No matching requests"
-              description="Try another type or status filter."
-              action={<Button variant="outline" className="rounded-xl" onClick={() => { setType("all"); setStatus("all") }}>Clear filters</Button>}
+              title={t("noMatching")}
+              description={t("noMatchingDescription")}
+              action={<Button variant="outline" className="rounded-xl" onClick={() => { setType("all"); setStatus("all") }}>{t("clearFilters")}</Button>}
             />
           ) : (
             <div className="space-y-4">
@@ -163,12 +165,14 @@ export default function ReturnsPage() {
 }
 
 function Filters({
+  typeFilters,
   status,
   statusFilters,
   type,
   onStatusChange,
   onTypeChange,
 }: {
+  typeFilters: Array<{ label: string; value: RequestType }>
   status: string
   statusFilters: string[]
   type: RequestType
@@ -178,7 +182,7 @@ function Filters({
   return (
     <div className="space-y-3 rounded-2xl border bg-card p-4">
       <div className="flex flex-wrap gap-2">
-        {TYPE_FILTERS.map((filter) => (
+        {typeFilters.map((filter) => (
           <button
             key={filter.value}
             onClick={() => onTypeChange(filter.value)}

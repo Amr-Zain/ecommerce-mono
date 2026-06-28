@@ -8,6 +8,12 @@ const queryKeys = {
   cities: (countryId?: string) => ["cities", countryId ?? ""] as const,
   countries: () => ["countries"] as const,
   currentUser: () => ["current-user"] as const,
+  loyalty: () => ["loyalty"] as const,
+  loyaltyRewards: () => ["loyalty", "rewards"] as const,
+  loyaltyTransactions: (params?: Record<string, unknown>) =>
+    params === undefined
+      ? (["loyalty", "transactions"] as const)
+      : (["loyalty", "transactions", params] as const),
   orders: (status?: string) => ["orders", status ?? ""] as const,
   order: (id?: string) => ["order", id ?? ""] as const,
   returns: () => ["returns"] as const,

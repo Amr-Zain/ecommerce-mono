@@ -1,5 +1,6 @@
 import { Location01Icon, Mail01Icon, MapsLocation01Icon, Search01Icon, SmartPhone01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import type { Metadata } from "next"
 import { Button } from "@ecommerce/ui/components/button"
 import {
   Card,
@@ -12,8 +13,25 @@ import {
 import { StatePanel } from "@/components/shared/state-panel"
 import { ListingPagination } from "@/components/shared/pagination"
 import { publicBackendGet } from "@/lib/server/backend"
-import { getTranslations } from "next-intl/server"
+import { getTranslations, setRequestLocale } from "next-intl/server"
+import { localeAlternates } from "@/lib/server/seo"
+import { ROUTES } from "@/lib/routes"
 import type { ApiList, ApiResponse, PaginationMeta } from "@/types/api"
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  setRequestLocale(locale)
+  const t = await getTranslations("Seo")
+  return {
+    ...localeAlternates(ROUTES.static.showRooms, locale),
+    title: t("showRoomsTitle"),
+    description: t("showRoomsDescription"),
+  }
+}
 
 type ShowRoom = {
   id: string
@@ -55,6 +73,7 @@ export default async function ShowRoomsPage({
   const page = positiveInt(query.page, 1)
   const limit = positiveInt(query.limit, 6)
   const t = await getTranslations("Experience")
+  const seoT = await getTranslations("Seo")
   const response = await publicBackendGet<unknown>("/client/show-rooms", {
     headers: { "accept-language": locale },
     query: { paginate: 1, page, limit },
@@ -70,7 +89,7 @@ export default async function ShowRoomsPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 py-10">
-      <div className="space-y-2"><h1 className="text-3xl font-bold tracking-tight">Our Showrooms</h1><p className="text-sm text-muted-foreground">Visit a location to experience our collections in person.</p></div>
+      <div className="space-y-2"><h1 className="text-3xl font-bold tracking-tight">{seoT("showRoomsTitle")}</h1><p className="text-sm text-muted-foreground">{seoT("showRoomsDescription")}</p></div>
       <div className="grid gap-5 md:grid-cols-2">
         {showrooms.map((showroom) => {
           const country = showroom.country?.name
@@ -82,7 +101,7 @@ export default async function ShowRoomsPage({
                   <HugeiconsIcon icon={Location01Icon} className="size-6" />
                 </div>
                 <CardTitle className="text-lg font-semibold">
-                  {showroom.name ?? "Showroom"}
+                  {showroom.name ?? seoT("showroomFallback")}
                 </CardTitle>
                 <CardDescription>
                   {[showroom.address, showroom.city, country].filter(Boolean).join(", ")}
@@ -96,7 +115,7 @@ export default async function ShowRoomsPage({
                 <CardFooter>
                   <Button variant="outline" render={<a href={mapUrl} target="_blank" rel="noreferrer" />}>
                     <HugeiconsIcon icon={MapsLocation01Icon} />
-                    Open map
+                    {seoT("openMap")}
                   </Button>
                 </CardFooter>
               )}
