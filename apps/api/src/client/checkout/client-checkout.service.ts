@@ -24,6 +24,7 @@ import {
   STRIPE_CONFIG,
 } from '@/shared/payment/payment.constants';
 import { WalletService } from '@/shared/wallet/wallet.service';
+import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { StripeWebhookService } from '@/shared/payment/stripe-webhook.service';
@@ -37,14 +38,15 @@ import {
 } from '@/shared/cache/public-cache-invalidation.service';
 
 type CheckoutDbClient = PrismaService | Prisma.TransactionClient;
+type DecimalLike = number | string | { toString(): string };
 
 type CouponForCheckout = {
   id: bigint;
   code: string;
   discountType: string;
-  discountValue: Prisma.Decimal | number | string;
-  maxDiscount: Prisma.Decimal | number | string | null;
-  minOrderAmount: Prisma.Decimal | number | string | null;
+  discountValue: DecimalLike;
+  maxDiscount: DecimalLike | null;
+  minOrderAmount: DecimalLike | null;
   startsAt: Date | null;
   expiresAt: Date | null;
   usageLimit: number | null;
@@ -67,15 +69,15 @@ type CheckoutVariant = {
   id: bigint;
   isActive: boolean;
   stockQuantity: number;
-  price: Prisma.Decimal | number | string;
+  price: DecimalLike;
   discountType: string | null;
-  discountValue: Prisma.Decimal | number | string | null;
+  discountValue: DecimalLike | null;
   attributes?: CheckoutVariantAttribute[];
 };
 
 type CheckoutProduct = {
   discountType: string | null;
-  discountValue: Prisma.Decimal | number | string | null;
+  discountValue: DecimalLike | null;
   translations: CheckoutTranslation[];
   variants?: CheckoutVariant[];
 };
@@ -112,6 +114,7 @@ export class ClientCheckoutService {
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly stripeWebhookService: StripeWebhookService,
     private readonly walletService: WalletService,
+    private readonly loyaltyService: LoyaltyService,
     private readonly domainEvents: DomainEventPublisher,
     private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
   ) {}
@@ -170,7 +173,7 @@ export class ClientCheckoutService {
 
     if (coupon.minOrderAmount !== null && subtotal < Number(coupon.minOrderAmount)) {
       throw new BadRequestException(
-        this.i18n.t('errors.coupon_min_order_amount_required', { args: { amount: coupon.minOrderAmount } }),
+        this.i18n.t('errors.coupon_min_order_amount_required', { args: { amount: Number(coupon.minOrderAmount) } }),
       );
     }
 
@@ -329,10 +332,23 @@ export class ClientCheckoutService {
     const phoneCode = country.phoneCode;
     const countryShortName = country.translations?.[0]?.shortName || null;
 
-    const totals = this.pricingService.calculateTotals(
+    const preliminaryTotals = this.pricingService.calculateTotals(
       cart.items.flatMap((item) => (item ? [{ price: item.price, quantity: item.quantity }] : [])),
       shippingFee,
       couponDiscount,
+      phoneCode,
+      countryShortName,
+    );
+    const loyalty = await this.loyaltyService.previewReward(userId, {
+      rewardId: dto.rewardId,
+      subtotal: preliminaryTotals.subtotal,
+      total: preliminaryTotals.totalPrice,
+    });
+    const loyaltyDiscount = loyalty?.discountAmount ?? 0;
+    const totals = this.pricingService.calculateTotals(
+      cart.items.flatMap((item) => (item ? [{ price: item.price, quantity: item.quantity }] : [])),
+      shippingFee,
+      couponDiscount + loyaltyDiscount,
       phoneCode,
       countryShortName,
     );
@@ -369,6 +385,12 @@ export class ClientCheckoutService {
           }
         : null,
       totals,
+      loyalty: loyalty
+        ? {
+            ...loyalty,
+            discountAmount: loyaltyDiscount,
+          }
+        : null,
       wallet: {
         availableBalance: walletAvailableBalance,
         pendingBalance: walletPendingBalance,
@@ -527,10 +549,24 @@ export class ClientCheckoutService {
         const shippingFee = isFreeShipping ? 0 : Number(country.shippingPrice);
         const phoneCode = country.phoneCode;
         const countryShortName = country.translations?.[0]?.shortName || null;
-        const totals = this.pricingService.calculateTotals(
+        const preliminaryTotals = this.pricingService.calculateTotals(
           pricedItems,
           shippingFee,
           couponDiscount,
+          phoneCode,
+          countryShortName,
+        );
+        const loyalty = await this.loyaltyService.previewReward(userId, {
+          rewardId: dto.rewardId,
+          subtotal: preliminaryTotals.subtotal,
+          total: preliminaryTotals.totalPrice,
+        });
+        const loyaltyDiscount = loyalty?.discountAmount ?? 0;
+        const totalDiscount = couponDiscount + loyaltyDiscount;
+        const totals = this.pricingService.calculateTotals(
+          pricedItems,
+          shippingFee,
+          totalDiscount,
           phoneCode,
           countryShortName,
         );
@@ -539,7 +575,7 @@ export class ClientCheckoutService {
         if (externalAmount <= 0) {
           throw new BadRequestException('Use wallet payment method for full wallet checkout');
         }
-        const onlineItemAllocations = this.allocateOrderItemPricing(orderItems, couponDiscount, totals.vatAmount);
+        const onlineItemAllocations = this.allocateOrderItemPricing(orderItems, totalDiscount, totals.vatAmount);
         const allocatedOrderItems = orderItems.map((item, index) => ({
           ...item,
           ...onlineItemAllocations[index],
@@ -564,6 +600,10 @@ export class ClientCheckoutService {
           cityNameSnapshot: address.city?.translations?.[0]?.name || FALLBACK_LABELS.city,
           couponId: coupon ? coupon.id.toString() : null,
           couponCodeSnapshot: coupon ? coupon.code : null,
+          loyaltyRewardId: dto.rewardId ? String(dto.rewardId) : null,
+          loyaltyPointsRedeemed: loyalty?.points ?? 0,
+          loyaltyDiscountAmount: loyaltyDiscount,
+          loyaltyRewardSnapshot: loyalty?.reward ?? null,
           totals: {
             ...totals,
             vatType: totals.vatRate > 0 ? `${VAT_TYPE_PREFIX}_${totals.vatRate * 100}` : null,
@@ -584,10 +624,13 @@ export class ClientCheckoutService {
             paymentStatus: PAYMENT_STATUSES.pending,
             amount: externalAmount,
             currency: PAYMENT_CURRENCIES.sar,
+            loyaltyRewardId: dto.rewardId ? BigInt(dto.rewardId) : null,
+            loyaltyPoints: loyalty?.points ?? 0,
+            loyaltyDiscount: loyaltyDiscount,
             couponCode: dto.couponCode,
             notes: dto.notes,
             langId,
-            checkoutSnapshot: snapshot,
+            checkoutSnapshot: toPrismaJson(snapshot),
             expiresAt: this.getPendingCheckoutExpiry(),
           },
         });
@@ -664,6 +707,20 @@ export class ClientCheckoutService {
           },
         });
 
+        await this.loyaltyService.reserveForCheckout(tx, {
+          userId,
+          rewardId: dto.rewardId,
+          pendingCheckoutId: pendingCheckout.id,
+          subtotal: preliminaryTotals.subtotal,
+          total: preliminaryTotals.totalPrice,
+          discountAmount: loyaltyDiscount,
+          metadata: {
+            externalPaymentMethod: dto.paymentMethod,
+            externalAmount,
+            totalAmount: totals.totalPrice,
+          },
+        });
+
         const paymentInit = await this.paymentService.initiatePayment(
           dto.paymentMethod,
           pendingCheckout.id.toString(),
@@ -694,6 +751,9 @@ export class ClientCheckoutService {
           orderId: null,
           orderNumber: null,
           totalPrice: totals.totalPrice,
+          loyaltyRewardId: dto.rewardId ? String(dto.rewardId) : null,
+          loyaltyPoints: loyalty?.points ?? 0,
+          loyaltyDiscountAmount: loyaltyDiscount,
           walletAmount,
           externalAmount,
           paymentMethod: dto.paymentMethod,
@@ -902,10 +962,24 @@ export class ClientCheckoutService {
         const phoneCode = country.phoneCode;
         const countryShortName = country.translations?.[0]?.shortName || null;
 
-        const totals = this.pricingService.calculateTotals(
+        const preliminaryTotals = this.pricingService.calculateTotals(
           pricedItems,
           shippingFee,
           couponDiscount,
+          phoneCode,
+          countryShortName,
+        );
+        const loyalty = await this.loyaltyService.previewReward(userId, {
+          rewardId: dto.rewardId,
+          subtotal: preliminaryTotals.subtotal,
+          total: preliminaryTotals.totalPrice,
+        });
+        const loyaltyDiscount = loyalty?.discountAmount ?? 0;
+        const totalDiscount = couponDiscount + loyaltyDiscount;
+        const totals = this.pricingService.calculateTotals(
+          pricedItems,
+          shippingFee,
+          totalDiscount,
           phoneCode,
           countryShortName,
         );
@@ -917,7 +991,7 @@ export class ClientCheckoutService {
         if (dto.paymentMethod !== PAYMENT_METHODS.wallet && walletAmount <= 0 && externalAmount <= 0) {
           throw new BadRequestException('Invalid payment amount');
         }
-        const itemAllocations = this.allocateOrderItemPricing(orderItemsToCreate, couponDiscount, totals.vatAmount);
+        const itemAllocations = this.allocateOrderItemPricing(orderItemsToCreate, totalDiscount, totals.vatAmount);
         const allocatedOrderItemsToCreate = orderItemsToCreate.map((item, index) => ({
           ...item,
           ...itemAllocations[index],
@@ -951,6 +1025,10 @@ export class ClientCheckoutService {
             shippingFee: totals.shippingFee,
             subtotal: totals.subtotal,
             discountAmount: totals.discountAmount,
+            loyaltyDiscountAmount: loyaltyDiscount,
+            loyaltyPointsRedeemed: loyalty?.points ?? 0,
+            loyaltyRewardId: dto.rewardId ? BigInt(dto.rewardId) : null,
+            loyaltyRewardSnapshot: loyalty?.reward ? toPrismaJson(loyalty.reward) : undefined,
             couponId: coupon ? coupon.id : null,
             couponCodeSnapshot: coupon ? coupon.code : null,
             vatValue: totals.vatAmount,
@@ -1001,6 +1079,15 @@ export class ClientCheckoutService {
             externalAmount,
             totalAmount: totals.totalPrice,
           },
+        });
+
+        await this.loyaltyService.redeemForOrder(tx, {
+          userId,
+          rewardId: dto.rewardId,
+          orderId: order.id,
+          subtotal: preliminaryTotals.subtotal,
+          total: preliminaryTotals.totalPrice,
+          discountAmount: loyaltyDiscount,
         });
 
         if (walletTransaction) {
@@ -1087,6 +1174,9 @@ export class ClientCheckoutService {
           totalPrice: Number(order.totalPrice),
           paymentMethod: order.paymentMethod,
           paymentStatus,
+          loyaltyRewardId: dto.rewardId ? String(dto.rewardId) : null,
+          loyaltyPoints: loyalty?.points ?? 0,
+          loyaltyDiscountAmount: loyaltyDiscount,
           walletAmount,
           externalAmount,
           redirectUrl,

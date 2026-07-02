@@ -11,13 +11,18 @@ export class CheckoutPreviewDto {
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "SUMMER20", description: 'couponCode' })
+  @ApiPropertyOptional({ example: 'SUMMER20', description: 'couponCode' })
   couponCode?: string;
 
   @IsOptional()
   @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
   @ApiPropertyOptional({ example: 150, description: 'walletAmount' })
   walletAmount?: number;
+
+  @IsOptional()
+  @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
+  @ApiPropertyOptional({ example: 1, description: 'rewardId' })
+  rewardId?: number;
 }
 
 export class PlaceOrderDto {
@@ -27,12 +32,12 @@ export class PlaceOrderDto {
 
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @IsIn(Object.values(PAYMENT_METHODS), { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
-  @ApiProperty({ example: "cod", description: 'paymentMethod' })
+  @ApiProperty({ example: 'cod', description: 'paymentMethod' })
   paymentMethod!: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "SUMMER20", description: 'couponCode' })
+  @ApiPropertyOptional({ example: 'SUMMER20', description: 'couponCode' })
   couponCode?: string;
 
   @IsOptional()
@@ -41,8 +46,13 @@ export class PlaceOrderDto {
   walletAmount?: number;
 
   @IsOptional()
+  @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
+  @ApiPropertyOptional({ example: 1, description: 'rewardId' })
+  rewardId?: number;
+
+  @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "Leave at door", description: 'notes' })
+  @ApiPropertyOptional({ example: 'Leave at door', description: 'notes' })
   notes?: string;
 }
 
