@@ -1,5 +1,6 @@
 "use client"
 
+import { useSession } from "next-auth/react"
 import { queryKeys } from "@/hooks/api/query-keys"
 import { useFetch } from "@/hooks/api/use-fetch"
 import { useMutate } from "@/hooks/api/use-mutate"
@@ -74,8 +75,10 @@ function responsePaginatedItems<T>(response: unknown, fallbackPage: number, fall
 }
 
 function useWallet() {
+  const { status } = useSession()
   return useFetch<unknown, Wallet | null>({
     authRequired: true,
+    enabled: status === "authenticated",
     endpoint: clientEndpoints.wallet,
     queryKey: queryKeys.wallet(),
     select: (response) => ((response as { data?: Wallet })?.data ?? null),
@@ -83,8 +86,10 @@ function useWallet() {
 }
 
 function useWalletTransactions(page = 1, limit = 10, status?: string | null) {
+  const session = useSession()
   return useFetch<unknown, WalletTransactionsResult>({
     authRequired: true,
+    enabled: session.status === "authenticated",
     endpoint: clientEndpoints.walletTransactions,
     params: { page, limit, "filters[status]": status || undefined },
     queryKey: queryKeys.walletTransactions({ page, limit, status: status || "" }),
@@ -93,8 +98,10 @@ function useWalletTransactions(page = 1, limit = 10, status?: string | null) {
 }
 
 function useWalletWithdrawals(page = 1, limit = 5, status?: string | null) {
+  const session = useSession()
   return useFetch<unknown, WalletWithdrawalsResult>({
     authRequired: true,
+    enabled: session.status === "authenticated",
     endpoint: clientEndpoints.walletWithdrawals,
     params: { page, limit, "filters[status]": status || undefined },
     queryKey: queryKeys.walletWithdrawals({ page, limit, status: status || "" }),
