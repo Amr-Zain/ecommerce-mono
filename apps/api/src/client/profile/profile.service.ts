@@ -23,12 +23,42 @@ export class ProfileService {
         isPhoneVerified: true,
         userType: true,
         addresses: true,
+        loyaltyAccount: {
+          include: {
+            currentTier: {
+              include: { translations: true },
+            },
+          },
+        },
       },
     });
     const userWithMedia = user ? await this.usersRepo.findById(userId) : null;
     if (!userWithMedia) throw new NotFoundException('User not found');
     const { password: _, ...result } = userWithMedia as unknown as Record<string, unknown>;
-    return { ...result, ...user };
+    const tier = user?.loyaltyAccount?.currentTier
+      ? {
+          id: user.loyaltyAccount.currentTier.id.toString(),
+          name:
+            user.loyaltyAccount.currentTier.translations.find((translation) => translation.langId === 'en')?.name ||
+            user.loyaltyAccount.currentTier.translations[0]?.name ||
+            '',
+          multiplier: Number(user.loyaltyAccount.currentTier.multiplier),
+          minLifetimePoints: user.loyaltyAccount.currentTier.minLifetimePoints,
+          color: user.loyaltyAccount.currentTier.color,
+        }
+      : null;
+    return {
+      ...result,
+      ...user,
+      loyaltyAccount: undefined,
+      tier,
+      loyalty: {
+        availablePoints: user?.loyaltyAccount?.availablePoints ?? 0,
+        pendingPoints: user?.loyaltyAccount?.pendingPoints ?? 0,
+        lifetimePoints: user?.loyaltyAccount?.lifetimePoints ?? 0,
+        tier,
+      },
+    };
   }
 
   async updateProfile(userId: bigint, dto: UpdateProfileDto) {

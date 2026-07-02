@@ -25,8 +25,15 @@ export type Reward = {
   description: string | null
   image: RewardImage | string | null
   points_required: number
-  reward_type: 'discount' | string
+  reward_type: 'fixed' | 'percentage' | string
   reward_value: string | number
+  max_discount_amount: string | number | null
+  min_order_amount: string | number | null
+  usage_limit: number | null
+  usage_count: number
+  per_user_limit: number
+  start_date: string | null
+  end_date: string | null
   is_active: boolean
   created_at: string
 }

@@ -1,4 +1,4 @@
-import { Image } from "./general"
+import type { Image } from "./general"
 
 export type ProductVariationAttribute = {
   attribute_id: number
@@ -47,13 +47,14 @@ export type ProductVariation = {
   stock_quantity: number
   barcode: string
   sku: string
+  is_default: boolean
   is_active: boolean
-  images: Image[] | null
-  gallery?: (Image & { id: string | number; attach_hash?: string })[] | null
+  images: Array<Image> | null
+  gallery?: Array<Image & { id: string | number; attach_hash?: string }> | null
   created_at: string
-  attributes: ProductVariationAttribute[]
-  price_history?: PriceHistoryEntry[]
-  inventory_logs?: InventoryLogEntry[]
+  attributes: Array<ProductVariationAttribute>
+  price_history?: Array<PriceHistoryEntry>
+  inventory_logs?: Array<InventoryLogEntry>
 }
 
 export type ProductLocale = {
@@ -141,9 +142,9 @@ export type ProductRecentWishlist = {
 }
 
 export type ProductRecentActivity = {
-  orders: ProductRecentOrder[]
-  reviews: ProductRecentReview[]
-  wishlists: ProductRecentWishlist[]
+  orders: Array<ProductRecentOrder>
+  reviews: Array<ProductRecentReview>
+  wishlists: Array<ProductRecentWishlist>
 }
 
 export type Product = {
@@ -152,7 +153,7 @@ export type Product = {
   description: string
   shopify_id: string | null
   image: Image | null
-  gallery: Image[] | null
+  gallery: Array<Image> | null
   collection: ProductCollection | null
   price: number
   compare_at_price: number | null
@@ -163,18 +164,24 @@ export type Product = {
   stock: number
   sold: number
   reserved: number
+  on_hand_stock?: number
+  representative_variant_id?: number | null
+  default_variant_id?: number | null
+  variant_count?: number
+  active_variant_count?: number
+  price_range?: { min: number; max: number } | null
   sku: string
   barcode: string
   average_rate: number
   total_reviews: number
-  tags: string[] | null
+  tags: Array<string> | null
   is_active: boolean
   is_featured: boolean
   has_variants: boolean
   created_at: string
   en?: ProductLocale
   ar?: ProductLocale
-  variants: ProductVariation[]
+  variants: Array<ProductVariation>
   statistics?: ProductStatistics
   recent_activity?: ProductRecentActivity
 }

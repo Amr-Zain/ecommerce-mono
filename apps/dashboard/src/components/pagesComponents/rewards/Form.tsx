@@ -1,13 +1,14 @@
-import AppForm from '@/components/common/form/AppForm'
-import { useMutate } from '@/hooks/UseMutate'
 import { useNavigate } from '@tanstack/react-router'
-import { generateFinalOut, generateInitialValues } from '@/util/helpers'
 import { useTranslation } from 'react-i18next'
-import { queryKeys } from '@/util/queryKeysFactory'
-import { Reward } from '@/types/api/earningRules'
-import { buildRewardFields, RewardFormData } from './Config'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod/v4'
+import { buildRewardFields } from './Config'
+import type { Reward } from '@/types/api/earningRules'
+import type { RewardFormData } from './Config';
+import AppForm from '@/components/common/form/AppForm'
+import { useMutate } from '@/hooks/UseMutate'
+import { generateFinalOut, generateInitialValues } from '@/util/helpers'
+import { queryKeys } from '@/util/queryKeysFactory'
 import { zodFormResolver } from '@/lib/schema/resolver'
 import { positiveNumber, stringOrUidHashObject, zodString } from '@/lib/schema/validation'
 
@@ -20,6 +21,10 @@ const makeRewardSchema = (t: any) =>
             .positive(),
         reward_type: zodString.min(1),
         reward_value: positiveNumber.int(),
+        max_discount_amount: z.coerce.number().min(0).optional().nullable(),
+        min_order_amount: z.coerce.number().min(0).optional().nullable(),
+        usage_limit: z.coerce.number().int().min(1).optional().nullable(),
+        per_user_limit: z.coerce.number().int().min(1).optional().nullable(),
         is_active: z.enum(['1', '0']).optional().nullable(),
         image: stringOrUidHashObject(t, { required: true }),
         name_ar: zodString.min(1),
@@ -39,8 +44,18 @@ const makeRewardSchema = (t: any) =>
         }
         if (
             data.reward_type === 'percentage' &&
+            (!data.max_discount_amount || +data.max_discount_amount <= 0)
+        ) {
+            ctx.addIssue({
+                code: 'custom',
+                path: ['max_discount_amount'],
+                message: t('Validation.requiredSimple'),
+            })
+        }
+        if (
+            data.reward_type === 'percentage' &&
             data.reward_value &&
-            +data.reward_value >= 100
+            +data.reward_value > 100
         ) {
             ctx.addIssue({
                 code: 'custom',
@@ -74,7 +89,11 @@ export default function RewardForm({ reward }: { reward?: Reward }) {
             points_required: reward?.points_required ?? ('' as any),
             reward_type: reward?.reward_type ?? 'percentage',
             reward_value: reward?.reward_value ?? ('' as any),
-            is_active: reward ? (reward.is_active ? '1' : '0') : ('1' as any),
+            max_discount_amount: reward?.max_discount_amount ?? ('' as any),
+            min_order_amount: reward?.min_order_amount ?? ('' as any),
+            usage_limit: reward?.usage_limit ?? ('' as any),
+            per_user_limit: reward?.per_user_limit ?? 1,
+            is_active: reward ? (reward.is_active ? '1' : '0') : ('1'),
         },
         mode: 'onChange',
     })
@@ -94,13 +113,16 @@ export default function RewardForm({ reward }: { reward?: Reward }) {
 
     const handleSubmit = (values: RewardFormData) => {
         const finalOut = generateFinalOut(reward, values)
-        mutate(finalOut as any)
+        ;(['max_discount_amount', 'min_order_amount', 'usage_limit', 'per_user_limit'] as const).forEach((key) => {
+            if (finalOut[key] === '') finalOut[key] = null
+        })
+        mutate(finalOut)
     }
 
     return (
         <AppForm<RewardFormData>
-            schema={schema as any}
-            fields={fields as any}
+            schema={schema}
+            fields={fields}
             providedForm={form as any}
             onSubmit={handleSubmit}
             isLoading={isPending}

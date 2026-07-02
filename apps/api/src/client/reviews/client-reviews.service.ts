@@ -6,6 +6,7 @@ import {
   PUBLIC_CACHE_EVENTS,
   PublicCacheInvalidationPublisher,
 } from '@/shared/cache/public-cache-invalidation.service';
+import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
 
 @Injectable()
 export class ClientReviewsService {
@@ -13,6 +14,7 @@ export class ClientReviewsService {
     @Inject(REVIEWS_REPOSITORY) private readonly reviewsRepository: IReviewsRepository,
     private readonly prisma: PrismaService,
     private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   async findByProduct(productId: bigint, query: ReviewQueryDto, _langId: string = 'en') {
@@ -44,6 +46,7 @@ export class ClientReviewsService {
       comment: dto.comment,
       images: dto.images,
     });
+    await this.loyaltyService.awardReview(userId, review.id);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.reviewsChanged, { productId: dto.productId });
     return review;
   }

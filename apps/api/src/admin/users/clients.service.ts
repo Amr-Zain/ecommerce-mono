@@ -2,11 +2,13 @@ import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { USERS_REPOSITORY, User as UserInterface } from '@/common/interfaces';
 import { UsersRepository } from '@/core/users/users.repository';
 import { UserQueryDto } from './dto/user-query.dto';
-import { PaginatedResult } from '../../common/dto/pagination.dto';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '../../generated/i18n.generated';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MediaService } from '@/media/media.service';
+import { Prisma } from '@prisma/client';
+
+type RecentOrderWithPayments = Prisma.OrderGetPayload<{ include: { payments: true } }>;
 
 @Injectable()
 export class ClientsService {
@@ -41,7 +43,13 @@ export class ClientsService {
   }
 
   private async transformClientListItem(user: UserInterface) {
-    const avatar = await this.mediaService.findByEntity('user', user.id, 'avatar');
+    const [avatar, loyaltyAccount] = await Promise.all([
+      this.mediaService.findByEntity('user', user.id, 'avatar'),
+      this.prisma.loyaltyAccount.findUnique({
+        where: { userId: user.id },
+        include: { currentTier: { include: { translations: true } } },
+      }),
+    ]);
 
     return {
       ...user,
@@ -49,47 +57,70 @@ export class ClientsService {
       gender: user.gender ?? null,
       image: avatar[0] ?? null,
       isBan: false,
-      points: 0,
+      points: loyaltyAccount?.availablePoints ?? 0,
+      pendingPoints: loyaltyAccount?.pendingPoints ?? 0,
+      lifetimePoints: loyaltyAccount?.lifetimePoints ?? 0,
+      tier: loyaltyAccount?.currentTier
+        ? {
+            id: loyaltyAccount.currentTier.id.toString(),
+            name:
+              loyaltyAccount.currentTier.translations.find((translation) => translation.langId === 'en')?.name ||
+              loyaltyAccount.currentTier.translations[0]?.name ||
+              '',
+            multiplier: Number(loyaltyAccount.currentTier.multiplier),
+            minLifetimePoints: loyaltyAccount.currentTier.minLifetimePoints,
+            color: loyaltyAccount.currentTier.color,
+          }
+        : null,
       market: (user.settings as { market?: string } | null)?.market,
     };
   }
 
   private async transformClientShow(user: UserInterface) {
-    const [baseUser, orderStats, orderCount, reviewStats, reviews, orders] = await Promise.all([
-      this.transformClientListItem(user),
-      this.prisma.paymentTransaction.aggregate({
-        where: { order: { userId: user.id }, paymentStatus: 'completed' },
-        _sum: { amount: true },
-      }),
-      this.prisma.order.count({
-        where: { userId: user.id },
-      }),
-      this.prisma.review.aggregate({
-        where: { userId: user.id },
-        _count: { _all: true },
-        _avg: { rating: true },
-      }),
-      this.prisma.review.findMany({
-        where: { userId: user.id },
-        include: {
-          product: {
-            include: {
-              translations: {
-                where: { langId: 'en' },
+    const [baseUser, orderStats, orderCount, reviewStats, reviews, orders, redeemedRewardsCount, loyaltyTransactions] =
+      await Promise.all([
+        this.transformClientListItem(user),
+        this.prisma.paymentTransaction.aggregate({
+          where: { order: { userId: user.id }, paymentStatus: 'completed' },
+          _sum: { amount: true },
+        }),
+        this.prisma.order.count({
+          where: { userId: user.id },
+        }),
+        this.prisma.review.aggregate({
+          where: { userId: user.id },
+          _count: { _all: true },
+          _avg: { rating: true },
+        }),
+        this.prisma.review.findMany({
+          where: { userId: user.id },
+          include: {
+            product: {
+              include: {
+                translations: {
+                  where: { langId: 'en' },
+                },
               },
             },
           },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-      }),
-      this.prisma.order.findMany({
-        where: { userId: user.id },
-        include: { payments: true },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-      }),
-    ]);
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        }),
+        this.prisma.order.findMany({
+          where: { userId: user.id },
+          include: { payments: true },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        }),
+        this.prisma.loyaltyRewardRedemption.count({
+          where: { userId: user.id, status: { in: ['redeemed', 'refunded'] } },
+        }),
+        this.prisma.loyaltyPointTransaction.findMany({
+          where: { userId: user.id },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        }),
+      ]);
 
     return {
       ...baseUser,
@@ -101,11 +132,20 @@ export class ClientsService {
       allowNotifications:
         this.getSettingsValue<boolean>(user.settings, 'allowNotifications', 'allow_notifications') ?? true,
       lastLoginAt: null,
-      lifetimePoints: 0,
-      redeemedRewardsCount: 0,
+      lifetimePoints: baseUser.lifetimePoints,
+      redeemedRewardsCount,
+      loyaltyTransactions: loyaltyTransactions.map((transaction) => ({
+        ...transaction,
+        id: transaction.id.toString(),
+        accountId: transaction.accountId.toString(),
+        userId: transaction.userId.toString(),
+        earningRuleId: transaction.earningRuleId?.toString() ?? null,
+        rewardId: transaction.rewardId?.toString() ?? null,
+        redemptionId: transaction.redemptionId?.toString() ?? null,
+      })),
       statistics: {
         totalOrders: orderCount,
-        totalSpent: orderStats._sum.amount ?? 0,
+        totalSpent: Number(orderStats._sum.amount ?? 0),
         activeCartItems: 0,
         activeCartTotal: 0,
         reviewsCount: reviewStats._count._all,
@@ -113,11 +153,11 @@ export class ClientsService {
         devicesCount: 0,
         addressesCount: user.addresses?.length ?? 0,
       },
-      recentOrders: orders.map((order: any) => ({
+      recentOrders: orders.map((order: RecentOrderWithPayments) => ({
         id: order.id,
-        orderNumber: order.orderNumber || order.id,
+        orderNumber: order.orderNumber || order.id.toString(),
         status: order.status,
-        total: order.payments.reduce((sum: number, payment: any) => sum + Number(payment.amount), 0),
+        total: order.payments.reduce((sum, payment) => sum + Number(payment.amount), 0),
         createdAt: order.createdAt,
       })),
       recentReviews: reviews.map((review) => ({

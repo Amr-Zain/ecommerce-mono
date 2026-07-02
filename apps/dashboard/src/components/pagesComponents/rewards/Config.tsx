@@ -1,21 +1,21 @@
-import { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
+import type { PickedAction } from '@/hooks/useStatusMutations'
+import type { Filter, RowAction } from '@/types/components/table'
+import type { FieldProp } from '@/types/components/form'
+import type { Reward } from '@/types/api/earningRules'
 import {
-    booleanControlColumn,
     DateColumn,
+    booleanControlColumn,
     imageColumn,
     textColumn,
 } from '@/components/features/sharedColumns'
-import { PickedAction } from '@/hooks/useStatusMutations'
-import { Filter, RowAction } from '@/types/components/table'
-import { FieldProp } from '@/types/components/form'
-import { Reward } from '@/types/api/earningRules'
 import { queryKeys } from '@/util/queryKeysFactory'
 /* ---------- TABLE COLUMNS ---------- */
 
 export const rewardColumns = (
     open: (type: PickedAction, row: Reward) => void,
     t: (key: string) => string,
-): ColumnDef<Reward>[] => [
+): Array<ColumnDef<Reward>> => [
         imageColumn<Reward>('image', 'table.columns.image'),
         textColumn<Reward>('name', 'table.columns.name', {
             className: 'min-w-20',
@@ -29,6 +29,10 @@ export const rewardColumns = (
             render: (row) => t(`rewards.${row.getValue()}`),
         }),
         textColumn<Reward>('reward_value', 'rewards.reward_value'),
+        textColumn<Reward>('max_discount_amount', 'rewards.max_discount_amount'),
+        textColumn<Reward>('min_order_amount', 'rewards.min_order_amount'),
+        textColumn<Reward>('usage_limit', 'rewards.usage_limit'),
+        textColumn<Reward>('per_user_limit', 'rewards.per_user_limit'),
         booleanControlColumn<Reward>(
             'is_active',
             'table.status',
@@ -45,7 +49,7 @@ export const rewardColumns = (
 export const rewardActions = (
     t: (key: string) => string,
     open: (type: PickedAction, row: Reward) => void,
-): RowAction<Reward>[] => [
+): Array<RowAction<Reward>> => [
     {
         label: t('actions.edit'),
         to: '/rewards/edit/$id',
@@ -68,11 +72,11 @@ export const rewardActions = (
         permission: 'rewards',
         action: 'update',
     },
-] as RowAction<Reward>[]
+] as Array<RowAction<Reward>>
 
 /* ---------- FILTERS ---------- */
 
-export const getRewardFilters = (t: (key: string) => string): Filter[] => [
+export const getRewardFilters = (t: (key: string) => string): Array<Filter> => [
     {
         id: 'filters[is_active]',
         title: t('status.title'),
@@ -109,6 +113,10 @@ export type RewardFormData = {
     points_required: number | string
     reward_type: string
     reward_value: number | string
+    max_discount_amount?: number | string | null
+    min_order_amount?: number | string | null
+    usage_limit?: number | string | null
+    per_user_limit?: number | string | null
     is_active?: '1' | '0'
     name: any
     description?: any
@@ -116,7 +124,7 @@ export type RewardFormData = {
 
 export const buildRewardFields = (
     t: (key: string) => string,
-): FieldProp<RewardFormData>[] => [
+): Array<FieldProp<RewardFormData>> => [
         {
             type: 'imgUploader',
             name: 'image',
@@ -144,7 +152,7 @@ export const buildRewardFields = (
                     { label: t('status.active'), value: '1' },
                     { label: t('status.inactive'), value: '0' },
                 ],
-            } as any,
+            },
         },
         {
             type: 'select',
@@ -164,16 +172,40 @@ export const buildRewardFields = (
             label: t('rewards.reward_value'),
             placeholder: t('Form.placeholders.reward_value'),
         },
+        {
+            type: 'number',
+            name: 'max_discount_amount',
+            label: t('rewards.max_discount_amount'),
+            placeholder: t('rewards.max_discount_amount'),
+        },
+        {
+            type: 'number',
+            name: 'min_order_amount',
+            label: t('rewards.min_order_amount'),
+            placeholder: t('rewards.min_order_amount'),
+        },
+        {
+            type: 'number',
+            name: 'usage_limit',
+            label: t('rewards.usage_limit'),
+            placeholder: t('rewards.usage_limit'),
+        },
+        {
+            type: 'number',
+            name: 'per_user_limit',
+            label: t('rewards.per_user_limit'),
+            placeholder: t('rewards.per_user_limit'),
+        },
 
         {
             type: 'multiLangField',
-            name: 'name' as any,
+            name: 'name',
             label: t('Form.labels.name'),
             span: 2,
         },
         {
             type: 'multiLangField',
-            name: 'description' as any,
+            name: 'description',
             label: t('Form.labels.description'),
             inputProps: {
                 type: 'editor',
