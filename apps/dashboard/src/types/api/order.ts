@@ -229,6 +229,7 @@ export interface ReturnRequest {
   final_refund_amount: number
   refund_adjustment_reason: string | null
   shipping_refund_reason: string | null
+  refund_options?: RefundOptions
   item_count: number
   items: ReturnRequestItem[]
   created_at: string
@@ -275,6 +276,7 @@ export interface ExchangeRequest {
   suggested_replacement_shipping_fee: number
   replacement_shipping_fee: number
   settlement_amount: number
+  refund_options?: RefundOptions
   shipping_fee_reason: string | null
   item_count: number
   items: ExchangeRequestItem[]
@@ -282,6 +284,23 @@ export interface ExchangeRequest {
   updated_at: string
   replacement_expires_at: string | null
   history?: ReturnExchangeStatusHistory[]
+}
+
+export interface RefundOptions {
+  original_paid_amount: number
+  refunded_amount: number
+  reserved_refund_amount: number
+  remaining_refundable_amount: number
+  original_payment_available_amount: number
+  wallet_available_amount: number
+  manual_available_amount: number
+  original_payments: Array<{
+    id: string
+    amount: number
+    payment_method: string
+    transaction_ref: string | null
+    currency: string
+  }>
 }
 
 export interface ReturnExchangeStatusHistory {

@@ -18,19 +18,18 @@ import {
   DialogTitle,
 } from '@ecommerce/ui/components/dialog'
 import { Separator } from '@ecommerce/ui/components/separator'
+import type { ApiResponseBase } from '@/types/api/http'
+import type { ExchangeRequest, ReturnRequest } from '@/types/api/order'
+import type { FieldProp } from '@/types/components/form'
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
 import { cn } from '@/lib/utils'
-import { ApiResponseBase } from '@/types/api/http'
 import {
   EXCHANGE_REQUEST_STATUSES,
-  ExchangeRequest,
   PRICE_ADJUSTMENT_STATUSES,
   REFUND_STATUSES,
   RETURN_REQUEST_STATUSES,
-  ReturnRequest,
 } from '@/types/api/order'
-import type { FieldProp } from '@/types/components/form'
 import { queryKeys } from '@/util/queryKeysFactory'
 
 const dispositions = ['restock', 'quarantine', 'damaged', 'discarded']
@@ -72,7 +71,7 @@ type DialogState = {
   wallet_refund_amount?: number
   original_refund_amount?: number
   manual_refund_amount?: number
-  items: ReceiveItemState[]
+  items: Array<ReceiveItemState>
 }
 
 const actionDialogSchema = z.object({
@@ -112,7 +111,10 @@ export function ReturnExchangeShow({
     ? queryKeys.returns.getReturn(request.id)
     : queryKeys.exchanges.getExchange(request.id)
 
-  const mutation = useMutate<ApiResponseBase<WorkflowRequest>, Record<string, unknown>>({
+  const mutation = useMutate<
+    ApiResponseBase<WorkflowRequest>,
+    Record<string, unknown>
+  >({
     endpoint:
       dialog?.action === 'release-expired'
         ? 'exchanges/release-expired'
@@ -133,6 +135,8 @@ export function ReturnExchangeShow({
   )
 
   const openAction = (action: WorkflowAction) => {
+    const refundAmount = getRefundAmount(action, request)
+    const allocation = getDefaultRefundAllocation(request, refundAmount)
     setDialog({
       action,
       note: '',
@@ -140,14 +144,9 @@ export function ReturnExchangeShow({
         ? (request as ReturnRequest).suggested_shipping_refund_amount
         : (request as ExchangeRequest).suggested_replacement_shipping_fee,
       shipping_reason: '',
-      wallet_refund_amount: 0,
-      original_refund_amount:
-        action === 'refund'
-          ? (request as ReturnRequest).final_refund_amount
-          : action === 'refund-difference'
-            ? Math.abs((request as ExchangeRequest).settlement_amount)
-            : 0,
-      manual_refund_amount: 0,
+      wallet_refund_amount: allocation.wallet,
+      original_refund_amount: allocation.original,
+      manual_refund_amount: allocation.manual,
       items: request.items.map((item: any) => ({
         id: item.id,
         accepted_quantity: item.accepted_quantity || item.quantity,
@@ -265,7 +264,13 @@ export function ReturnExchangeShow({
   )
 }
 
-function MoneyCard({ title, request }: { title: string; request: WorkflowRequest }) {
+function MoneyCard({
+  title,
+  request,
+}: {
+  title: string
+  request: WorkflowRequest
+}) {
   const rows =
     'refund_status' in request
       ? [
@@ -273,7 +278,10 @@ function MoneyCard({ title, request }: { title: string; request: WorkflowRequest
           ['Calculated VAT', money(request.calculated_vat_refund_amount)],
           ['Adjusted refund', money(request.adjusted_refund_amount)],
           ['Adjusted VAT', money(request.adjusted_vat_refund_amount)],
-          ['Suggested shipping', money(request.suggested_shipping_refund_amount)],
+          [
+            'Suggested shipping',
+            money(request.suggested_shipping_refund_amount),
+          ],
           ['Shipping refund', money(request.shipping_refund_amount)],
           ['Final refund', money(request.final_refund_amount)],
         ]
@@ -281,7 +289,10 @@ function MoneyCard({ title, request }: { title: string; request: WorkflowRequest
           ['Old value', money(request.total_old_value)],
           ['New value', money(request.total_new_value)],
           ['Difference', money(request.total_price_difference)],
-          ['Suggested shipping', money(request.suggested_replacement_shipping_fee)],
+          [
+            'Suggested shipping',
+            money(request.suggested_replacement_shipping_fee),
+          ],
           ['Replacement shipping', money(request.replacement_shipping_fee)],
           ['Settlement', money(request.settlement_amount)],
           ['Reservation expires', formatDate(request.replacement_expires_at)],
@@ -315,12 +326,21 @@ function NotesCard({ request }: { request: WorkflowRequest }) {
         <Note label="Admin" value={request.admin_note} />
         {'refund_adjustment_reason' in request && (
           <>
-            <Note label="Refund adjustment" value={request.refund_adjustment_reason} />
-            <Note label="Shipping refund" value={request.shipping_refund_reason} />
+            <Note
+              label="Refund adjustment"
+              value={request.refund_adjustment_reason}
+            />
+            <Note
+              label="Shipping refund"
+              value={request.shipping_refund_reason}
+            />
           </>
         )}
         {'shipping_fee_reason' in request && (
-          <Note label="Shipping fee reason" value={request.shipping_fee_reason} />
+          <Note
+            label="Shipping fee reason"
+            value={request.shipping_fee_reason}
+          />
         )}
       </CardContent>
     </Card>
@@ -334,8 +354,17 @@ function RelatedCard({ request }: { request: WorkflowRequest }) {
         <CardTitle>Related records</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        <RelatedLink label="Order" to="/orders/show/$id" id={request.order_id} />
-        <RelatedLink label="Client" to="/users/show/$id" id={request.user_id} value={request.user_name} />
+        <RelatedLink
+          label="Order"
+          to="/orders/show/$id"
+          id={request.order_id}
+        />
+        <RelatedLink
+          label="Client"
+          to="/users/show/$id"
+          id={request.user_id}
+          value={request.user_name}
+        />
         <Info label="Created" value={formatDate(request.created_at)} />
         <Info label="Updated" value={formatDate(request.updated_at)} />
       </CardContent>
@@ -371,7 +400,9 @@ function RelatedLink({
 function Note({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <p className="text-xs font-bold uppercase text-muted-foreground">{label}</p>
+      <p className="text-xs font-bold uppercase text-muted-foreground">
+        {label}
+      </p>
       <p>{value || '-'}</p>
     </div>
   )
@@ -387,12 +418,17 @@ function HistoryCard({ request }: { request: WorkflowRequest }) {
         {(request.history ?? []).length ? (
           <div className="relative space-y-0">
             {request.history?.map((entry, index) => (
-              <div key={`${entry.created_at}-${index}`} className="relative grid gap-3 border-s ps-6 pb-6 last:pb-0">
+              <div
+                key={`${entry.created_at}-${index}`}
+                className="relative grid gap-3 border-s ps-6 pb-6 last:pb-0"
+              >
                 <span className="absolute -start-2 top-1 size-4 rounded-full border-2 border-background bg-primary shadow" />
                 <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border bg-muted/20 p-4">
                   <div>
                     <p className="text-sm font-black capitalize">
-                      {entry.previous_status ? entry.previous_status.replace(/_/g, ' ') : 'Created'}
+                      {entry.previous_status
+                        ? entry.previous_status.replace(/_/g, ' ')
+                        : 'Created'}
                       <span className="mx-2 text-muted-foreground">{'->'}</span>
                       {entry.new_status.replace(/_/g, ' ')}
                     </p>
@@ -400,19 +436,25 @@ function HistoryCard({ request }: { request: WorkflowRequest }) {
                       {formatDate(entry.created_at)}
                     </p>
                     {entry.reason && (
-                      <p className="mt-2 text-sm text-muted-foreground">{entry.reason}</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {entry.reason}
+                      </p>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{entry.actor_type || 'system'}</Badge>
+                    <Badge variant="outline">
+                      {entry.actor_type || 'system'}
+                    </Badge>
                     {entry.actor_user_id && (
-                      <Badge variant="secondary">Actor #{entry.actor_user_id}</Badge>
+                      <Badge variant="secondary">
+                        Actor #{entry.actor_user_id}
+                      </Badge>
                     )}
                   </div>
                 </div>
               </div>
             ))}
-            </div>
+          </div>
         ) : (
           <p className="text-sm text-muted-foreground">No history yet.</p>
         )}
@@ -448,28 +490,35 @@ function ItemsCard({
                   <div className="size-16 rounded-lg border bg-muted" />
                 )}
                 <div>
-                <p className="font-black">
-                  {item.product_id ? (
-                    <Link
-                      to="/products/show/$id"
-                      params={{ id: item.product_id }}
-                      className={linkClass}
-                    >
-                      {item.product_name_snapshot || `Product #${item.product_id}`}
-                    </Link>
-                  ) : (
-                    item.product_name_snapshot || `Item #${item.id}`
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Order item #{item.order_item_id}
-                </p>
-                <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  {item.product_id && <span>Product #{item.product_id}</span>}
-                  {item.variant_id && <span>Original variant #{item.variant_id}</span>}
-                  {item.old_variant_id && <span>Returned variant #{item.old_variant_id}</span>}
-                  {item.new_variant_id && <span>New variant #{item.new_variant_id}</span>}
-                </div>
+                  <p className="font-black">
+                    {item.product_id ? (
+                      <Link
+                        to="/products/show/$id"
+                        params={{ id: item.product_id }}
+                        className={linkClass}
+                      >
+                        {item.product_name_snapshot ||
+                          `Product #${item.product_id}`}
+                      </Link>
+                    ) : (
+                      item.product_name_snapshot || `Item #${item.id}`
+                    )}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Order item #{item.order_item_id}
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    {item.product_id && <span>Product #{item.product_id}</span>}
+                    {item.variant_id && (
+                      <span>Original variant #{item.variant_id}</span>
+                    )}
+                    {item.old_variant_id && (
+                      <span>Returned variant #{item.old_variant_id}</span>
+                    )}
+                    {item.new_variant_id && (
+                      <span>New variant #{item.new_variant_id}</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <Badge variant="outline">
@@ -478,25 +527,52 @@ function ItemsCard({
             </div>
             <Separator className="my-3" />
             <div className="grid gap-3 text-sm md:grid-cols-2 lg:grid-cols-4">
-              <Info label="Reason" value={item.return_reason || item.exchange_reason} />
+              <Info
+                label="Reason"
+                value={item.return_reason || item.exchange_reason}
+              />
               <Info label="Disposition" value={item.item_disposition} />
-              <Info label="Old net unit" value={money(item.old_net_unit_price)} />
-              <Info label="Variant snapshot" value={formatJsonish(item.variant_info_snapshot)} />
+              <Info
+                label="Old net unit"
+                value={money(item.old_net_unit_price)}
+              />
+              <Info
+                label="Variant snapshot"
+                value={formatJsonish(item.variant_info_snapshot)}
+              />
               {kind === 'return' ? (
                 <>
-                  <Info label="Calculated refund" value={money(item.calculated_refund_amount)} />
-                  <Info label="Calculated VAT" value={money(item.calculated_vat_refund_amount)} />
-                  <Info label="Adjusted refund" value={money(item.adjusted_refund_amount)} />
-                  <Info label="Adjusted VAT" value={money(item.adjusted_vat_refund_amount)} />
+                  <Info
+                    label="Calculated refund"
+                    value={money(item.calculated_refund_amount)}
+                  />
+                  <Info
+                    label="Calculated VAT"
+                    value={money(item.calculated_vat_refund_amount)}
+                  />
+                  <Info
+                    label="Adjusted refund"
+                    value={money(item.adjusted_refund_amount)}
+                  />
+                  <Info
+                    label="Adjusted VAT"
+                    value={money(item.adjusted_vat_refund_amount)}
+                  />
                 </>
               ) : (
                 <>
                   <Info label="New variant" value={item.new_variant_id} />
                   <Info label="New variant SKU" value={item.new_variant_sku} />
-                  <Info label="New unit" value={money(item.new_unit_price_snapshot)} />
+                  <Info
+                    label="New unit"
+                    value={money(item.new_unit_price_snapshot)}
+                  />
                   <Info label="Old value" value={money(item.old_value)} />
                   <Info label="New value" value={money(item.new_value)} />
-                  <Info label="Difference" value={money(item.price_difference)} />
+                  <Info
+                    label="Difference"
+                    value={money(item.price_difference)}
+                  />
                 </>
               )}
               <Info label="Client note" value={item.client_note} />
@@ -509,10 +585,18 @@ function ItemsCard({
   )
 }
 
-function Info({ label, value }: { label: string; value?: string | number | null }) {
+function Info({
+  label,
+  value,
+}: {
+  label: string
+  value?: string | number | null
+}) {
   return (
     <div>
-      <p className="text-xs font-bold uppercase text-muted-foreground">{label}</p>
+      <p className="text-xs font-bold uppercase text-muted-foreground">
+        {label}
+      </p>
       <p className="font-medium">{value ?? '-'}</p>
     </div>
   )
@@ -535,7 +619,11 @@ function ActionDialog({
 }) {
   const action = dialog?.action
   const requiresReceivePayload = action === 'receive'
-  const requiresNote = action === 'reject' || action === 'waive-adjustment' || action === 'refund' || action === 'refund-difference'
+  const requiresNote =
+    action === 'reject' ||
+    action === 'waive-adjustment' ||
+    action === 'refund' ||
+    action === 'refund-difference'
   const fields = useMemo(
     () =>
       dialog
@@ -549,7 +637,15 @@ function ActionDialog({
             onCancel: () => onChange(null),
           })
         : [],
-    [dialog, kind, onChange, pending, request, requiresNote, requiresReceivePayload],
+    [
+      dialog,
+      kind,
+      onChange,
+      pending,
+      request,
+      requiresNote,
+      requiresReceivePayload,
+    ],
   )
 
   return (
@@ -558,7 +654,8 @@ function ActionDialog({
         <DialogHeader>
           <DialogTitle>{action ? labelAction(action) : 'Action'}</DialogTitle>
           <DialogDescription>
-            Review the request carefully before submitting. Some values cannot be increased above API calculated limits.
+            Review the request carefully before submitting. Some values cannot
+            be increased above API calculated limits.
           </DialogDescription>
         </DialogHeader>
 
@@ -594,8 +691,8 @@ function buildActionFields({
   requiresNote: boolean
   requiresReceivePayload: boolean
   onCancel: () => void
-}): FieldProp<DialogState>[] {
-  const fields: FieldProp<DialogState>[] = []
+}): Array<FieldProp<DialogState>> {
+  const fields: Array<FieldProp<DialogState>> = []
 
   if (requiresReceivePayload) {
     dialog.items.forEach((item, index) => {
@@ -661,31 +758,73 @@ function buildActionFields({
     fields.push({
       type: 'number',
       name: 'shipping_amount',
-      label: kind === 'return' ? 'Shipping refund amount' : 'Replacement shipping fee',
+      label:
+        kind === 'return'
+          ? 'Shipping refund amount'
+          : 'Replacement shipping fee',
       inputProps: { min: 0 },
     })
     fields.push({
       type: 'textarea',
       name: 'shipping_reason',
-      label: kind === 'return' ? 'Shipping refund reason' : 'Shipping fee reason',
+      label:
+        kind === 'return' ? 'Shipping refund reason' : 'Shipping fee reason',
     })
   }
 
   if (requiresNote || requiresReceivePayload) {
     if (dialog.action === 'refund' || dialog.action === 'refund-difference') {
-      const amount =
-        dialog.action === 'refund'
-          ? (request as ReturnRequest).final_refund_amount
-          : Math.abs((request as ExchangeRequest).settlement_amount)
+      const amount = getRefundAmount(dialog.action, request)
+      const options = getRefundOptions(request, amount)
+      const destinationRows = [
+        [
+          'Original payment',
+          options.original,
+          'Refund through the captured payment gateway.',
+        ],
+        ['Wallet', options.wallet, 'Credit the customer wallet immediately.'],
+        [
+          'Manual',
+          options.manual,
+          'Record an offline refund handled outside the gateway.',
+        ],
+      ] as const
       fields.push({
         type: 'custom',
         span: 2,
         customItem: (
           <div className="rounded-xl border bg-muted/20 p-4 text-sm">
-            <p className="font-semibold">Refund allocation</p>
-            <p className="mt-1 text-muted-foreground">
-              Split exactly {money(amount)} between wallet, original payment, and manual refund.
-            </p>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="font-semibold">Refund allocation</p>
+                <p className="mt-1 text-muted-foreground">
+                  Split exactly {money(amount)} across the available refund
+                  destinations.
+                </p>
+              </div>
+              <Badge variant="outline">
+                Remaining {money(options.remaining)}
+              </Badge>
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {destinationRows.map(([label, available, description]) => (
+                <div
+                  key={label}
+                  className={cn(
+                    'rounded-md border bg-background p-3',
+                    available <= 0 && 'opacity-50',
+                  )}
+                >
+                  <p className="font-medium">{label}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {description}
+                  </p>
+                  <p className="mt-2 text-xs font-semibold">
+                    Available {money(available)}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         ),
       })
@@ -693,19 +832,34 @@ function buildActionFields({
         type: 'number',
         name: 'wallet_refund_amount',
         label: 'Refund to wallet',
-        inputProps: { min: 0, max: amount, step: 0.01 },
+        inputProps: {
+          min: 0,
+          max: Math.min(amount, options.wallet),
+          step: 0.01,
+          disabled: options.wallet <= 0,
+        },
       })
       fields.push({
         type: 'number',
         name: 'original_refund_amount',
         label: 'Refund to original payment',
-        inputProps: { min: 0, max: amount, step: 0.01 },
+        inputProps: {
+          min: 0,
+          max: Math.min(amount, options.original),
+          step: 0.01,
+          disabled: options.original <= 0,
+        },
       })
       fields.push({
         type: 'number',
         name: 'manual_refund_amount',
         label: 'Manual refund',
-        inputProps: { min: 0, max: amount, step: 0.01 },
+        inputProps: {
+          min: 0,
+          max: Math.min(amount, options.manual),
+          step: 0.01,
+          disabled: options.manual <= 0,
+        },
       })
     }
     fields.push({
@@ -721,7 +875,12 @@ function buildActionFields({
     span: 2,
     customItem: (
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" disabled={pending} onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={onCancel}
+        >
           Cancel
         </Button>
         <Button type="submit" disabled={pending}>
@@ -745,7 +904,9 @@ function buildPayload(kind: WorkflowKind, dialog: DialogState) {
           ? {
               adjusted_refund_amount: item.adjusted_refund_amount,
               adjusted_vat_refund_amount: item.adjusted_vat_refund_amount,
-              refund_adjustment_reason: emptyToUndefined(item.refund_adjustment_reason),
+              refund_adjustment_reason: emptyToUndefined(
+                item.refund_adjustment_reason,
+              ),
             }
           : {}),
         note: emptyToUndefined(item.note),
@@ -775,7 +936,10 @@ function buildPayload(kind: WorkflowKind, dialog: DialogState) {
           ? { destination: 'wallet', amount: dialog.wallet_refund_amount }
           : null,
         dialog.original_refund_amount
-          ? { destination: 'original_payment', amount: dialog.original_refund_amount }
+          ? {
+              destination: 'original_payment',
+              amount: dialog.original_refund_amount,
+            }
           : null,
         dialog.manual_refund_amount
           ? { destination: 'manual', amount: dialog.manual_refund_amount }
@@ -789,39 +953,96 @@ function buildPayload(kind: WorkflowKind, dialog: DialogState) {
   return {}
 }
 
-function getAvailableActions(kind: WorkflowKind, request: WorkflowRequest): WorkflowAction[] {
+function getRefundAmount(action: WorkflowAction, request: WorkflowRequest) {
+  if (action === 'refund') return (request as ReturnRequest).final_refund_amount
+  if (action === 'refund-difference')
+    return Math.abs((request as ExchangeRequest).settlement_amount)
+  return 0
+}
+
+function getRefundOptions(request: WorkflowRequest, amount: number) {
+  const options = request.refund_options
+  const remaining = roundMoney(options?.remaining_refundable_amount ?? amount)
+  return {
+    remaining,
+    original: roundMoney(options?.original_payment_available_amount ?? amount),
+    wallet: roundMoney(options?.wallet_available_amount ?? remaining),
+    manual: roundMoney(options?.manual_available_amount ?? remaining),
+  }
+}
+
+function getDefaultRefundAllocation(request: WorkflowRequest, amount: number) {
+  if (amount <= 0) return { wallet: 0, original: 0, manual: 0 }
+  const options = getRefundOptions(request, amount)
+  const original = Math.min(amount, options.original)
+  const afterOriginal = roundMoney(amount - original)
+  const wallet = Math.min(afterOriginal, options.wallet)
+  const afterWallet = roundMoney(afterOriginal - wallet)
+  const manual = Math.min(afterWallet, options.manual)
+
+  return {
+    wallet: roundMoney(wallet),
+    original: roundMoney(original),
+    manual: roundMoney(manual),
+  }
+}
+
+function roundMoney(value: number) {
+  return Number(value.toFixed(2))
+}
+
+function getAvailableActions(
+  kind: WorkflowKind,
+  request: WorkflowRequest,
+): Array<WorkflowAction> {
   if (kind === 'return') {
     const item = request as ReturnRequest
-    const actions: WorkflowAction[] = []
-    if (item.status === RETURN_REQUEST_STATUSES.requested) actions.push('approve', 'reject')
-    if (item.status === RETURN_REQUEST_STATUSES.approved) actions.push('receive')
+    const actions: Array<WorkflowAction> = []
+    if (item.status === RETURN_REQUEST_STATUSES.requested)
+      actions.push('approve', 'reject')
+    if (item.status === RETURN_REQUEST_STATUSES.approved)
+      actions.push('receive')
     if (
       item.status === RETURN_REQUEST_STATUSES.itemReceived &&
-      [REFUND_STATUSES.requiresRefund, REFUND_STATUSES.requiresReview].includes(item.refund_status as never)
+      [REFUND_STATUSES.requiresRefund, REFUND_STATUSES.requiresReview].includes(
+        item.refund_status as never,
+      )
     ) {
       actions.push('refund')
     }
-    if (item.status === RETURN_REQUEST_STATUSES.refunded || item.refund_status === REFUND_STATUSES.waived) {
+    if (
+      item.status === RETURN_REQUEST_STATUSES.refunded ||
+      item.refund_status === REFUND_STATUSES.waived
+    ) {
       actions.push('complete')
     }
     return actions
   }
 
   const item = request as ExchangeRequest
-  const actions: WorkflowAction[] = []
-  if (item.status === EXCHANGE_REQUEST_STATUSES.requested) actions.push('approve', 'reject')
-  if (item.status === EXCHANGE_REQUEST_STATUSES.requiresReview) actions.push('retry-reservation', 'reject')
+  const actions: Array<WorkflowAction> = []
+  if (item.status === EXCHANGE_REQUEST_STATUSES.requested)
+    actions.push('approve', 'reject')
+  if (item.status === EXCHANGE_REQUEST_STATUSES.requiresReview)
+    actions.push('retry-reservation', 'reject')
   if (item.status === EXCHANGE_REQUEST_STATUSES.approved) {
     actions.push('receive')
-    if (item.replacement_expires_at && new Date(item.replacement_expires_at).getTime() <= Date.now()) {
+    if (
+      item.replacement_expires_at &&
+      new Date(item.replacement_expires_at).getTime() <= Date.now()
+    ) {
       actions.push('release-expired')
     }
   }
   if (item.status === EXCHANGE_REQUEST_STATUSES.itemReceived) {
-    if (item.price_adjustment_status === PRICE_ADJUSTMENT_STATUSES.requiresRefund) {
+    if (
+      item.price_adjustment_status === PRICE_ADJUSTMENT_STATUSES.requiresRefund
+    ) {
       actions.push('refund-difference', 'waive-adjustment')
     }
-    if (item.price_adjustment_status === PRICE_ADJUSTMENT_STATUSES.requiresPayment) {
+    if (
+      item.price_adjustment_status === PRICE_ADJUSTMENT_STATUSES.requiresPayment
+    ) {
       actions.push('waive-adjustment')
     }
     if (
@@ -835,7 +1056,8 @@ function getAvailableActions(kind: WorkflowKind, request: WorkflowRequest): Work
       actions.push('ship')
     }
   }
-  if (item.status === EXCHANGE_REQUEST_STATUSES.replacementShipped) actions.push('complete')
+  if (item.status === EXCHANGE_REQUEST_STATUSES.replacementShipped)
+    actions.push('complete')
   return actions
 }
 

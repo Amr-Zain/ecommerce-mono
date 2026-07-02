@@ -102,6 +102,10 @@ export class ClientOrdersService {
       shippingFee: Number(order.shippingFee),
       subtotal: Number(order.subtotal),
       discountAmount: Number(order.discountAmount),
+      loyaltyDiscountAmount: Number(order.loyaltyDiscountAmount),
+      loyaltyPointsRedeemed: order.loyaltyPointsRedeemed,
+      loyaltyRewardId: order.loyaltyRewardId?.toString() || null,
+      loyaltyRewardSnapshot: order.loyaltyRewardSnapshot,
       couponId: order.couponId?.toString() || null,
       couponCodeSnapshot: order.couponCodeSnapshot,
       vatValue: Number(order.vatValue),
@@ -152,6 +156,8 @@ export class ClientOrdersService {
           currency: payment.currency,
           paidAt: payment.paidAt,
           createdAt: payment.createdAt,
+          refundSource: payment.refundSource,
+          refundReason: payment.refundReason,
         })) || [],
     };
   }

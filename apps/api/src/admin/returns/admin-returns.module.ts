@@ -6,9 +6,10 @@ import { OrderLifecycleModule } from '@/shared/orders/order-lifecycle.module';
 import { ReturnsModule } from '@/core/returns/returns.module';
 import { ProductsModule } from '@/core/products/products.module';
 import { WalletModule } from '@/shared/wallet/wallet.module';
+import { LoyaltyModule } from '@/shared/loyalty/loyalty.module';
 
 @Module({
-  imports: [PaymentModule, OrderLifecycleModule, ReturnsModule, ProductsModule, WalletModule],
+  imports: [PaymentModule, OrderLifecycleModule, ReturnsModule, ProductsModule, WalletModule, LoyaltyModule],
   controllers: [AdminReturnsController],
   providers: [AdminReturnsService],
 })

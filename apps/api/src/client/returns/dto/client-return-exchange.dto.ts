@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateReturnRequestItemDto {
   @IsString()
-  @ApiProperty({ example: "1", description: 'orderItemId' })
+  @ApiProperty({ example: '1', description: 'orderItemId' })
   orderItemId!: string;
 
   @IsInt()
@@ -13,12 +13,12 @@ export class CreateReturnRequestItemDto {
   quantity!: number;
 
   @IsString()
-  @ApiProperty({ example: "RESTOCK", description: 'reason' })
+  @ApiProperty({ example: 'RESTOCK', description: 'reason' })
   reason!: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "Return request rejected after review", description: 'note' })
+  @ApiPropertyOptional({ example: 'Return request rejected after review', description: 'note' })
   note?: string;
 }
 
@@ -32,17 +32,17 @@ export class CreateReturnRequestDto {
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "Return request rejected after review", description: 'note' })
+  @ApiPropertyOptional({ example: 'Return request rejected after review', description: 'note' })
   note?: string;
 }
 
 export class CreateExchangeRequestItemDto {
   @IsString()
-  @ApiProperty({ example: "1", description: 'orderItemId' })
+  @ApiProperty({ example: '1', description: 'orderItemId' })
   orderItemId!: string;
 
   @IsString()
-  @ApiProperty({ example: "1", description: 'newVariantId' })
+  @ApiProperty({ example: '1', description: 'newVariantId' })
   newVariantId!: string;
 
   @IsInt()
@@ -51,12 +51,12 @@ export class CreateExchangeRequestItemDto {
   quantity!: number;
 
   @IsString()
-  @ApiProperty({ example: "RESTOCK", description: 'reason' })
+  @ApiProperty({ example: 'RESTOCK', description: 'reason' })
   reason!: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "Return request rejected after review", description: 'note' })
+  @ApiPropertyOptional({ example: 'Return request rejected after review', description: 'note' })
   note?: string;
 }
 
@@ -70,6 +70,6 @@ export class CreateExchangeRequestDto {
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "Return request rejected after review", description: 'note' })
+  @ApiPropertyOptional({ example: 'Return request rejected after review', description: 'note' })
   note?: string;
 }

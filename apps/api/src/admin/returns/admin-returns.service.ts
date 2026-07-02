@@ -25,6 +25,7 @@ import { REFUND_SOURCES } from '@/shared/payment/payment.constants';
 import { WALLET_REFERENCE_TYPES } from '@/common/constants/wallet.constants';
 import { WalletService } from '@/shared/wallet/wallet.service';
 import { OrderLifecycleService } from '@/shared/orders/order-lifecycle.service';
+import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
 import {
   AdminExchangePaymentDto,
   AdminReceiveExchangeDto,
@@ -73,7 +74,7 @@ const toPrismaJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.
 
 type ReturnRequestWithRelations = Prisma.ReturnRequestGetPayload<{
   include: {
-    order: true;
+    order: { include: { payments: true } };
     user: true;
     items: { include: { orderItem: true } };
   };
@@ -90,7 +91,7 @@ type ReturnRequestWithRelations = Prisma.ReturnRequestGetPayload<{
 
 type ExchangeRequestWithRelations = Prisma.ExchangeRequestGetPayload<{
   include: {
-    order: true;
+    order: { include: { payments: true } };
     user: true;
     items: { include: { orderItem: true; newVariant: true } };
   };
@@ -111,6 +112,16 @@ type RefundAllocation = {
   paymentTransactionId?: string;
 };
 
+type RefundablePayment = {
+  id: bigint;
+  amount: Prisma.Decimal;
+  paymentMethod: string;
+  paymentStatus: string;
+  transactionRef?: string | null;
+  refundSource?: string | null;
+  currency?: string | null;
+};
+
 @Injectable()
 export class AdminReturnsService {
   constructor(
@@ -125,6 +136,7 @@ export class AdminReturnsService {
     @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
     private readonly walletService: WalletService,
     private readonly domainEvents: DomainEventPublisher,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   async findReturns(query: AdminReturnExchangeQueryDto = {}) {
@@ -132,7 +144,7 @@ export class AdminReturnsService {
     const requests = await this.returnRequestsRepository.findMany({
       where,
       include: {
-        order: true,
+        order: { include: { payments: true } },
         user: true,
         items: { include: { orderItem: true } },
         history: { orderBy: { createdAt: 'asc' } },
@@ -157,7 +169,7 @@ export class AdminReturnsService {
     const request = await this.returnRequestsRepository.findUnique({
       where: { id },
       include: {
-        order: true,
+        order: { include: { payments: true } },
         user: true,
         items: { include: { orderItem: true } },
         history: { orderBy: { createdAt: 'asc' } },
@@ -172,7 +184,7 @@ export class AdminReturnsService {
     const requests = await this.exchangeRequestsRepository.findMany({
       where,
       include: {
-        order: true,
+        order: { include: { payments: true } },
         user: true,
         items: { include: { orderItem: true, newVariant: true } },
         history: { orderBy: { createdAt: 'asc' } },
@@ -197,7 +209,7 @@ export class AdminReturnsService {
     const request = await this.exchangeRequestsRepository.findUnique({
       where: { id },
       include: {
-        order: true,
+        order: { include: { payments: true } },
         user: true,
         items: { include: { orderItem: true, newVariant: true } },
         history: { orderBy: { createdAt: 'asc' } },
@@ -537,6 +549,10 @@ export class AdminReturnsService {
         status: PAYMENT_STATUSES.refunded,
         amount: refundAmount,
         actorUserId: adminId,
+      });
+      await this.loyaltyService.reverseOrderEarningsForRefund(tx, request.orderId, refundAmount, {
+        source: REFUND_SOURCES.return,
+        sourceId: id,
       });
       await this.returnRequestsRepository.update(
         {
@@ -1064,6 +1080,10 @@ export class AdminReturnsService {
         amount,
         actorUserId: adminId,
       });
+      await this.loyaltyService.reverseOrderEarningsForRefund(tx, request.orderId, amount, {
+        source: REFUND_SOURCES.exchange,
+        sourceId: id,
+      });
       await this.exchangeRequestsRepository.update(
         {
           where: { id },
@@ -1226,6 +1246,10 @@ export class AdminReturnsService {
         note: dto.note,
         adminId,
       });
+      await this.loyaltyService.reverseOrderEarningsForRefund(tx, request.orderId, refundAmount, {
+        source: REFUND_SOURCES.return,
+        sourceId: request.id,
+      });
       await this.returnRequestsRepository.update(
         {
           where: { id: request.id },
@@ -1303,6 +1327,10 @@ export class AdminReturnsService {
         note: dto.note,
         adminId,
       });
+      await this.loyaltyService.reverseOrderEarningsForRefund(tx, request.orderId, amount, {
+        source: REFUND_SOURCES.exchange,
+        sourceId: request.id,
+      });
       await this.exchangeRequestsRepository.update(
         {
           where: { id: request.id },
@@ -1329,6 +1357,30 @@ export class AdminReturnsService {
     return normalized;
   }
 
+  private refundOptions(orderPayments: RefundablePayment[] | undefined) {
+    const payments = orderPayments ?? [];
+    const paymentSummary = this.orderLifecycleService.paymentSummary(payments);
+    const originalPayments = payments
+      .filter((payment) => !payment.refundSource && payment.paymentStatus === PAYMENT_STATUSES.completed)
+      .map((payment) => ({
+        id: payment.id.toString(),
+        amount: Number(payment.amount),
+        paymentMethod: payment.paymentMethod,
+        transactionRef: payment.transactionRef ?? null,
+        currency: payment.currency || PAYMENT_CURRENCIES.sar,
+      }));
+    const hasOriginalPayment = originalPayments.length > 0;
+    const originalPaymentAvailableAmount = hasOriginalPayment ? paymentSummary.remainingRefundableAmount : 0;
+
+    return {
+      ...paymentSummary,
+      originalPaymentAvailableAmount,
+      walletAvailableAmount: paymentSummary.remainingRefundableAmount,
+      manualAvailableAmount: paymentSummary.remainingRefundableAmount,
+      originalPayments,
+    };
+  }
+
   private async createOriginalRefundAttempts(input: {
     source: string;
     sourceId: bigint;
@@ -1347,6 +1399,13 @@ export class AdminReturnsService {
         input.orderId,
         this.round(input.allocations.reduce((total, allocation) => total + allocation.amount, 0)),
       );
+      const refundOptions = this.refundOptions(input.orderPayments);
+      const originalAmount = this.round(
+        originalAllocations.reduce((total, allocation) => total + allocation.amount, 0),
+      );
+      if (originalAmount > refundOptions.originalPaymentAvailableAmount) {
+        throw new BadRequestException(this.i18n.t('errors.refund_amount_exceeds_remaining_paid_amount'));
+      }
       const attempts = [];
       for (const [index, allocation] of originalAllocations.entries()) {
         const originalPayment = this.findOriginalPayment(input.orderPayments, allocation);
@@ -1355,23 +1414,36 @@ export class AdminReturnsService {
             throw new BadRequestException(this.i18n.t('errors.order_completed_payment_not_found'));
           }
           const idempotencyKey = `${input.source}_refund_${input.sourceId.toString()}_${index}`;
-          const attempt = await tx.paymentTransaction.create({
-            data: {
-              orderId: input.orderId,
-              returnRequestId: input.source === REFUND_SOURCES.return ? input.sourceId : undefined,
-              exchangeRequestId: input.source === REFUND_SOURCES.exchange ? input.sourceId : undefined,
-              amount: allocation.amount,
-              paymentMethod: originalPayment.paymentMethod,
-              paymentStatus: PAYMENT_STATUSES.processingPayment,
-              transactionRef: `${input.source}_refund_${input.sourceId.toString()}_${index}`,
-              gatewayResponse: toPrismaJson({ originalTransactionRef: originalPayment.transactionRef }),
-              currency: originalPayment.currency || PAYMENT_CURRENCIES.sar,
-              refundSource: input.source,
-              refundReason: input.note,
-              idempotencyKey,
-              requestedById: input.adminId,
-            },
+          const existingAttempt = await tx.paymentTransaction.findFirst({
+            where: { idempotencyKey },
+            orderBy: { id: 'desc' },
           });
+          const attempt = existingAttempt
+            ? await tx.paymentTransaction.update({
+                where: { id: existingAttempt.id },
+                data: {
+                  paymentStatus: PAYMENT_STATUSES.processingPayment,
+                  requestedById: input.adminId,
+                  refundReason: input.note,
+                },
+              })
+            : await tx.paymentTransaction.create({
+                data: {
+                  orderId: input.orderId,
+                  returnRequestId: input.source === REFUND_SOURCES.return ? input.sourceId : undefined,
+                  exchangeRequestId: input.source === REFUND_SOURCES.exchange ? input.sourceId : undefined,
+                  amount: allocation.amount,
+                  paymentMethod: originalPayment.paymentMethod,
+                  paymentStatus: PAYMENT_STATUSES.processingPayment,
+                  transactionRef: `${input.source}_refund_${input.sourceId.toString()}_${index}`,
+                  gatewayResponse: toPrismaJson({ originalTransactionRef: originalPayment.transactionRef }),
+                  currency: originalPayment.currency || PAYMENT_CURRENCIES.sar,
+                  refundSource: input.source,
+                  refundReason: input.note,
+                  idempotencyKey,
+                  requestedById: input.adminId,
+                },
+              });
           attempts.push({ attempt, originalPayment, allocation });
         }
       }
@@ -1391,7 +1463,11 @@ export class AdminReturnsService {
           item.allocation.amount,
           { idempotencyKey: item.attempt.idempotencyKey },
         );
-        if (result.status !== PAYMENT_STATUSES.refunded) throw new Error('REFUND_NOT_CONFIRMED');
+        if (result.status !== PAYMENT_STATUSES.refunded) {
+          const errorMessage =
+            typeof result.gatewayResponse?.error === 'string' ? result.gatewayResponse.error : 'REFUND_NOT_CONFIRMED';
+          throw new Error(errorMessage);
+        }
         item.attempt.gatewayRefundResponse = result.gatewayResponse;
       } catch (error) {
         await markReview(item.attempt.id, error);
@@ -1563,6 +1639,7 @@ export class AdminReturnsService {
   }
 
   private formatReturnRequest(request: ReturnRequestWithRelations) {
+    const refundOptions = this.refundOptions((request.order as { payments?: RefundablePayment[] }).payments);
     return {
       id: request.id.toString(),
       orderId: request.orderId.toString(),
@@ -1581,6 +1658,7 @@ export class AdminReturnsService {
       finalRefundAmount: Number(request.finalRefundAmount),
       refundAdjustmentReason: request.refundAdjustmentReason,
       shippingRefundReason: request.shippingRefundReason,
+      refundOptions,
       adminNote: request.adminNote,
       clientNote: request.clientNote,
       createdAt: request.createdAt,
@@ -1620,6 +1698,7 @@ export class AdminReturnsService {
   }
 
   private formatExchangeRequest(request: ExchangeRequestWithRelations) {
+    const refundOptions = this.refundOptions((request.order as { payments?: RefundablePayment[] }).payments);
     return {
       id: request.id.toString(),
       orderId: request.orderId.toString(),
@@ -1634,6 +1713,7 @@ export class AdminReturnsService {
       suggestedReplacementShippingFee: Number(request.suggestedReplacementShippingFee),
       replacementShippingFee: Number(request.replacementShippingFee),
       settlementAmount: Number(request.settlementAmount),
+      refundOptions,
       shippingFeeReason: request.shippingFeeReason,
       adminNote: request.adminNote,
       clientNote: request.clientNote,
