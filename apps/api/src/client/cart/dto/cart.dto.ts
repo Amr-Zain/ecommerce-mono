@@ -20,8 +20,14 @@ export class AddToCartDto {
 }
 
 export class UpdateCartItemDto {
+  @IsOptional()
   @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
   @Min(1, { message: i18nValidationMessage<I18nTranslations>('validation.MIN') })
-  @ApiProperty({ example: 3, description: 'quantity' })
-  quantity!: number;
+  @ApiPropertyOptional({ example: 3, description: 'quantity' })
+  quantity?: number;
+
+  @IsOptional()
+  @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
+  @ApiPropertyOptional({ example: 1, description: 'variantId' })
+  variantId?: number;
 }

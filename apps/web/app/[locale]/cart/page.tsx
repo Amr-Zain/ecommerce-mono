@@ -98,8 +98,9 @@ export default function CartPage() {
       image: item.image ?? FALLBACK_IMAGE,
       qty: item.quantity,
       stock: item.stockQuantity,
-      size: item.attributes[0]?.value ?? "",
-      color: item.attributes[1]?.value ?? "",
+      attributes: item.attributes,
+      variantId: item.variantId,
+      variantOptions: item.variantOptions,
     })) ?? []
 
   const subtotal = cart.data?.data.subtotal ?? 0
@@ -306,6 +307,12 @@ export default function CartPage() {
                   updateItem.mutate({
                     id,
                     quantity,
+                  })
+                }
+                onVariantChange={(id, variantId) =>
+                  updateItem.mutate({
+                    id,
+                    variantId: Number(variantId),
                   })
                 }
                 onRemove={(id) =>

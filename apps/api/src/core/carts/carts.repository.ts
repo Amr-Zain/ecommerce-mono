@@ -28,7 +28,23 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
                 translations: true,
                 variants: {
                   where: { isActive: true },
-                  take: 1,
+                  orderBy: [{ isDefault: 'desc' }, { price: 'asc' }, { id: 'asc' }],
+                  include: {
+                    attributes: {
+                      include: {
+                        attribute: {
+                          include: {
+                            translations: true,
+                          },
+                        },
+                        value: {
+                          include: {
+                            translations: true,
+                          },
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -63,7 +79,7 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
     }
     let cart = await this.findByOwner(identity);
     if (!cart) {
-      const newCart = await this.prisma.cart.create({
+      await this.prisma.cart.create({
         data: identity.type === 'user' ? { userId: identity.userId } : { anonymousSessionId: identity.sessionId },
       });
       cart = await this.findByOwner(identity);
@@ -107,6 +123,13 @@ export class CartsRepository extends BaseRepository<Cart> implements ICartsRepos
       data: { quantity },
     });
     return updated;
+  }
+
+  async updateItem(cartItemId: bigint, data: { quantity?: number; variantId?: bigint }): Promise<CartItem> {
+    return this.prisma.cartItem.update({
+      where: { id: cartItemId },
+      data,
+    });
   }
 
   async removeItem(cartItemId: bigint): Promise<CartItem> {

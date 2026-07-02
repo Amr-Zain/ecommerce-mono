@@ -29,7 +29,18 @@ type CartItem = {
   originalPrice: number
   lineTotal: number
   image?: string
-  attributes: Array<{ name: string; value: string }>
+  attributes: Array<{ attributeId?: string; valueId?: string; name: string; value: string }>
+  variantOptions: Array<{
+    id: string
+    price: number
+    compareAtPrice?: number
+    originalPrice: number
+    stockQuantity: number
+    available: boolean
+    isDefault: boolean
+    image?: string
+    attributes: Array<{ attributeId?: string; valueId?: string; name: string; value: string }>
+  }>
 }
 
 type WishlistItem = {
@@ -58,6 +69,9 @@ function normalizeCartResponse(response: unknown): ApiResponse<Cart> {
   const items = rawItems.map((entry) => {
     const item = entry as Record<string, unknown>
     const rawAttributes = Array.isArray(item.attributes) ? item.attributes : []
+    const rawVariantOptions = Array.isArray(item.variantOptions ?? item.variant_options)
+      ? (item.variantOptions ?? item.variant_options)
+      : []
 
     return {
       id: String(item.id ?? ""),
@@ -80,8 +94,46 @@ function normalizeCartResponse(response: unknown): ApiResponse<Cart> {
       attributes: rawAttributes.map((entry) => {
         const attribute = entry as Record<string, unknown>
         return {
+          attributeId: String(attribute.attributeId ?? attribute.attribute_id ?? ""),
+          valueId: String(attribute.valueId ?? attribute.value_id ?? ""),
           name: String(attribute.name ?? ""),
           value: String(attribute.value ?? ""),
+        }
+      }),
+      variantOptions: (rawVariantOptions as unknown[]).map((entry) => {
+        const option = entry as Record<string, unknown>
+        const rawOptionAttributes = Array.isArray(option.attributes)
+          ? option.attributes
+          : []
+        return {
+          id: String(option.id ?? ""),
+          price: numberValue(option.price),
+          compareAtPrice:
+            option.compareAtPrice !== undefined ||
+            option.compare_at_price !== undefined
+              ? numberValue(option.compareAtPrice ?? option.compare_at_price)
+              : undefined,
+          originalPrice: numberValue(
+            option.originalPrice ?? option.original_price ?? option.price
+          ),
+          stockQuantity: numberValue(
+            option.stockQuantity ?? option.stock_quantity
+          ),
+          available: option.available !== false,
+          isDefault: Boolean(option.isDefault ?? option.is_default),
+          image:
+            typeof option.image === "string" && option.image
+              ? option.image
+              : undefined,
+          attributes: rawOptionAttributes.map((entry) => {
+            const attribute = entry as Record<string, unknown>
+            return {
+              attributeId: String(attribute.attributeId ?? attribute.attribute_id ?? ""),
+              valueId: String(attribute.valueId ?? attribute.value_id ?? ""),
+              name: String(attribute.name ?? ""),
+              value: String(attribute.value ?? ""),
+            }
+          }),
         }
       }),
     }

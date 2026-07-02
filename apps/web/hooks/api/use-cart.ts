@@ -75,6 +75,7 @@ function useAddToCart(productId?: string) {
                   originalPrice: optimistic.oldPrice ?? optimistic.price,
                   lineTotal: optimistic.price * input.quantity,
                   attributes: [],
+                  variantOptions: [],
                 },
               ]
           queryClient.setQueryData<ApiResponse<Cart>>(queryKeys.cart(), {
@@ -107,7 +108,7 @@ function useAddToCart(productId?: string) {
   })
 }
 
-type UpdateCartItemInput = { id: string; quantity: number }
+type UpdateCartItemInput = { id: string; quantity?: number; variantId?: number }
 type RemoveCartItemInput = { id: string }
 
 function useUpdateCartItem() {
@@ -115,7 +116,7 @@ function useUpdateCartItem() {
 
   return useMutate<unknown, UpdateCartItemInput>({
     endpoint: (input) => clientEndpoints.cartItem(input.id),
-    body: ({ quantity }) => ({ quantity }),
+    body: ({ quantity, variantId }) => ({ quantity, variantId }),
     mutationKey: ["cart", "update"],
     method: "PATCH",
     mutationOptions: {
@@ -131,8 +132,8 @@ function useUpdateCartItem() {
             item.id === input.id
               ? {
                   ...item,
-                  quantity: input.quantity,
-                  lineTotal: item.price * input.quantity,
+                  quantity: input.quantity ?? item.quantity,
+                  lineTotal: item.price * (input.quantity ?? item.quantity),
                 }
               : item
           )

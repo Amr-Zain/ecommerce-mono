@@ -18,8 +18,17 @@ type CartItem = {
   image: string
   qty: number
   stock: number
-  size: string
-  color: string
+  attributes: Array<{ name: string; value: string }>
+  variantId: string
+  variantOptions: Array<{
+    id: string
+    price: number
+    compareAtPrice?: number
+    stockQuantity: number
+    available: boolean
+    isDefault: boolean
+    attributes: Array<{ name: string; value: string }>
+  }>
 }
 
 export interface Pricing {
@@ -36,6 +45,7 @@ interface CartStepProps {
   pricing: Pricing
   onNext: () => void
   onQuantityChange: (id: string, quantity: number) => void
+  onVariantChange: (id: string, variantId: string) => void
   onRemove: (id: string) => void
   couponCode: string
   couponApplied: boolean
@@ -100,6 +110,7 @@ export function CartStep({
   pricing,
   onNext,
   onQuantityChange,
+  onVariantChange,
   onRemove,
   couponCode,
   couponApplied,
@@ -135,9 +146,34 @@ export function CartStep({
                   <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{item.brand}</p>
                   <h3 className="mt-0.5 text-sm font-bold text-foreground leading-snug line-clamp-2">{item.name}</h3>
                   <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground font-medium">
-                    {item.size && <span>Size: {item.size}</span>}
-                    {item.color && <span>Color: {item.color}</span>}
+                    {item.attributes.map((attribute) => (
+                      <span key={`${attribute.name}-${attribute.value}`}>
+                        {attribute.name}: {attribute.value}
+                      </span>
+                    ))}
                   </div>
+                  {item.variantOptions.length > 1 ? (
+                    <label className="mt-3 block max-w-xs text-[11px] font-semibold text-muted-foreground">
+                      Variant
+                      <select
+                        value={item.variantId}
+                        onChange={(event) => onVariantChange(item.id, event.target.value)}
+                        className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs text-foreground"
+                      >
+                        {item.variantOptions.map((option) => {
+                          const label =
+                            option.attributes.map((attribute) => `${attribute.name}: ${attribute.value}`).join(" / ") ||
+                            (option.isDefault ? "Default variant" : `Variant #${option.id}`)
+                          return (
+                            <option key={option.id} value={option.id} disabled={!option.available}>
+                              {label} - ${option.price.toFixed(2)}
+                              {!option.available ? " (out of stock)" : ""}
+                            </option>
+                          )
+                        })}
+                      </select>
+                    </label>
+                  ) : null}
                 </div>
                 <button
                   onClick={() => removeItem(item.id)}

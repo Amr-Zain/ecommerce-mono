@@ -29,7 +29,12 @@ export class ClientCartController {
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @Post('items')
-  async addItem(@Req() request: Request, @CurrentUser() user: { id: bigint } | null, @Body() dto: AddToCartDto, @I18nLang() lang: string) {
+  async addItem(
+    @Req() request: Request,
+    @CurrentUser() user: { id: bigint } | null,
+    @Body() dto: AddToCartDto,
+    @I18nLang() lang: string,
+  ) {
     return this.cartService.addItem(await this.anonymousSessions.resolveOwner(request, user, true), dto, lang);
   }
 
@@ -43,14 +48,28 @@ export class ClientCartController {
     @Body() dto: UpdateCartItemDto,
     @I18nLang() lang: string,
   ) {
-    return this.cartService.updateItemQuantity(await this.anonymousSessions.resolveOwner(request, user, true), BigInt(id), dto, lang);
+    return this.cartService.updateItemQuantity(
+      await this.anonymousSessions.resolveOwner(request, user, true),
+      BigInt(id),
+      dto,
+      lang,
+    );
   }
 
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @Delete('items/:id')
-  async removeItem(@Req() request: Request, @CurrentUser() user: { id: bigint } | null, @Param('id') id: string, @I18nLang() lang: string) {
-    return this.cartService.removeItem(await this.anonymousSessions.resolveOwner(request, user, true), BigInt(id), lang);
+  async removeItem(
+    @Req() request: Request,
+    @CurrentUser() user: { id: bigint } | null,
+    @Param('id') id: string,
+    @I18nLang() lang: string,
+  ) {
+    return this.cartService.removeItem(
+      await this.anonymousSessions.resolveOwner(request, user, true),
+      BigInt(id),
+      lang,
+    );
   }
 
   @Public()

@@ -27,6 +27,7 @@ export interface ICartsRepository extends IBaseRepository<Cart> {
   findOrCreateByOwner(identity: CommerceIdentity): Promise<Cart>;
   addItem(cartId: bigint, productId: bigint, variantId: bigint | null, quantity: number): Promise<CartItem>;
   updateItemQuantity(cartItemId: bigint, quantity: number): Promise<CartItem>;
+  updateItem(cartItemId: bigint, data: { quantity?: number; variantId?: bigint }): Promise<CartItem>;
   removeItem(cartItemId: bigint): Promise<CartItem>;
   clearCart(cartId: bigint): Promise<void>;
 }
