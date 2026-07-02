@@ -31,12 +31,17 @@ export interface ProductVariant {
   stockQuantity: number;
   barcode: string | null;
   sku: string | null;
+  isDefault: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   attributes?: VariantAttribute[];
   gallery?: unknown;
 }
+
+export type ProductVariantWithProduct = Prisma.ProductVariantGetPayload<{
+  include: { product: true };
+}>;
 
 export interface Product {
   id: bigint;
@@ -127,7 +132,7 @@ export interface IVariantsRepository {
     reason: string,
     tx?: Prisma.TransactionClient,
   ): Promise<ProductVariant>;
-  findActiveVariantsWithProduct(ids: bigint[], tx?: Prisma.TransactionClient): Promise<any[]>;
+  findActiveVariantsWithProduct(ids: bigint[], tx?: Prisma.TransactionClient): Promise<ProductVariantWithProduct[]>;
   findActiveVariantStocks(
     ids: bigint[],
     tx?: Prisma.TransactionClient,

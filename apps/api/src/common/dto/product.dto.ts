@@ -33,17 +33,17 @@ export class MaxPercentageConstraint implements ValidatorConstraintInterface {
 export class ProductTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "en", description: 'langId' })
+  @ApiProperty({ example: 'en', description: 'langId' })
   langId!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "Test Product", description: 'name' })
+  @ApiProperty({ example: 'Test Product', description: 'name' })
   name!: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "Sample description", description: 'description' })
+  @ApiPropertyOptional({ example: 'Sample description', description: 'description' })
   description?: string;
 }
 
@@ -61,7 +61,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "PERCENTAGE", description: 'discountType' })
+  @ApiPropertyOptional({ example: 'PERCENTAGE', description: 'discountType' })
   discountType?: 'FIXED' | 'PERCENTAGE';
 
   @IsOptional()
@@ -76,7 +76,13 @@ export class CreateProductDto {
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
   @Type(() => ProductTranslationDto)
-  @ApiProperty({ example: [{ langId: 'en', name: 'Test Product' }, { langId: 'ar', name: 'منتج تجريبي' }], description: 'translations' })
+  @ApiProperty({
+    example: [
+      { langId: 'en', name: 'Test Product' },
+      { langId: 'ar', name: 'منتج تجريبي' },
+    ],
+    description: 'translations',
+  })
   translations!: ProductTranslationDto[];
 
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
@@ -88,7 +94,7 @@ export class CreateProductDto {
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "mock-main-image-hash", description: 'image' })
+  @ApiProperty({ example: 'mock-main-image-hash', description: 'image' })
   image!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
@@ -139,7 +145,7 @@ export class CreateVariantDto {
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "PERCENTAGE", description: 'discountType' })
+  @ApiPropertyOptional({ example: 'PERCENTAGE', description: 'discountType' })
   discountType?: 'FIXED' | 'PERCENTAGE';
 
   @IsOptional()
@@ -153,7 +159,7 @@ export class CreateVariantDto {
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "PROD-1-VAR-1", description: 'sku' })
+  @ApiPropertyOptional({ example: 'PROD-1-VAR-1', description: 'sku' })
   sku?: string;
 
   @IsOptional()
@@ -171,6 +177,11 @@ export class CreateVariantDto {
   @IsOptional()
   @ApiPropertyOptional({ example: true, description: 'isActive' })
   isActive?: boolean = true;
+
+  @IsBoolean({ message: i18nValidationMessage<I18nTranslations>('validation.IS_BOOLEAN') })
+  @IsOptional()
+  @ApiPropertyOptional({ example: false, description: 'isDefault' })
+  isDefault?: boolean = false;
 
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
@@ -201,6 +212,6 @@ export class AdjustStockDto {
   @IsEnum(['RESTOCK', 'SALE', 'ADJUSTMENT', 'RETURN'], {
     message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM'),
   })
-  @ApiProperty({ example: "RESTOCK", description: 'reason' })
+  @ApiProperty({ example: 'RESTOCK', description: 'reason' })
   reason!: 'RESTOCK' | 'SALE' | 'ADJUSTMENT' | 'RETURN';
 }

@@ -4,12 +4,28 @@ import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MediaService } from '@/media/media.service';
 import { Prisma } from '@prisma/client';
-import { VARIANTS_REPOSITORY, IVariantsRepository } from '@/common/interfaces';
+import { IVariantsRepository } from '@/common/interfaces';
 import { PaginationUtil } from '@/common/utils/pagination.util';
 
 type VariantType = Prisma.ProductVariantGetPayload<{
   include: { attributes: true };
 }>;
+
+type ProductConnectRelation = {
+  connect?: {
+    id?: number | bigint;
+  } | null;
+};
+
+type VariantAttributeInput = {
+  attributeId: number | bigint;
+  valueId: number | bigint;
+};
+
+type VariantUpdatePayload = Prisma.ProductVariantUpdateInput & {
+  gallery?: string | string[];
+  attributes?: VariantAttributeInput[];
+};
 
 @Injectable()
 export class VariantsRepository extends BaseRepository<VariantType> implements IVariantsRepository {
@@ -129,14 +145,23 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
 
   async createVariant(data: Prisma.ProductVariantCreateInput, gallery?: string[]) {
     const variant = await this.prisma.$transaction(async (prisma) => {
+      const productId =
+        typeof data.product === 'object' && data.product !== null
+          ? (data.product as ProductConnectRelation).connect?.id
+          : undefined;
+      if (productId && (data as Record<string, unknown>).isDefault === true) {
+        await prisma.productVariant.updateMany({
+          where: { productId: BigInt(productId) },
+          data: { isDefault: false },
+        });
+      }
+
       const variant = await prisma.productVariant.create({
         data,
         include: { attributes: true },
       });
 
       // Mark parent product as having variants
-      const productId =
-        typeof data.product === 'object' && data.product !== null ? (data.product as any).connect?.id : undefined;
       if (productId) {
         await prisma.product.update({
           where: { id: BigInt(productId) },
@@ -176,7 +201,7 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
     return enriched;
   }
 
-  async updateVariant(id: number | bigint, data: Prisma.ProductVariantUpdateInput) {
+  async updateVariant(id: number | bigint, data: VariantUpdatePayload) {
     return this.prisma.$transaction(async (prisma) => {
       const current = await prisma.productVariant.findUnique({
         where: { id: BigInt(id) },
@@ -260,7 +285,14 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
       }
 
       // Extract non-scalar fields before Prisma update
-      const { gallery, attributes, ...variantData } = data as Record<string, any>;
+      const { gallery, attributes, ...variantData } = data;
+
+      if (variantData.isDefault === true) {
+        await prisma.productVariant.updateMany({
+          where: { productId: current.productId, id: { not: current.id } },
+          data: { isDefault: false },
+        });
+      }
 
       const updated = await prisma.productVariant.update({
         where: { id: BigInt(id) },

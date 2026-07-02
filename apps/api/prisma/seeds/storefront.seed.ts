@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../node_modules/.prisma/client/index.js';
 import * as bcrypt from 'bcrypt';
 
 const collectionSeeds = [
@@ -753,11 +753,12 @@ export async function seedStorefront(prisma: PrismaClient) {
     }
     await prisma.productVariant.updateMany({
       where: { productId: id, sku: { startsWith: `SEED-${id}` } },
-      data: { isActive: false },
+      data: { isActive: false, isDefault: false },
     });
     for (let variantIndex = 0; variantIndex < variantCounts[index]; variantIndex++) {
       const variantPrice = price + variantIndex * 20;
       const variantStock = Math.max(1, stock - variantIndex * 3);
+      const isDefault = variantIndex === 0;
       const variant = await prisma.productVariant.upsert({
         where: { sku: `SEED-${id}-${variantIndex + 1}` },
         update: {
@@ -765,6 +766,7 @@ export async function seedStorefront(prisma: PrismaClient) {
           price: variantPrice,
           compareAtPrice: compareAtPrice ? compareAtPrice + variantIndex * 20 : null,
           stockQuantity: variantStock,
+          isDefault,
           isActive: true,
         },
         create: {
@@ -775,6 +777,7 @@ export async function seedStorefront(prisma: PrismaClient) {
           compareAtPrice: compareAtPrice ? compareAtPrice + variantIndex * 20 : null,
           costPrice: Math.max(1, variantPrice * 0.6),
           stockQuantity: variantStock,
+          isDefault,
           isActive: true,
         },
       });

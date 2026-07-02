@@ -18,6 +18,10 @@ function buildAttributeSignature(attributes: { attributeId: number | bigint; val
     .join(',');
 }
 
+type MutableUpdateVariantDto = UpdateVariantDto & {
+  compareAtPrice?: number | null;
+};
+
 @Injectable()
 export class VariantsService {
   constructor(
@@ -84,6 +88,7 @@ export class VariantsService {
       sku: createVariantDto.sku,
       barcode: createVariantDto.barcode,
       stockQuantity: createVariantDto.stockQuantity ?? 0,
+      isDefault: createVariantDto.isDefault ?? false,
       isActive: createVariantDto.isActive ?? true,
       attributes: {
         create: createVariantDto.attributes.map((attr) => ({
@@ -108,7 +113,7 @@ export class VariantsService {
   }
 
   async update(id: number, updateVariantDto: UpdateVariantDto) {
-    const dto = updateVariantDto as Record<string, any>;
+    const dto = updateVariantDto as MutableUpdateVariantDto;
 
     /* 1. Uniqueness guards */
     if (dto.sku) {
@@ -177,7 +182,7 @@ export class VariantsService {
       }
     }
 
-    const variant = await this.repo.updateVariant(id, dto as Prisma.ProductVariantUpdateInput);
+    const variant = await this.repo.updateVariant(id, dto);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.productsChanged);
     return variant;
   }

@@ -14,7 +14,7 @@ export class ClientHomeController {
   @Public()
   @Get()
   getHomePage(@I18nLang() lang: string) {
-    console.log('caaaaaaaa')
+    console.log('caaaaaaaa');
 
     return this.homeService.getHomePage(lang);
   }

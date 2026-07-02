@@ -10,7 +10,13 @@ const attribute = (attributeId: bigint, valueId: bigint, attributeName: string, 
   value: { id: valueId, attributeId, createdAt: new Date(), isActive: true, translations: [{ name: valueName }] },
 });
 
-const variant = (id: bigint, price: number, stockQuantity: number, attributes: ReturnType<typeof attribute>[]) => ({
+const variant = (
+  id: bigint,
+  price: number,
+  stockQuantity: number,
+  attributes: ReturnType<typeof attribute>[],
+  isDefault = false,
+) => ({
   id,
   productId: 1n,
   price,
@@ -21,6 +27,7 @@ const variant = (id: bigint, price: number, stockQuantity: number, attributes: R
   stockQuantity,
   barcode: null,
   sku: null,
+  isDefault,
   isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -93,5 +100,27 @@ describe('ProductsRepository.findCatalog', () => {
     const item = (result.items as Array<{ representativeVariant: { id: bigint; available: boolean } }>)[0];
 
     expect(item.representativeVariant).toMatchObject({ id: 2n, available: true });
+  });
+
+  it('uses the in-stock manual default before a cheaper in-stock variant', async () => {
+    const product = {
+      id: 1n,
+      collectionId: null,
+      hasVariants: true,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      translations: [{ name: 'Ring', description: '' }],
+      collection: null,
+      reviews: [{ rating: 5 }],
+      variants: [
+        variant(1n, 80, 5, [attribute(10n, 101n, 'Color', 'Red')]),
+        variant(2n, 100, 3, [attribute(10n, 101n, 'Color', 'Blue')], true),
+      ],
+    };
+    const result = await createRepository([product]).findCatalog({});
+    const item = (result.items as Array<{ representativeVariant: { id: bigint; isDefault: boolean } }>)[0];
+
+    expect(item.representativeVariant).toMatchObject({ id: 2n, isDefault: true });
   });
 });

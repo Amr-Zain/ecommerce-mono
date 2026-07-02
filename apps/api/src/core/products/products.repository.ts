@@ -45,6 +45,8 @@ type CatalogVariantEntry = {
   price: unknown;
   compareAtPrice: unknown;
   stockQuantity: number;
+  isActive?: boolean;
+  isDefault?: boolean;
   attributes: CatalogAttributeEntry[];
 };
 type CatalogProductEntry = {
@@ -102,34 +104,64 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
 
     await this.mergeVariantMedia(product);
 
-    if (product.hasVariants) {
-      // Variant product: hide the main variant (no attributes) from the response
-      const realVariants = product.variants?.filter((v) => v.attributes && v.attributes.length > 0) ?? [];
-      (product as Record<string, unknown>).variants = realVariants;
+    const variants = product.variants ?? [];
+    const representative = this.pickRepresentativeVariant(variants);
+    const activeVariants = variants.filter((variant) => variant.isActive);
+    const reservedByVariant = await this.reservedStockByVariant(variants.map((variant) => variant.id));
+    const reservedStock = [...reservedByVariant.values()].reduce((sum, quantity) => sum + quantity, 0);
+    const activePrices = activeVariants.map((variant) => Number(variant.price)).filter(Number.isFinite);
 
-      // Root-level fields should not synthesize from variants
-      (product as Record<string, unknown>).stock = null;
-      (product as Record<string, unknown>).price = null;
-      (product as Record<string, unknown>).sku = null;
-      (product as Record<string, unknown>).barcode = null;
-    } else {
-      // Simple product: copy first variant data to root, then hide the internal variant
-      const firstVariant = product.variants?.[0];
-      if (firstVariant) {
-        (product as Record<string, unknown>).price = firstVariant.price;
-        (product as Record<string, unknown>).stock = firstVariant.stockQuantity;
-        (product as Record<string, unknown>).sku = firstVariant.sku;
-        (product as Record<string, unknown>).barcode = firstVariant.barcode;
-        (product as Record<string, unknown>).compareAtPrice = firstVariant.compareAtPrice;
-        (product as Record<string, unknown>).costPrice = firstVariant.costPrice;
-        (product as Record<string, unknown>).discountType = firstVariant.discountType;
-        (product as Record<string, unknown>).discountValue = firstVariant.discountValue;
-      }
-      // Clear variants array for simple products — the internal row is not a real variant
-      (product as Record<string, unknown>).variants = [];
+    if (representative) {
+      (product as Record<string, unknown>).price = representative.price;
+      (product as Record<string, unknown>).compareAtPrice = representative.compareAtPrice;
+      (product as Record<string, unknown>).costPrice = representative.costPrice;
+      (product as Record<string, unknown>).sku = representative.sku;
+      (product as Record<string, unknown>).barcode = representative.barcode;
+      (product as Record<string, unknown>).representativeVariantId = representative.id;
+      (product as Record<string, unknown>).defaultVariantId = variants.find((variant) => variant.isDefault)?.id ?? null;
+      (product as Record<string, unknown>).discountType = representative.discountType ?? product.discountType;
+      (product as Record<string, unknown>).discountValue = representative.discountValue ?? product.discountValue;
     }
 
+    (product as Record<string, unknown>).stock = activeVariants.reduce(
+      (sum, variant) => sum + variant.stockQuantity,
+      0,
+    );
+    (product as Record<string, unknown>).reserved = reservedStock;
+    (product as Record<string, unknown>).onHandStock =
+      Number((product as Record<string, unknown>).stock ?? 0) + reservedStock;
+    (product as Record<string, unknown>).variantCount = variants.length;
+    (product as Record<string, unknown>).activeVariantCount = activeVariants.length;
+    (product as Record<string, unknown>).priceRange = activePrices.length
+      ? { min: Math.min(...activePrices), max: Math.max(...activePrices) }
+      : null;
+
     return product;
+  }
+
+  private pickRepresentativeVariant<
+    T extends { id: bigint; price: unknown; stockQuantity: number; isActive?: boolean; isDefault?: boolean },
+  >(variants: T[]): T | undefined {
+    const byPrice = (a: T, b: T) => Number(a.price) - Number(b.price) || Number(a.id - b.id);
+    return (
+      [...variants]
+        .filter((variant) => variant.isActive && variant.isDefault && variant.stockQuantity > 0)
+        .sort(byPrice)[0] ??
+      [...variants].filter((variant) => variant.isActive && variant.stockQuantity > 0).sort(byPrice)[0] ??
+      [...variants].filter((variant) => variant.isActive && variant.isDefault).sort(byPrice)[0] ??
+      [...variants].filter((variant) => variant.isActive).sort(byPrice)[0] ??
+      [...variants].sort(byPrice)[0]
+    );
+  }
+
+  private async reservedStockByVariant(variantIds: bigint[]) {
+    if (variantIds.length === 0) return new Map<string, number>();
+    const rows = await this.prisma.stockReservation.groupBy({
+      by: ['variantId'],
+      where: { variantId: { in: variantIds }, status: 'reserved', expiresAt: { gt: new Date() } },
+      _sum: { quantity: true },
+    });
+    return new Map(rows.map((row) => [row.variantId.toString(), row._sum.quantity ?? 0]));
   }
 
   async createProduct(data: Prisma.ProductCreateInput) {
@@ -169,7 +201,10 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
       });
 
       if (variants && variants.length > 0) {
-        for (const v of variants) {
+        const explicitDefaultIndex = variants.findIndex((variant) => variant.isDefault);
+        const defaultIndex = explicitDefaultIndex >= 0 ? explicitDefaultIndex : 0;
+
+        for (const [index, v] of variants.entries()) {
           const computed = this.pricingService.computePrice(
             v.price,
             { type: v.discountType ?? null, value: v.discountValue ? Number(v.discountValue) : null },
@@ -190,6 +225,7 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
               sku: v.sku,
               barcode: v.barcode,
               stockQuantity: v.stockQuantity ?? 0,
+              isDefault: index === defaultIndex,
               isActive: v.isActive ?? true,
               attributes: {
                 create: v.attributes.map((attr) => ({
@@ -292,7 +328,10 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
 
     const [productMedia, variantMedia, reviewStats] = await Promise.all([
       this.mediaService?.findByEntities('product', [product.id]) ?? new Map(),
-      this.mediaService?.findByEntities('productvariant', product.variants.map((variant) => variant.id)) ?? new Map(),
+      this.mediaService?.findByEntities(
+        'productvariant',
+        product.variants.map((variant) => variant.id),
+      ) ?? new Map(),
       this.prisma.review.groupBy({
         by: ['rating'],
         where: { productId: product.id, isActive: true, isVerified: true },
@@ -333,6 +372,7 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
         compareAtPrice: variant.compareAtPrice ? Number(variant.compareAtPrice) : null,
         stockQuantity: variant.stockQuantity,
         sku: variant.sku,
+        isDefault: variant.isDefault,
         available: variant.stockQuantity > 0,
         images: (variantMedia.get(variant.id.toString()) ?? []).map((item: { path: string }) => item.path),
         attributes: variant.attributes.map((entry) => ({
@@ -342,6 +382,16 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
           value: entry.value.translations[0]?.name ?? '',
         })),
       })),
+      representativeVariant: this.pickRepresentativeVariant(product.variants)
+        ? {
+            id: this.pickRepresentativeVariant(product.variants)!.id,
+            stockQuantity: this.pickRepresentativeVariant(product.variants)!.stockQuantity,
+            available: this.pickRepresentativeVariant(product.variants)!.stockQuantity > 0,
+            isDefault: this.pickRepresentativeVariant(product.variants)!.isDefault,
+          }
+        : null,
+      hasVariants: product.hasVariants,
+      variantCount: product.variants.length,
       reviews: {
         items: product.reviews,
         total: reviewCount,
@@ -453,11 +503,8 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
       .map((product) => {
         const matchingVariants = product.variants.filter((variant) => variantMatches(variant));
         if (matchingVariants.length === 0) return null;
-        const representative =
-          [...matchingVariants]
-            .filter((variant) => variant.stockQuantity > 0)
-            .sort((a, b) => Number(a.price) - Number(b.price))[0] ??
-          [...matchingVariants].sort((a, b) => Number(a.price) - Number(b.price))[0];
+        const representative = this.pickRepresentativeVariant(matchingVariants);
+        if (!representative) return null;
         const rating = product.reviews.length
           ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
           : 0;
@@ -515,10 +562,14 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
       discountPercentage: this.discountPercentage(representative),
       rating: Number(rating.toFixed(1)),
       reviewsCount: product.reviews.length,
+      hasVariants: product.hasVariants,
+      variantCount: product.variants.length,
+      canQuickAdd: representative.stockQuantity > 0,
       representativeVariant: {
         id: representative.id,
         stockQuantity: representative.stockQuantity,
         available: representative.stockQuantity > 0,
+        isDefault: representative.isDefault ?? false,
         attributes: representative.attributes.map((entry) => ({
           attributeId: entry.attributeId,
           attribute: entry.attribute.translations[0]?.name ?? '',
@@ -754,6 +805,7 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
   private async syncSimpleVariant(tx: Prisma.TransactionClient, productId: bigint, sync: SimpleVariantSyncData) {
     const firstVariant = await tx.productVariant.findFirst({
       where: { productId },
+      orderBy: [{ isDefault: 'desc' }, { id: 'asc' }],
     });
 
     if (!firstVariant) return;
@@ -805,6 +857,7 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
   async findFirstVariantOfProduct(productId: number | bigint) {
     return this.prisma.productVariant.findFirst({
       where: { productId: BigInt(productId) },
+      orderBy: [{ isDefault: 'desc' }, { id: 'asc' }],
       select: {
         id: true,
         price: true,
@@ -815,6 +868,7 @@ export class ProductsRepository extends BaseRepository<ProductType> implements I
         costPrice: true,
         discountType: true,
         discountValue: true,
+        isDefault: true,
       },
     });
   }
