@@ -9,8 +9,10 @@ import { StripeWebhookService } from './stripe-webhook.service';
 import { PaymentReservationCleanupService } from './payment-reservation-cleanup.service';
 import { PAYMENT_TRANSACTIONS_REPOSITORY } from '@/common/interfaces';
 import { PaymentTransactionsRepository } from './repositories/payment-transactions.repository';
+import { LoyaltyModule } from '@/shared/loyalty/loyalty.module';
 
 @Module({
+  imports: [LoyaltyModule],
   controllers: [StripeWebhookController],
   providers: [
     PaymentService,

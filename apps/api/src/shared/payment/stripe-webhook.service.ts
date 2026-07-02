@@ -35,6 +35,7 @@ import {
   type OrderCreatedPayload,
   type PaymentCompletedPayload,
 } from '@/common/events/domain-event';
+import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
 
 type StripeEvent = {
   type: string;
@@ -94,6 +95,10 @@ type CheckoutSnapshot = {
     externalAmount?: number;
     totalAmount?: number;
   };
+  loyaltyRewardId?: string | null;
+  loyaltyPointsRedeemed?: number;
+  loyaltyDiscountAmount?: number;
+  loyaltyRewardSnapshot?: unknown;
   items: CheckoutSnapshotItem[];
 };
 
@@ -126,6 +131,7 @@ export class StripeWebhookService {
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly configService: ConfigService,
     private readonly domainEvents: DomainEventPublisher,
+    private readonly loyaltyService: LoyaltyService,
   ) {
     this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || STRIPE_CONFIG.defaultSecretKey);
   }
@@ -548,6 +554,12 @@ export class StripeWebhookService {
           shippingFee: snapshot.totals.shippingFee,
           subtotal: snapshot.totals.subtotal,
           discountAmount: snapshot.totals.discountAmount,
+          loyaltyDiscountAmount: snapshot.loyaltyDiscountAmount || 0,
+          loyaltyPointsRedeemed: snapshot.loyaltyPointsRedeemed || 0,
+          loyaltyRewardId: snapshot.loyaltyRewardId ? BigInt(snapshot.loyaltyRewardId) : null,
+          loyaltyRewardSnapshot: snapshot.loyaltyRewardSnapshot
+            ? toPrismaJson(snapshot.loyaltyRewardSnapshot)
+            : Prisma.JsonNull,
           couponId: snapshot.couponId ? BigInt(snapshot.couponId) : null,
           couponCodeSnapshot: snapshot.couponCodeSnapshot,
           vatValue: snapshot.totals.vatAmount,
@@ -612,6 +624,11 @@ export class StripeWebhookService {
               externalAmount: Number(pendingCheckout.amount),
             })
           : null;
+
+      await this.loyaltyService.captureCheckoutRedemption(tx, {
+        pendingCheckoutId: pendingCheckout.id,
+        orderId: order.id,
+      });
 
       let payment: { id: bigint } | null = null;
       if (walletTransaction) {
@@ -832,6 +849,7 @@ export class StripeWebhookService {
     });
 
     await this.releaseCheckoutWalletHold(tx, pendingCheckout.id, paymentStatus, gatewayResponse);
+    await this.loyaltyService.releaseCheckoutRedemption(tx, pendingCheckout.id);
 
     await tx.pendingCheckout.update({
       where: { id: pendingCheckout.id },

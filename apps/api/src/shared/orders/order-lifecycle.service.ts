@@ -32,6 +32,7 @@ import {
   type PaymentCompletedPayload,
   type PaymentFailedPayload,
 } from '@/common/events/domain-event';
+import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
 
 const toJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
@@ -54,6 +55,7 @@ export class OrderLifecycleService {
     private readonly paymentTransactionsRepository: IPaymentTransactionsRepository,
     @Inject(VARIANTS_REPOSITORY) private readonly variantsRepository: IVariantsRepository,
     private readonly domainEvents: DomainEventPublisher,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   paymentSummary(payments: { amount: Prisma.Decimal; paymentStatus: string; refundSource?: string | null }[]) {
@@ -203,7 +205,9 @@ export class OrderLifecycleService {
 
     if (!reservation) return;
     if ((reservation as { allocated?: boolean }).allocated) {
-      await this.processAllocatedCancellationRefund(reservation as Parameters<OrderLifecycleService['processAllocatedCancellationRefund']>[0]);
+      await this.processAllocatedCancellationRefund(
+        reservation as Parameters<OrderLifecycleService['processAllocatedCancellationRefund']>[0],
+      );
       return;
     }
     const gatewayReservation = reservation as Parameters<OrderLifecycleService['processCancellationRefund']>[1] & {
@@ -637,6 +641,8 @@ export class OrderLifecycleService {
       tx,
     );
     const summary = this.paymentSummary(await this.paymentTransactionsRepository.findMany({ orderId: order.id }, tx));
+    await this.loyaltyService.refundOrderRedemptions(tx, order.id);
+    await this.loyaltyService.reverseOrderEarnings(tx, order.id);
     await this.ordersRepository.updateOrder(
       order.id,
       {
