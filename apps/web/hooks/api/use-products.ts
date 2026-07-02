@@ -40,6 +40,7 @@ type CatalogProduct = {
     id: string
     stock_quantity: number
     available: boolean
+    is_default?: boolean
     attributes: Array<{ attribute: string; value: string }>
   }
 }
@@ -102,6 +103,7 @@ type ProductDetail = {
     stock_quantity: number
     sku?: string | null
     available: boolean
+    is_default?: boolean
     images: string[]
     attributes: Array<{
       attribute_id: string

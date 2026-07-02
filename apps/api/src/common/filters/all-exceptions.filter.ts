@@ -74,7 +74,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
         translationKey = `errors.${message}`;
       }
     } else {
-      this.logger.error(exception);
+      const safeMessage =
+        exception instanceof Error
+          ? exception.message
+          : typeof exception === 'string'
+            ? exception
+            : 'Unknown non-error exception';
+      const safeStack = exception instanceof Error ? exception.stack : undefined;
+      this.logger.error(safeMessage, safeStack);
     }
 
     // Process Internationalization for the main message

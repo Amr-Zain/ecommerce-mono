@@ -50,7 +50,7 @@ export class EmptyResponseDto {
 }
 
 export class ErrorDetailDto {
-  @ApiProperty({ example: "email", description: 'Error type or code' })
+  @ApiProperty({ example: 'email', description: 'Error type or code' })
   type!: string;
 
   @ApiProperty({ example: 'email must be a valid email address', description: 'Error message' })

@@ -186,7 +186,8 @@ export class WalletService {
         status: releasedStatus,
         description: input.reason || 'Wallet checkout hold released',
         failedAt:
-          releasedStatus === WALLET_TRANSACTION_STATUSES.failed || releasedStatus === WALLET_TRANSACTION_STATUSES.expired
+          releasedStatus === WALLET_TRANSACTION_STATUSES.failed ||
+          releasedStatus === WALLET_TRANSACTION_STATUSES.expired
             ? new Date()
             : undefined,
         metadata: toPrismaJson({

@@ -29,7 +29,16 @@ export class ClientWishlistController {
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @Post()
-  async toggle(@Req() request: Request, @CurrentUser() user: { id: bigint } | null, @Body() dto: ToggleWishlistDto, @I18nLang() lang: string) {
-    return this.wishlistService.toggle(await this.anonymousSessions.resolveOwner(request, user, true), BigInt(dto.productId), lang);
+  async toggle(
+    @Req() request: Request,
+    @CurrentUser() user: { id: bigint } | null,
+    @Body() dto: ToggleWishlistDto,
+    @I18nLang() lang: string,
+  ) {
+    return this.wishlistService.toggle(
+      await this.anonymousSessions.resolveOwner(request, user, true),
+      BigInt(dto.productId),
+      lang,
+    );
   }
 }

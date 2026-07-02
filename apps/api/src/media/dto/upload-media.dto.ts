@@ -11,27 +11,27 @@ export class UploadMediaDto {
   @IsString()
   @IsNotEmpty()
   @IsIn(ALLOWED_MEDIA_MODELS, { message: i18nValidationMessage<I18nTranslations>('validation.INVALID_MEDIA_MODEL') })
-  @ApiProperty({ example: "product", description: 'model' })
+  @ApiProperty({ example: 'product', description: 'model' })
   model!: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ example: "1", description: 'modelId' })
+  @ApiPropertyOptional({ example: '1', description: 'modelId' })
   modelId?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ example: "products", description: 'collection' })
+  @ApiPropertyOptional({ example: 'products', description: 'collection' })
   collection?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ example: "email", description: 'type' })
+  @ApiPropertyOptional({ example: 'email', description: 'type' })
   type?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ example: "HASH_FROM_UPLOAD", description: 'attachHash' })
+  @ApiPropertyOptional({ example: 'HASH_FROM_UPLOAD', description: 'attachHash' })
   attachHash?: string;
 
   @IsOptional()

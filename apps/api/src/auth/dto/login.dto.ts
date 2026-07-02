@@ -5,11 +5,11 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
   @IsEmail({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_EMAIL') })
-  @ApiProperty({ example: "admin@ecommerce.com", description: 'email' })
+  @ApiProperty({ example: 'admin@ecommerce.com', description: 'email' })
   email!: string;
 
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @MinLength(6, { message: i18nValidationMessage<I18nTranslations>('validation.MIN_LENGTH') })
-  @ApiProperty({ example: "password123", description: 'password' })
+  @ApiProperty({ example: 'password123', description: 'password' })
   password!: string;
 }

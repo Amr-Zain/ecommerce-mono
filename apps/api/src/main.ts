@@ -16,7 +16,7 @@ import cookieParser from 'cookie-parser';
   return this.toString();
 };
 
-const API_VERSION = process.env.API_VERSION ?? '1'
+const API_VERSION = process.env.API_VERSION ?? '1';
 
 const configuredCorsOrigins = (process.env.CORS_ORIGINS ?? '')
   .split(',')

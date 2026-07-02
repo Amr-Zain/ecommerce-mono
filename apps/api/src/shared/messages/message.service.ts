@@ -5,7 +5,11 @@ import { DomainEventPublisher } from '@/common/events/domain-event-publisher.ser
 import { MessageRepository } from './message.repository';
 import { MessageRenderer } from './message-renderer.service';
 import { MESSAGE_CHANNELS, MESSAGE_RECIPIENT_TYPES } from './message.constants';
-import { CreateMessageTemplateDto, PreviewMessageTemplateDto, UpdateMessageTemplateDto } from './dto/message-template.dto';
+import {
+  CreateMessageTemplateDto,
+  PreviewMessageTemplateDto,
+  UpdateMessageTemplateDto,
+} from './dto/message-template.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 
 @Injectable()
@@ -107,7 +111,7 @@ export class MessageService {
           channel: template.channel,
           purpose: template.purpose,
           content: template.content,
-        } as Prisma.InputJsonValue,
+        },
         recipients,
       });
 

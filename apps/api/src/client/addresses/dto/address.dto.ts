@@ -5,7 +5,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAddressDto {
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "123 Main Street", description: 'address' })
+  @ApiProperty({ example: '123 Main Street', description: 'address' })
   address!: string;
 
   @IsOptional()
@@ -22,12 +22,12 @@ export class CreateAddressDto {
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "Main St", description: 'streetName' })
+  @ApiPropertyOptional({ example: 'Main St', description: 'streetName' })
   streetName?: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "123", description: 'buildingNumber' })
+  @ApiPropertyOptional({ example: '123', description: 'buildingNumber' })
   buildingNumber?: string;
 
   @IsOptional()
@@ -39,7 +39,7 @@ export class CreateAddressDto {
 export class UpdateAddressDto {
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "123 Main Street", description: 'address' })
+  @ApiPropertyOptional({ example: '123 Main Street', description: 'address' })
   address?: string;
 
   @IsOptional()
@@ -56,12 +56,12 @@ export class UpdateAddressDto {
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "Main St", description: 'streetName' })
+  @ApiPropertyOptional({ example: 'Main St', description: 'streetName' })
   streetName?: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "123", description: 'buildingNumber' })
+  @ApiPropertyOptional({ example: '123', description: 'buildingNumber' })
   buildingNumber?: string;
 
   @IsOptional()

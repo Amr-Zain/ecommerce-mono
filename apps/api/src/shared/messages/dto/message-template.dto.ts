@@ -35,20 +35,20 @@ class MessageContentDto {
 export class CreateMessageTemplateDto {
   @IsString()
   @Matches(/^[a-z0-9_.-]+$/)
-  @ApiProperty({ example: "welcome_email", description: 'key' })
+  @ApiProperty({ example: 'welcome_email', description: 'key' })
   key!: string;
 
   @IsString()
   @MaxLength(120)
-  @ApiProperty({ example: "Welcome Email", description: 'name' })
+  @ApiProperty({ example: 'Welcome Email', description: 'name' })
   name!: string;
 
   @IsEnum(MESSAGE_CHANNELS)
-  @ApiProperty({ example: "email", description: 'channel' })
+  @ApiProperty({ example: 'email', description: 'channel' })
   channel!: string;
 
   @IsEnum(MESSAGE_PURPOSES)
-  @ApiProperty({ example: "welcome", description: 'purpose' })
+  @ApiProperty({ example: 'welcome', description: 'purpose' })
   purpose!: string;
 
   @ValidateNested()
@@ -71,17 +71,17 @@ export class UpdateMessageTemplateDto {
   @IsOptional()
   @IsString()
   @MaxLength(120)
-  @ApiPropertyOptional({ example: "Welcome Email", description: 'name' })
+  @ApiPropertyOptional({ example: 'Welcome Email', description: 'name' })
   name?: string;
 
   @IsOptional()
   @IsEnum(MESSAGE_CHANNELS)
-  @ApiPropertyOptional({ example: "email", description: 'channel' })
+  @ApiPropertyOptional({ example: 'email', description: 'channel' })
   channel?: string;
 
   @IsOptional()
   @IsEnum(MESSAGE_PURPOSES)
-  @ApiPropertyOptional({ example: "welcome", description: 'purpose' })
+  @ApiPropertyOptional({ example: 'welcome', description: 'purpose' })
   purpose?: string;
 
   @IsOptional()
@@ -104,12 +104,12 @@ export class UpdateMessageTemplateDto {
 export class PreviewMessageTemplateDto {
   @IsOptional()
   @IsEnum(MESSAGE_CHANNELS)
-  @ApiPropertyOptional({ example: "email", description: 'channel' })
+  @ApiPropertyOptional({ example: 'email', description: 'channel' })
   channel?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "en", description: 'locale' })
+  @ApiPropertyOptional({ example: 'en', description: 'locale' })
   locale?: string;
 
   @IsOptional()

@@ -9,12 +9,12 @@ export { AttributeValueQueryDto } from '@/common/dto/attribute-value-query.dto';
 export class AttributeValueTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "en", description: 'langId' })
+  @ApiProperty({ example: 'en', description: 'langId' })
   langId!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "Red", description: 'name' })
+  @ApiProperty({ example: 'Red', description: 'name' })
   name!: string;
 }
 
@@ -33,6 +33,12 @@ export class CreateAttributeValueDto {
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
   @Type(() => AttributeValueTranslationDto)
-  @ApiProperty({ example: [{ langId: 'en', name: 'Red' }, { langId: 'ar', name: 'أحمر' }], description: 'translations' })
+  @ApiProperty({
+    example: [
+      { langId: 'en', name: 'Red' },
+      { langId: 'ar', name: 'أحمر' },
+    ],
+    description: 'translations',
+  })
   translations!: AttributeValueTranslationDto[];
 }

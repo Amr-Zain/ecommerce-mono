@@ -19,7 +19,7 @@ export class CreateWalletDepositDto {
   amount!: number;
 
   @IsIn([PAYMENT_METHODS.stripeCheckout, PAYMENT_METHODS.stripeIntent])
-  @ApiProperty({ example: "stripe_checkout", description: 'paymentMethod' })
+  @ApiProperty({ example: 'stripe_checkout', description: 'paymentMethod' })
   paymentMethod!: string;
 }
 
@@ -31,7 +31,7 @@ export class CreateWalletWithdrawalDto {
   amount!: number;
 
   @IsIn(Object.values(WALLET_WITHDRAWAL_METHODS))
-  @ApiProperty({ example: "bank_transfer", description: 'method' })
+  @ApiProperty({ example: 'bank_transfer', description: 'method' })
   method!: string;
 
   @IsObject()
@@ -40,44 +40,44 @@ export class CreateWalletWithdrawalDto {
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "Approved for manual bank transfer", description: 'note' })
+  @ApiPropertyOptional({ example: 'Approved for manual bank transfer', description: 'note' })
   note?: string;
 }
 
 export class WalletTransactionQueryDto extends PaginationDto {
   @IsOptional()
   @IsIn(Object.values(WALLET_TRANSACTION_TYPES))
-  @ApiPropertyOptional({ example: "deposit", description: 'type' })
+  @ApiPropertyOptional({ example: 'deposit', description: 'type' })
   type?: string;
 
   @IsOptional()
   @IsIn(Object.values(WALLET_TRANSACTION_DIRECTIONS))
-  @ApiPropertyOptional({ example: "credit", description: 'direction' })
+  @ApiPropertyOptional({ example: 'credit', description: 'direction' })
   direction?: string;
 
   @IsOptional()
   @IsIn(Object.values(WALLET_TRANSACTION_STATUSES))
-  @ApiPropertyOptional({ example: "completed", description: 'status' })
+  @ApiPropertyOptional({ example: 'completed', description: 'status' })
   status?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "order", description: 'referenceType' })
+  @ApiPropertyOptional({ example: 'order', description: 'referenceType' })
   referenceType?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "1", description: 'referenceId' })
+  @ApiPropertyOptional({ example: '1', description: 'referenceId' })
   referenceId?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "stripe_checkout", description: 'paymentMethod' })
+  @ApiPropertyOptional({ example: 'stripe_checkout', description: 'paymentMethod' })
   paymentMethod?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "pi_1234567890", description: 'transactionRef' })
+  @ApiPropertyOptional({ example: 'pi_1234567890', description: 'transactionRef' })
   transactionRef?: string;
 
   @IsOptional()
@@ -96,102 +96,102 @@ export class WalletTransactionQueryDto extends PaginationDto {
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "2026-06-01", description: 'dateFrom' })
+  @ApiPropertyOptional({ example: '2026-06-01', description: 'dateFrom' })
   dateFrom?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "2026-06-30", description: 'dateTo' })
+  @ApiPropertyOptional({ example: '2026-06-30', description: 'dateTo' })
   dateTo?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "createdAt:desc", description: 'sort' })
+  @ApiPropertyOptional({ example: 'createdAt:desc', description: 'sort' })
   sort?: string;
 }
 
 export class AdminWalletTransactionQueryDto extends WalletTransactionQueryDto {
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "1", description: 'userId' })
+  @ApiPropertyOptional({ example: '1', description: 'userId' })
   userId?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "1", description: 'walletId' })
+  @ApiPropertyOptional({ example: '1', description: 'walletId' })
   walletId?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "customer@example.com", description: 'userEmail' })
+  @ApiPropertyOptional({ example: 'customer@example.com', description: 'userEmail' })
   userEmail?: string;
 }
 
 export class WalletWithdrawalQueryDto extends PaginationDto {
   @IsOptional()
   @IsIn(Object.values(WALLET_WITHDRAWAL_STATUSES))
-  @ApiPropertyOptional({ example: "requested", description: 'status' })
+  @ApiPropertyOptional({ example: 'requested', description: 'status' })
   status?: string;
 
   @IsOptional()
   @IsIn(Object.values(WALLET_WITHDRAWAL_METHODS))
-  @ApiPropertyOptional({ example: "bank_transfer", description: 'method' })
+  @ApiPropertyOptional({ example: 'bank_transfer', description: 'method' })
   method?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "2026-06-01", description: 'dateFrom' })
+  @ApiPropertyOptional({ example: '2026-06-01', description: 'dateFrom' })
   dateFrom?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "2026-06-30", description: 'dateTo' })
+  @ApiPropertyOptional({ example: '2026-06-30', description: 'dateTo' })
   dateTo?: string;
 }
 
 export class AdminWalletWithdrawalQueryDto extends WalletWithdrawalQueryDto {
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "1", description: 'userId' })
+  @ApiPropertyOptional({ example: '1', description: 'userId' })
   userId?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "1", description: 'walletId' })
+  @ApiPropertyOptional({ example: '1', description: 'walletId' })
   walletId?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "customer@example.com", description: 'userEmail' })
+  @ApiPropertyOptional({ example: 'customer@example.com', description: 'userEmail' })
   userEmail?: string;
 }
 
 export class AdminWalletListQueryDto extends PaginationDto {
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "1", description: 'userId' })
+  @ApiPropertyOptional({ example: '1', description: 'userId' })
   userId?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "customer@example.com", description: 'userEmail' })
+  @ApiPropertyOptional({ example: 'customer@example.com', description: 'userEmail' })
   userEmail?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "active", description: 'status' })
+  @ApiPropertyOptional({ example: 'active', description: 'status' })
   status?: string;
 }
 
 export class AdminWithdrawalActionDto {
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "Approved for manual bank transfer", description: 'note' })
+  @ApiPropertyOptional({ example: 'Approved for manual bank transfer', description: 'note' })
   note?: string;
 }
 
 export class AdminMarkWithdrawalPaidDto extends AdminWithdrawalActionDto {
   @IsString()
-  @ApiProperty({ example: "REF123456", description: 'transferReference' })
+  @ApiProperty({ example: 'REF123456', description: 'transferReference' })
   transferReference!: string;
 }

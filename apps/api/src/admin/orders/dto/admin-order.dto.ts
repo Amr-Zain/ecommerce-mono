@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsNumber, IsOptional, IsString, IsEnum, IsNotEmpty, Min, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsNotEmpty,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '../../../generated/i18n.generated';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -36,12 +46,12 @@ export class RefundAllocationDto {
 export class UpdateOrderStatusDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
   @IsEnum(OrderStatus, { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
-  @ApiProperty({ example: "shipped", description: 'status' })
+  @ApiProperty({ example: 'shipped', description: 'status' })
   status!: OrderStatus;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "RESTOCK", description: 'reason' })
+  @ApiPropertyOptional({ example: 'RESTOCK', description: 'reason' })
   reason?: string;
 
   @IsOptional()
@@ -55,11 +65,11 @@ export class UpdateOrderStatusDto {
 export class AdminOrderQueryDto extends AdvancedQueryDto {
   @IsOptional()
   @IsEnum(OrderStatus, { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
-  @ApiPropertyOptional({ example: "shipped", description: 'status' })
+  @ApiPropertyOptional({ example: 'shipped', description: 'status' })
   status?: OrderStatus;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "paid", description: 'paymentStatus' })
+  @ApiPropertyOptional({ example: 'paid', description: 'paymentStatus' })
   paymentStatus?: string;
 }

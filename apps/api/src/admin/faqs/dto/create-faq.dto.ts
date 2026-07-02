@@ -8,17 +8,17 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class FaqTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "en", description: 'langId' })
+  @ApiProperty({ example: 'en', description: 'langId' })
   langId!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "What is your return policy?", description: 'question' })
+  @ApiProperty({ example: 'What is your return policy?', description: 'question' })
   question!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "You can return any item within 30 days.", description: 'answer' })
+  @ApiProperty({ example: 'You can return any item within 30 days.', description: 'answer' })
   answer!: string;
 }
 
@@ -36,6 +36,12 @@ export class CreateFaqDto {
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
   @Type(() => FaqTranslationDto)
-  @ApiProperty({ example: [{ langId: 'en', question: 'What is your return policy?', answer: 'You can return any item within 30 days.' }, { langId: 'ar', question: 'ما هي سياسة الإرجاع؟', answer: 'يمكنك إرجاع أي منتج خلال 30 يوماً.' }], description: 'translations' })
+  @ApiProperty({
+    example: [
+      { langId: 'en', question: 'What is your return policy?', answer: 'You can return any item within 30 days.' },
+      { langId: 'ar', question: 'ما هي سياسة الإرجاع؟', answer: 'يمكنك إرجاع أي منتج خلال 30 يوماً.' },
+    ],
+    description: 'translations',
+  })
   translations!: FaqTranslationDto[];
 }

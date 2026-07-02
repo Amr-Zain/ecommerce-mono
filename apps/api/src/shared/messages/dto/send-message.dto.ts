@@ -4,15 +4,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SendMessageDto {
   @IsString()
-  @ApiProperty({ example: "welcome_email", description: 'templateId' })
+  @ApiProperty({ example: 'welcome_email', description: 'templateId' })
   templateId!: string;
 
   @IsEnum(MESSAGE_CHANNELS)
-  @ApiProperty({ example: "email", description: 'channel' })
+  @ApiProperty({ example: 'email', description: 'channel' })
   channel!: string;
 
   @IsEnum(MESSAGE_RECIPIENT_TYPES)
-  @ApiProperty({ example: "user", description: 'recipientType' })
+  @ApiProperty({ example: 'user', description: 'recipientType' })
   recipientType!: string;
 
   @IsOptional()

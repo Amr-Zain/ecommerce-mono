@@ -18,12 +18,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class SliderTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "en", description: 'langId' })
+  @ApiProperty({ example: 'en', description: 'langId' })
   langId!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "Summer Sale", description: 'title' })
+  @ApiProperty({ example: 'Summer Sale', description: 'title' })
   title!: string;
 }
 
@@ -37,13 +37,13 @@ export class CreateSliderDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsDateString({}, { message: i18nValidationMessage<I18nTranslations>('validation.INVALID_DATE') })
   @IsNotPast({ message: i18nValidationMessage<I18nTranslations>('validation.DATE_NOT_PAST') })
-  @ApiPropertyOptional({ example: "2026-05-01T00:00:00Z", description: 'startDate' })
+  @ApiPropertyOptional({ example: '2026-05-01T00:00:00Z', description: 'startDate' })
   startDate?: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsDateString({}, { message: i18nValidationMessage<I18nTranslations>('validation.INVALID_DATE') })
   @IsAfter('startDate', { message: i18nValidationMessage<I18nTranslations>('validation.DATE_MUST_BE_AFTER') })
-  @ApiPropertyOptional({ example: "2026-08-31T23:59:59Z", description: 'endDate' })
+  @ApiPropertyOptional({ example: '2026-08-31T23:59:59Z', description: 'endDate' })
   endDate?: string;
 
   @IsOptional()
@@ -54,11 +54,17 @@ export class CreateSliderDto {
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
   @Type(() => SliderTranslationDto)
-  @ApiProperty({ example: [{ langId: 'en', title: 'Summer Sale' }, { langId: 'ar', title: 'تخفيضات الصيف' }], description: 'translations' })
+  @ApiProperty({
+    example: [
+      { langId: 'en', title: 'Summer Sale' },
+      { langId: 'ar', title: 'تخفيضات الصيف' },
+    ],
+    description: 'translations',
+  })
   translations!: SliderTranslationDto[];
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "mock-slide-image-hash", description: 'slide' })
+  @ApiProperty({ example: 'mock-slide-image-hash', description: 'slide' })
   slide!: string;
 }

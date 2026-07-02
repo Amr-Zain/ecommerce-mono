@@ -25,22 +25,22 @@ export class CountryTranslationDto {
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "Saudi Arabia", description: 'name' })
+  @ApiProperty({ example: 'Saudi Arabia', description: 'name' })
   name!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "Saudi", description: 'nationality' })
+  @ApiPropertyOptional({ example: 'Saudi', description: 'nationality' })
   nationality?: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "SA", description: 'shortName' })
+  @ApiPropertyOptional({ example: 'SA', description: 'shortName' })
   shortName?: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "SAR", description: 'currencyCode' })
+  @ApiPropertyOptional({ example: 'SAR', description: 'currencyCode' })
   currencyCode?: string;
 }
 
@@ -49,7 +49,7 @@ export class CreateCountryDto {
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @Matches(/^[0-9]+$/, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMERIC') })
   @Length(2, 4, { message: i18nValidationMessage<I18nTranslations>('validation.IS_LENGTH', { min: 2, max: 4 }) })
-  @ApiProperty({ example: "966", description: 'phoneCode' })
+  @ApiProperty({ example: '966', description: 'phoneCode' })
   phoneCode!: string;
 
   @IsOptional()
@@ -78,11 +78,17 @@ export class CreateCountryDto {
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
   @Type(() => CountryTranslationDto)
-  @ApiProperty({ example: [{ langId: 'en', name: 'Saudi Arabia', nationality: 'Saudi', shortName: 'SA', currencyCode: 'SAR' }, { langId: 'ar', name: 'المملكة العربية السعودية', nationality: 'سعودي', shortName: 'SA', currencyCode: 'SAR' }], description: 'translations' })
+  @ApiProperty({
+    example: [
+      { langId: 'en', name: 'Saudi Arabia', nationality: 'Saudi', shortName: 'SA', currencyCode: 'SAR' },
+      { langId: 'ar', name: 'المملكة العربية السعودية', nationality: 'سعودي', shortName: 'SA', currencyCode: 'SAR' },
+    ],
+    description: 'translations',
+  })
   translations!: CountryTranslationDto[];
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "🇸🇦", description: 'flag' })
+  @ApiProperty({ example: '🇸🇦', description: 'flag' })
   flag!: string;
 }

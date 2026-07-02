@@ -1,16 +1,18 @@
-import AppForm from '@/components/common/form/AppForm'
-import { useMutate } from '@/hooks/UseMutate'
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { useTranslation } from 'react-i18next'
-import { generateFinalOut } from '@/util/helpers'
-import { queryKeys } from '@/util/queryKeysFactory'
-import { buildVariationFields, ProductVariationFormData } from './Config'
 import { Dialog, DialogContent } from '@ecommerce/ui/components/dialog'
 import * as React from 'react'
-import { useFormContext, useFieldArray, useWatch } from 'react-hook-form'
-import Field from '@/components/common/form/Field'
+import { useFieldArray, useFormContext, useWatch } from 'react-hook-form'
 import { z } from 'zod/v4'
 import { Button } from '@ecommerce/ui/components/button'
-import { ProductVariation } from '@/types/api/product'
+import { buildVariationFields } from './Config'
+import type { ProductVariationFormData } from './Config';
+import type { ProductVariation } from '@/types/api/product'
+import AppForm from '@/components/common/form/AppForm'
+import Field from '@/components/common/form/Field'
+import { queryKeys } from '@/util/queryKeysFactory'
+import { generateFinalOut } from '@/util/helpers'
+import { useMutate } from '@/hooks/UseMutate'
 
 type VariationGalleryItem = {
   attach_hash?: string
@@ -20,7 +22,7 @@ type VariationGalleryItem = {
   path?: string
 }
 type ProductVariationWithGallery = ProductVariation & {
-  gallery?: VariationGalleryItem[] | null
+  gallery?: Array<VariationGalleryItem> | null
 }
 type VariationAttributeFormValue = {
   attribute_id?: string
@@ -28,7 +30,7 @@ type VariationAttributeFormValue = {
 }
 type VariationSubmitValue = ProductVariationFormData & {
   gallery?: Array<string | VariationGalleryItem>
-  variation_attributes?: VariationAttributeFormValue[]
+  variation_attributes?: Array<VariationAttributeFormValue>
 }
 
 const toSelectOptions = (res: any) =>
@@ -62,6 +64,7 @@ const getVariationBaseValues = (
   sku: variation?.sku,
   barcode: variation?.barcode,
   is_active: variation?.is_active,
+  is_default: variation?.is_default,
   gallery: variation?.gallery || [],
   variation_attributes: mapVariationAttributes(variation),
 })
@@ -82,6 +85,7 @@ const getVariationDefaultValues = (
     sku: variation?.sku ?? '',
     barcode: variation?.barcode ?? '',
     is_active: variation?.is_active ?? true,
+    is_default: variation?.is_default ?? false,
     gallery: mapVariationGallery(variation) as unknown as ProductVariationFormData['gallery'],
     variation_attributes: attributes.length
       ? attributes
@@ -105,6 +109,7 @@ const buildVariationPayload = (
     discount_value: finalOut.discount_value ?? null,
     stock_quantity: finalOut.stock,
     is_active: finalOut.is_active,
+    is_default: finalOut.is_default,
     gallery: finalOut.gallery?.map(toGalleryValue) || [],
     sku: finalOut.sku,
     barcode: finalOut.barcode,
@@ -134,7 +139,7 @@ const VariationRow: React.FC<{
       <Field
         type="select"
         control={control}
-        name={`variation_attributes.${idx}.attribute_id` as any}
+        name={`variation_attributes.${idx}.attribute_id`}
         label={`${t('Form.labels.attribute')} #${idx + 1}`}
         inputProps={{
           endpoint: 'attributes?paginate=false',
@@ -147,7 +152,7 @@ const VariationRow: React.FC<{
         key={`value-${idx}-${attributeId ?? 'none'}`}
         type="select"
         control={control}
-        name={`variation_attributes.${idx}.value_id` as any}
+        name={`variation_attributes.${idx}.value_id`}
         label={t('Form.labels.value')}
         inputProps={{
           endpoint: attributeId
@@ -245,6 +250,7 @@ export default function ProductVariationFormDialog({
         stock: z.coerce.number({ message: t('Validation.requiredSimple') }).int({ message: t('Validation.int') })
           .positive({ message: t('Validation.positive') }),
         is_active: z.boolean().optional().default(true),
+        is_default: z.boolean().optional().default(false),
         sku: z.string().max(100).or(z.literal('')),
         barcode: z.string().max(100).or(z.literal('')),
         gallery: z.any().optional(),
@@ -296,7 +302,7 @@ export default function ProductVariationFormDialog({
       <DialogContent className="bg-card border border-border rounded-lg shadow-sm  sm:max-w-3xl p-0">
         <div className="my-4">
           <AppForm<ProductVariationFormData>
-            schema={schema as any}
+            schema={schema}
             fields={fields}
             defaultValues={getVariationDefaultValues(productId, variation)}
             onSubmit={handleSubmit}

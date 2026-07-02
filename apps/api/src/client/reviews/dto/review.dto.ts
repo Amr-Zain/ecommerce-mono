@@ -20,7 +20,7 @@ export class CreateReviewDto {
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "Updated review", description: 'comment' })
+  @ApiPropertyOptional({ example: 'Updated review', description: 'comment' })
   comment?: string;
 
   @IsOptional()
@@ -41,7 +41,7 @@ export class UpdateReviewDto {
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: "Updated review", description: 'comment' })
+  @ApiPropertyOptional({ example: 'Updated review', description: 'comment' })
   comment?: string;
 
   @IsOptional()

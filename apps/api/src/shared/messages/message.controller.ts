@@ -3,7 +3,11 @@ import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { ParseBigIntPipe } from '@/common/pipes/parse-bigint.pipe';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { MessageService } from './message.service';
-import { CreateMessageTemplateDto, PreviewMessageTemplateDto, UpdateMessageTemplateDto } from './dto/message-template.dto';
+import {
+  CreateMessageTemplateDto,
+  PreviewMessageTemplateDto,
+  UpdateMessageTemplateDto,
+} from './dto/message-template.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 

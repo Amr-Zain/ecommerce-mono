@@ -106,11 +106,7 @@ export class AuthController {
     }
 
     const expectedUserType = req.headers['x-user-type'];
-    if (
-      typeof expectedUserType === 'string' &&
-      expectedUserType &&
-      user.userType !== expectedUserType
-    ) {
+    if (typeof expectedUserType === 'string' && expectedUserType && user.userType !== expectedUserType) {
       throw new UnauthorizedException('Refresh token does not match the requested user type');
     }
 

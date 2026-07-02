@@ -6,12 +6,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateCouponDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "SUMMER20", description: 'code' })
+  @ApiProperty({ example: 'SUMMER20', description: 'code' })
   code!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "PERCENTAGE", description: 'discountType' })
+  @ApiProperty({ example: 'PERCENTAGE', description: 'discountType' })
   discountType!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
@@ -41,12 +41,12 @@ export class CreateCouponDto {
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
   @IsDateString({}, { message: i18nValidationMessage<I18nTranslations>('validation.INVALID_DATE') })
-  @ApiProperty({ example: "2026-06-01T00:00:00Z", description: 'startsAt' })
+  @ApiProperty({ example: '2026-06-01T00:00:00Z', description: 'startsAt' })
   startsAt!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
   @IsDateString({}, { message: i18nValidationMessage<I18nTranslations>('validation.INVALID_DATE') })
-  @ApiProperty({ example: "2026-07-01T00:00:00Z", description: 'expiresAt' })
+  @ApiProperty({ example: '2026-07-01T00:00:00Z', description: 'expiresAt' })
   expiresAt!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
@@ -58,12 +58,12 @@ export class CreateCouponDto {
 export class UpdateCouponDto {
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "SUMMER20", description: 'code' })
+  @ApiPropertyOptional({ example: 'SUMMER20', description: 'code' })
   code?: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "PERCENTAGE", description: 'discountType' })
+  @ApiPropertyOptional({ example: 'PERCENTAGE', description: 'discountType' })
   discountType?: string;
 
   @IsOptional()
@@ -93,12 +93,12 @@ export class UpdateCouponDto {
 
   @IsOptional()
   @IsDateString({}, { message: i18nValidationMessage<I18nTranslations>('validation.INVALID_DATE') })
-  @ApiPropertyOptional({ example: "2026-06-01T00:00:00Z", description: 'startsAt' })
+  @ApiPropertyOptional({ example: '2026-06-01T00:00:00Z', description: 'startsAt' })
   startsAt?: string;
 
   @IsOptional()
   @IsDateString({}, { message: i18nValidationMessage<I18nTranslations>('validation.INVALID_DATE') })
-  @ApiPropertyOptional({ example: "2026-07-01T00:00:00Z", description: 'expiresAt' })
+  @ApiPropertyOptional({ example: '2026-07-01T00:00:00Z', description: 'expiresAt' })
   expiresAt?: string;
 
   @IsOptional()

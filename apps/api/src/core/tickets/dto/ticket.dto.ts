@@ -8,19 +8,19 @@ export type TicketStatus = (typeof TICKET_STATUSES)[number];
 export class TicketAttachmentDto {
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: "HASH_FROM_UPLOAD", description: 'attachHash' })
+  @ApiProperty({ example: 'HASH_FROM_UPLOAD', description: 'attachHash' })
   attachHash!: string;
 }
 
 export class CreateTicketDto {
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: "Welcome to Ecommerce", description: 'title' })
+  @ApiProperty({ example: 'Welcome to Ecommerce', description: 'title' })
   title!: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: "Sample description", description: 'description' })
+  @ApiProperty({ example: 'Sample description', description: 'description' })
   description!: string;
 
   @IsArray()
@@ -34,7 +34,7 @@ export class CreateTicketDto {
 export class ReplyTicketDto {
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: "I need help with my order", description: 'body' })
+  @ApiProperty({ example: 'I need help with my order', description: 'body' })
   body!: string;
 
   @IsArray()
@@ -48,6 +48,6 @@ export class ReplyTicketDto {
 export class UpdateTicketDto {
   @IsIn(TICKET_STATUSES)
   @IsOptional()
-  @ApiPropertyOptional({ example: "shipped", description: 'status' })
+  @ApiPropertyOptional({ example: 'shipped', description: 'status' })
   status?: TicketStatus;
 }

@@ -7,12 +7,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class RoleTranslationDto {
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
-  @ApiProperty({ example: "en", description: 'langId' })
+  @ApiProperty({ example: 'en', description: 'langId' })
   langId!: string;
 
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
-  @ApiProperty({ example: "Manager", description: 'name' })
+  @ApiProperty({ example: 'Manager', description: 'name' })
   name!: string;
 }
 
@@ -20,7 +20,13 @@ export class CreateRoleDto {
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
   @Type(() => RoleTranslationDto)
-  @ApiProperty({ example: [{ langId: 'en', name: 'Manager' }, { langId: 'ar', name: 'مدير' }], description: 'translations' })
+  @ApiProperty({
+    example: [
+      { langId: 'en', name: 'Manager' },
+      { langId: 'ar', name: 'مدير' },
+    ],
+    description: 'translations',
+  })
   translations!: RoleTranslationDto[];
 
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })

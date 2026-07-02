@@ -93,7 +93,9 @@ export class AnonymousSessionService {
       return;
     }
 
-    const targetItems = new Map(targetCart.items.map((item) => [this.cartItemKey(item.productId, item.variantId), item]));
+    const targetItems = new Map(
+      targetCart.items.map((item) => [this.cartItemKey(item.productId, item.variantId), item]),
+    );
     for (const item of anonymousCart.items) {
       const existing = targetItems.get(this.cartItemKey(item.productId, item.variantId));
       if (existing) {
@@ -110,12 +112,19 @@ export class AnonymousSessionService {
     const anonymousItems = await tx.wishlistItem.findMany({ where: { anonymousSessionId } });
     if (!anonymousItems.length) return;
 
-    const targetItems = await tx.wishlistItem.findMany({ where: { userId: targetUserId }, select: { productId: true } });
+    const targetItems = await tx.wishlistItem.findMany({
+      where: { userId: targetUserId },
+      select: { productId: true },
+    });
     const targetProductIds = new Set(targetItems.map((item) => item.productId.toString()));
     await tx.wishlistItem.deleteMany({
       where: {
         anonymousSessionId,
-        productId: { in: anonymousItems.filter((item) => targetProductIds.has(item.productId.toString())).map((item) => item.productId) },
+        productId: {
+          in: anonymousItems
+            .filter((item) => targetProductIds.has(item.productId.toString()))
+            .map((item) => item.productId),
+        },
       },
     });
     await tx.wishlistItem.updateMany({

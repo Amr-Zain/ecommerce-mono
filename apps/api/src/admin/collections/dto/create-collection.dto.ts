@@ -7,24 +7,24 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CollectionTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "en", description: 'langId' })
+  @ApiProperty({ example: 'en', description: 'langId' })
   langId!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "New Collection", description: 'name' })
+  @ApiProperty({ example: 'New Collection', description: 'name' })
   name!: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "Sample description", description: 'description' })
+  @ApiPropertyOptional({ example: 'Sample description', description: 'description' })
   description?: string;
 }
 
 export class CreateCollectionDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "sample-item", description: 'slug' })
+  @ApiProperty({ example: 'sample-item', description: 'slug' })
   slug!: string;
 
   @IsOptional()
@@ -48,11 +48,17 @@ export class CreateCollectionDto {
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
   @Type(() => CollectionTranslationDto)
-  @ApiProperty({ example: [{ langId: 'en', name: 'New Collection', description: 'Sample description' }, { langId: 'ar', name: 'مجموعة جديدة', description: 'وصف تجريبي' }], description: 'translations' })
+  @ApiProperty({
+    example: [
+      { langId: 'en', name: 'New Collection', description: 'Sample description' },
+      { langId: 'ar', name: 'مجموعة جديدة', description: 'وصف تجريبي' },
+    ],
+    description: 'translations',
+  })
   translations!: CollectionTranslationDto[];
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "mock-main-image-hash", description: 'image' })
+  @ApiPropertyOptional({ example: 'mock-main-image-hash', description: 'image' })
   image?: string;
 }

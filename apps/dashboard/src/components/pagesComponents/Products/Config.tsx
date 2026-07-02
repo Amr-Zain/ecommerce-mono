@@ -1,23 +1,24 @@
-import { ColumnDef } from '@tanstack/react-table'
-import {
-  booleanControlColumn,
-  DateColumn,
-  imageColumn,
-  textColumn,
-} from '@/components/features/sharedColumns'
-import { PickedAction } from '@/hooks/useStatusMutations'
-import { queryKeys } from '@/util/queryKeysFactory'
-import { Filter, RowAction } from '@/types/components/table'
-import { FieldProp } from '@/types/components/form'
-import { ProductFormData } from '@/lib/schema'
-import { Product, ProductVariation } from '@/types/api/product'
+/* eslint-disable @typescript-eslint/consistent-type-imports */
 import ButtonCopy from '@ecommerce/ui/components/copy-button'
 import { FormLabel } from '@ecommerce/ui/components/form'
 import { NestedCategorySelect } from './NestedCategorySelect'
+import type { ColumnDef } from '@tanstack/react-table'
+import type { PickedAction } from '@/hooks/useStatusMutations'
+import type { Filter, RowAction } from '@/types/components/table'
+import type { FieldProp } from '@/types/components/form'
+import type { ProductFormData } from '@/lib/schema'
+import type { Product, ProductVariation } from '@/types/api/product'
+import { queryKeys } from '@/util/queryKeysFactory'
+import {
+  DateColumn,
+  booleanControlColumn,
+  imageColumn,
+  textColumn,
+} from '@/components/features/sharedColumns'
 
 export const productColumns = (
   open: (type: PickedAction, row: Product) => void,
-): ColumnDef<Product>[] => [
+): Array<ColumnDef<Product>> => [
     imageColumn<Product>('image', 'table.columns.image'),
     textColumn<Product>('name', 'table.columns.name', { className: 'min-w-15 ' }),
     // textColumn<Product>('description', 'table.columns.description', {
@@ -110,7 +111,7 @@ export const productColumns = (
 export const productActions = (
   t: (key: string) => string,
   open: (type: PickedAction, row: Product) => void,
-): RowAction<Product>[] => [
+): Array<RowAction<Product>> => [
     {
       label: t('actions.show'),
       to: '/products/show/$id',
@@ -143,7 +144,7 @@ export const productActions = (
     },
   ]
 
-export const getProductFilters = (t: (key: string) => string): Filter[] => [
+export const getProductFilters = (t: (key: string) => string): Array<Filter> => [
   {
     id: 'filters[is_active]',
     title: t('status.title'),
@@ -177,7 +178,7 @@ export const buildProductFields = (
   t: (key: string) => string,
   form: ReturnType<typeof import("react-hook-form").useForm<ProductFormData>>,
   modelId?: string,
-): FieldProp<ProductFormData>[] => {
+): Array<FieldProp<ProductFormData>> => {
   const collection_id = form.watch('collection_id');
   return [
     {
@@ -230,7 +231,7 @@ export const buildProductFields = (
       customItem:
         <div className="w-full flex flex-col gap-4!">
           <FormLabel >{t('Form.labels.category')}</FormLabel>
-          <NestedCategorySelect placeholder={t('Form.placeholders.category')} onSelect={(item) => form.setValue('collection_id', item.id.toString())} value={collection_id?.toString()!} />
+          <NestedCategorySelect placeholder={t('Form.placeholders.category')} onSelect={(item) => form.setValue('collection_id', item.id.toString())} value={collection_id?.toString()} />
         </div>
     },
     {
@@ -290,7 +291,7 @@ export const buildProductFields = (
       },
       span: 2,
     },
-  ] as FieldProp<ProductFormData>[]
+  ] as Array<FieldProp<ProductFormData>>
 }
 
 export type ProductVariationFormData = {
@@ -303,7 +304,8 @@ export type ProductVariationFormData = {
   sku: string
   barcode: string
   is_active?: boolean
-  gallery?: { attach_hash: string; hash: string, id: string, mime_type: string, path: string, size: string, url: string }[]
+  is_default?: boolean
+  gallery?: Array<{ attach_hash: string; hash: string, id: string, mime_type: string, path: string, size: string, url: string }>
   // real array:
   variation_attributes: Array<{ attribute_id?: string; value_id?: string }>
 }
@@ -311,7 +313,7 @@ export type ProductVariationFormData = {
 export const buildVariationFields = (
   t: (key: string) => string,
   modelId?: string,
-): FieldProp<ProductVariationFormData>[] => [
+): Array<FieldProp<ProductVariationFormData>> => [
     {
       type: 'imgUploader',
       name: 'gallery',
@@ -348,7 +350,7 @@ export const buildVariationFields = (
           { label: t('Form.options.fixed'), value: 'FIXED' },
           { label: t('Form.options.percent'), value: 'PERCENTAGE' },
         ],
-      } as any,
+      },
     },
     {
       type: 'number',
@@ -386,6 +388,18 @@ export const buildVariationFields = (
         ],
       } as any,
     },
+    {
+      type: 'select',
+      name: 'is_default',
+      label: t('Form.labels.defaultVariant'),
+      placeholder: t('Form.placeholders.defaultVariant'),
+      inputProps: {
+        options: [
+          { label: t('actions.yes'), value: true },
+          { label: t('actions.no'), value: false },
+        ],
+      } as any,
+    },
   ]
 export const ProductVariationActions = (
   t: (key: string) => string,
@@ -420,4 +434,4 @@ export const ProductVariationActions = (
     permission: 'product-variations',
     action: 'update',
   },
-] as RowAction<ProductVariation>[]
+] as Array<RowAction<ProductVariation>>

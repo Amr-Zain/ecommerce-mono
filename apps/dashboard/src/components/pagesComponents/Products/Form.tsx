@@ -1,16 +1,18 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+import { useTranslation } from 'react-i18next'
+import * as React from 'react'
+import { useFieldArray, useForm, useFormContext } from 'react-hook-form'
+import { Button } from '@ecommerce/ui/components/button'
+import { buildProductFields } from './Config'
+import type { ProductFormData } from '@/lib/schema';
+import type { Product } from '@/types/api/product'
 import AppForm from '@/components/common/form/AppForm'
 import { useMutate } from '@/hooks/UseMutate'
 import { generateFinalOut, generateInitialValues, mapGalleryForForm, toMediaValue } from '@/util/helpers'
-import { useTranslation } from 'react-i18next'
 import { queryKeys } from '@/util/queryKeysFactory'
-import { makeProductSchema, ProductFormData } from '@/lib/schema'
-import { Product } from '@/types/api/product'
-import { buildProductFields } from './Config'
+import { makeProductSchema } from '@/lib/schema'
 
-import * as React from 'react'
-import { useFormContext, useFieldArray, useForm } from 'react-hook-form'
 import Field from '@/components/common/form/Field'
-import { Button } from '@ecommerce/ui/components/button'
 import { zodFormResolver } from '@/lib/schema/resolver'
 
 type ProductPayload = Record<string, unknown>
@@ -53,6 +55,7 @@ const buildProductPayload = (product: Product | undefined, values: ProductFormDa
         stock_quantity: Number(finalOut.stock ?? 0),
         sku: finalOut.sku || '',
         barcode: finalOut.barcode || '',
+        is_default: true,
         is_active: true,
         attributes: [],
         gallery: [],
@@ -121,6 +124,18 @@ export const TagsRepeater: React.FC<{ t: (k: string) => string }> = ({ t }) => {
   )
 }
 
+const FormSectionHeader = ({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) => (
+  <div className="col-span-2 rounded-lg border bg-muted/30 p-4">
+    <h3 className="text-sm font-semibold">{title}</h3>
+    <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+  </div>
+)
 
 export default function ProductForm({ product }: { product?: Product }) {
   const { t } = useTranslation()
@@ -143,10 +158,77 @@ export default function ProductForm({ product }: { product?: Product }) {
 
   const fields = React.useMemo(
     () => [
-      ...baseFields,
+      {
+        type: 'custom' as const,
+        name: 'identitySection',
+        span: 2,
+        customItem: (
+          <FormSectionHeader
+            title={t('productForm.sections.identity', 'Product identity')}
+            description={t(
+              'productForm.sections.identityHelp',
+              'Catalog information shared by every sellable variant.',
+            )}
+          />
+        ),
+      },
+      ...baseFields.filter((field) =>
+        ['collection_id', 'name', 'description'].includes(String(field.name)),
+      ),
       { type: 'custom' as const, name: 'tags',  span: 2, customItem: <TagsRepeater t={t} /> },
+      {
+        type: 'custom' as const,
+        name: 'mediaSection',
+        span: 2,
+        customItem: (
+          <FormSectionHeader
+            title={t('productForm.sections.media', 'Product media')}
+            description={t('productForm.sections.mediaHelp', 'Images shown before a specific variant is selected.')}
+          />
+        ),
+      },
+      ...baseFields.filter((field) => ['image', 'gallery'].includes(String(field.name))),
+      {
+        type: 'custom' as const,
+        name: 'offerSection',
+        span: 2,
+        customItem: (
+          <FormSectionHeader
+            title={t('productForm.sections.offer', 'Fallback product offer')}
+            description={t(
+              'productForm.sections.offerHelp',
+              'This offer is inherited only by variants that do not have their own offer.',
+            )}
+          />
+        ),
+      },
+      ...baseFields.filter((field) => ['discount_type', 'discount_value'].includes(String(field.name))),
+      {
+        type: 'custom' as const,
+        name: 'defaultVariantSection',
+        span: 2,
+        customItem: (
+          <FormSectionHeader
+            title={t('productForm.sections.defaultVariant', 'Default sellable variant')}
+            description={
+              product
+                ? t(
+                    'productForm.sections.defaultVariantEditHelp',
+                    'For multi-variant products, manage price, stock, SKU, barcode, and default status in the variants section on the product page.',
+                  )
+                : t(
+                    'productForm.sections.defaultVariantHelp',
+                    'A simple product is created with one default variant. This variant is the quick-add and checkout stock unit.',
+                  )
+            }
+          />
+        ),
+      },
+      ...(product?.has_variants
+        ? []
+        : baseFields.filter((field) => ['price', 'cost_price', 'stock', 'sku', 'barcode'].includes(String(field.name)))),
     ],
-    [baseFields, t]
+    [baseFields, product, t]
   )
 
   const { mutate, isPending } = useMutate({
@@ -163,7 +245,7 @@ export default function ProductForm({ product }: { product?: Product }) {
 
   return (
     <AppForm<ProductFormData>
-      schema={makeProductSchema(t) as any}
+      schema={makeProductSchema(t)}
       fields={fields as any}
       providedForm={form as any}
       onSubmit={handleSubmit}

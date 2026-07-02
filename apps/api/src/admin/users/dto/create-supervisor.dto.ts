@@ -24,36 +24,36 @@ export class SupervisorSettingsDto {
   @IsOptional()
   @IsString()
   @IsIn(['ar', 'en'])
-  @ApiPropertyOptional({ example: "en", description: 'language' })
+  @ApiPropertyOptional({ example: 'en', description: 'language' })
   language?: string;
 }
 
 export class CreateSupervisorDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "mock-avatar-hash", description: 'avatar' })
+  @ApiProperty({ example: 'mock-avatar-hash', description: 'avatar' })
   avatar!: string;
 
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
-  @ApiProperty({ example: "Test Supervisor", description: 'name' })
+  @ApiProperty({ example: 'Test Supervisor', description: 'name' })
   name!: string;
 
   @IsEmail({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_EMAIL') })
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
-  @ApiProperty({ example: "test@ecommerce.com", description: 'email' })
+  @ApiProperty({ example: 'test@ecommerce.com', description: 'email' })
   email!: string;
 
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @MinLength(6, { message: i18nValidationMessage<I18nTranslations>('validation.MIN_LENGTH') })
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
-  @ApiProperty({ example: "password123", description: 'password' })
+  @ApiProperty({ example: 'password123', description: 'password' })
   password!: string;
 
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
   @Match('password', { message: i18nValidationMessage<I18nTranslations>('validation.PASSWORDS_MATCH') })
-  @ApiProperty({ example: "password123", description: 'passwordConfirm' })
+  @ApiProperty({ example: 'password123', description: 'passwordConfirm' })
   passwordConfirm!: string;
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.NOT_EMPTY') })
@@ -63,18 +63,18 @@ export class CreateSupervisorDto {
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "512345678", description: 'phone' })
+  @ApiPropertyOptional({ example: '512345678', description: 'phone' })
   phone?: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiPropertyOptional({ example: "966", description: 'phoneCode' })
+  @ApiPropertyOptional({ example: '966', description: 'phoneCode' })
   phoneCode?: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @IsIn(['male', 'female'])
-  @ApiPropertyOptional({ example: "male", description: 'gender' })
+  @ApiPropertyOptional({ example: 'male', description: 'gender' })
   gender?: string;
 
   @IsOptional()

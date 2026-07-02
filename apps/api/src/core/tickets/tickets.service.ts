@@ -54,7 +54,11 @@ export class TicketsService {
   async findClientTickets(userId: bigint) {
     const tickets = await this.ticketsRepository.findMany({
       where: { userId },
-      include: { user: true, messages: { orderBy: { createdAt: 'desc' }, take: 1 }, _count: { select: { messages: true } } },
+      include: {
+        user: true,
+        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+        _count: { select: { messages: true } },
+      },
       orderBy: { updatedAt: 'desc' },
     });
     return tickets.map((ticket) => this.formatListItem(ticket));
@@ -67,24 +71,27 @@ export class TicketsService {
 
   async createClientTicket(userId: bigint, dto: CreateTicketDto) {
     const ticket = await this.prisma.$transaction(async (tx) => {
-      const created = await this.ticketsRepository.create({
-        data: {
-          userId,
-          title: dto.title,
-          description: dto.description,
-          messages: {
-            create: {
-              userId,
-              senderType: 'client',
-              body: dto.description,
+      const created = await this.ticketsRepository.create(
+        {
+          data: {
+            userId,
+            title: dto.title,
+            description: dto.description,
+            messages: {
+              create: {
+                userId,
+                senderType: 'client',
+                body: dto.description,
+              },
             },
           },
+          include: {
+            user: true,
+            messages: { include: { user: true }, orderBy: { createdAt: 'asc' } },
+          },
         },
-        include: {
-          user: true,
-          messages: { include: { user: true }, orderBy: { createdAt: 'asc' } },
-        },
-      }, tx);
+        tx,
+      );
 
       await this.attachMessageMedia(created.messages[0].id, dto.attachments, tx);
       return created;
@@ -110,7 +117,11 @@ export class TicketsService {
     const [tickets, total] = await Promise.all([
       this.ticketsRepository.findMany({
         where,
-        include: { user: true, messages: { orderBy: { createdAt: 'desc' }, take: 1 }, _count: { select: { messages: true } } },
+        include: {
+          user: true,
+          messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+          _count: { select: { messages: true } },
+        },
         orderBy: this.buildOrderBy(query),
         skip: query.paginate === false ? undefined : (page - 1) * limit,
         take: query.paginate === false ? undefined : limit,
@@ -170,9 +181,12 @@ export class TicketsService {
 
   private async createMessage(ticketId: bigint, userId: bigint, senderType: 'admin' | 'client', dto: ReplyTicketDto) {
     const message = await this.prisma.$transaction(async (tx) => {
-      const created = await this.ticketsRepository.createMessage({
-        data: { ticketId, userId, senderType, body: dto.body },
-      }, tx);
+      const created = await this.ticketsRepository.createMessage(
+        {
+          data: { ticketId, userId, senderType, body: dto.body },
+        },
+        tx,
+      );
       await this.attachMessageMedia(created.id, dto.attachments, tx);
       await this.ticketsRepository.update({ where: { id: ticketId }, data: { updatedAt: new Date() } }, tx);
       return created;

@@ -12,7 +12,7 @@ export class CityTranslationDto {
 
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @ApiProperty({ example: "Riyadh", description: 'name' })
+  @ApiProperty({ example: 'Riyadh', description: 'name' })
   name!: string;
 }
 
@@ -26,7 +26,13 @@ export class createCityDto {
   @IsArray({ message: i18nValidationMessage<I18nTranslations>('validation.IS_ARRAY') })
   @ValidateNested({ each: true })
   @Type(() => CityTranslationDto)
-  @ApiProperty({ example: [{ langId: 'en', name: 'Riyadh' }, { langId: 'ar', name: 'الرياض' }], description: 'translations' })
+  @ApiProperty({
+    example: [
+      { langId: 'en', name: 'Riyadh' },
+      { langId: 'ar', name: 'الرياض' },
+    ],
+    description: 'translations',
+  })
   translations!: CityTranslationDto[];
 
   @IsOptional()

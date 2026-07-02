@@ -1,25 +1,18 @@
+/* eslint-disable import/order, @typescript-eslint/consistent-type-imports, sort-imports, @typescript-eslint/no-unnecessary-condition */
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from '@ecommerce/ui/components/card'
 import { Badge } from '@ecommerce/ui/components/badge'
 import { useTranslation } from 'react-i18next'
-import { formatDate, getModalTitle } from '@/util/helpers'
-import { ProductVariation, PriceHistoryEntry, InventoryLogEntry } from '@/types/api/product'
-import ImageWithPreview from '@/components/common/uiComponents/image/ImagePreview'
-import { Plus, History, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, History, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@ecommerce/ui/components/button'
-import { HasPermission } from '@/components/common/HasPermission'
 import { useEffect, useState } from 'react'
-import { useAlertModal } from '@/stores/useAlertModal'
-import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
-import { queryKeys } from '@/util/queryKeysFactory'
 import { useParams } from '@tanstack/react-router'
 import ButtonCopy from '@ecommerce/ui/components/copy-button'
-import { SARIcon } from '@/components/common/Icons'
 import {
   Dialog,
   DialogContent,
@@ -28,11 +21,20 @@ import {
 } from '@ecommerce/ui/components/dialog'
 import { ScrollArea } from '@ecommerce/ui/components/scroll-area'
 import { Skeleton } from '@ecommerce/ui/components/skeleton'
+import { Input } from '@ecommerce/ui/components/input'
+import type { PickedAction} from '@/hooks/useStatusMutations';
+import { formatDate, getModalTitle } from '@/util/helpers'
+import { ProductVariation, PriceHistoryEntry, InventoryLogEntry } from '@/types/api/product'
+import ImageWithPreview from '@/components/common/uiComponents/image/ImagePreview'
+import { HasPermission } from '@/components/common/HasPermission'
+import { useAlertModal } from '@/stores/useAlertModal'
+import { useStatusMutation } from '@/hooks/useStatusMutations'
+import { queryKeys } from '@/util/queryKeysFactory'
+import { SARIcon } from '@/components/common/Icons'
 import { RowActions } from '@/components/common/table/RowActions'
-import { RowAction } from '@/types/components/table'
+import type { RowAction } from '@/types/components/table'
 import useFetch from '@/hooks/UseFetch'
 import { useMutate } from '@/hooks/UseMutate'
-import { Input } from '@ecommerce/ui/components/input'
 import { Switch } from '@ecommerce/ui/components/switch'
 
 /* ------------------------------------------------------------------ */
@@ -94,7 +96,7 @@ function VariantHistoryDialog({
 
   const priceQuery = useFetch<
     any,
-    { items: PriceHistoryEntry[]; meta?: any }
+    { items: Array<PriceHistoryEntry>; meta?: any }
   >({
     endpoint: open && variantId ? `variants/${variantId}/price-history?page=${pricePage}&limit=${limit}` : undefined,
     queryKey: ['variant-price-history', String(variantId), pricePage],
@@ -104,7 +106,7 @@ function VariantHistoryDialog({
 
   const inventoryQuery = useFetch<
     any,
-    { items: InventoryLogEntry[]; meta?: any }
+    { items: Array<InventoryLogEntry>; meta?: any }
   >({
     endpoint: open && variantId ? `variants/${variantId}/inventory-logs?page=${inventoryPage}&limit=${limit}` : undefined,
     queryKey: ['variant-inventory-logs', String(variantId), inventoryPage],
@@ -245,7 +247,9 @@ function VariantHistoryDialog({
 /*  Main Card                                                          */
 /* ------------------------------------------------------------------ */
 type Props = {
-  variations: ProductVariation[]
+  variations: Array<ProductVariation>
+  productDiscountType?: string | null
+  productDiscountValue?: number | null
   onCreate?: () => void
   onEdit?: (v: ProductVariation) => void
   onView?: (v: ProductVariation) => void
@@ -253,6 +257,8 @@ type Props = {
 
 export function ProductVariationsCard({
   variations,
+  productDiscountType,
+  productDiscountValue,
   onCreate,
   onEdit,
   onView,
@@ -309,9 +315,17 @@ export function ProductVariationsCard({
     },
   })
 
+  const { mutate: setDefaultMutate, isPending: setDefaultPending } = useMutate({
+    endpoint: (row: ProductVariation) => `variants/${row.id}`,
+    body: () => ({ is_default: true }),
+    method: 'patch',
+    mutationKey: queryKeys.products.getProduct(productId),
+    invalidates: [queryKeys.products.all(), queryKeys.products.getProduct(productId)],
+  })
+
   useEffect(() => {
-    alert.setPending(activePending || deletePending || adjustStockPending)
-  }, [activePending, deletePending, adjustStockPending])
+    alert.setPending(activePending || deletePending || adjustStockPending || setDefaultPending)
+  }, [activePending, deletePending, adjustStockPending, setDefaultPending])
 
   const openAlert = (type: PickedAction, row: ProductVariation) => {
     setSelected({ id: String(row.id), type, isActive: row.is_active })
@@ -350,7 +364,13 @@ export function ProductVariationsCard({
     if (type === 'delete' || type === 'active') return openAlert(type, row)
   }
 
-  const variationActions: RowAction<ProductVariation>[] = [
+  const variationActions: Array<RowAction<ProductVariation>> = [
+    {
+      label: t('productShow.variations.setDefault', 'Set default'),
+      onClick: (row) => setDefaultMutate(row),
+      permission: 'products',
+      action: 'update',
+    },
     {
       label: t('productShow.variations.history', 'History'),
       onClick: (row) => openHistory(row),
@@ -427,6 +447,11 @@ export function ProductVariationsCard({
               {/* attributes */}
               <div className="col-span-3">
                 <div className="flex flex-wrap gap-1.5">
+                  {v.is_default && (
+                    <Badge variant="default" className="whitespace-nowrap text-[10px] px-1.5 py-0">
+                      {t('productShow.variations.default', 'Default')}
+                    </Badge>
+                  )}
                   {v.attributes?.map((a) => (
                     <Badge
                       key={`${v.id}-${a.value_id}`}
@@ -441,7 +466,18 @@ export function ProductVariationsCard({
 
               {/* price */}
               <div className="col-span-1 text-[13px] font-medium h-10 flex items-center whitespace-nowrap gap-0.5">
-                {v.price} <SARIcon className="h-3 w-3 opacity-60" />
+                <div>
+                  <div className="flex items-center gap-0.5">
+                    {v.price} <SARIcon className="h-3 w-3 opacity-60" />
+                  </div>
+                  <div className="text-[9px] font-normal text-muted-foreground">
+                    {v.discount_type && v.discount_value
+                      ? t('productShow.variations.variantOffer', 'Variant offer')
+                      : productDiscountType && productDiscountValue
+                        ? t('productShow.variations.inheritsOffer', 'Inherits offer')
+                        : t('productShow.variations.noOffer', 'No offer')}
+                  </div>
+                </div>
               </div>
 
               {/* sku */}

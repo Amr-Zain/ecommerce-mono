@@ -3,11 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import { I18nService } from 'nestjs-i18n';
 import { PrismaService, Prisma } from '@/prisma';
-import {
-  AUTH_DEFAULTS,
-  AUTH_SECURITY,
-  EmailOtpPurpose,
-} from '@/common/constants/auth.constants';
+import { AUTH_DEFAULTS, AUTH_SECURITY, EmailOtpPurpose } from '@/common/constants/auth.constants';
 import { I18nTranslations } from '@/generated/i18n.generated';
 
 interface CreateChallengeInput {
@@ -74,10 +70,7 @@ export class EmailOtpChallengeService {
               })
             : Promise.resolve(0),
         ]);
-        if (
-          recipientCount >= AUTH_SECURITY.otpHourlyLimit ||
-          ipRecipientCount >= AUTH_SECURITY.otpHourlyLimit
-        ) {
+        if (recipientCount >= AUTH_SECURITY.otpHourlyLimit || ipRecipientCount >= AUTH_SECURITY.otpHourlyLimit) {
           throw this.tooManyRequests(this.i18n.t('errors.otp_rate_limit'));
         }
 
@@ -167,7 +160,9 @@ export class EmailOtpChallengeService {
   }
 
   private normalizeCode(code: string): string {
-    return String(code ?? '').replace(/\D/g, '').slice(0, 4);
+    return String(code ?? '')
+      .replace(/\D/g, '')
+      .slice(0, 4);
   }
 
   private matches(code: string, expectedHash: string, activeKey: string): boolean {

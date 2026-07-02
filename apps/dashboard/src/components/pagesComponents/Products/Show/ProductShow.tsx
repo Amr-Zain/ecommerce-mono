@@ -1,45 +1,47 @@
+/* eslint-disable import/order, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unnecessary-type-assertion */
 import * as React from 'react'
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
   CardDescription,
   CardFooter,
+  CardHeader,
+  CardTitle,
 } from '@ecommerce/ui/components/card'
 import { Button } from '@ecommerce/ui/components/button'
 import { Badge } from '@ecommerce/ui/components/badge'
 import { useTranslation } from 'react-i18next'
+import { Link, useNavigate, useSearch } from '@tanstack/react-router'
+import {
+  Add01Icon,
+  ArrowRight01Icon,
+  Edit01Icon,
+  EyeIcon,
+  HeartAddIcon,
+  LayoutGridIcon,
+  Package01Icon,
+  ShoppingCart01Icon,
+  StarIcon as StarIconSvg,
+  Time01Icon,
+  TrendingUpDownIcon,
+} from '@hugeicons/core-free-icons'
+import { HugeiconsIcon  } from '@hugeicons/react'
+import { Avatar, AvatarFallback, AvatarImage } from '@ecommerce/ui/components/avatar'
+import { Progress } from '@ecommerce/ui/components/progress'
+import ButtonCopy from '@ecommerce/ui/components/copy-button'
+import { LocalizedContentCard } from '../../StaticPages/show/LocalizedContentCard'
+import ProductVariationFormDialog from '../VariationsForm'
+import { ProductVariationsCard } from './ProductVariationsCard'
+import type { Product, ProductStatistics, ProductVariation } from '@/types/api/product'
 import { formatDate } from '@/util/helpers'
 
-import { ProductVariationsCard } from './ProductVariationsCard'
-import { LocalizedContentCard } from '../../StaticPages/show/LocalizedContentCard'
-import { Product, ProductVariation, ProductStatistics } from '@/types/api/product'
-import ProductVariationFormDialog from '../VariationsForm'
 import { ProductReviewsCard } from './ProductReviewsCard'
 import { SARIcon } from '@/components/common/Icons'
-import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 
 import { StatsCard } from '@/components/common/charts/StatsCard'
 import { HasPermission } from '@/components/common/HasPermission'
-import {
-  ShoppingCart01Icon,
-  TrendingUpDownIcon,
-  EyeIcon,
-  Package01Icon,
-  StarIcon as StarIconSvg,
-  HeartAddIcon,
-  LayoutGridIcon,
-  Time01Icon,
-  ArrowRight01Icon,
-  Add01Icon,
-  Edit01Icon,
-} from '@hugeicons/core-free-icons'
-import { HugeiconsIcon, type HugeiconsIconProps } from '@hugeicons/react'
+import type {HugeiconsIconProps} from '@hugeicons/react';
 import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
-import { Avatar, AvatarImage, AvatarFallback } from '@ecommerce/ui/components/avatar'
-import { Progress } from '@ecommerce/ui/components/progress'
-import ButtonCopy from '@ecommerce/ui/components/copy-button'
 import { ShowHeader } from '@/components/common/show'
 
 const H = (icon: any) => (props: Omit<HugeiconsIconProps, 'icon'>) => (
@@ -83,6 +85,11 @@ export function ProductShow({ product }: Props) {
   }
 
   const discountBadge = getDiscountBadge(product.discount)
+  const priceRange =
+    product.price_range && product.price_range.min !== product.price_range.max
+      ? `${product.price_range.min.toFixed(2)} - ${product.price_range.max.toFixed(2)}`
+      : product.price?.toFixed(2)
+  const defaultVariant = product.variants?.find((variant) => variant.is_default)
 
   // Dialog state for create/edit variation
   const [variationFormOpen, setVariationFormOpen] = React.useState(false)
@@ -170,7 +177,7 @@ export function ProductShow({ product }: Props) {
                 <Card className="shadow-none border-muted/60">
                   <CardHeader>
                     <CardTitle className="text-base flex items-center justify-between">
-                      <span>{t('productShow.pricing.title')}</span>
+                      <span>{t('productShow.pricing.title', 'Variant pricing and stock')}</span>
                       <Badge variant="outline" className="font-mono text-[10px]">{product.barcode}</Badge>
                     </CardTitle>
                     <CardDescription>{t('productShow.pricing.subtitle')}</CardDescription>
@@ -183,7 +190,7 @@ export function ProductShow({ product }: Props) {
                       </div>
                       <div className="flex flex-col gap-1">
                         <div className="text-3xl font-black flex items-center gap-1 text-primary">
-                          {(product.price - (product.discount?.amount || 0)).toFixed(2)}
+                          {priceRange}
                           <SARIcon className="h-6 w-6 opacity-70" />
                         </div>
                         {product.discount && product.discount.value > 0 && (
@@ -204,9 +211,13 @@ export function ProductShow({ product }: Props) {
                       </div>
                     </div>
                     <div>
-                      <div className="text-sm text-muted-foreground mb-1">{t('table.columns.sku')} / {t('table.columns.barcode')}</div>
-                      <div className="text-sm font-medium">{product.sku}</div>
-                      <div className="text-[11px] text-muted-foreground">{product.barcode}</div>
+                      <div className="text-sm text-muted-foreground mb-1">
+                        {t('productShow.variations.default', 'Default variant')}
+                      </div>
+                      <div className="text-sm font-medium">{defaultVariant?.sku || product.sku || '—'}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        #{defaultVariant?.id ?? product.default_variant_id ?? product.representative_variant_id ?? '—'}
+                      </div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground mb-1">{t('table.columns.stock')}</div>
@@ -217,7 +228,7 @@ export function ProductShow({ product }: Props) {
                         </Badge>
                       </div>
                       <div className="text-[11px] text-muted-foreground">
-                        {t('productShow.reserved')}: {product.reserved} • {t('productShow.sold')}: {product.sold}
+                        {t('productShow.reserved')}: {product.reserved ?? 0} • {t('productShow.onHand', 'On hand')}: {product.on_hand_stock ?? product.stock}
                       </div>
                     </div>
                     <div>
@@ -278,7 +289,13 @@ export function ProductShow({ product }: Props) {
                   </CardContent>
                 </Card>
 
-                <ProductVariationsCard variations={product.variants ?? []} onCreate={openCreateVariation} onEdit={openEditVariation} />
+                <ProductVariationsCard
+                  variations={product.variants ?? []}
+                  productDiscountType={product.discount_type}
+                  productDiscountValue={product.discount_value}
+                  onCreate={openCreateVariation}
+                  onEdit={openEditVariation}
+                />
                 <ProductReviewsCard productId={product.id} />
               </div>
             ),
@@ -342,7 +359,7 @@ export function ProductShow({ product }: Props) {
                       <Card className="shadow-none border-muted/60">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                           <CardTitle className="text-base flex items-center gap-2"><StarIcon className="h-4 w-4 text-warning fill-warning" />{t('productShow.activity.reviews')}</CardTitle>
-                          <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs"><Link to={"/reviews" as any} search={{ 'filters[product_id]': product.id } as any}>{t('actions.viewAll')}<ArrowRight className="h-3 w-3 rtl:rotate-180" /></Link></Button>
+                          <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs"><Link to={"/reviews"} search={{ 'filters[product_id]': product.id } as any}>{t('actions.viewAll')}<ArrowRight className="h-3 w-3 rtl:rotate-180" /></Link></Button>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-4">
@@ -351,7 +368,7 @@ export function ProductShow({ product }: Props) {
                                 {[5, 4, 3, 2, 1].map((star) => {
                                   const starKey = `${star}_star` as keyof ProductStatistics['reviews']['rating_distribution']
                                   const count = product.statistics!.reviews.rating_distribution[starKey] || 0
-                                  const distValues = Object.values(product.statistics!.reviews.rating_distribution) as number[]
+                                  const distValues = Object.values(product.statistics!.reviews.rating_distribution)
                                   const totalInDistribution = distValues.reduce((acc, curr) => acc + curr, 0) || 1
                                   const percentage = (count / totalInDistribution) * 100
                                   return (

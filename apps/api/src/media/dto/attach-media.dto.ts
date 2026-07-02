@@ -8,16 +8,16 @@ export class AttachMediaDto {
   @IsString()
   @IsNotEmpty()
   @IsIn(ALLOWED_MEDIA_MODELS, { message: i18nValidationMessage<I18nTranslations>('validation.INVALID_MEDIA_MODEL') })
-  @ApiProperty({ example: "product", description: 'model' })
+  @ApiProperty({ example: 'product', description: 'model' })
   model!: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: "HASH_FROM_UPLOAD", description: 'attachHash' })
+  @ApiProperty({ example: 'HASH_FROM_UPLOAD', description: 'attachHash' })
   attachHash!: string;
 
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ example: "1", description: 'modelId' })
+  @ApiProperty({ example: '1', description: 'modelId' })
   modelId!: string;
 }

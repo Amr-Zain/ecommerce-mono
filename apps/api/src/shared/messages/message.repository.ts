@@ -10,10 +10,14 @@ export class MessageRepository {
     const where: Prisma.MessageTemplateWhereInput = {};
     if (query.channel) where.channel = String(query.channel);
     if (query.purpose) where.purpose = String(query.purpose);
-    if (query.isActive !== undefined) where.isActive = query.isActive === true || query.isActive === 'true' || query.isActive === '1';
+    if (query.isActive !== undefined)
+      where.isActive = query.isActive === true || query.isActive === 'true' || query.isActive === '1';
     if (query.search) {
       const search = String(query.search);
-      where.OR = [{ key: { contains: search, mode: 'insensitive' } }, { name: { contains: search, mode: 'insensitive' } }];
+      where.OR = [
+        { key: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } },
+      ];
     }
     return this.prisma.messageTemplate.findMany({ where, orderBy: { createdAt: 'desc' } });
   }
@@ -83,7 +87,10 @@ export class MessageRepository {
   listCampaigns() {
     return this.prisma.messageCampaign.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { template: { select: { id: true, key: true, name: true } }, sender: { select: { id: true, name: true } } },
+      include: {
+        template: { select: { id: true, key: true, name: true } },
+        sender: { select: { id: true, name: true } },
+      },
     });
   }
 
@@ -93,7 +100,10 @@ export class MessageRepository {
       include: {
         template: true,
         sender: { select: { id: true, name: true } },
-        recipients: { include: { user: { select: { id: true, name: true, email: true, userType: true } } }, orderBy: { id: 'asc' } },
+        recipients: {
+          include: { user: { select: { id: true, name: true, email: true, userType: true } } },
+          orderBy: { id: 'asc' },
+        },
       },
     });
   }

@@ -18,7 +18,9 @@ type Variant = ProductDetail["variants"][number]
 
 function defaultVariant(variants: Variant[]) {
   return (
+    [...variants].filter((variant) => variant.is_default && variant.available).sort((a, b) => a.price - b.price)[0] ??
     [...variants].filter((variant) => variant.available).sort((a, b) => a.price - b.price)[0] ??
+    [...variants].filter((variant) => variant.is_default).sort((a, b) => a.price - b.price)[0] ??
     [...variants].sort((a, b) => a.price - b.price)[0]
   )
 }
