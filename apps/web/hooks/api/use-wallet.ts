@@ -55,7 +55,11 @@ type DepositResult = {
   client_secret?: string | null
 }
 
-function responsePaginatedItems<T>(response: unknown, fallbackPage: number, fallbackLimit: number) {
+function responsePaginatedItems<T>(
+  response: unknown,
+  fallbackPage: number,
+  fallbackLimit: number
+) {
   const data = (response as { data?: unknown })?.data
   const nestedData = (data as { data?: unknown })?.data
   const items = Array.isArray(nestedData)
@@ -81,7 +85,7 @@ function useWallet() {
     enabled: status === "authenticated",
     endpoint: clientEndpoints.wallet,
     queryKey: queryKeys.wallet(),
-    select: (response) => ((response as { data?: Wallet })?.data ?? null),
+    select: (response) => (response as { data?: Wallet })?.data ?? null,
   })
 }
 
@@ -92,8 +96,13 @@ function useWalletTransactions(page = 1, limit = 10, status?: string | null) {
     enabled: session.status === "authenticated",
     endpoint: clientEndpoints.walletTransactions,
     params: { page, limit, "filters[status]": status || undefined },
-    queryKey: queryKeys.walletTransactions({ page, limit, status: status || "" }),
-    select: (response) => responsePaginatedItems<WalletTransaction>(response, page, limit),
+    queryKey: queryKeys.walletTransactions({
+      page,
+      limit,
+      status: status || "",
+    }),
+    select: (response) =>
+      responsePaginatedItems<WalletTransaction>(response, page, limit),
   })
 }
 
@@ -104,13 +113,21 @@ function useWalletWithdrawals(page = 1, limit = 5, status?: string | null) {
     enabled: session.status === "authenticated",
     endpoint: clientEndpoints.walletWithdrawals,
     params: { page, limit, "filters[status]": status || undefined },
-    queryKey: queryKeys.walletWithdrawals({ page, limit, status: status || "" }),
-    select: (response) => responsePaginatedItems<WalletWithdrawal>(response, page, limit),
+    queryKey: queryKeys.walletWithdrawals({
+      page,
+      limit,
+      status: status || "",
+    }),
+    select: (response) =>
+      responsePaginatedItems<WalletWithdrawal>(response, page, limit),
   })
 }
 
 function useCreateWalletDeposit() {
-  return useMutate<{ success: boolean; data: DepositResult }, { amount: number; paymentMethod: string }>({
+  return useMutate<
+    { success: boolean; data: DepositResult },
+    { amount: number; paymentMethod: string }
+  >({
     authRequired: true,
     endpoint: clientEndpoints.walletDeposits,
     mutationKey: ["wallet", "deposit"],
@@ -121,30 +138,58 @@ function useCreateWalletDeposit() {
 function useVerifyWalletDeposit(id?: string | null) {
   return useMutate<unknown, Record<string, never>>({
     authRequired: true,
-    endpoint: id ? clientEndpoints.walletDepositVerify(id) : clientEndpoints.walletDeposits,
+    endpoint: id
+      ? clientEndpoints.walletDepositVerify(id)
+      : clientEndpoints.walletDeposits,
     mutationKey: ["wallet", "deposit", "verify", id],
     method: "POST",
-    mutationOptions: { meta: { invalidates: [queryKeys.wallet(), queryKeys.walletTransactions()] } },
+    mutationOptions: {
+      meta: {
+        invalidates: [queryKeys.wallet(), queryKeys.walletTransactions()],
+      },
+    },
   })
 }
 
 function useCancelWalletDeposit(id?: string | null) {
   return useMutate<unknown, Record<string, never>>({
     authRequired: true,
-    endpoint: id ? clientEndpoints.walletDepositCancel(id) : clientEndpoints.walletDeposits,
+    endpoint: id
+      ? clientEndpoints.walletDepositCancel(id)
+      : clientEndpoints.walletDeposits,
     mutationKey: ["wallet", "deposit", "cancel", id],
     method: "POST",
-    mutationOptions: { meta: { invalidates: [queryKeys.wallet(), queryKeys.walletTransactions()] } },
+    mutationOptions: {
+      meta: {
+        invalidates: [queryKeys.wallet(), queryKeys.walletTransactions()],
+      },
+    },
   })
 }
 
 function useCreateWalletWithdrawal() {
-  return useMutate<unknown, { amount: number; method: string; details: Record<string, unknown>; note?: string }>({
+  return useMutate<
+    unknown,
+    {
+      amount: number
+      method: string
+      details: Record<string, unknown>
+      note?: string
+    }
+  >({
     authRequired: true,
     endpoint: clientEndpoints.walletWithdrawals,
     mutationKey: ["wallet", "withdrawal"],
     method: "POST",
-    mutationOptions: { meta: { invalidates: [queryKeys.wallet(), queryKeys.walletTransactions(), queryKeys.walletWithdrawals()] } },
+    mutationOptions: {
+      meta: {
+        invalidates: [
+          queryKeys.wallet(),
+          queryKeys.walletTransactions(),
+          queryKeys.walletWithdrawals(),
+        ],
+      },
+    },
   })
 }
 
@@ -154,7 +199,15 @@ function useCancelWalletWithdrawal(id: string) {
     endpoint: clientEndpoints.walletWithdrawalCancel(id),
     mutationKey: ["wallet", "withdrawal", "cancel", id],
     method: "POST",
-    mutationOptions: { meta: { invalidates: [queryKeys.wallet(), queryKeys.walletTransactions(), queryKeys.walletWithdrawals()] } },
+    mutationOptions: {
+      meta: {
+        invalidates: [
+          queryKeys.wallet(),
+          queryKeys.walletTransactions(),
+          queryKeys.walletWithdrawals(),
+        ],
+      },
+    },
   })
 }
 
