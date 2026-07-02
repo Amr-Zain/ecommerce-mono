@@ -47,7 +47,7 @@ function OTPField({
         <InputOTPGroup key={index}>
           <InputOTPSlot
             index={index}
-            className="!text-primary size-12 rounded-md border text-center !text-2xl font-bold md:size-16"
+            className="size-12 text-center text-2xl font-bold md:size-14"
           />
         </InputOTPGroup>
       ))}
