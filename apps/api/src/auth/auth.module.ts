@@ -17,6 +17,7 @@ import { UsersModule as CoreUsersModule } from '@/core/users/users.module';
 import { AnonymousSessionService } from './services/anonymous-session.service';
 import { AnonymousSessionsRepository } from './repositories/anonymous-sessions.repository';
 import { EmailOtpChallengeService } from './services/email-otp-challenge.service';
+import { LoyaltyModule } from '@/shared/loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { EmailOtpChallengeService } from './services/email-otp-challenge.service
     DiscoveryModule,
     MediaModule,
     CoreUsersModule,
+    LoyaltyModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

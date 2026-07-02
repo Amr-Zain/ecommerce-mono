@@ -63,6 +63,9 @@ model User {
   wallets                 Wallet[]
   walletTransactions      WalletTransaction[]
   walletWithdrawals       WalletWithdrawalRequest[]
+  loyaltyAccount          LoyaltyAccount?
+  loyaltyTransactions     LoyaltyPointTransaction[]
+  loyaltyRedemptions      LoyaltyRewardRedemption[]
   notifications           Notification[]
   emailOtpChallenges      EmailOtpChallenge[]
   tickets                 Ticket[]

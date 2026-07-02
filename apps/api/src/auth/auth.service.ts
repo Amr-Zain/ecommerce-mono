@@ -46,6 +46,7 @@ import {
   EMAIL_OTP_PURPOSES,
   AuthConfigSecretKey,
 } from '../common/constants/auth.constants';
+import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
 
 /** Same include as local/JWT validation — single source for “user + role + permissions”. */
 export type AuthUserPayload = Prisma.UserGetPayload<{
@@ -89,6 +90,7 @@ export class AuthService {
     private readonly emailChallenges: EmailOtpChallengeService,
     private readonly eventEmitter: EventEmitter2,
     private readonly domainEvents: DomainEventPublisher,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   /**
@@ -135,7 +137,11 @@ export class AuthService {
   /**
    * Register a new user
    */
-  async register(registerDto: RegisterDto, requestIp?: string, lang: string = AUTH_DEFAULTS.language): Promise<{ message: string }> {
+  async register(
+    registerDto: RegisterDto,
+    requestIp?: string,
+    lang: string = AUTH_DEFAULTS.language,
+  ): Promise<{ message: string }> {
     const isEmailRegistration = registerDto.type === AUTH_IDENTIFIER_TYPES.email;
     const existingUser = isEmailRegistration
       ? await this.usersRepository.findByEmail(registerDto.email!)
@@ -340,7 +346,11 @@ export class AuthService {
   /**
    * Send verification code (OTP) via Email or Phone
    */
-  async sendOtp(dto: SendOtpDto, requestIp?: string, lang: string = AUTH_DEFAULTS.language): Promise<{ message: string }> {
+  async sendOtp(
+    dto: SendOtpDto,
+    requestIp?: string,
+    lang: string = AUTH_DEFAULTS.language,
+  ): Promise<{ message: string }> {
     const type = dto.type;
     let user: UserInterface | null = null;
 
@@ -503,6 +513,7 @@ export class AuthService {
         phoneVerificationCode: null,
         phoneVerificationExpiry: null,
       });
+      await this.loyaltyService.awardWelcome(user.id);
     }
 
     if (!user.isActive) {
@@ -583,7 +594,11 @@ export class AuthService {
   /**
    * Forgot password - send reset code
    */
-  async forgotPassword(email: string, requestIp?: string, lang: string = AUTH_DEFAULTS.language): Promise<{ message: string }> {
+  async forgotPassword(
+    email: string,
+    requestIp?: string,
+    lang: string = AUTH_DEFAULTS.language,
+  ): Promise<{ message: string }> {
     const user = await this.usersRepository.findOne({ email });
 
     if (!user) {
@@ -685,6 +700,7 @@ export class AuthService {
       phoneVerificationCode: null,
       phoneVerificationExpiry: null,
     });
+    await this.loyaltyService.awardWelcome(user.id);
 
     return { message: this.i18n.t('common.auth_phone_verified_successfully') };
   }

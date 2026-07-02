@@ -63,7 +63,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    return /server has closed the connection|connection terminated|connection timeout|ECONNRESET|ETIMEDOUT/i.test(message);
+    return /server has closed the connection|connection terminated|connection timeout|ECONNRESET|ETIMEDOUT/i.test(
+      message,
+    );
   }
 
   private static normalizeLocalDatabaseUrl(databaseUrl: string): string {

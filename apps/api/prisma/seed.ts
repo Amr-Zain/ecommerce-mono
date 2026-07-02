@@ -1,9 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../node_modules/.prisma/client/index.js';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 import { seedAdmin } from './seeds/admin.seed.ts';
 import { seedEmailTemplates } from './seeds/email-templates.seed.ts';
 import { seedStorefront } from './seeds/storefront.seed.ts';
+import { seedLoyalty } from './seeds/loyalty.seed.ts';
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -18,6 +19,7 @@ async function main() {
   console.log('Seeding data...');
 
   await seedAdmin(prisma);
+  await seedLoyalty(prisma);
   await seedStorefront(prisma);
   await seedEmailTemplates(prisma);
 
