@@ -1,9 +1,16 @@
-import { getTranslations } from "next-intl/server"
+import { buttonVariants } from "@ecommerce/ui/components/button"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+} from "@ecommerce/ui/components/pagination"
 
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 
 type PaginationSearchParams = Record<string, string | string[] | undefined>
+type PaginationItem = number | "ellipsis-start" | "ellipsis-end"
 
 function pageUrl(
   pathname: string,
@@ -24,23 +31,31 @@ function pageUrl(
   return `${pathname}?${params.toString()}`
 }
 
-function PaginationLink({
+function ListingPaginationLink({
   children,
   disabled,
   href,
   label,
+  active = false,
 }: {
   children: React.ReactNode
   disabled: boolean
   href: string
   label: string
+  active?: boolean
 }) {
   return (
     <Link
       href={href}
       aria-label={label}
+      aria-current={active ? "page" : undefined}
+      data-slot="pagination-link"
+      data-active={active}
       className={cn(
-        "inline-flex size-9 items-center justify-center rounded-full border bg-background text-sm font-semibold transition-all hover:border-foreground/30 hover:bg-muted",
+        buttonVariants({
+          variant: active ? "outline" : "ghost",
+          size: "icon",
+        }),
         disabled && "pointer-events-none opacity-35"
       )}
     >
@@ -49,13 +64,56 @@ function PaginationLink({
   )
 }
 
-async function ListingPagination({
+function paginationItems(
+  currentPage: number,
+  totalPages: number
+): PaginationItem[] {
+  if (totalPages <= 7)
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+
+  const pages = new Set<number>([1, totalPages, currentPage])
+  if (currentPage > 1) pages.add(currentPage - 1)
+  if (currentPage < totalPages) pages.add(currentPage + 1)
+
+  if (currentPage <= 4) {
+    pages.add(2)
+    pages.add(3)
+    pages.add(4)
+    pages.add(5)
+  }
+
+  if (currentPage >= totalPages - 3) {
+    pages.add(totalPages - 1)
+    pages.add(totalPages - 2)
+    pages.add(totalPages - 3)
+    pages.add(totalPages - 4)
+  }
+
+  const sorted = Array.from(pages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b)
+  const items: PaginationItem[] = []
+
+  for (const page of sorted) {
+    const previous = items[items.length - 1]
+    if (typeof previous === "number" && page - previous > 1) {
+      items.push(previous === 1 ? "ellipsis-start" : "ellipsis-end")
+    }
+    items.push(page)
+  }
+
+  return items
+}
+
+function ListingPagination({
   pathname,
   searchParams,
   currentPage,
   totalPages,
   className,
   pageParam = "page",
+  nextLabel = "Next page",
+  previousLabel = "Previous page",
 }: {
   pathname: string
   searchParams: PaginationSearchParams
@@ -63,41 +121,53 @@ async function ListingPagination({
   totalPages: number
   className?: string
   pageParam?: string
+  nextLabel?: string
+  previousLabel?: string
 }) {
-  const t = await getTranslations("Product")
   if (totalPages <= 1) return null
+  const page = Math.min(Math.max(1, currentPage), totalPages)
 
   return (
-    <div className={cn("mt-auto flex items-center justify-center gap-2 pt-6", className)}>
-      <PaginationLink
-        disabled={currentPage <= 1}
-        href={pageUrl(pathname, searchParams, currentPage - 1, pageParam)}
-        label={t("previousPage")}
-      >
-        {"<"}
-      </PaginationLink>
-      {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-        <Link
-          key={page}
-          href={pageUrl(pathname, searchParams, page, pageParam)}
-          className={cn(
-            "inline-flex size-9 items-center justify-center rounded-full border text-sm font-semibold transition-all",
-            currentPage === page
-              ? "border-foreground bg-foreground text-background shadow-sm"
-              : "bg-background text-muted-foreground hover:border-foreground/30 hover:bg-muted hover:text-foreground"
-          )}
-        >
-          {page}
-        </Link>
-      ))}
-      <PaginationLink
-        disabled={currentPage >= totalPages}
-        href={pageUrl(pathname, searchParams, currentPage + 1, pageParam)}
-        label={t("nextPage")}
-      >
-        {">"}
-      </PaginationLink>
-    </div>
+    <Pagination className={cn("mt-auto justify-center pt-6", className)}>
+      <PaginationContent>
+        <PaginationItem>
+          <ListingPaginationLink
+            disabled={page <= 1}
+            href={pageUrl(pathname, searchParams, page - 1, pageParam)}
+            label={previousLabel}
+          >
+            {"<"}
+          </ListingPaginationLink>
+        </PaginationItem>
+        {paginationItems(page, totalPages).map((item) =>
+          typeof item === "number" ? (
+            <PaginationItem key={item}>
+              <ListingPaginationLink
+                active={page === item}
+                disabled={false}
+                href={pageUrl(pathname, searchParams, item, pageParam)}
+                label={`Page ${item}`}
+              >
+                {item}
+              </ListingPaginationLink>
+            </PaginationItem>
+          ) : (
+            <PaginationItem key={item}>
+              <PaginationEllipsis />
+            </PaginationItem>
+          )
+        )}
+        <PaginationItem>
+          <ListingPaginationLink
+            disabled={page >= totalPages}
+            href={pageUrl(pathname, searchParams, page + 1, pageParam)}
+            label={nextLabel}
+          >
+            {">"}
+          </ListingPaginationLink>
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   )
 }
 

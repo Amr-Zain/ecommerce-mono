@@ -18,12 +18,12 @@ model Collection {
 }
 
 model CollectionTranslation {
-  id         BigInt     @id @default(autoincrement())
-  recordId   BigInt     @map("record_id")
-  collection Collection @relation(fields: [recordId], references: [id], onDelete: Cascade)
-  langId     String     @map("lang_id")
-  name       String
-  description String?   @db.Text
+  id          BigInt     @id @default(autoincrement())
+  recordId    BigInt     @map("record_id")
+  collection  Collection @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  langId      String     @map("lang_id")
+  name        String
+  description String?    @db.Text
 
   @@unique([recordId, langId])
   @@map("collections_translations")

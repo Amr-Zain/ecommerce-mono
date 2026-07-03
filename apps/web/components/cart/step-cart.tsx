@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Delete02Icon, MinusSignIcon, PlusSignIcon, TicketIcon } from "@hugeicons/core-free-icons"
 import { Button } from "@ecommerce/ui/components/button"
 import { Input } from "@ecommerce/ui/components/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ecommerce/ui/components/select"
 import { Separator } from "@ecommerce/ui/components/separator"
 import { cn } from "@/lib/utils"
 
@@ -29,6 +30,13 @@ type CartItem = {
     isDefault: boolean
     attributes: Array<{ name: string; value: string }>
   }>
+}
+
+function formatVariantOptionLabel(option: CartItem["variantOptions"][number]) {
+  const attributes = option.attributes.map((attribute) => `${attribute.name}: ${attribute.value}`).join(" / ")
+  const label = attributes || (option.isDefault ? "Default variant" : `Variant #${option.id}`)
+
+  return `${label} - $${option.price.toFixed(2)}${!option.available ? " (out of stock)" : ""}`
 }
 
 export interface Pricing {
@@ -132,7 +140,11 @@ export function CartStep({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Items List */}
       <div className="lg:col-span-2 space-y-4">
-        {items.map((item) => (
+        {items.map((item) => {
+          const selectedOption = item.variantOptions.find((option) => option.id === item.variantId)
+          const selectedVariantLabel = selectedOption ? formatVariantOptionLabel(selectedOption) : "Choose variant"
+
+          return (
           <div key={item.id} className="flex gap-4 rounded-2xl border bg-card p-4 sm:p-5">
             {/* Image */}
             <div className="relative size-24 sm:size-28 shrink-0 rounded-xl bg-muted/40 overflow-hidden border">
@@ -153,26 +165,36 @@ export function CartStep({
                     ))}
                   </div>
                   {item.variantOptions.length > 1 ? (
-                    <label className="mt-3 block max-w-xs text-[11px] font-semibold text-muted-foreground">
-                      Variant
-                      <select
+                    <div className="mt-3 w-full space-y-1">
+                      <p className="text-[11px] font-semibold text-muted-foreground">Variant</p>
+                      <Select
                         value={item.variantId}
-                        onChange={(event) => onVariantChange(item.id, event.target.value)}
-                        className="mt-1 h-9 w-full rounded-lg border bg-background px-2 text-xs text-foreground"
+                        onValueChange={(value) => {
+                          if (value) onVariantChange(item.id, value)
+                        }}
                       >
+                        <SelectTrigger className="h-9 w-full bg-background text-xs">
+                          <SelectValue placeholder={selectedVariantLabel}>{selectedVariantLabel}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent
+                          alignItemWithTrigger={false}
+                          className="w-[min(28rem,calc(100vw-2rem))] p-2 text-xs"
+                        >
                         {item.variantOptions.map((option) => {
-                          const label =
-                            option.attributes.map((attribute) => `${attribute.name}: ${attribute.value}`).join(" / ") ||
-                            (option.isDefault ? "Default variant" : `Variant #${option.id}`)
                           return (
-                            <option key={option.id} value={option.id} disabled={!option.available}>
-                              {label} - ${option.price.toFixed(2)}
-                              {!option.available ? " (out of stock)" : ""}
-                            </option>
+                            <SelectItem
+                              key={option.id}
+                              value={option.id}
+                              disabled={!option.available}
+                              className="items-start py-2 pe-9 ps-2 leading-relaxed *:[span]:last:whitespace-normal *:[span]:last:break-words"
+                            >
+                              {formatVariantOptionLabel(option)}
+                            </SelectItem>
                           )
                         })}
-                      </select>
-                    </label>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   ) : null}
                 </div>
                 <button
@@ -215,7 +237,8 @@ export function CartStep({
               </div>
             </div>
           </div>
-        ))}
+          )
+        })}
 
         {/* Coupon */}
         <div className="rounded-2xl border bg-card p-5">

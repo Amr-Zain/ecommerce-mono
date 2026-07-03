@@ -26,6 +26,14 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
 
   const view = searchParams.get("view") || "grid"
   const sort = searchParams.get("sort") || "recommended"
+  const sortOptions = [
+    { value: "recommended", label: t("sortRecommended") },
+    { value: "price-asc", label: t("priceLowToHigh") },
+    { value: "price-desc", label: t("priceHighToLow") },
+    { value: "rating-desc", label: t("customerRating") },
+  ]
+  const selectedSortLabel =
+    sortOptions.find((option) => option.value === sort)?.label ?? t("sortBy")
 
   const DEFAULT_BREADCRUMBS: Breadcrumb[] = [
     { label: t("home"), href: "/" },
@@ -312,14 +320,22 @@ export function ListingTopbar({ breadcrumbs }: { breadcrumbs?: Breadcrumb[] }) {
 
           {/* Sort Select */}
           <Select value={sort} onValueChange={handleSortChange}>
-            <SelectTrigger className="h-8 text-xs font-semibold bg-background/50 border">
-              <SelectValue placeholder={t("sortBy")} />
+            <SelectTrigger className="h-8 w-full min-w-40 bg-background/50 text-xs font-semibold sm:w-44">
+              <SelectValue placeholder={selectedSortLabel}>{selectedSortLabel}</SelectValue>
             </SelectTrigger>
-            <SelectContent className="text-xs">
-              <SelectItem value="recommended">{t("sortRecommended")}</SelectItem>
-              <SelectItem value="price-asc">{t("priceLowToHigh")}</SelectItem>
-              <SelectItem value="price-desc">{t("priceHighToLow")}</SelectItem>
-              <SelectItem value="rating-desc">{t("customerRating")}</SelectItem>
+            <SelectContent
+              alignItemWithTrigger={false}
+              className="w-[min(18rem,calc(100vw-2rem))] p-2 text-xs"
+            >
+              {sortOptions.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  className="items-start py-2 pe-9 ps-2 leading-relaxed *:[span]:last:whitespace-normal *:[span]:last:break-words"
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

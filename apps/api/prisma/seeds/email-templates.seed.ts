@@ -151,6 +151,196 @@ const emailTemplates = [
     },
     variables: { name: 'string' },
   },
+  {
+    id: 4004n,
+    key: 'campaign_promotion',
+    name: 'Campaign Promotion',
+    channel: 'both',
+    purpose: 'campaign',
+    content: {
+      en: {
+        subject: '{{campaignTitle}}',
+        title: '{{campaignTitle}}',
+        body: 'Hi {{name}}, {{message}} Use code {{couponCode}} before {{expiresAt}}.',
+        html: buildEmailHtml(
+          'ltr',
+          'en',
+          '{{campaignTitle}}',
+          'Hi {{name}}, {{message}} Use code {{couponCode}} before {{expiresAt}}.',
+        ),
+      },
+      ar: {
+        subject: '{{campaignTitle}}',
+        title: '{{campaignTitle}}',
+        body: 'Hello {{name}}, {{message}} Use code {{couponCode}} before {{expiresAt}}.',
+        html: buildEmailHtml(
+          'rtl',
+          'ar',
+          '{{campaignTitle}}',
+          'Hello {{name}}, {{message}} Use code {{couponCode}} before {{expiresAt}}.',
+        ),
+      },
+    },
+    variables: {
+      campaignTitle: 'string',
+      name: 'string',
+      message: 'string',
+      couponCode: 'string',
+      expiresAt: 'string',
+    },
+  },
+  {
+    id: 4005n,
+    key: 'order_status_update',
+    name: 'Order Status Update',
+    channel: 'both',
+    purpose: 'generic',
+    content: {
+      en: {
+        subject: 'Order {{orderNumber}} is {{status}}',
+        title: 'Order {{orderNumber}} update',
+        body: 'Your order {{orderNumber}} is now {{status}}. {{message}}',
+        html: buildEmailHtml(
+          'ltr',
+          'en',
+          'Order {{orderNumber}} update',
+          'Your order {{orderNumber}} is now {{status}}. {{message}}',
+        ),
+      },
+      ar: {
+        subject: 'Order {{orderNumber}} is {{status}}',
+        title: 'Order {{orderNumber}} update',
+        body: 'Your order {{orderNumber}} is now {{status}}. {{message}}',
+        html: buildEmailHtml(
+          'rtl',
+          'ar',
+          'Order {{orderNumber}} update',
+          'Your order {{orderNumber}} is now {{status}}. {{message}}',
+        ),
+      },
+    },
+    variables: { orderNumber: 'string', status: 'string', message: 'string' },
+  },
+  {
+    id: 4006n,
+    key: 'loyalty_points_added',
+    name: 'Loyalty Points Added',
+    channel: 'notification',
+    purpose: 'generic',
+    content: {
+      en: {
+        title: 'You earned {{points}} points',
+        body: '{{points}} loyalty points were added to your account from {{source}}.',
+      },
+      ar: {
+        title: 'You earned {{points}} points',
+        body: '{{points}} loyalty points were added to your account from {{source}}.',
+      },
+    },
+    variables: { points: 'number', source: 'string' },
+  },
+  {
+    id: 4007n,
+    key: 'tier_upgraded',
+    name: 'Tier Upgrade Congratulations',
+    channel: 'both',
+    purpose: 'generic',
+    content: {
+      en: {
+        subject: 'Congratulations, you reached {{tierName}}',
+        title: 'You are now {{tierName}}',
+        body: 'Congratulations {{name}}! Your loyalty tier is now {{tierName}} with a {{multiplier}}x earning multiplier.',
+        html: buildEmailHtml(
+          'ltr',
+          'en',
+          'You are now {{tierName}}',
+          'Congratulations {{name}}! Your loyalty tier is now {{tierName}} with a {{multiplier}}x earning multiplier.',
+        ),
+      },
+      ar: {
+        subject: 'Congratulations, you reached {{tierName}}',
+        title: 'You are now {{tierName}}',
+        body: 'Congratulations {{name}}! Your loyalty tier is now {{tierName}} with a {{multiplier}}x earning multiplier.',
+        html: buildEmailHtml(
+          'rtl',
+          'ar',
+          'You are now {{tierName}}',
+          'Congratulations {{name}}! Your loyalty tier is now {{tierName}} with a {{multiplier}}x earning multiplier.',
+        ),
+      },
+    },
+    variables: { name: 'string', tierName: 'string', multiplier: 'number' },
+  },
+  {
+    id: 4008n,
+    key: 'support_reply',
+    name: 'Support Ticket Reply',
+    channel: 'notification',
+    purpose: 'generic',
+    content: {
+      en: {
+        title: 'New reply on ticket {{ticketNumber}}',
+        body: '{{agentName}} replied to your support ticket: {{summary}}',
+      },
+      ar: {
+        title: 'New reply on ticket {{ticketNumber}}',
+        body: '{{agentName}} replied to your support ticket: {{summary}}',
+      },
+    },
+    variables: { ticketNumber: 'string', agentName: 'string', summary: 'string' },
+  },
+  {
+    id: 4009n,
+    key: 'back_in_stock',
+    name: 'Back In Stock',
+    channel: 'email',
+    purpose: 'campaign',
+    content: {
+      en: {
+        subject: '{{productName}} is back in stock',
+        body: 'Good news {{name}}, {{productName}} is available again. View it here: {{productUrl}}',
+        html: buildEmailHtml(
+          'ltr',
+          'en',
+          '{{productName}} is back in stock',
+          'Good news {{name}}, {{productName}} is available again. View it here: {{productUrl}}',
+        ),
+      },
+      ar: {
+        subject: '{{productName}} is back in stock',
+        body: 'Good news {{name}}, {{productName}} is available again. View it here: {{productUrl}}',
+        html: buildEmailHtml(
+          'rtl',
+          'ar',
+          '{{productName}} is back in stock',
+          'Good news {{name}}, {{productName}} is available again. View it here: {{productUrl}}',
+        ),
+      },
+    },
+    variables: { name: 'string', productName: 'string', productUrl: 'string' },
+  },
+  {
+    id: 4010n,
+    key: 'manual_announcement',
+    name: 'Manual Announcement',
+    channel: 'both',
+    purpose: 'campaign',
+    content: {
+      en: {
+        subject: '{{title}}',
+        title: '{{title}}',
+        body: '{{body}}',
+        html: buildEmailHtml('ltr', 'en', '{{title}}', '{{body}}'),
+      },
+      ar: {
+        subject: '{{title}}',
+        title: '{{title}}',
+        body: '{{body}}',
+        html: buildEmailHtml('rtl', 'ar', '{{title}}', '{{body}}'),
+      },
+    },
+    variables: { title: 'string', body: 'string' },
+  },
 ];
 
 export async function seedEmailTemplates(prisma: PrismaClient) {

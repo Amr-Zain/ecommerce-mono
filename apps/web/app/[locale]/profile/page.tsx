@@ -1,83 +1,119 @@
 "use client"
 
+import * as React from "react"
 import { useTranslations } from "next-intl"
+import { useSession } from "next-auth/react"
 import { useForm } from "react-hook-form"
+import { toast } from "@ecommerce/ui/components/sonner"
+import { FormLabel } from "@ecommerce/ui/components/form"
 
-import { AppFormComplete, type FormField } from "@ecommerce/forms"
+import { AppFormComplete, PhoneField, type FormField } from "@ecommerce/forms"
+import {
+  useCurrentUser,
+  useUpdateCurrentUser,
+} from "@/hooks/api/use-current-user"
 
 type ProfileFormValues = {
-  firstName: string
-  lastName: string
+  name: string
   email: string
+  phoneCode: string
   phone: string
-  birthday: string
-  gender: string
 }
 
 const defaultValues: ProfileFormValues = {
-  firstName: "John",
-  lastName: "Doe",
-  email: "john@gmail.com",
-  phone: "123-456-0789",
-  birthday: "2002-06-11",
-  gender: "male",
+  name: "",
+  email: "",
+  phoneCode: "",
+  phone: "",
 }
 
 export default function ProfilePage() {
   const t = useTranslations("Profile")
+  const { update: updateSession } = useSession()
+  const { data: currentUser, isLoading } = useCurrentUser()
+  const updateProfile = useUpdateCurrentUser()
+  const profile = currentUser?.data
   const form = useForm<ProfileFormValues>({
     defaultValues,
     mode: "onChange",
   })
 
+  React.useEffect(() => {
+    if (!profile) return
+
+    form.reset({
+      name: profile.name ?? "",
+      email: profile.email ?? "",
+      phoneCode: profile.phoneCode ?? profile.phone_code ?? "",
+      phone: profile.phone ?? "",
+    })
+  }, [form, profile])
+
+  const pending = isLoading || updateProfile.isPending
+
   const fields: FormField<ProfileFormValues>[] = [
     {
       type: "text",
-      name: "firstName",
-      label: t("firstName"),
+      name: "name",
+      label: t("name"),
       required: true,
-      inputProps: { required: true, className: "h-11" },
-    },
-    {
-      type: "text",
-      name: "lastName",
-      label: t("lastName"),
-      required: true,
-      inputProps: { required: true, className: "h-11" },
+      inputProps: {
+        autoComplete: "name",
+        className: "h-11",
+        disabled: pending,
+        required: true,
+      },
     },
     {
       type: "email",
       name: "email",
       label: t("emailAddress"),
-      required: true,
-      inputProps: { required: true, className: "h-11" },
+      inputProps: {
+        autoComplete: "email",
+        className: "h-11",
+        disabled: true,
+        readOnly: true,
+      },
     },
     {
-      type: "tel",
+      type: "phone",
       name: "phone",
       label: t("phone"),
-      required: true,
-      inputProps: { required: true, className: "h-11" },
-    },
-    {
-      type: "date",
-      name: "birthday",
-      label: t("birthday"),
-      inputProps: { className: "h-11" },
-    },
-    {
-      type: "select",
-      name: "gender",
-      label: t("gender"),
-      placeholder: t("selectGender"),
-      options: [
-        { value: "male", label: t("male") },
-        { value: "female", label: t("female") },
-        { value: "other", label: t("other") },
-      ],
-      inputProps: { className: "h-11" },
+      phoneCodeName: "phoneCode",
+      phoneNumberName: "phone",
+      span: 2,
+      disabled: pending,
     },
   ]
+
+  function saveProfile(values: ProfileFormValues) {
+    updateProfile.mutate(
+      {
+        name: values.name.trim(),
+        phone: values.phone.trim() || undefined,
+        phoneCode: values.phoneCode.trim() || undefined,
+      },
+      {
+        onSuccess: async (response) => {
+          const updated = response.data
+          await updateSession({
+            user: {
+              name: updated.name,
+              phone: updated.phone,
+              phone_code: updated.phoneCode ?? updated.phone_code,
+            },
+          })
+          toast.success(t("profileUpdated"))
+          form.reset({
+            name: updated.name ?? "",
+            email: updated.email ?? "",
+            phoneCode: updated.phoneCode ?? updated.phone_code ?? "",
+            phone: updated.phone ?? "",
+          })
+        },
+      }
+    )
+  }
 
   return (
     <div className="space-y-12">
@@ -88,10 +124,35 @@ export default function ProfilePage() {
         <AppFormComplete
           form={form}
           fields={fields}
-          onSubmit={() => undefined}
+          onSubmit={saveProfile}
           layout={{ columns: 2 }}
+          isLoading={pending}
+          loadingButtonText={t("saving")}
           submitButtonText={t("saveChanges")}
           submitButtonClassName="h-11 rounded-xl px-8 font-semibold sm:w-auto"
+          submitDisabled={pending || !form.formState.isDirty}
+          customRenderers={{
+            phone: ({ field, form: activeForm, label }) =>
+              field.type === "phone" ? (
+                <div className="space-y-2">
+                  {label ? <FormLabel>{label}</FormLabel> : null}
+                  <PhoneField
+                    control={activeForm.control}
+                    phoneCodeName={
+                      (field.phoneCodeName ?? "phoneCode") as "phoneCode"
+                    }
+                    phoneNumberName={
+                      (field.phoneNumberName ?? "phone") as "phone"
+                    }
+                    disabled={field.disabled}
+                    codeClass="h-11"
+                    phoneClass="h-11"
+                    codePlaceholder="+"
+                    phonePlaceholder={t("phone")}
+                  />
+                </div>
+              ) : null,
+          }}
         />
       </section>
     </div>

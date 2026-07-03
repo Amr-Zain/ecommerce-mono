@@ -19,10 +19,11 @@ export async function seedAdmin(prisma: PrismaClient) {
 
   console.log('Super Admin Role created/updated');
 
-  const returnExchangePermissions = ['returns', 'exchanges'].flatMap((resource) =>
-    ['list', 'read', 'update'].map((action) => ({ resource, action })),
-  );
-  for (const permission of returnExchangePermissions) {
+  const permissions = [
+    { resource: 'dashboard', action: 'read' },
+    ...['returns', 'exchanges'].flatMap((resource) => ['list', 'read', 'update'].map((action) => ({ resource, action }))),
+  ];
+  for (const permission of permissions) {
     await prisma.permission.upsert({
       where: { resource_action: permission },
       update: { roles: { connect: { id: superAdminRole.id } } },

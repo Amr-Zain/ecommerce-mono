@@ -14,13 +14,25 @@ import {
 import { Button } from "@ecommerce/ui/components/button"
 import { useCancelOrder } from "@/hooks/api/use-profile-commerce"
 
-function CancelOrderDialog({ orderId, size }: { orderId: string; size?: "sm" | "default" }) {
+function CancelOrderDialog({
+  orderId,
+  size,
+}: {
+  orderId: string
+  size?: "sm" | "default"
+}) {
   const cancelOrder = useCancelOrder(orderId)
 
   return (
     <AlertDialog>
       <AlertDialogTrigger
-        render={<Button size={size} variant="destructive" disabled={cancelOrder.isPending} />}
+        render={
+          <Button
+            size={size}
+            variant="destructive"
+            disabled={cancelOrder.isPending}
+          />
+        }
       >
         {cancelOrder.isPending ? "Cancelling..." : "Cancel Order"}
       </AlertDialogTrigger>
@@ -28,7 +40,9 @@ function CancelOrderDialog({ orderId, size }: { orderId: string; size?: "sm" | "
         <AlertDialogHeader>
           <AlertDialogTitle>Cancel this order?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. The API will validate whether the order can still be cancelled.
+            This action cannot be undone. If payment was already captured, any
+            eligible refund will be processed according to the order payment
+            method.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -36,7 +50,9 @@ function CancelOrderDialog({ orderId, size }: { orderId: string; size?: "sm" | "
           <AlertDialogAction
             variant="destructive"
             disabled={cancelOrder.isPending}
-            onClick={() => cancelOrder.mutate({ reason: "Cancelled by client" })}
+            onClick={() =>
+              cancelOrder.mutate({ reason: "Cancelled by client" })
+            }
           >
             {cancelOrder.isPending ? "Cancelling..." : "Confirm Cancellation"}
           </AlertDialogAction>

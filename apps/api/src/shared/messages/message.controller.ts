@@ -55,6 +55,12 @@ export class MessageTemplateController {
   preview(@Param('id', ParseBigIntPipe) id: bigint, @Body() dto: PreviewMessageTemplateDto) {
     return this.messages.previewTemplate(id, dto);
   }
+
+  @Post(':id/verify')
+  @RequirePermissions({ resource: 'message_templates', action: 'read' })
+  verify(@Param('id', ParseBigIntPipe) id: bigint, @Body() dto: PreviewMessageTemplateDto) {
+    return this.messages.verifyTemplate(id, dto);
+  }
 }
 
 @Controller('messages')

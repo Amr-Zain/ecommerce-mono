@@ -7,6 +7,8 @@ import {
   PublicCacheInvalidationPublisher,
 } from '@/shared/cache/public-cache-invalidation.service';
 import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
+import { ORDER_STATUSES } from '@/client/orders/order.constants';
+import { PAYMENT_STATUSES } from '@/shared/payment/payment.constants';
 
 @Injectable()
 export class ClientReviewsService {
@@ -24,9 +26,11 @@ export class ClientReviewsService {
   }
 
   async findMine(userId: bigint, productId: bigint) {
+    const normalizedUserId = BigInt(userId);
+    const normalizedProductId = BigInt(productId);
     const [review, canReview] = await Promise.all([
-      this.reviewsRepository.findUserReview(userId, productId),
-      this.hasDeliveredPurchase(userId, productId),
+      this.reviewsRepository.findUserReview(normalizedUserId, normalizedProductId),
+      this.hasVerifiedDeliveredPurchase(normalizedUserId, normalizedProductId),
     ]);
     return {
       review,
@@ -36,18 +40,27 @@ export class ClientReviewsService {
   }
 
   async create(userId: bigint, dto: CreateReviewDto) {
-    if (!(await this.hasDeliveredPurchase(userId, BigInt(dto.productId)))) {
+    const normalizedUserId = BigInt(userId);
+    const normalizedProductId = BigInt(dto.productId);
+    const [existingReview, hasDeliveredPurchase] = await Promise.all([
+      this.reviewsRepository.findUserReview(normalizedUserId, normalizedProductId),
+      this.hasVerifiedDeliveredPurchase(normalizedUserId, normalizedProductId),
+    ]);
+    if (existingReview) {
+      throw new BadRequestException('You have already reviewed this product');
+    }
+    if (!hasDeliveredPurchase) {
       throw new BadRequestException('A delivered purchase is required to review this product');
     }
     const review = await this.reviewsRepository.createForUser({
-      userId,
-      productId: BigInt(dto.productId),
+      userId: normalizedUserId,
+      productId: normalizedProductId,
       rating: dto.rating,
       comment: dto.comment,
       images: dto.images,
     });
-    await this.loyaltyService.awardReview(userId, review.id);
-    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.reviewsChanged, { productId: dto.productId });
+    await this.loyaltyService.awardReview(normalizedUserId, review.id);
+    this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.reviewsChanged, { productId: normalizedProductId });
     return review;
   }
 
@@ -76,12 +89,18 @@ export class ClientReviewsService {
     return deleted;
   }
 
-  private async hasDeliveredPurchase(userId: bigint, productId: bigint) {
+  private async hasVerifiedDeliveredPurchase(userId: bigint, productId: bigint) {
     const item = await this.prisma.orderItem.findFirst({
       where: {
-        productId,
         isActive: true,
-        order: { userId, isActive: true, status: 'delivered' },
+        OR: [{ productId }, { variant: { productId } }],
+        order: {
+          userId,
+          isActive: true,
+          status: ORDER_STATUSES.delivered,
+          paymentStatus: PAYMENT_STATUSES.completed,
+          deliveredAt: { not: null },
+        },
       },
       select: { id: true },
     });

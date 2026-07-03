@@ -8,12 +8,12 @@ export class MessageRepository {
 
   listTemplates(query: Record<string, unknown>) {
     const where: Prisma.MessageTemplateWhereInput = {};
-    if (query.channel) where.channel = String(query.channel);
-    if (query.purpose) where.purpose = String(query.purpose);
+    if (typeof query.channel === 'string') where.channel = query.channel;
+    if (typeof query.purpose === 'string') where.purpose = query.purpose;
     if (query.isActive !== undefined)
       where.isActive = query.isActive === true || query.isActive === 'true' || query.isActive === '1';
     if (query.search) {
-      const search = String(query.search);
+      const search = typeof query.search === 'string' ? query.search : '';
       where.OR = [
         { key: { contains: search, mode: 'insensitive' } },
         { name: { contains: search, mode: 'insensitive' } },
@@ -41,7 +41,7 @@ export class MessageRepository {
   findRecipients(where: Prisma.UserWhereInput) {
     return this.prisma.user.findMany({
       where,
-      select: { id: true, email: true, name: true, userType: true, isActive: true },
+      select: { id: true, email: true, name: true, userType: true, isActive: true, settings: true },
       orderBy: { id: 'asc' },
     });
   }
@@ -52,7 +52,9 @@ export class MessageRepository {
       templateId: bigint;
       senderId?: bigint;
       channel: string;
+      locale: string;
       recipientType: string;
+      recipientUserType?: string;
       titleOverride?: string;
       variables?: Record<string, unknown>;
       templateSnapshot: Prisma.InputJsonValue;
@@ -73,7 +75,9 @@ export class MessageRepository {
         templateId: input.templateId,
         senderId: input.senderId,
         channel: input.channel,
+        locale: input.locale,
         recipientType: input.recipientType,
+        recipientUserType: input.recipientUserType,
         titleOverride: input.titleOverride,
         variables: input.variables as Prisma.InputJsonValue | undefined,
         templateSnapshot: input.templateSnapshot,
@@ -101,7 +105,7 @@ export class MessageRepository {
         template: true,
         sender: { select: { id: true, name: true } },
         recipients: {
-          include: { user: { select: { id: true, name: true, email: true, userType: true } } },
+          include: { user: { select: { id: true, name: true, email: true, userType: true, settings: true } } },
           orderBy: { id: 'asc' },
         },
       },
@@ -111,7 +115,10 @@ export class MessageRepository {
   pendingRecipients(campaignId: bigint) {
     return this.prisma.messageCampaignRecipient.findMany({
       where: { campaignId, status: MESSAGE_STATUSES.queued },
-      include: { user: { select: { id: true, name: true, email: true, userType: true } }, campaign: true },
+      include: {
+        user: { select: { id: true, name: true, email: true, userType: true, settings: true } },
+        campaign: true,
+      },
       orderBy: { id: 'asc' },
     });
   }

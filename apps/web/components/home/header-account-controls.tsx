@@ -7,6 +7,7 @@ import { getTranslations } from "next-intl/server"
 import { auth } from "@/auth"
 import { Button } from "@ecommerce/ui/components/button"
 import { backendGet } from "@/lib/server/backend"
+import { normalizeUploadUrl } from "@/lib/media-url"
 import { HeaderAccountDropdown } from "./header-account-dropdown"
 import { HeaderNotificationLink } from "./header-notification-link"
 
@@ -61,10 +62,11 @@ async function HeaderAccountControls({ locale }: { locale: string }) {
   }
 
   const [profile, unread] = await getAccountData(session.accessToken)
-  const image =
-    session.user.image ??
+  const image = normalizeUploadUrl(
     profile?.data.avatar?.path ??
-    profile?.data.image?.path
+      profile?.data.image?.path ??
+      session.user.image
+  )
   const unreadCount = unread?.data.count ?? 0
 
   return (

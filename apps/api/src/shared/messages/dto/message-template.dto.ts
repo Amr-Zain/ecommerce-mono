@@ -116,4 +116,10 @@ export class PreviewMessageTemplateDto {
   @IsObject()
   @ApiPropertyOptional({ example: {}, description: 'variables' })
   variables?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  @ApiPropertyOptional({ example: 'Custom campaign title', description: 'titleOverride' })
+  titleOverride?: string;
 }

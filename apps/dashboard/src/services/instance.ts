@@ -64,7 +64,7 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError<ErrorResponse>) => {
     console.log("🚀 ~ error:", error)
     const { status } = error.response || {};
-    const originalRequest: any = error.config;
+    const originalRequest: any = error.config ?? {};
 
     if (status === 401 && !originalRequest._retry) {
       if (isRefreshing) {

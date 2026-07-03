@@ -1,4 +1,5 @@
 export interface DashboardStatistics {
+    filters?: DashboardFilters;
     users: {
         total: number;
         active: number;
@@ -8,11 +9,11 @@ export interface DashboardStatistics {
         new_this_month: number;
         growth_trend: number;
         by_type: Record<string, number>;
-        by_tier: {
+        by_tier: Array<{
             id?: number;
             tier_name: string;
             count: number;
-        }[];
+        }>;
     };
     orders: {
         total: number;
@@ -29,12 +30,12 @@ export interface DashboardStatistics {
         orders_today: number;
         orders_this_week: number;
         orders_this_month: number;
-        top_products: {
+        top_products: Array<{
             id: number;
             name: string;
             sold: number;
             revenue: number;
-        }[];
+        }>;
     };
     products: {
         total: number;
@@ -45,16 +46,24 @@ export interface DashboardStatistics {
         added_this_week: number;
         added_this_month: number;
         inventory_value: number;
-        most_viewed: {
+        most_viewed: Array<{
             id: number;
             name: string;
             views: number;
-        }[];
-        most_wishlisted: {
+        }>;
+        most_wishlisted: Array<{
             id: number;
             name: string;
             wishlist_count: number;
-        }[];
+        }>;
+        recent_products?: Array<{
+            id: number;
+            name: string;
+            stock: number;
+            price: number;
+            is_active: boolean;
+            created_at: string;
+        }>;
     };
     reviews: {
         total: number;
@@ -62,12 +71,12 @@ export interface DashboardStatistics {
         average_rating: number;
         this_month: number;
         rating_distribution: Record<string, number>;
-        most_reviewed: {
+        most_reviewed: Array<{
             id: number;
             name: string;
             reviews_count: number;
             average_rating: number;
-        }[];
+        }>;
     };
     loyalty: {
         total_points_distributed: number;
@@ -75,11 +84,11 @@ export interface DashboardStatistics {
         active_rewards: number;
         total_redeemed_rewards: number;
         points_this_month: number;
-        users_by_tier: {
+        users_by_tier: Array<{
             id?: number;
             tier_name: string;
             count: number;
-        }[];
+        }>;
     };
     financial: {
         total_revenue: number;
@@ -91,7 +100,7 @@ export interface DashboardStatistics {
     };
     geo: {
         generated_at: string;
-        countries: {
+        countries: Array<{
             country: {
                 id: number;
                 code: string;
@@ -107,39 +116,133 @@ export interface DashboardStatistics {
                 active: number;
                 banned: number;
             };
-        }[];
+        }>;
     };
     recent_activity: {
-        orders: {
+        orders: Array<{
             id: number;
             order_number: number;
             user_name: string;
             total: number;
             status: string;
             created_at: string;
-        }[];
-        users: {
+        }>;
+        users: Array<{
             id: number;
             full_name: string;
             email: string | null;
             is_active: boolean;
             created_at: string;
-        }[];
-        reviews: {
+        }>;
+        reviews: Array<{
             id: number;
             user_name: string;
             product_name: string | null;
             rating: number;
             is_approved: boolean;
             created_at: string;
-        }[];
-        products: {
+        }>;
+        products: Array<{
             id: number;
             name: string;
             stock: number;
             price: number;
             is_active: boolean;
             created_at: string;
-        }[];
+        }>;
     };
+    analytics: DashboardAnalytics;
+}
+
+export type DashboardPreset = 'today' | '7d' | '30d' | '90d' | 'year' | 'custom';
+export type DashboardGranularity = 'auto' | 'day' | 'week' | 'month';
+
+export interface DashboardFilters {
+    preset: DashboardPreset;
+    from: string;
+    to: string;
+    granularity: Exclude<DashboardGranularity, 'auto'>;
+    sections: Array<string>;
+}
+
+export interface DashboardQueryParams {
+    preset?: DashboardPreset;
+    from?: string;
+    to?: string;
+    granularity?: DashboardGranularity;
+    compare?: boolean;
+    sections?: string;
+}
+
+export interface DashboardNameValuePoint {
+    name: string;
+    value: number;
+}
+
+export interface DashboardSalesTrendPoint {
+    period: string;
+    revenue: number;
+    netRevenue: number;
+    orders: number;
+    refunds: number;
+}
+
+export interface DashboardCustomerGrowthPoint {
+    period: string;
+    newUsers: number;
+    activeUsers: number;
+}
+
+export interface DashboardInventoryStockPoint {
+    state: string;
+    count: number;
+}
+
+export interface DashboardReviewRatingPoint {
+    rating: string;
+    count: number;
+}
+
+export interface DashboardLoyaltyTrendPoint {
+    period: string;
+    earned: number;
+    redeemed: number;
+}
+
+export interface DashboardAnalytics {
+    salesTrend: Array<DashboardSalesTrendPoint>;
+    ordersByStatus: Array<DashboardNameValuePoint>;
+    ordersByPaymentMethod: Array<DashboardNameValuePoint>;
+    paymentHealth: Array<DashboardNameValuePoint>;
+    customerSegments: Array<DashboardNameValuePoint>;
+    customerGrowth: Array<DashboardCustomerGrowthPoint>;
+    inventoryStockStates: Array<DashboardInventoryStockPoint>;
+    reviewRatings: Array<DashboardReviewRatingPoint>;
+    loyaltyPointsTrend: Array<DashboardLoyaltyTrendPoint>;
+    businessMetrics: DashboardBusinessMetrics;
+    operationalAlerts: DashboardOperationalAlerts;
+}
+
+export interface DashboardBusinessMetrics {
+    grossRevenue: number;
+    netRevenue: number;
+    orders: number;
+    averageOrderValue: number;
+    refundRate: number;
+    repeatCustomerRate: number;
+    reviewApprovalRate: number;
+    inventoryAtRisk: number;
+    pendingOperations: number;
+}
+
+export interface DashboardOperationalAlerts {
+    pendingPaymentsCount: number;
+    pendingPaymentsAmount: number;
+    pendingReviews: number;
+    openTickets: number;
+    openReturns: number;
+    openExchanges: number;
+    lowStockVariants: number;
+    outOfStockVariants: number;
+    refundRequestsValue: number;
 }

@@ -98,9 +98,11 @@
   },
   "Profile": {
     "title": "Personal Information",
+    "name": "Name",
     "firstName": "First Name",
     "lastName": "Last Name",
     "emailAddress": "Email Address",
+    "phoneCode": "Phone Code",
     "phone": "Phone",
     "birthday": "Birthday",
     "gender": "Gender",
@@ -108,7 +110,9 @@
     "male": "Male",
     "female": "Female",
     "other": "Other",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "saving": "Saving...",
+    "profileUpdated": "Profile updated"
   },
   "Orders": {
     "title": "My Orders",

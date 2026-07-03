@@ -288,7 +288,7 @@ export const queryKeys = {
 
   dashboard: {
     all: () => ['dashboard'] as const,
-    statistics: () => [...queryKeys.dashboard.all(), 'statistics'] as const,
+    statistics: (params?: unknown) => [...queryKeys.dashboard.all(), 'statistics', params] as const,
   },
 
   settings: {

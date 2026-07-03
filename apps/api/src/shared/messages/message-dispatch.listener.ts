@@ -25,13 +25,18 @@ export class MessageDispatchListener {
       const campaign = await this.repository.getCampaign(campaignId);
       if (!campaign) return;
 
-      const content = (campaign.templateSnapshot as any).content ?? {};
+      const snapshot =
+        campaign.templateSnapshot && typeof campaign.templateSnapshot === 'object'
+          ? (campaign.templateSnapshot as MessageTemplateSnapshot)
+          : {};
+      const content = snapshot.content ?? {};
       const variables = (campaign.variables ?? {}) as Record<string, unknown>;
-      const rendered = this.renderer.renderBoth(content, variables);
       const pending = await this.repository.pendingRecipients(campaignId);
 
       for (const recipient of pending) {
         try {
+          const locale = this.resolveLocale(campaign.locale, recipient.user?.settings);
+          const rendered = this.renderer.render(content, variables, locale);
           if (recipient.channel === MESSAGE_CHANNELS.email) {
             if (!recipient.email) {
               await this.repository.updateRecipient(recipient.id, {
@@ -42,16 +47,16 @@ export class MessageDispatchListener {
             }
             await this.email.sendRendered({
               to: recipient.email,
-              subject: campaign.titleOverride ?? rendered.en.subject,
-              html: rendered.en.html,
-              text: rendered.en.body,
+              subject: campaign.titleOverride ?? rendered.subject,
+              html: rendered.html,
+              text: rendered.body,
             });
           } else {
             await this.notifications.createRenderedForUsers([recipient.userId], {
               eventId: `${event.eventId}:${recipient.id.toString()}`,
               notificationType: 'message.campaign',
-              title: campaign.titleOverride ?? rendered.en.title,
-              body: rendered.en.body,
+              title: campaign.titleOverride ?? rendered.title,
+              body: rendered.body,
               data: { entity: { type: 'message_campaign', id: campaignId.toString() } },
             });
           }
@@ -71,4 +76,18 @@ export class MessageDispatchListener {
       await this.repository.refreshCampaignCounts(campaignId);
     });
   }
+
+  private resolveLocale(locale: string | null | undefined, settings: unknown) {
+    if (locale === 'ar' || locale === 'en') return locale;
+    const userSettings = settings && typeof settings === 'object' ? (settings as Record<string, unknown>) : {};
+    const preferred = userSettings.language ?? userSettings.locale ?? userSettings.preferred_language;
+    return preferred === 'ar' ? 'ar' : 'en';
+  }
 }
+
+type MessageTemplateSnapshot = {
+  content?: {
+    en?: { subject?: string; title?: string; body?: string; html?: string };
+    ar?: { subject?: string; title?: string; body?: string; html?: string };
+  };
+};

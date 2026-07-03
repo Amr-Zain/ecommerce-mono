@@ -28,6 +28,7 @@ import { Route as MainRolesIndexRouteImport } from './routes/_main/roles/index'
 import { Route as MainRewardsIndexRouteImport } from './routes/_main/rewards/index'
 import { Route as MainReviewsIndexRouteImport } from './routes/_main/reviews/index'
 import { Route as MainReturnsIndexRouteImport } from './routes/_main/returns/index'
+import { Route as MainReportsIndexRouteImport } from './routes/_main/reports/index'
 import { Route as MainProfileIndexRouteImport } from './routes/_main/profile/index'
 import { Route as MainProductsIndexRouteImport } from './routes/_main/products/index'
 import { Route as MainPaymentGatewaysIndexRouteImport } from './routes/_main/payment-gateways/index'
@@ -200,6 +201,11 @@ const MainReviewsIndexRoute = MainReviewsIndexRouteImport.update({
 const MainReturnsIndexRoute = MainReturnsIndexRouteImport.update({
   id: '/returns/',
   path: '/returns/',
+  getParentRoute: () => MainRouteRoute,
+} as any)
+const MainReportsIndexRoute = MainReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
   getParentRoute: () => MainRouteRoute,
 } as any)
 const MainProfileIndexRoute = MainProfileIndexRouteImport.update({
@@ -649,6 +655,7 @@ export interface FileRoutesByFullPath {
   '/payment-gateways/': typeof MainPaymentGatewaysIndexRoute
   '/products/': typeof MainProductsIndexRoute
   '/profile/': typeof MainProfileIndexRoute
+  '/reports/': typeof MainReportsIndexRoute
   '/returns/': typeof MainReturnsIndexRoute
   '/reviews/': typeof MainReviewsIndexRoute
   '/rewards/': typeof MainRewardsIndexRoute
@@ -747,6 +754,7 @@ export interface FileRoutesByTo {
   '/payment-gateways': typeof MainPaymentGatewaysIndexRoute
   '/products': typeof MainProductsIndexRoute
   '/profile': typeof MainProfileIndexRoute
+  '/reports': typeof MainReportsIndexRoute
   '/returns': typeof MainReturnsIndexRoute
   '/reviews': typeof MainReviewsIndexRoute
   '/rewards': typeof MainRewardsIndexRoute
@@ -847,6 +855,7 @@ export interface FileRoutesById {
   '/_main/payment-gateways/': typeof MainPaymentGatewaysIndexRoute
   '/_main/products/': typeof MainProductsIndexRoute
   '/_main/profile/': typeof MainProfileIndexRoute
+  '/_main/reports/': typeof MainReportsIndexRoute
   '/_main/returns/': typeof MainReturnsIndexRoute
   '/_main/reviews/': typeof MainReviewsIndexRoute
   '/_main/rewards/': typeof MainRewardsIndexRoute
@@ -947,6 +956,7 @@ export interface FileRouteTypes {
     | '/payment-gateways/'
     | '/products/'
     | '/profile/'
+    | '/reports/'
     | '/returns/'
     | '/reviews/'
     | '/rewards/'
@@ -1045,6 +1055,7 @@ export interface FileRouteTypes {
     | '/payment-gateways'
     | '/products'
     | '/profile'
+    | '/reports'
     | '/returns'
     | '/reviews'
     | '/rewards'
@@ -1144,6 +1155,7 @@ export interface FileRouteTypes {
     | '/_main/payment-gateways/'
     | '/_main/products/'
     | '/_main/profile/'
+    | '/_main/reports/'
     | '/_main/returns/'
     | '/_main/reviews/'
     | '/_main/rewards/'
@@ -1347,6 +1359,13 @@ declare module '@tanstack/react-router' {
       path: '/returns'
       fullPath: '/returns/'
       preLoaderRoute: typeof MainReturnsIndexRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
+    '/_main/reports/': {
+      id: '/_main/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof MainReportsIndexRouteImport
       parentRoute: typeof MainRouteRoute
     }
     '/_main/profile/': {
@@ -1930,6 +1949,7 @@ interface MainRouteRouteChildren {
   MainPaymentGatewaysIndexRoute: typeof MainPaymentGatewaysIndexRoute
   MainProductsIndexRoute: typeof MainProductsIndexRoute
   MainProfileIndexRoute: typeof MainProfileIndexRoute
+  MainReportsIndexRoute: typeof MainReportsIndexRoute
   MainReturnsIndexRoute: typeof MainReturnsIndexRoute
   MainReviewsIndexRoute: typeof MainReviewsIndexRoute
   MainRewardsIndexRoute: typeof MainRewardsIndexRoute
@@ -2026,6 +2046,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainPaymentGatewaysIndexRoute: MainPaymentGatewaysIndexRoute,
   MainProductsIndexRoute: MainProductsIndexRoute,
   MainProfileIndexRoute: MainProfileIndexRoute,
+  MainReportsIndexRoute: MainReportsIndexRoute,
   MainReturnsIndexRoute: MainReturnsIndexRoute,
   MainReviewsIndexRoute: MainReviewsIndexRoute,
   MainRewardsIndexRoute: MainRewardsIndexRoute,

@@ -101,6 +101,26 @@ function normalizeClientPath(path: string) {
   return segments.map(encodeURIComponent).join("/")
 }
 
+function getBackendFailureMessage(error: Error) {
+  if (
+    error.name === "AbortError" ||
+    error.name === "TimeoutError" ||
+    error.message.toLowerCase().includes("aborted")
+  ) {
+    return "The server took too long to respond. Please try again."
+  }
+
+  if (
+    error instanceof TypeError ||
+    error.message.toLowerCase() === "fetch failed" ||
+    error.message.toLowerCase().includes("failed to fetch")
+  ) {
+    return "We couldn't reach the API server. Please try again in a moment."
+  }
+
+  return error.message
+}
+
 async function proxyClientApiRequest({
   body,
   method,
@@ -174,7 +194,9 @@ async function proxyClientApiRequest({
     }
 
     const message =
-      error instanceof Error ? error.message : "Backend request failed"
+      error instanceof Error
+        ? getBackendFailureMessage(error)
+        : "Backend request failed"
 
     return Response.json(
       { message },

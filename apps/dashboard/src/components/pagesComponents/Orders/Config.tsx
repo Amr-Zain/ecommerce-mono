@@ -1,15 +1,16 @@
-import { ColumnDef } from '@tanstack/react-table'
-import { textColumn } from '@/components/features/sharedColumns'
-import { Badge } from '@ecommerce/ui/components/badge'
-import { Filter } from '@/types/components/table'
-import { ORDER_STATUSES, PAYMENT_STATUSES, Order } from '@/types/api/order'
-import { cn } from '@/lib/utils'
 import { Link } from '@tanstack/react-router'
 import { Eye } from 'lucide-react'
+import { Badge } from '@ecommerce/ui/components/badge'
+import type { ColumnDef } from '@tanstack/react-table'
+import type { Order } from '@/types/api/order'
+import type { Filter } from '@/types/components/table'
 import { HasPermission } from '@/components/common/HasPermission'
+import { textColumn } from '@/components/features/sharedColumns'
+import { cn } from '@/lib/utils'
+import { ORDER_STATUSES, PAYMENT_STATUSES } from '@/types/api/order'
 
 export const getStatusColor = (status: string) => {
-  switch (status?.toLowerCase()) {
+  switch (status.toLowerCase()) {
     case ORDER_STATUSES.processing:
     case ORDER_STATUSES.shipped:
     case PAYMENT_STATUSES.processingPayment:
@@ -52,13 +53,13 @@ export const StatusBadge = ({
       getStatusColor(status),
     )}
   >
-    {t(`${labelPrefix}.${status}`) || status}
+    {statusLabel(status, labelPrefix, t)}
   </Badge>
 )
 
 export const orderColumns = (
   t: (key: string) => string,
-): ColumnDef<Order>[] => [
+): Array<ColumnDef<Order>> => [
   textColumn<Order>('order_number', 'orders.labels.order_number', {
     render: (info) => (
       <span className="font-bold text-primary">
@@ -126,7 +127,7 @@ export const orderColumns = (
   },
 ]
 
-export const getOrderFilters = (t: (key: string) => string): Filter[] => [
+export const getOrderFilters = (t: (key: string) => string): Array<Filter> => [
   {
     id: 'status',
     title: t('orders.labels.status'),
@@ -155,3 +156,14 @@ export const getOrderFilters = (t: (key: string) => string): Filter[] => [
     multiple: false,
   },
 ]
+
+function statusLabel(
+  status: string,
+  labelPrefix: string,
+  t: (key: string) => string,
+) {
+  const key = `${labelPrefix}.${status}`
+  const translated = t(key)
+  if (translated !== key) return translated
+  return status.replaceAll('_', ' ')
+}

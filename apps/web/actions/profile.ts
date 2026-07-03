@@ -1,19 +1,18 @@
 "use server"
 
-import { backendPatch } from "@/lib/server/backend"
+import { backendPut } from "@/lib/server/backend"
 import { actionError, actionSuccess } from "@/lib/server/action-result"
 import { cacheTags, revalidateCacheTag } from "@/lib/server/cache-tags"
 
 type UpdateProfileInput = {
-  email?: string
   name?: string
   phone?: string
-  phone_code?: string
+  phoneCode?: string
 }
 
 async function updateProfileAction(input: UpdateProfileInput) {
   try {
-    const data = await backendPatch("/me", input, {
+    const data = await backendPut("/client/profile", input, {
       cache: "no-store",
       requireAuth: true,
     })

@@ -34,24 +34,24 @@ model Permission {
 }
 
 model User {
-  id                      BigInt                    @id @default(autoincrement())
+  id                      BigInt                     @id @default(autoincrement())
   name                    String?
-  email                   String?                   @unique
-  roleId                  BigInt?                   @map("role")
-  role                    Role?                     @relation(fields: [roleId], references: [id], onDelete: SetNull)
-  userType                String?                   @default("client") @map("user_type")
+  email                   String?                    @unique
+  roleId                  BigInt?                    @map("role")
+  role                    Role?                      @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  userType                String?                    @default("client") @map("user_type")
   password                String?
   gender                  String?
   phone                   String?
-  phoneCode               String?                   @map("phone_code")
-  isPhoneVerified         Boolean                   @default(false) @map("is_phone_verified")
-  isEmailVerified         Boolean                   @default(false) @map("is_email_verified")
-  isActive                Boolean                   @default(true) @map("is_active")
-  phoneVerificationCode   String?                   @map("phone_verification_code") // 4-digit code
-  phoneVerificationExpiry DateTime?                 @map("phone_verification_expiry")
-  settings                Json?                     @default("{}")
-  createdAt               DateTime                  @default(now()) @map("created_at")
-  updatedAt               DateTime                  @default(now()) @updatedAt @map("updated_at")
+  phoneCode               String?                    @map("phone_code")
+  isPhoneVerified         Boolean                    @default(false) @map("is_phone_verified")
+  isEmailVerified         Boolean                    @default(false) @map("is_email_verified")
+  isActive                Boolean                    @default(true) @map("is_active")
+  phoneVerificationCode   String?                    @map("phone_verification_code") // 4-digit code
+  phoneVerificationExpiry DateTime?                  @map("phone_verification_expiry")
+  settings                Json?                      @default("{}")
+  createdAt               DateTime                   @default(now()) @map("created_at")
+  updatedAt               DateTime                   @default(now()) @updatedAt @map("updated_at")
   addresses               Address[]
   reviews                 Review[]
   orders                  Order[]
@@ -70,7 +70,7 @@ model User {
   emailOtpChallenges      EmailOtpChallenge[]
   tickets                 Ticket[]
   ticketMessages          TicketMessage[]
-  messageCampaigns        MessageCampaign[]         @relation("MessageCampaignSender")
+  messageCampaigns        MessageCampaign[]          @relation("MessageCampaignSender")
   messageRecipients       MessageCampaignRecipient[]
 
   @@index([phone])

@@ -170,6 +170,26 @@ function extractMessage(body: unknown, fallback: string) {
   return fallback
 }
 
+function getNetworkErrorMessage(error: Error) {
+  if (
+    error.name === "AbortError" ||
+    error.name === "TimeoutError" ||
+    error.message.toLowerCase().includes("aborted")
+  ) {
+    return "The request timed out. Please try again."
+  }
+
+  if (
+    error instanceof TypeError ||
+    error.message.toLowerCase() === "fetch failed" ||
+    error.message.toLowerCase().includes("failed to fetch")
+  ) {
+    return "We couldn't reach the server. Check your connection and try again."
+  }
+
+  return error.message
+}
+
 class ClientHttpError extends Error {
   readonly status?: number
   readonly statusText?: string
@@ -218,23 +238,29 @@ async function clientRequest(
   endpoint: string,
   options: ClientRequestOptions & { formData?: boolean } = {}
 ) {
-  const {
-    body,
-    formData,
-    headers: headersInput,
-    params,
-    ...init
-  } = options
+  const { body, formData, headers: headersInput, params, ...init } = options
   const language = document.documentElement.lang || navigator.language || "en"
   const headers = applyApiHeaders(headersInput, language)
   const url = appendParams(resolveClientUrl(endpoint), params)
   const requestBody = prepareRequestBody(body, headers, formData)
-  const response = await fetch(url, {
-    ...init,
-    body: requestBody,
-    credentials: init.credentials ?? "include",
-    headers,
-  })
+  let response: Response
+
+  try {
+    response = await fetch(url, {
+      ...init,
+      body: requestBody,
+      credentials: init.credentials ?? "include",
+      headers,
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new ClientHttpError(getNetworkErrorMessage(error))
+    }
+
+    throw new ClientHttpError(
+      "We couldn't complete the request. Please try again."
+    )
+  }
 
   if (!response.ok) {
     const responseBody = await readResponseBody(response)

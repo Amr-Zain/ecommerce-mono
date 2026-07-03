@@ -14,17 +14,17 @@ model AppSetting {
 }
 
 model LoyaltyAccount {
-  id             BigInt                    @id @default(autoincrement())
-  userId         BigInt                    @unique @map("user_id")
-  user           User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  availablePoints Int                     @default(0) @map("available_points")
-  pendingPoints   Int                     @default(0) @map("pending_points")
-  lifetimePoints  Int                     @default(0) @map("lifetime_points")
-  currentTierId   BigInt?                 @map("current_tier_id")
-  currentTier     LoyaltyTier?            @relation("CurrentLoyaltyTier", fields: [currentTierId], references: [id], onDelete: SetNull)
-  status          String                  @default("active")
-  createdAt       DateTime                @default(now()) @map("created_at")
-  updatedAt       DateTime                @default(now()) @updatedAt @map("updated_at")
+  id              BigInt                    @id @default(autoincrement())
+  userId          BigInt                    @unique @map("user_id")
+  user            User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availablePoints Int                       @default(0) @map("available_points")
+  pendingPoints   Int                       @default(0) @map("pending_points")
+  lifetimePoints  Int                       @default(0) @map("lifetime_points")
+  currentTierId   BigInt?                   @map("current_tier_id")
+  currentTier     LoyaltyTier?              @relation("CurrentLoyaltyTier", fields: [currentTierId], references: [id], onDelete: SetNull)
+  status          String                    @default("active")
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @default(now()) @updatedAt @map("updated_at")
   transactions    LoyaltyPointTransaction[]
   redemptions     LoyaltyRewardRedemption[]
 
@@ -90,20 +90,20 @@ model LoyaltyEarningRuleTranslation {
 }
 
 model LoyaltyReward {
-  id                BigInt                       @id @default(autoincrement())
-  pointsRequired    Int                          @map("points_required")
-  rewardType        String                       @map("reward_type")
-  rewardValue       Decimal                      @map("reward_value") @db.Decimal(12, 2)
-  maxDiscountAmount Decimal?                     @map("max_discount_amount") @db.Decimal(12, 2)
-  minOrderAmount    Decimal?                     @map("min_order_amount") @db.Decimal(12, 2)
-  usageLimit        Int?                         @map("usage_limit")
-  usageCount        Int                          @default(0) @map("usage_count")
-  perUserLimit      Int                          @default(1) @map("per_user_limit")
-  startsAt          DateTime?                    @map("starts_at")
-  endsAt            DateTime?                    @map("ends_at")
-  isActive          Boolean                      @default(true) @map("is_active")
-  createdAt         DateTime                     @default(now()) @map("created_at")
-  updatedAt         DateTime                     @default(now()) @updatedAt @map("updated_at")
+  id                BigInt                     @id @default(autoincrement())
+  pointsRequired    Int                        @map("points_required")
+  rewardType        String                     @map("reward_type")
+  rewardValue       Decimal                    @map("reward_value") @db.Decimal(12, 2)
+  maxDiscountAmount Decimal?                   @map("max_discount_amount") @db.Decimal(12, 2)
+  minOrderAmount    Decimal?                   @map("min_order_amount") @db.Decimal(12, 2)
+  usageLimit        Int?                       @map("usage_limit")
+  usageCount        Int                        @default(0) @map("usage_count")
+  perUserLimit      Int                        @default(1) @map("per_user_limit")
+  startsAt          DateTime?                  @map("starts_at")
+  endsAt            DateTime?                  @map("ends_at")
+  isActive          Boolean                    @default(true) @map("is_active")
+  createdAt         DateTime                   @default(now()) @map("created_at")
+  updatedAt         DateTime                   @default(now()) @updatedAt @map("updated_at")
   translations      LoyaltyRewardTranslation[]
   redemptions       LoyaltyRewardRedemption[]
   transactions      LoyaltyPointTransaction[]
@@ -125,33 +125,33 @@ model LoyaltyRewardTranslation {
 }
 
 model LoyaltyPointTransaction {
-  id                   BigInt                    @id @default(autoincrement())
-  accountId            BigInt                    @map("account_id")
-  account              LoyaltyAccount            @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  userId               BigInt                    @map("user_id")
-  user                 User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  earningRuleId        BigInt?                   @map("earning_rule_id")
-  earningRule          LoyaltyEarningRule?       @relation(fields: [earningRuleId], references: [id], onDelete: SetNull)
-  rewardId             BigInt?                   @map("reward_id")
-  reward               LoyaltyReward?            @relation(fields: [rewardId], references: [id], onDelete: SetNull)
-  redemptionId         BigInt?                   @map("redemption_id")
-  redemption           LoyaltyRewardRedemption?  @relation(fields: [redemptionId], references: [id], onDelete: SetNull)
-  type                 String
-  direction            String
-  points               Int
-  availableDelta       Int                       @default(0) @map("available_delta")
-  pendingDelta         Int                       @default(0) @map("pending_delta")
-  lifetimeDelta        Int                       @default(0) @map("lifetime_delta")
-  status               String                    @default("completed")
-  referenceType        String?                   @map("reference_type")
-  referenceId          String?                   @map("reference_id")
-  idempotencyKey       String?                   @unique @map("idempotency_key")
-  description          String?                   @db.Text
-  expiresAt            DateTime?                 @map("expires_at")
-  completedAt          DateTime?                 @map("completed_at")
-  metadata             Json?                     @db.JsonB
-  createdAt            DateTime                  @default(now()) @map("created_at")
-  updatedAt            DateTime                  @default(now()) @updatedAt @map("updated_at")
+  id             BigInt                   @id @default(autoincrement())
+  accountId      BigInt                   @map("account_id")
+  account        LoyaltyAccount           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  userId         BigInt                   @map("user_id")
+  user           User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  earningRuleId  BigInt?                  @map("earning_rule_id")
+  earningRule    LoyaltyEarningRule?      @relation(fields: [earningRuleId], references: [id], onDelete: SetNull)
+  rewardId       BigInt?                  @map("reward_id")
+  reward         LoyaltyReward?           @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+  redemptionId   BigInt?                  @map("redemption_id")
+  redemption     LoyaltyRewardRedemption? @relation(fields: [redemptionId], references: [id], onDelete: SetNull)
+  type           String
+  direction      String
+  points         Int
+  availableDelta Int                      @default(0) @map("available_delta")
+  pendingDelta   Int                      @default(0) @map("pending_delta")
+  lifetimeDelta  Int                      @default(0) @map("lifetime_delta")
+  status         String                   @default("completed")
+  referenceType  String?                  @map("reference_type")
+  referenceId    String?                  @map("reference_id")
+  idempotencyKey String?                  @unique @map("idempotency_key")
+  description    String?                  @db.Text
+  expiresAt      DateTime?                @map("expires_at")
+  completedAt    DateTime?                @map("completed_at")
+  metadata       Json?                    @db.JsonB
+  createdAt      DateTime                 @default(now()) @map("created_at")
+  updatedAt      DateTime                 @default(now()) @updatedAt @map("updated_at")
 
   @@index([accountId, status, createdAt(sort: Desc)])
   @@index([userId, createdAt(sort: Desc)])

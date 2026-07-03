@@ -1,5 +1,10 @@
 import { ArrayNotEmpty, IsArray, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { MESSAGE_CHANNELS, MESSAGE_RECIPIENT_TYPES } from '../message.constants';
+import {
+  MESSAGE_CHANNELS,
+  MESSAGE_LOCALES,
+  MESSAGE_RECIPIENT_TYPES,
+  MESSAGE_RECIPIENT_USER_TYPES,
+} from '../message.constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SendMessageDto {
@@ -11,9 +16,19 @@ export class SendMessageDto {
   @ApiProperty({ example: 'email', description: 'channel' })
   channel!: string;
 
+  @IsOptional()
+  @IsEnum(MESSAGE_LOCALES)
+  @ApiPropertyOptional({ example: 'profile', description: 'locale: profile, en, or ar' })
+  locale?: string;
+
   @IsEnum(MESSAGE_RECIPIENT_TYPES)
   @ApiProperty({ example: 'user', description: 'recipientType' })
   recipientType!: string;
+
+  @IsOptional()
+  @IsEnum(MESSAGE_RECIPIENT_USER_TYPES)
+  @ApiPropertyOptional({ example: 'client', description: 'recipientUserType for specific sends' })
+  recipientUserType?: string;
 
   @IsOptional()
   @IsArray()

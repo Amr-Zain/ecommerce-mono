@@ -99,6 +99,10 @@
     "returnToCart": "العودة إلى سلة التسوق"
   },
   "Profile": {
+    "name": "Name",
+    "phoneCode": "Phone Code",
+    "saving": "Saving...",
+    "profileUpdated": "Profile updated",
     "title": "المعلومات الشخصية",
     "firstName": "الاسم الأول",
     "lastName": "الاسم الأخير",

@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 type Locale = 'en' | 'ar';
 
 type MessageContent = {
-  en?: { subject?: string; title?: string; body?: string; html?: string };
-  ar?: { subject?: string; title?: string; body?: string; html?: string };
+  en?: { subject?: string | null; title?: string | null; body?: string | null; html?: string | null };
+  ar?: { subject?: string | null; title?: string | null; body?: string | null; html?: string | null };
 };
 
 @Injectable()
@@ -30,7 +30,9 @@ export class MessageRenderer {
   private interpolate(template: string, variables: Record<string, unknown>): string {
     return template.replace(/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g, (_match, key: string) => {
       const value = variables[key];
-      return value === undefined || value === null ? '' : String(value);
+      if (value === undefined || value === null) return '';
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+      return JSON.stringify(value);
     });
   }
 }

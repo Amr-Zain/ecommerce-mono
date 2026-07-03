@@ -1,6 +1,8 @@
 export type MessageChannel = 'email' | 'notification' | 'both'
 export type MessagePurpose = 'otp' | 'welcome' | 'generic' | 'campaign'
 export type MessageRecipientType = 'admin' | 'client' | 'all' | 'specific'
+export type MessageRecipientUserType = 'admin' | 'client'
+export type MessageLocale = 'profile' | 'en' | 'ar'
 
 export type MessageTemplateContentLocale = {
   subject?: string | null
@@ -23,6 +25,13 @@ export type MessageTemplate = {
   content: MessageTemplateContent
   variables?: Record<string, unknown> | null
   is_active: boolean
+  validation?: {
+    isValid?: boolean
+    is_valid?: boolean
+    errors: Array<string>
+    usedVariables?: Array<string>
+    used_variables?: Array<string>
+  }
   created_at?: string
   updated_at?: string
 }
@@ -71,7 +80,9 @@ export type MessageCampaign = {
   template_id: string | number
   sender_id?: string | number | null
   channel: MessageChannel
+  locale?: MessageLocale
   recipient_type: MessageRecipientType
+  recipient_user_type?: MessageRecipientUserType | null
   title_override?: string | null
   variables?: Record<string, unknown> | null
   template_snapshot?: unknown
@@ -83,13 +94,15 @@ export type MessageCampaign = {
   created_at?: string
   updated_at?: string
   template?: MessageTemplate
-  recipients?: MessageCampaignRecipient[]
+  recipients?: Array<MessageCampaignRecipient>
 }
 
 export type SendMessagePayload = {
   templateId: string | number
   channel: MessageChannel
+  locale?: MessageLocale
   recipientType: MessageRecipientType
+  recipientUserType?: MessageRecipientUserType
   recipientIds?: Array<string | number>
   titleOverride?: string
   variables?: Record<string, unknown>

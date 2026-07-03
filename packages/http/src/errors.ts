@@ -5,8 +5,15 @@ import type { NormalizedHttpError } from "./types"
  * Works with Axios errors, fetch Response errors, plain Error objects, etc.
  */
 export function normalizeError(error: unknown): NormalizedHttpError {
-  if (isNormalizedHttpError(error)) {
-    return error
+  if (isAxiosNetworkError(error)) {
+    return {
+      name: "NetworkError",
+      message: extractMessage(error) ?? "Cannot connect to the server. Please check the API connection and try again.",
+      status: undefined,
+      statusText: undefined,
+      body: undefined,
+      errors: undefined,
+    }
   }
 
   // Axios-style error (error.response.data)
@@ -30,9 +37,11 @@ export function normalizeError(error: unknown): NormalizedHttpError {
   if (hasStatus(error)) {
     const body = (error as Record<string, unknown>).body
     const errObj = error as Record<string, unknown>
+    const bodyMessage = extractMessage(body)
     return {
       name: (typeof errObj.name === "string" ? errObj.name : undefined) ?? "HttpError",
       message:
+        bodyMessage ??
         (typeof errObj.message === "string" ? errObj.message : undefined) ??
         `Request failed with status ${(error as { status: number }).status}`,
       status: (error as { status: number }).status,
@@ -40,6 +49,11 @@ export function normalizeError(error: unknown): NormalizedHttpError {
       body,
       errors: body && typeof body === "object" ? (body as Record<string, unknown>).errors : undefined,
     }
+  }
+
+  if (isNormalizedHttpError(error)) {
+    const bodyMessage = extractMessage(error.body)
+    return bodyMessage ? { ...error, message: bodyMessage } : error
   }
 
   // Plain Error
@@ -84,6 +98,15 @@ function isAxiosLike(
   )
 }
 
+function isAxiosNetworkError(error: unknown): error is { message?: string; code?: string; request?: unknown } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "isAxiosError" in error &&
+    !("response" in error && (error as Record<string, unknown>).response)
+  )
+}
+
 function hasStatus(error: unknown): error is { status: number } {
   return (
     typeof error === "object" &&
@@ -96,7 +119,10 @@ function hasStatus(error: unknown): error is { status: number } {
 function extractMessage(obj: unknown): string | undefined {
   if (!obj || typeof obj !== "object") return undefined
   const payload = obj as Record<string, unknown>
+  if (typeof payload.details === "string") return payload.details
   if (typeof payload.message === "string") return payload.message
   if (typeof payload.error === "string") return payload.error
+  if (Array.isArray(payload.message)) return payload.message.join("; ")
+  if (Array.isArray(payload.details)) return payload.details.join("; ")
   return undefined
 }

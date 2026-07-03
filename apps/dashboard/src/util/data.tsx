@@ -59,14 +59,13 @@ export const getDashboardMenuItems: MenuItem[] = [
   //   url: '/',
   //   icon: Home,
   // },
-  // {
-  //   title: 'menu.analytics',
-  //   url: '/analytics',
-  //   icon: BarChart3,
-  //   // badge: 'Pro',
-  //   /*     permission: 'statistics.index'
-  //    */
-  // },
+  {
+    title: 'menu.reports',
+    url: '/reports',
+    icon: BarChart3,
+    checkPermission: true,
+    permissionEntity: 'dashboard-home',
+  },
 
   {
     title: 'menu.static-pages',
@@ -228,25 +227,29 @@ export const getEarningMenuItems: MenuItem[] = [
 ] */
 export const getSettingsMenuItems: any = (not_count?: number) => [
   {
-    title: 'menu.message_templates',
-    url: '/message-templates',
-    icon: MessageSquare,
-    checkPermission: true,
-    permissionEntity: 'message_templates',
-  },
-  {
-    title: 'menu.send_message',
-    url: '/messages/send',
-    icon: MessageSquare,
-    checkPermission: true,
-    permissionEntity: 'messages',
-  },
-  {
-    title: 'menu.message_campaigns',
+    title: 'menu.messages',
     url: '/messages',
     icon: MessageSquare,
-    checkPermission: true,
-    permissionEntity: 'messages',
+    subItems: [
+      {
+        title: 'menu.message_campaigns',
+        url: '/messages',
+        checkPermission: true,
+        permissionEntity: 'messages',
+      },
+      {
+        title: 'menu.send_message',
+        url: '/messages/send',
+        checkPermission: true,
+        permissionEntity: 'messages',
+      },
+      {
+        title: 'menu.message_templates',
+        url: '/message-templates',
+        checkPermission: true,
+        permissionEntity: 'message_templates',
+      },
+    ],
   },
   {
     title: 'menu.admin_notifications',

@@ -5,6 +5,7 @@ import { Link, usePathname } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
+import { normalizeUploadUrl } from "@/lib/media-url"
 import Image from "next/image"
 import { Badge } from "@ecommerce/ui/components/badge"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -20,7 +21,14 @@ import {
   FavouriteIcon,
   GiftIcon,
 } from "@hugeicons/core-free-icons"
-import { useCurrentUser } from "@/hooks/api/use-current-user"
+import { toast } from "@ecommerce/ui/components/sonner"
+import {
+  uploadCurrentUserImage,
+  useCurrentUser,
+  useUpdateCurrentUserImage,
+  type CurrentUserProfile,
+  type ProfileMedia,
+} from "@/hooks/api/use-current-user"
 
 const SIDEBAR_LINKS = [
   { name: "My account", href: ROUTES.profile.root, icon: UserCircleIcon },
@@ -45,12 +53,72 @@ const SIDEBAR_LINKS = [
   { name: "Support Tickets", href: ROUTES.profile.support.root, icon: Ticket01Icon },
 ]
 
+function getMediaUrl(media?: ProfileMedia | string | null) {
+  if (!media) return null
+  const url = typeof media === "string" ? media : media.url ?? media.path
+  return normalizeUploadUrl(url)
+}
+
+function getProfileImage(profile?: CurrentUserProfile, sessionImage?: string | null) {
+  return (
+    getMediaUrl(profile?.avatar) ??
+    getMediaUrl(profile?.image) ??
+    normalizeUploadUrl(sessionImage)
+  )
+}
+
 export function ProfileSidebar() {
   const pathname = usePathname()
-  const { data: session } = useSession()
+  const { data: session, update: updateSession } = useSession()
   const { data: currentUser } = useCurrentUser()
+  const updateImage = useUpdateCurrentUserImage()
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null)
+  const [uploading, setUploading] = React.useState(false)
   const profile = currentUser?.data
   const tier = profile?.tier ?? profile?.loyalty?.tier
+  const image = getProfileImage(profile, session?.user.image)
+  const displayName = profile?.name || session?.user.name || "User"
+  const initials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+  const imagePending = uploading || updateImage.isPending
+
+  async function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.")
+      return
+    }
+
+    try {
+      setUploading(true)
+      const attachHash = await uploadCurrentUserImage(file)
+      updateImage.mutate(
+        { image: attachHash },
+        {
+          onSuccess: async (response) => {
+            const updatedImage = getProfileImage(response.data, session?.user.image)
+            await updateSession({
+              user: {
+                image: updatedImage,
+              },
+            })
+            toast.success("Profile photo updated")
+          },
+        }
+      )
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Profile photo upload failed")
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-6 rounded-xl border bg-card p-6 sm:w-[280px]">
@@ -58,21 +126,39 @@ export function ProfileSidebar() {
       <div className="flex flex-col gap-4 border-b pb-6">
         <div className="flex flex-col gap-2">
           <div className="relative size-16 overflow-hidden rounded-xl border bg-muted/50">
-            <Image
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"
-              alt="Cristofer Torff"
-              fill
-              className="object-cover"
-            />
+            {image ? (
+              <Image
+                src={image}
+                alt={displayName}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex size-full items-center justify-center text-lg font-bold text-muted-foreground">
+                {initials || "U"}
+              </div>
+            )}
           </div>
-          <button className="flex items-center gap-1.5 text-left text-xs font-semibold text-muted-foreground hover:text-foreground">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-left text-xs font-semibold text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={imagePending}
+            onClick={() => fileInputRef.current?.click()}
+          >
             <HugeiconsIcon icon={Camera01Icon} className="size-3.5" />
-            Edit Profile Photo
+            {imagePending ? "Uploading..." : "Edit Profile Photo"}
           </button>
         </div>
         <div>
           <h2 className="text-lg font-bold">
-            {profile?.name || session?.user.name || "User"}
+            {displayName}
           </h2>
           <p className="text-sm text-muted-foreground">{profile?.email || session?.user.email}</p>
           {tier?.name && (

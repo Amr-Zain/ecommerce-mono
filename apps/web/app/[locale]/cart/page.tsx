@@ -46,6 +46,16 @@ export type Step = "cart" | "address" | "payment"
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=300&q=80"
 
+function isInsufficientLoyaltyPointsError(error: unknown) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" && error && "message" in error
+        ? String((error as { message?: unknown }).message ?? "")
+        : ""
+  return message.toLowerCase().includes("insufficient loyalty points")
+}
+
 export default function CartPage() {
   const t = useTranslations("Experience")
   const searchParams = useSearchParams()
@@ -72,6 +82,8 @@ export default function CartPage() {
   const loyalty = useLoyalty()
   const updateItem = useUpdateCartItem()
   const removeItem = useRemoveCartItem()
+  const isAuthenticated = status === "authenticated"
+  const isAuthLoading = status === "loading"
   const setStep = React.useCallback(
     (nextStep: Step) => {
       const params = new URLSearchParams(searchParams.toString())
@@ -82,12 +94,12 @@ export default function CartPage() {
     [router, searchParams]
   )
   const requireLogin = () => setLoginOpen(true)
+  const canUseCheckout = () => {
+    if (isAuthenticated) return true
+    if (!isAuthLoading) requireLogin()
+    return false
+  }
 
-  React.useEffect(() => {
-    if (status === "unauthenticated" && step !== "cart") {
-      setStep("cart")
-    }
-  }, [setStep, status, step])
   const items =
     cart.data?.data.items.map((item) => ({
       id: item.id,
@@ -109,8 +121,15 @@ export default function CartPage() {
     0
   )
   const totals = preview?.totals
-  const loyaltyDiscount = Number(preview?.loyalty?.discount_amount ?? preview?.loyalty?.discountAmount ?? 0)
+  const loyaltyDiscount = Number(
+    preview?.loyalty?.discount_amount ?? preview?.loyalty?.discountAmount ?? 0
+  )
   const redeemedPoints = Number(preview?.loyalty?.points ?? 0)
+  const availableLoyaltyPoints = Number(
+    loyalty.data?.account.available_points ??
+      loyalty.data?.account.availablePoints ??
+      0
+  )
   const pricing = {
     subtotal: totals?.subtotal ?? subtotal,
     savings,
@@ -138,10 +157,7 @@ export default function CartPage() {
     ""
 
   const beginCheckout = () => {
-    if (status !== "authenticated") {
-      requireLogin()
-      return
-    }
+    if (!canUseCheckout()) return
     setStep("address")
   }
 
@@ -149,10 +165,7 @@ export default function CartPage() {
     addressId: string,
     options: { coupon?: string; rewardId?: string; onSuccess?: () => void } = {}
   ) => {
-    if (status !== "authenticated") {
-      requireLogin()
-      return
-    }
+    if (!canUseCheckout()) return
     if (!addressId) return
     const coupon = options.coupon ?? appliedCoupon
     const reward = options.rewardId ?? selectedRewardId
@@ -167,6 +180,16 @@ export default function CartPage() {
           setPreview(response.data)
           options.onSuccess?.()
         },
+        onError: (error) => {
+          if (reward && isInsufficientLoyaltyPointsError(error)) {
+            setSelectedRewardId(undefined)
+            loadPreview(addressId, {
+              coupon,
+              rewardId: undefined,
+              onSuccess: options.onSuccess,
+            })
+          }
+        },
       }
     )
   }
@@ -174,10 +197,7 @@ export default function CartPage() {
   const applyCoupon = () => {
     const code = couponCode.trim()
     if (!code) return
-    if (status !== "authenticated") {
-      requireLogin()
-      return
-    }
+    if (!canUseCheckout()) return
     if (!effectiveAddressId) {
       setAppliedCoupon(code)
       setStep("address")
@@ -207,17 +227,22 @@ export default function CartPage() {
     notes?: string,
     requestedWalletAmount = appliedWalletAmount
   ) => {
-    if (status !== "authenticated") {
-      requireLogin()
-      return
-    }
+    if (!canUseCheckout()) return
     placeOrder.mutate(
       {
         addressId: Number(effectiveAddressId),
         paymentMethod,
         walletAmount:
-          Math.min(Math.max(requestedWalletAmount, 0), walletAvailable, pricing.total) > 0
-            ? Math.min(Math.max(requestedWalletAmount, 0), walletAvailable, pricing.total)
+          Math.min(
+            Math.max(requestedWalletAmount, 0),
+            walletAvailable,
+            pricing.total
+          ) > 0
+            ? Math.min(
+                Math.max(requestedWalletAmount, 0),
+                walletAvailable,
+                pricing.total
+              )
             : undefined,
         couponCode: appliedCoupon || undefined,
         rewardId: selectedRewardId ? Number(selectedRewardId) : undefined,
@@ -274,6 +299,7 @@ export default function CartPage() {
             walletPending={walletPending}
             walletAmount={appliedWalletAmount}
             rewards={loyalty.data?.rewards ?? []}
+            availablePoints={availableLoyaltyPoints}
             selectedRewardId={selectedRewardId}
             loyaltyDiscount={loyaltyDiscount}
             redeemedPoints={redeemedPoints}
@@ -347,6 +373,7 @@ export default function CartPage() {
                 walletPending={walletPending}
                 walletAmount={appliedWalletAmount}
                 rewards={loyalty.data?.rewards ?? []}
+                availablePoints={availableLoyaltyPoints}
                 selectedRewardId={selectedRewardId}
                 loyaltyDiscount={loyaltyDiscount}
                 redeemedPoints={redeemedPoints}
@@ -367,7 +394,7 @@ export default function CartPage() {
           </div>
         )}
       </div>
-      <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
+      <Dialog open={loginOpen && !isAuthenticated} onOpenChange={setLoginOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -382,11 +409,7 @@ export default function CartPage() {
             <Button variant="outline" onClick={() => setLoginOpen(false)}>
               {t("keepShopping")}
             </Button>
-            <Button
-              render={
-                <Link href={loginPath("/cart?step=address")} />
-              }
-            >
+            <Button render={<Link href={loginPath("/cart?step=address")} />}>
               {t("signInContinue")}
             </Button>
           </DialogFooter>

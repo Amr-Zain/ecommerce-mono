@@ -16,4 +16,5 @@ export const publicCacheTags = {
   sliders: 'content:sliders',
   faqs: 'content:faqs',
   reviews: (productId: string | number | bigint) => `reviews:product:${productId.toString()}`,
+  dashboardHome: 'dashboard:home',
 } as const;

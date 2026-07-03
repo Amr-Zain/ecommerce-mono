@@ -17,15 +17,15 @@ model Ticket {
 }
 
 model TicketMessage {
-  id        BigInt   @id @default(autoincrement())
-  ticketId  BigInt   @map("ticket_id")
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId    BigInt?  @map("user_id")
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  senderType String  @map("sender_type")
-  body      String   @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  id         BigInt   @id @default(autoincrement())
+  ticketId   BigInt   @map("ticket_id")
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId     BigInt?  @map("user_id")
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  senderType String   @map("sender_type")
+  body       String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@index([ticketId])
   @@index([userId])

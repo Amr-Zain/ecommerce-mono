@@ -44,6 +44,15 @@ function values(params: SearchParams, key: string) {
   return value === undefined ? [] : Array.isArray(value) ? value : [value]
 }
 
+function sortOptions(t: ReturnType<typeof useTranslations<"Product">>) {
+  return [
+    { value: "newest", label: t("sortNewest") },
+    { value: "price_asc", label: t("priceLowToHigh") },
+    { value: "price_desc", label: t("priceHighToLow") },
+    { value: "rating_desc", label: t("customerRating") },
+  ]
+}
+
 function CatalogControls({
   breadcrumbs,
   facets,
@@ -58,6 +67,10 @@ function CatalogControls({
   const pathname = usePathname()
   const view = searchParams.view === "list" ? "list" : "grid"
   const t = useTranslations("Product")
+  const currentSort = String(searchParams.catalog_sort ?? "newest")
+  const sortItems = sortOptions(t)
+  const currentSortLabel =
+    sortItems.find((option) => option.value === currentSort)?.label ?? t("sortBy")
   const update = (key: string, value: string) => {
     const params = toUrlSearchParams(searchParams)
     params.set(key, value)
@@ -102,15 +115,25 @@ function CatalogControls({
             ))}
           </div>
           <Select
-            value={String(searchParams.catalog_sort ?? "newest")}
+            value={currentSort}
             onValueChange={(value) => value && update("catalog_sort", value)}
           >
-            <SelectTrigger size="sm"><SelectValue placeholder={t("sortBy")} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">{t("sortNewest")}</SelectItem>
-              <SelectItem value="price_asc">{t("priceLowToHigh")}</SelectItem>
-              <SelectItem value="price_desc">{t("priceHighToLow")}</SelectItem>
-              <SelectItem value="rating_desc">{t("customerRating")}</SelectItem>
+            <SelectTrigger size="sm" className="w-full min-w-40 sm:w-44">
+              <SelectValue placeholder={currentSortLabel}>{currentSortLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent
+              alignItemWithTrigger={false}
+              className="w-[min(18rem,calc(100vw-2rem))] p-2 text-xs"
+            >
+              {sortItems.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  className="items-start py-2 pe-9 ps-2 leading-relaxed *:[span]:last:whitespace-normal *:[span]:last:break-words"
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

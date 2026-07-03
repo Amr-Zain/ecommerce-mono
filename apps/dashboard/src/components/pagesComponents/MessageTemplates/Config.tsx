@@ -1,11 +1,14 @@
-import { ColumnDef } from '@tanstack/react-table'
 import { Badge } from '@ecommerce/ui/components/badge'
-import { booleanControlColumn, textColumn } from '@/components/features/sharedColumns'
-import { PickedAction } from '@/hooks/useStatusMutations'
+import type { ColumnDef } from '@tanstack/react-table'
+import type { PickedAction } from '@/hooks/useStatusMutations'
+import type { Filter, RowAction } from '@/types/components/table'
+import type { MessageTemplate } from '@/types/api/message'
+import type { TFn } from '@/lib/schema/validation'
+import {
+  booleanControlColumn,
+  textColumn,
+} from '@/components/features/sharedColumns'
 import { queryKeys } from '@/util/queryKeysFactory'
-import { Filter, RowAction } from '@/types/components/table'
-import { MessageTemplate } from '@/types/api/message'
-import { TFn } from '@/lib/schema/validation'
 
 export const CHANNELS = ['email', 'notification', 'both'] as const
 export const PURPOSES = ['otp', 'welcome', 'generic', 'campaign'] as const
@@ -13,9 +16,11 @@ export const PURPOSES = ['otp', 'welcome', 'generic', 'campaign'] as const
 export const messageTemplateColumns = (
   open: (type: PickedAction, row: MessageTemplate) => void,
   t: TFn,
-): ColumnDef<MessageTemplate>[] => [
+): Array<ColumnDef<MessageTemplate>> => [
   textColumn<MessageTemplate>('key', 'messageTemplates.labels.key', {
-    render: (info) => <span className="font-mono text-xs">{String(info.getValue())}</span>,
+    render: (info) => (
+      <span className="font-mono text-xs">{String(info.getValue())}</span>
+    ),
   }),
   textColumn<MessageTemplate>('name', 'messageTemplates.labels.name'),
   textColumn<MessageTemplate>('channel', 'messageTemplates.labels.channel', {
@@ -40,6 +45,19 @@ export const messageTemplateColumns = (
     false,
     'message_templates',
   ),
+  textColumn<MessageTemplate>('validation', 'Validation', {
+    render: ({ row }) => {
+      const validation = getTemplateValidation(row.original)
+      if (!validation) return <Badge variant="secondary">Unchecked</Badge>
+      return validation.isValid ? (
+        <Badge>Valid</Badge>
+      ) : (
+        <Badge variant="destructive">
+          {validation.errors.length ? validation.errors[0] : 'Invalid'}
+        </Badge>
+      )
+    },
+  }),
   textColumn<MessageTemplate>('created_at', 'table.createdAt', {
     render: (info) => formatDate(info.getValue() as string | null),
   }),
@@ -81,9 +99,11 @@ export const messageTemplateActions = (
       permission: 'message_templates',
       action: 'delete',
     },
-  ] as RowAction<MessageTemplate>[]
+  ] as Array<RowAction<MessageTemplate>>
 
-export const getMessageTemplateFilters = (t: (key: string) => string): Filter[] => [
+export const getMessageTemplateFilters = (
+  t: (key: string) => string,
+): Array<Filter> => [
   {
     id: 'channel',
     title: t('messageTemplates.labels.channel'),
@@ -117,4 +137,14 @@ function formatDate(value: string | null) {
   if (!value) return '-'
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString()
+}
+
+function getTemplateValidation(template: MessageTemplate) {
+  const validation = template.validation
+  if (!validation) return null
+
+  return {
+    isValid: validation.isValid ?? validation.is_valid ?? false,
+    errors: validation.errors,
+  }
 }

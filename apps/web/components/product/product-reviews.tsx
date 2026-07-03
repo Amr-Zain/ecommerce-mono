@@ -59,11 +59,13 @@ function ProductReviews({ product }: { product: ProductDetail }) {
   const deleteReview = useDeleteReview(product.id, mine?.id)
 
   const openForm = () => {
+    if (!mine && !eligibility.data?.data.can_review) return
     setRating(mine?.rating ?? 5)
     setComment(mine?.comment ?? "")
     setFormOpen(true)
   }
   const submit = () => {
+    if (!mine && !eligibility.data?.data.can_review) return
     const mutation = mine ? updateReview : createReview
     mutation.mutate(
       mine ? { rating, comment } : { productId: Number(product.id), rating, comment },
