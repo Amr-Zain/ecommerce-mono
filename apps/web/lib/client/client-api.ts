@@ -22,6 +22,7 @@ const clientEndpoints = {
   cartItems: "cart/items",
   cartItem: (id: string) => `cart/items/${id}`,
   checkoutPlaceOrder: "checkout/place-order",
+  checkoutPaymentMethods: "checkout/payment-methods",
   checkoutPreview: "checkout/preview",
   checkoutVerifyPayment: "checkout/verify-payment",
   cities: "cities",

@@ -5,6 +5,7 @@ const queryKeys = {
   cart: () => ["cart"] as const,
   checkoutPreview: (addressId?: string, couponCode?: string) =>
     ["checkout-preview", addressId ?? "", couponCode ?? ""] as const,
+  checkoutPaymentMethods: () => ["checkout", "payment-methods"] as const,
   cities: (countryId?: string) => ["cities", countryId ?? ""] as const,
   countries: () => ["countries"] as const,
   currentUser: () => ["current-user"] as const,

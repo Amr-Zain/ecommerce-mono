@@ -115,6 +115,14 @@ type VerifyPaymentResult = {
   payment_status?: string
 }
 
+type PaymentMethodOption = {
+  id: string
+  label: string
+  provider?: string | null
+  provider_identifier?: string | null
+  provider_name?: string | null
+}
+
 type CreateAddressInput = {
   address: string
   cityId: number
@@ -200,6 +208,19 @@ function useCheckoutPreview() {
   })
 }
 
+function useCheckoutPaymentMethods() {
+  return useFetch<unknown, PaymentMethodOption[]>({
+    endpoint: clientEndpoints.checkoutPaymentMethods,
+    queryKey: queryKeys.checkoutPaymentMethods(),
+    select: (response) => {
+      const data = (response as { data?: { payment_methods?: unknown } })?.data
+      return Array.isArray(data?.payment_methods)
+        ? (data.payment_methods as PaymentMethodOption[])
+        : []
+    },
+  })
+}
+
 function usePlaceOrder() {
   return useMutate<{ success: boolean; data: PlaceOrderResult }, PlaceOrderInput>({
     authRequired: true,
@@ -241,6 +262,7 @@ export {
   locationName,
   useAddresses,
   useCheckoutPreview,
+  useCheckoutPaymentMethods,
   useCities,
   useCountries,
   useCreateAddress,
@@ -253,5 +275,6 @@ export type {
   CheckoutTotals,
   Location,
   PlaceOrderResult,
+  PaymentMethodOption,
   VerifyPaymentResult,
 }

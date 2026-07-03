@@ -19,6 +19,7 @@ import { useRouter } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 import {
   useAddresses,
+  useCheckoutPaymentMethods,
   useCheckoutPreview,
   usePlaceOrder,
   type CheckoutPreview,
@@ -77,6 +78,7 @@ export default function CartPage() {
   const cart = useCart()
   const addresses = useAddresses()
   const checkoutPreview = useCheckoutPreview()
+  const paymentMethods = useCheckoutPaymentMethods()
   const placeOrder = usePlaceOrder()
   const wallet = useWallet()
   const loyalty = useLoyalty()
@@ -223,7 +225,7 @@ export default function CartPage() {
   }
 
   const submitOrder = (
-    paymentMethod: "cod" | "bank_transfer" | "stripe_checkout" | "wallet",
+    paymentMethod: string,
     notes?: string,
     requestedWalletAmount = appliedWalletAmount
   ) => {
@@ -307,6 +309,7 @@ export default function CartPage() {
             onRewardChange={selectReward}
             onBack={() => setStep("address")}
             onPlaceOrder={submitOrder}
+            availablePaymentMethods={paymentMethods.data ?? []}
           />
         ) : items.length === 0 ? (
           <CartEmpty />
@@ -381,6 +384,7 @@ export default function CartPage() {
                 onRewardChange={selectReward}
                 onBack={() => setStep("address")}
                 onPlaceOrder={submitOrder}
+                availablePaymentMethods={paymentMethods.data ?? []}
               />
             )}
             {(checkoutPreview.error || placeOrder.error) && (

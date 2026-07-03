@@ -17,11 +17,11 @@ import { Button } from "@ecommerce/ui/components/button"
 import { Input } from "@ecommerce/ui/components/input"
 import { Textarea } from "@ecommerce/ui/components/textarea"
 import { PricingSummary, type Pricing } from "@/components/cart/step-cart"
-import type { PlaceOrderResult } from "@/hooks/api/use-checkout"
+import type { PaymentMethodOption, PlaceOrderResult } from "@/hooks/api/use-checkout"
 import type { LoyaltyReward } from "@/hooks/api/use-loyalty"
 import { cn } from "@/lib/utils"
 
-type PaymentMethod = "cod" | "bank_transfer" | "stripe_checkout" | "wallet"
+type PaymentMethod = string
 
 interface PaymentStepProps {
   pricing: Pricing
@@ -43,6 +43,7 @@ interface PaymentStepProps {
     notes?: string,
     walletAmount?: number
   ) => void
+  availablePaymentMethods?: PaymentMethodOption[]
 }
 
 function SuccessScreen({ result }: { result: PlaceOrderResult }) {
@@ -112,8 +113,10 @@ export function PaymentStep({
   onRewardChange,
   onBack,
   onPlaceOrder,
+  availablePaymentMethods = [],
 }: PaymentStepProps) {
-  const [method, setMethod] = React.useState<PaymentMethod>("stripe_checkout")
+  const defaultOnlineMethod = availablePaymentMethods[0]?.id ?? "card"
+  const [method, setMethod] = React.useState<PaymentMethod>(defaultOnlineMethod)
   const [notes, setNotes] = React.useState("")
 
   if (result?.order_number) return <SuccessScreen result={result} />
@@ -128,11 +131,18 @@ export function PaymentStep({
     Number((pricing.total - walletApplied).toFixed(2))
   )
   const walletCoversOrder = walletApplied >= pricing.total && pricing.total > 0
+  const availableMethodIds =
+    availablePaymentMethods.length > 0
+      ? availablePaymentMethods.map((item) => item.id)
+      : ["card", "bank_transfer", "cod"]
+  const resolvedMethod = availableMethodIds.includes(method)
+    ? method
+    : defaultOnlineMethod
   const selectedMethod = walletCoversOrder
     ? "wallet"
-    : method === "wallet"
-      ? "stripe_checkout"
-      : method
+    : resolvedMethod === "wallet"
+      ? defaultOnlineMethod
+      : resolvedMethod
 
   const methods: Array<{
     id: PaymentMethod
@@ -148,32 +158,27 @@ export function PaymentStep({
           icon: Wallet01Icon,
         },
       ]
-    : [
-        {
-          id: "stripe_checkout",
-          label: "Credit / Debit Card",
-          sub: "Secure Stripe Checkout",
-          icon: CreditCardIcon,
-        },
-        {
-          id: "bank_transfer",
-          label: "Bank Transfer",
-          sub: "Awaiting admin confirmation",
-          icon: BankIcon,
-        },
-        {
-          id: "cod",
-          label: "Cash on Delivery",
-          sub: "Pay when your order arrives",
-          icon: BankIcon,
-        },
-      ]
+    : (availablePaymentMethods.length > 0
+        ? availablePaymentMethods
+        : [
+            { id: "card", label: "Card / Online Payment" },
+            { id: "bank_transfer", label: "Bank Transfer" },
+            { id: "cod", label: "Cash on Delivery" },
+          ]
+      ).map((item) => ({
+        id: item.id,
+        label: item.label || paymentMethodLabel(item.id),
+        sub: paymentMethodSub(item),
+        icon: item.id === "cod" || item.id === "bank_transfer" ? BankIcon : item.id === "wallet" ? Wallet01Icon : CreditCardIcon,
+      }))
   const actionLabel = isLoading
     ? "Processing..."
     : walletCoversOrder
       ? "Place Order"
-      : selectedMethod === "stripe_checkout"
-        ? "Continue to Stripe"
+      : ["card", "stripe_checkout", "tap_checkout", "moyasar", "apple_pay", "tabby"].includes(selectedMethod)
+        ? selectedMethod === "tabby"
+          ? "Continue to Tabby"
+          : "Continue to Payment"
         : "Place Order"
 
   return (
@@ -352,10 +357,16 @@ export function PaymentStep({
           </button>
         ))}
 
-        {selectedMethod === "stripe_checkout" && remainingDue > 0 && (
+        {["card", "stripe_checkout", "tap_checkout", "moyasar", "apple_pay"].includes(selectedMethod) && remainingDue > 0 && (
           <p className="rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
-            Wallet funds are reserved while Stripe is pending. Your order is
-            created only after Stripe confirms payment.
+            Wallet funds are reserved while online payment is pending. Your order
+            is created only after the provider confirms payment.
+          </p>
+        )}
+        {selectedMethod === "tabby" && remainingDue > 0 && (
+          <p className="rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
+            Tabby will review the BNPL session. We create the order only after
+            Tabby returns an approved payment status.
           </p>
         )}
         <Textarea
@@ -382,4 +393,20 @@ export function PaymentStep({
       />
     </div>
   )
+}
+
+function paymentMethodLabel(method: string) {
+  if (method === "apple_pay") return "Apple Pay"
+  if (method === "tabby") return "Tabby"
+  if (method === "cod") return "Cash on Delivery"
+  if (method === "bank_transfer") return "Bank Transfer"
+  return "Card / Online Payment"
+}
+
+function paymentMethodSub(method: PaymentMethodOption) {
+  if (method.id === "apple_pay") return "Pay with Apple Pay when supported by your device"
+  if (method.id === "tabby") return "Buy now, pay later with Tabby"
+  if (method.id === "bank_transfer") return "Awaiting admin confirmation"
+  if (method.id === "cod") return "Pay when your order arrives"
+  return method.provider_name ? `Processed by ${method.provider_name}` : "Secure online payment"
 }

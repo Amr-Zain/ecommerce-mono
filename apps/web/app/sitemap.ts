@@ -24,7 +24,9 @@ import type {
 //
 // See: https://nextjs.org/docs/app/api-reference/functions/generate-sitemaps
 
-type SitemapId = { locale: string; kind: "static" | "collections" | "products" }
+type SitemapKind = "static" | "collections" | "products"
+type SitemapId = { id: string }
+type ParsedSitemapId = { locale: string; kind: SitemapKind }
 
 type ChangeFreq =
   | "always"
@@ -117,9 +119,9 @@ export async function generateSitemaps(): Promise<SitemapId[]> {
 
   const ids: SitemapId[] = []
   for (const locale of routing.locales) {
-    ids.push({ locale, kind: "static" })
-    if (collectionSlugs.length) ids.push({ locale, kind: "collections" })
-    if (productIds.length) ids.push({ locale, kind: "products" })
+    ids.push({ id: `${locale}-static` })
+    if (collectionSlugs.length) ids.push({ id: `${locale}-collections` })
+    if (productIds.length) ids.push({ id: `${locale}-products` })
   }
   return ids
 }
@@ -136,9 +138,11 @@ const STATIC_PATHS = [
 export default async function sitemap({
   id,
 }: {
-  id: SitemapId
+  id: string
 }): Promise<MetadataRoute.Sitemap> {
-  const { locale, kind } = id
+  const parsed = parseSitemapId(id)
+  if (!parsed) return []
+  const { locale, kind } = parsed
 
   if (kind === "static") {
     return STATIC_PATHS.map((path) =>
@@ -161,4 +165,16 @@ export default async function sitemap({
   }
 
   return []
+}
+
+function parseSitemapId(id: string): ParsedSitemapId | null {
+  for (const locale of routing.locales) {
+    const prefix = `${locale}-`
+    if (!id.startsWith(prefix)) continue
+    const kind = id.slice(prefix.length) as SitemapKind
+    if (kind === "static" || kind === "collections" || kind === "products") {
+      return { locale, kind }
+    }
+  }
+  return null
 }
