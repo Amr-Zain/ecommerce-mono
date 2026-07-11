@@ -18,33 +18,33 @@ export class CodStrategy implements PaymentStrategy {
 
   constructor(private readonly i18n: I18nService<I18nTranslations>) {}
 
-  async initiate(referenceId: string, amount: number): Promise<PaymentInitResult> {
+  initiate(referenceId: string, amount: number): Promise<PaymentInitResult> {
     const transactionRef = `${PAYMENT_REFERENCE_PREFIXES.cod}_${randomBytes(8).toString('hex')}`;
-    return {
+    return Promise.resolve({
       transactionRef,
       status: PAYMENT_STATUSES.pending,
-      gatewayResponse: { message: this.i18n.t('errors.payment_cod_requested') },
-    };
+      gatewayResponse: { referenceId, amount, transactionRef, message: this.i18n.t('errors.payment_cod_requested') },
+    });
   }
 
-  async verify(transactionRef: string, gatewayData: PaymentGatewayData): Promise<PaymentVerifyResult> {
-    return {
+  verify(transactionRef: string, gatewayData: PaymentGatewayData): Promise<PaymentVerifyResult> {
+    return Promise.resolve({
       status: PAYMENT_STATUSES.pending,
-      gatewayResponse: { ...gatewayData, message: this.i18n.t('errors.payment_cod_verified') },
-    };
+      gatewayResponse: { ...gatewayData, transactionRef, message: this.i18n.t('errors.payment_cod_verified') },
+    });
   }
 
-  async refund(transactionRef: string, amount: number): Promise<PaymentRefundResult> {
-    return {
+  refund(transactionRef: string, amount: number): Promise<PaymentRefundResult> {
+    return Promise.resolve({
       status: PAYMENT_STATUSES.refunded,
-      gatewayResponse: { message: this.i18n.t('errors.payment_cod_refund_processed') },
-    };
+      gatewayResponse: { transactionRef, amount, message: this.i18n.t('errors.payment_cod_refund_processed') },
+    });
   }
 
-  async cancel(transactionRef: string): Promise<PaymentCancelResult> {
-    return {
+  cancel(transactionRef: string): Promise<PaymentCancelResult> {
+    return Promise.resolve({
       status: PAYMENT_STATUSES.failed,
       gatewayResponse: { transactionRef },
-    };
+    });
   }
 }

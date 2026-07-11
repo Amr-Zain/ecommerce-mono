@@ -1,7 +1,6 @@
-import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '../../../generated/i18n.generated';
-import { PAYMENT_METHODS } from '@/shared/payment/payment.constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CheckoutPreviewDto {
@@ -31,9 +30,13 @@ export class PlaceOrderDto {
   addressId!: number;
 
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @IsIn(Object.values(PAYMENT_METHODS), { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
   @ApiProperty({ example: 'cod', description: 'paymentMethod' })
   paymentMethod!: string;
+
+  @IsOptional()
+  @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
+  @ApiPropertyOptional({ example: 'tap', description: 'providerIdentifier' })
+  providerIdentifier?: string;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })

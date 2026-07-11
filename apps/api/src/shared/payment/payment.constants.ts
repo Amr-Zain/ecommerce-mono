@@ -2,11 +2,33 @@ export const PAYMENT_METHODS = {
   cod: 'cod',
   bankTransfer: 'bank_transfer',
   wallet: 'wallet',
+  card: 'card',
+  applePay: 'apple_pay',
   stripeCheckout: 'stripe_checkout',
   stripeIntent: 'stripe_intent',
+  tapCheckout: 'tap_checkout',
+  moyasar: 'moyasar',
+  tabby: 'tabby',
 } as const;
 
-export const ONLINE_PAYMENT_METHODS = [PAYMENT_METHODS.stripeCheckout, PAYMENT_METHODS.stripeIntent] as const;
+export const PAYMENT_PROVIDERS = {
+  cod: 'cod',
+  bankTransfer: 'bank_transfer',
+  stripe: 'stripe',
+  tap: 'tap',
+  moyasar: 'moyasar',
+  tabby: 'tabby',
+} as const;
+
+export const ONLINE_PAYMENT_METHODS = [
+  PAYMENT_METHODS.card,
+  PAYMENT_METHODS.applePay,
+  PAYMENT_METHODS.stripeCheckout,
+  PAYMENT_METHODS.stripeIntent,
+  PAYMENT_METHODS.tapCheckout,
+  PAYMENT_METHODS.moyasar,
+  PAYMENT_METHODS.tabby,
+] as const;
 export const MANUAL_PAYMENT_METHODS = [PAYMENT_METHODS.cod, PAYMENT_METHODS.bankTransfer] as const;
 export const WALLET_PAYMENT_METHODS = [PAYMENT_METHODS.wallet] as const;
 
@@ -48,6 +70,7 @@ export const PAYMENT_CURRENCIES = {
 
 export const PAYMENT_GATEWAY_CURRENCIES = {
   sar: 'sar',
+  egp: 'egp',
 } as const;
 
 export const PAYMENT_REFERENCE_PREFIXES = {
@@ -65,6 +88,24 @@ export const STRIPE_CONFIG = {
   checkoutSessionIdPlaceholder: '{CHECKOUT_SESSION_ID}',
   checkoutExpiryMinutes: 31,
   pendingCheckoutMetadataKey: 'pendingCheckoutId',
+} as const;
+
+export const PAYMENT_GATEWAY_SECRET_KEYS = {
+  cod: [],
+  bank_transfer: [],
+  stripe: ['secret_key', 'webhook_secret'],
+  tap: ['secret_key', 'webhook_secret', 'hash_secret'],
+  moyasar: ['secret_key', 'webhook_secret'],
+  tabby: ['secret_key', 'webhook_secret'],
+} as const;
+
+export const PAYMENT_GATEWAY_DEFAULT_METHODS = {
+  cod: [PAYMENT_METHODS.cod],
+  bank_transfer: [PAYMENT_METHODS.bankTransfer],
+  stripe: [PAYMENT_METHODS.card, PAYMENT_METHODS.stripeCheckout, PAYMENT_METHODS.stripeIntent],
+  tap: [PAYMENT_METHODS.card, PAYMENT_METHODS.applePay, PAYMENT_METHODS.tapCheckout],
+  moyasar: [PAYMENT_METHODS.card, PAYMENT_METHODS.applePay, PAYMENT_METHODS.moyasar],
+  tabby: [PAYMENT_METHODS.tabby],
 } as const;
 
 export const FRONTEND_URL_FALLBACK = 'http://localhost:3000' as const;

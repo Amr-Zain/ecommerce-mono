@@ -6,6 +6,7 @@ import { seedEmailTemplates } from './seeds/email-templates.seed.ts';
 import { seedStorefront } from './seeds/storefront.seed.ts';
 import { seedLoyalty } from './seeds/loyalty.seed.ts';
 import { seedDashboard } from './seeds/dashboard.seed.ts';
+import { seedPaymentGateways } from './seeds/payment-gateways.seed.ts';
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -22,6 +23,7 @@ async function main() {
   await seedAdmin(prisma);
   await seedLoyalty(prisma);
   await seedStorefront(prisma);
+  await seedPaymentGateways(prisma);
   await seedDashboard(prisma);
   await seedEmailTemplates(prisma);
 

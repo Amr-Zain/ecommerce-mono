@@ -57,7 +57,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
             errors[field] = msg;
           });
         } else {
-          message = (res.message as string) || exception.message;
+          message = this.toSafeMessage(res.message || exception.message);
         }
 
         // Custom AppException handling
@@ -70,7 +70,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           translationKey = `errors.${message}`;
         }
       } else {
-        message = exception.message;
+        message = this.toSafeMessage(exception.message);
         translationKey = `errors.${message}`;
       }
     } else {
@@ -150,6 +150,23 @@ export class AllExceptionsFilter implements ExceptionFilter {
     });
 
     return formattedErrors;
+  }
+
+  private toSafeMessage(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (value instanceof Error) return value.message;
+    if (value && typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      const nested = record.message ?? record.error ?? record.description ?? record.reason;
+      if (nested && nested !== value) return this.toSafeMessage(nested);
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return 'Unexpected error';
+      }
+    }
+    return 'Unexpected error';
   }
 
   /**

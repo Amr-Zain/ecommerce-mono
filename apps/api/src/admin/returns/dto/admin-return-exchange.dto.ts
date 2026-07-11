@@ -13,7 +13,7 @@ import {
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '../../../generated/i18n.generated';
 import { ITEM_DISPOSITIONS } from '@/common/constants/return-exchange.constants';
-import { PAYMENT_METHODS } from '@/shared/payment/payment.constants';
+import { ONLINE_PAYMENT_METHODS } from '@/shared/payment/payment.constants';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -153,7 +153,7 @@ export class AdminReturnRefundDto {
 
 export class AdminExchangePaymentDto {
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
-  @IsIn([PAYMENT_METHODS.stripeCheckout, PAYMENT_METHODS.stripeIntent], {
+  @IsIn(ONLINE_PAYMENT_METHODS, {
     message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM'),
   })
   @ApiProperty({ example: 'cod', description: 'paymentMethod' })

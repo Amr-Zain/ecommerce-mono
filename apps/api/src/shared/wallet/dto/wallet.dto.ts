@@ -18,9 +18,21 @@ export class CreateWalletDepositDto {
   @ApiProperty({ example: 5, description: 'amount' })
   amount!: number;
 
-  @IsIn([PAYMENT_METHODS.stripeCheckout, PAYMENT_METHODS.stripeIntent])
+  @IsIn([
+    PAYMENT_METHODS.card,
+    PAYMENT_METHODS.applePay,
+    PAYMENT_METHODS.stripeCheckout,
+    PAYMENT_METHODS.stripeIntent,
+    PAYMENT_METHODS.tapCheckout,
+    PAYMENT_METHODS.moyasar,
+  ])
   @ApiProperty({ example: 'stripe_checkout', description: 'paymentMethod' })
   paymentMethod!: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ example: 'tap', description: 'providerIdentifier' })
+  providerIdentifier?: string;
 }
 
 export class CreateWalletWithdrawalDto {

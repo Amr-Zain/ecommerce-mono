@@ -1,0 +1,64 @@
+model PaymentGateway {
+  id                  BigInt           @id @default(autoincrement())
+  identifier          String           @unique
+  provider            String
+  name                String
+  description         String?          @db.Text
+  image               String?
+  icon                String?
+  environment         String           @default("test")
+  priority            Int              @default(100)
+  isActive            Boolean          @default(false) @map("is_active")
+  publicSettings      Json             @default("{}") @map("public_settings") @db.JsonB
+  secretSettings      Json             @default("{}") @map("secret_settings") @db.JsonB
+  enabledMethods      String[]         @default([]) @map("enabled_methods")
+  supportedCountries  String[]         @default([]) @map("supported_countries")
+  supportedCurrencies String[]         @default([]) @map("supported_currencies")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @default(now()) @updatedAt @map("updated_at")
+  sessions            PaymentSession[]
+
+  @@index([provider])
+  @@index([isActive])
+  @@index([priority])
+  @@map("payment_gateways")
+}
+
+model PaymentSession {
+  id                  BigInt          @id @default(autoincrement())
+  gatewayId           BigInt?         @map("gateway_id")
+  gateway             PaymentGateway? @relation(fields: [gatewayId], references: [id], onDelete: SetNull)
+  providerIdentifier  String          @map("provider_identifier")
+  paymentMethod       String          @map("payment_method")
+  status              String          @default("pending")
+  amount              Decimal         @default(0) @db.Decimal(12, 2)
+  currency            String          @default("SAR")
+  transactionRef      String?         @map("transaction_ref")
+  sessionKey          String?         @map("session_key")
+  checkoutUrl         String?         @map("checkout_url") @db.Text
+  failureReason       String?         @map("failure_reason") @db.Text
+  providerResponse    Json?           @map("provider_response") @db.JsonB
+  sdkParameters       Json?           @map("sdk_parameters") @db.JsonB
+  metadata            Json?           @db.JsonB
+  pendingCheckoutId   BigInt?         @map("pending_checkout_id")
+  orderId             BigInt?         @map("order_id")
+  walletTransactionId BigInt?         @map("wallet_transaction_id")
+  returnRequestId     BigInt?         @map("return_request_id")
+  exchangeRequestId   BigInt?         @map("exchange_request_id")
+  expiresAt           DateTime?       @map("expires_at")
+  completedAt         DateTime?       @map("completed_at")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  @@index([gatewayId])
+  @@index([providerIdentifier])
+  @@index([paymentMethod])
+  @@index([status])
+  @@index([transactionRef])
+  @@index([pendingCheckoutId])
+  @@index([orderId])
+  @@index([walletTransactionId])
+  @@index([returnRequestId])
+  @@index([exchangeRequestId])
+  @@map("payment_sessions")
+}

@@ -5,6 +5,7 @@ import {
   COUPON_RESERVATION_STATUSES,
   PAYMENT_CURRENCIES,
   PAYMENT_METHODS,
+  PAYMENT_PROVIDERS,
   PAYMENT_STATUSES,
   STOCK_RESERVATION_STATUSES,
   STRIPE_CONFIG,
@@ -36,6 +37,7 @@ import {
   type PaymentCompletedPayload,
 } from '@/common/events/domain-event';
 import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
+import { PaymentGatewayService } from './payment-gateway.service';
 
 type StripeEvent = {
   type: string;
@@ -123,7 +125,6 @@ const toPrismaJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.
 @Injectable()
 export class StripeWebhookService {
   private readonly logger = new Logger(StripeWebhookService.name);
-  private readonly stripe: Stripe.Stripe;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -132,12 +133,12 @@ export class StripeWebhookService {
     private readonly configService: ConfigService,
     private readonly domainEvents: DomainEventPublisher,
     private readonly loyaltyService: LoyaltyService,
-  ) {
-    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || STRIPE_CONFIG.defaultSecretKey);
-  }
+    private readonly paymentGateways: PaymentGatewayService,
+  ) {}
 
-  constructEvent(rawBody: Buffer, signature?: string): StripeEvent {
-    const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || STRIPE_CONFIG.defaultWebhookSecret;
+  async constructEvent(rawBody: Buffer, signature?: string): Promise<StripeEvent> {
+    const gateway = await this.paymentGateways.getRuntimeGatewayByProvider(PAYMENT_PROVIDERS.stripe);
+    const webhookSecret = gateway.secrets.webhook_secret || STRIPE_CONFIG.defaultWebhookSecret;
 
     if (!webhookSecret) {
       if (this.configService.get<string>('NODE_ENV') === 'production') {
@@ -150,7 +151,16 @@ export class StripeWebhookService {
       throw new BadRequestException('Missing Stripe signature');
     }
 
-    return this.stripe.webhooks.constructEvent(rawBody, signature, webhookSecret) as unknown as StripeEvent;
+    const stripe = new Stripe(gateway.secrets.secret_key || STRIPE_CONFIG.defaultSecretKey, {
+      apiVersion: this.text(gateway.publicSettings.api_version, STRIPE_CONFIG.apiVersion) as never,
+    });
+    return stripe.webhooks.constructEvent(rawBody, signature, webhookSecret) as unknown as StripeEvent;
+  }
+
+  private text(value: unknown, fallback = '') {
+    return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
   }
 
   async verifyPendingCheckoutAndCreateOrder(checkoutId: string, userId: bigint) {
@@ -251,6 +261,18 @@ export class StripeWebhookService {
     }
 
     return { released: expiredCheckouts.length };
+  }
+
+  async completePendingCheckoutFromProvider(
+    pendingCheckoutId: string,
+    transactionRef: string,
+    gatewayResponse: unknown,
+  ) {
+    return this.createPaidOrderFromPendingCheckout(pendingCheckoutId, transactionRef, gatewayResponse);
+  }
+
+  async releasePendingCheckoutFromProvider(pendingCheckoutId: string, status: string, gatewayResponse?: unknown) {
+    return this.releasePendingCheckoutReservations(pendingCheckoutId, status, gatewayResponse);
   }
 
   async handleEvent(event: StripeEvent) {

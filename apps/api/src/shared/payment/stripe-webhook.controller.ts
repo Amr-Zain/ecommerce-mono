@@ -2,7 +2,7 @@ import { Controller, Headers, Post, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { Public } from '@/auth/decorators/public.decorator';
 import { StripeWebhookService } from './stripe-webhook.service';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 
 type RawBodyRequest = Request & { rawBody?: Buffer };
 
@@ -15,7 +15,7 @@ export class StripeWebhookController {
   @Post()
   async handleStripeWebhook(@Req() req: RawBodyRequest, @Headers('stripe-signature') signature?: string) {
     const rawBody = req.rawBody ?? Buffer.from(JSON.stringify(req.body));
-    const event = this.stripeWebhookService.constructEvent(rawBody, signature);
+    const event = await this.stripeWebhookService.constructEvent(rawBody, signature);
     return this.stripeWebhookService.handleEvent(event);
   }
 }

@@ -36,6 +36,7 @@ import {
   PUBLIC_CACHE_EVENTS,
   PublicCacheInvalidationPublisher,
 } from '@/shared/cache/public-cache-invalidation.service';
+import type { PaymentOrderDetails } from '@/shared/payment/interfaces/payment.interfaces';
 
 type CheckoutDbClient = PrismaService | Prisma.TransactionClient;
 type DecimalLike = number | string | { toString(): string };
@@ -182,17 +183,29 @@ export class ClientCheckoutService {
 
   calculateCouponDiscount(coupon: CouponForCheckout, subtotal: number): number {
     let discount = 0;
-    if (coupon.discountType === DISCOUNT_TYPES.percentage) {
+    const discountType = this.normalizeDiscountType(coupon.discountType);
+    if (discountType === DISCOUNT_TYPES.percentage) {
       discount = subtotal * (Number(coupon.discountValue) / 100);
       if (coupon.maxDiscount !== null) {
         discount = Math.min(discount, Number(coupon.maxDiscount));
       }
-    } else if (coupon.discountType === DISCOUNT_TYPES.fixed) {
+    } else if (discountType === DISCOUNT_TYPES.fixed) {
       discount = Number(coupon.discountValue);
-    } else if (coupon.discountType === DISCOUNT_TYPES.freeShipping) {
+    } else if (discountType === DISCOUNT_TYPES.freeShipping) {
       discount = 0;
     }
     return Number(Math.min(subtotal, discount).toFixed(2));
+  }
+
+  private normalizeDiscountType(value?: string | null) {
+    const normalized = String(value || '')
+      .trim()
+      .toUpperCase()
+      .replace(/-/g, '_');
+    if (normalized === 'PERCENTAGE' || normalized === 'PERCENT') return DISCOUNT_TYPES.percentage;
+    if (normalized === 'FIXED' || normalized === 'AMOUNT') return DISCOUNT_TYPES.fixed;
+    if (normalized === 'FREE_SHIPPING' || normalized === 'FREESHIPPING') return DISCOUNT_TYPES.freeShipping;
+    return normalized;
   }
 
   private calculateDiscountedSubtotal(items: CartItemForTotals[]) {
@@ -257,6 +270,63 @@ export class ClientCheckoutService {
     });
   }
 
+  private buildPaymentOrderDetails(input: {
+    referenceId: string;
+    currency: string;
+    totals: {
+      subtotal: number;
+      shippingFee: number;
+      discountAmount: number;
+      vatAmount: number;
+      totalPrice: number;
+    };
+    walletAmount: number;
+    externalAmount: number;
+    items: Array<
+      OrderItemPricingInput &
+        AllocatedOrderItemPricing & {
+          productId: string;
+          variantId: string;
+          productNameSnapshot: string;
+          variantInfoSnapshot: Record<string, string>;
+        }
+    >;
+    customer?: {
+      name?: string | null;
+      email?: string | null;
+      phone?: string | null;
+    };
+    shippingAddress?: PaymentOrderDetails['shippingAddress'];
+  }): PaymentOrderDetails {
+    return {
+      referenceId: input.referenceId,
+      currency: input.currency,
+      amount: input.totals.totalPrice,
+      subtotal: input.totals.subtotal,
+      shippingAmount: input.totals.shippingFee,
+      discountAmount: input.totals.discountAmount,
+      taxAmount: input.totals.vatAmount,
+      walletAmount: input.walletAmount,
+      externalAmount: input.externalAmount,
+      customer: input.customer,
+      shippingAddress: input.shippingAddress,
+      items: input.items.map((item) => ({
+        name: item.productNameSnapshot,
+        description: Object.entries(item.variantInfoSnapshot)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(', '),
+        quantity: item.quantity,
+        unitAmount: Number((item.netUnitPrice + item.vatShare / item.quantity).toFixed(2)),
+        totalAmount: Number((item.netLineTotal + item.vatShare).toFixed(2)),
+        productId: item.productId,
+        variantId: item.variantId,
+        metadata: Object.fromEntries(
+          Object.entries(item.variantInfoSnapshot).map(([key, value]) => [key, String(value)]),
+        ),
+      })),
+    };
+  }
+
   private isOnlinePaymentMethod(paymentMethod: string) {
     return (ONLINE_PAYMENT_METHODS as readonly string[]).includes(paymentMethod);
   }
@@ -316,7 +386,7 @@ export class ClientCheckoutService {
         cart.items.flatMap((item) => (item ? [{ price: item.price, quantity: item.quantity }] : [])),
       );
       coupon = await this.validateCoupon(dto.couponCode, discountedSubtotal, userId);
-      if (coupon.discountType === DISCOUNT_TYPES.freeShipping) {
+      if (this.normalizeDiscountType(coupon.discountType) === DISCOUNT_TYPES.freeShipping) {
         isFreeShipping = true;
         couponDiscount = 0;
       } else {
@@ -459,6 +529,11 @@ export class ClientCheckoutService {
           throw new NotFoundException(this.i18n.t('errors.delivery_address_not_found'));
         }
 
+        const user = await tx.user.findUnique({
+          where: { id: userId },
+          select: { name: true, email: true, phone: true },
+        });
+
         const country = address.country;
         if (!country) {
           throw new BadRequestException(this.i18n.t('errors.address_country_missing'));
@@ -539,7 +614,7 @@ export class ClientCheckoutService {
 
         if (dto.couponCode) {
           coupon = await this.validateCoupon(dto.couponCode, discountedSubtotal, userId, tx);
-          if (coupon.discountType === DISCOUNT_TYPES.freeShipping) {
+          if (this.normalizeDiscountType(coupon.discountType) === DISCOUNT_TYPES.freeShipping) {
             isFreeShipping = true;
           } else {
             couponDiscount = this.calculateCouponDiscount(coupon, discountedSubtotal);
@@ -575,6 +650,10 @@ export class ClientCheckoutService {
         if (externalAmount <= 0) {
           throw new BadRequestException('Use wallet payment method for full wallet checkout');
         }
+        await this.paymentService.assertPaymentMethodAvailable(dto.paymentMethod, {
+          providerIdentifier: dto.providerIdentifier,
+          currency: PAYMENT_CURRENCIES.sar,
+        });
         const onlineItemAllocations = this.allocateOrderItemPricing(orderItems, totalDiscount, totals.vatAmount);
         const allocatedOrderItems = orderItems.map((item, index) => ({
           ...item,
@@ -585,6 +664,7 @@ export class ClientCheckoutService {
           userId: userId.toString(),
           addressId: address.id.toString(),
           paymentMethod: dto.paymentMethod,
+          providerIdentifier: dto.providerIdentifier ?? null,
           notes: dto.notes ?? null,
           cartId: cart.id.toString(),
           addressSnapshot: {
@@ -726,15 +806,42 @@ export class ClientCheckoutService {
           pendingCheckout.id.toString(),
           externalAmount,
           {
+            providerIdentifier: dto.providerIdentifier,
+            pendingCheckoutId: pendingCheckout.id,
+            currency: PAYMENT_CURRENCIES.sar,
             metadata: {
               [STRIPE_CONFIG.pendingCheckoutMetadataKey]: pendingCheckout.id.toString(),
             },
             expiresAt: pendingCheckout.expiresAt,
+            orderDetails: this.buildPaymentOrderDetails({
+              referenceId: pendingCheckout.id.toString(),
+              currency: PAYMENT_CURRENCIES.sar,
+              totals: {
+                subtotal: totals.subtotal,
+                shippingFee: totals.shippingFee,
+                discountAmount: totals.discountAmount,
+                vatAmount: totals.vatAmount,
+                totalPrice: totals.totalPrice,
+              },
+              walletAmount,
+              externalAmount,
+              items: allocatedOrderItems,
+              customer: {
+                name: user?.name,
+                email: user?.email,
+                phone: user?.phone,
+              },
+              shippingAddress: {
+                address: address.address,
+                city: address.city?.translations?.[0]?.name || FALLBACK_LABELS.city,
+                country: country.translations?.[0]?.name || FALLBACK_LABELS.country,
+              },
+            }),
           },
         );
 
         if (paymentInit.transactionRef === PAYMENT_REFERENCE_PREFIXES.error) {
-          throw new BadRequestException(paymentInit.gatewayResponse?.error || 'Payment initialization failed');
+          throw new BadRequestException(this.paymentErrorMessage(paymentInit.gatewayResponse?.error));
         }
 
         await tx.pendingCheckout.update({
@@ -943,7 +1050,7 @@ export class ClientCheckoutService {
 
         if (dto.couponCode) {
           coupon = await this.validateCoupon(dto.couponCode, discountedSubtotal, userId, tx);
-          if (coupon.discountType === DISCOUNT_TYPES.freeShipping) {
+          if (this.normalizeDiscountType(coupon.discountType) === DISCOUNT_TYPES.freeShipping) {
             isFreeShipping = true;
           } else {
             couponDiscount = this.calculateCouponDiscount(coupon, discountedSubtotal);
@@ -990,6 +1097,12 @@ export class ClientCheckoutService {
         }
         if (dto.paymentMethod !== PAYMENT_METHODS.wallet && walletAmount <= 0 && externalAmount <= 0) {
           throw new BadRequestException('Invalid payment amount');
+        }
+        if (externalAmount > 0) {
+          await this.paymentService.assertPaymentMethodAvailable(dto.paymentMethod, {
+            providerIdentifier: dto.providerIdentifier,
+            currency: PAYMENT_CURRENCIES.sar,
+          });
         }
         const itemAllocations = this.allocateOrderItemPricing(orderItemsToCreate, totalDiscount, totals.vatAmount);
         const allocatedOrderItemsToCreate = orderItemsToCreate.map((item, index) => ({
@@ -1116,7 +1229,19 @@ export class ClientCheckoutService {
             dto.paymentMethod,
             order.id.toString(),
             externalAmount,
+            {
+              providerIdentifier: dto.providerIdentifier,
+              orderId: order.id,
+              currency: PAYMENT_CURRENCIES.sar,
+              metadata: {
+                orderId: order.id.toString(),
+              },
+            },
           );
+
+          if (paymentInit.transactionRef === PAYMENT_REFERENCE_PREFIXES.error) {
+            throw new BadRequestException(this.paymentErrorMessage(paymentInit.gatewayResponse?.error));
+          }
 
           // Create PaymentTransaction
           await tx.paymentTransaction.create({
@@ -1186,5 +1311,24 @@ export class ClientCheckoutService {
         this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.productsChanged);
         return result;
       });
+  }
+
+  private paymentErrorMessage(error: unknown): string {
+    if (!error) return 'Payment initialization failed';
+    if (typeof error === 'string') return error;
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'number' || typeof error === 'boolean') return String(error);
+    if (typeof error === 'object') {
+      const record = error as Record<string, unknown>;
+      const message = record.message ?? record.error ?? record.description ?? record.reason;
+      if (typeof message === 'string') return message;
+      if (Array.isArray(message)) return message.map((item: unknown) => this.paymentErrorMessage(item)).join(', ');
+      try {
+        return JSON.stringify(error);
+      } catch {
+        return 'Payment initialization failed';
+      }
+    }
+    return 'Payment initialization failed';
   }
 }

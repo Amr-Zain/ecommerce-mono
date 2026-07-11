@@ -296,6 +296,10 @@ export class WalletService {
 
     const wallet = await this.walletRepository.getOrCreateWallet(userId);
     this.assertWalletActive(wallet.status);
+    await this.paymentService.assertPaymentMethodAvailable(dto.paymentMethod, {
+      providerIdentifier: dto.providerIdentifier,
+      currency: wallet.currency,
+    });
 
     const transaction = await this.prisma.walletTransaction.create({
       data: {
@@ -318,6 +322,9 @@ export class WalletService {
       transaction.id.toString(),
       dto.amount,
       {
+        providerIdentifier: dto.providerIdentifier,
+        walletTransactionId: transaction.id,
+        currency: wallet.currency,
         metadata: {
           purpose: WALLET_PAYMENT_PURPOSES.deposit,
           walletTransactionId: transaction.id.toString(),

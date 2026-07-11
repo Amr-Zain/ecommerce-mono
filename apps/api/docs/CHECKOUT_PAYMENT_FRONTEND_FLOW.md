@@ -186,25 +186,48 @@ async function createOrderAction(input: CreateOrderInput) {
 }
 ```
 
-Do not send `card` or `upi` to the API. Use:
+Fetch the available methods from `GET /client/checkout/payment-methods` and send both the canonical payment method and the provider identifier. Provider option `id` is only a UI id.
 
 ```ts
-const METHODS = [
-  { id: 'stripe_checkout', label: 'Credit / Debit Card' },
-  { id: 'bank_transfer', label: 'Bank Transfer' },
-  { id: 'cod', label: 'Cash on Delivery' },
-] as const;
+const option = {
+  id: 'card:tap',
+  payment_method: 'card',
+  provider_identifier: 'tap',
+  label: 'Card / Online Payment - Tap Payments',
+};
+
+await placeOrder({
+  paymentMethod: option.payment_method,
+  providerIdentifier: option.provider_identifier,
+});
 ```
 
 ## Environment Variables
 
 ```env
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
 FRONTEND_URL=http://localhost:3000
+PAYMENT_SECRETS_KEY=development-payment-secret-key
+STRIPE_SECRET_KEY=sk_test_dummy_dashboard_stripe_secret
+STRIPE_PUBLISHABLE_KEY=pk_test_replace_me
+STRIPE_WEBHOOK_SECRET=whsec_dummy_dashboard_stripe_webhook
+TAP_SECRET_KEY=sk_test_dummy_dashboard_tap_secret
+TAP_PUBLIC_KEY=pk_test_replace_me
+TAP_MERCHANT_ID=dummy_tap_merchant
+TAP_WEBHOOK_SECRET=tap_whsec_dummy_dashboard_webhook
+TAP_HASH_SECRET=tap_hash_dummy_dashboard_secret
+MOYASAR_SECRET_KEY=sk_test_dummy_dashboard_moyasar_secret
+MOYASAR_PUBLISHABLE_KEY=pk_test_replace_me
+MOYASAR_WEBHOOK_SECRET=moyasar_whsec_dummy_dashboard_webhook
+TABBY_SECRET_KEY=sk_test_dummy_dashboard_tabby_secret
+TABBY_PUBLIC_KEY=pk_test_replace_me
+TABBY_MERCHANT_CODE=dummy_tabby_merchant
+TABBY_WEBHOOK_SECRET=tabby_whsec_dummy_dashboard_webhook
+TABBY_INSTALLMENT_PLANS=2,3,6
 ```
 
-For local development, use Stripe CLI:
+Runtime provider variables are stored encrypted in `payment_gateways.secret_settings` and edited from the dashboard. Env vars are only bootstrap values for local/test seed records.
+
+For local Stripe webhook development, use Stripe CLI:
 
 ```bash
 stripe listen --forward-to localhost:3000/webhooks/stripe
