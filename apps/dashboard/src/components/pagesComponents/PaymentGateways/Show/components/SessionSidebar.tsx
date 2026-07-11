@@ -1,12 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@ecommerce/ui/components/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@ecommerce/ui/components/card";
 import { Badge } from "@ecommerce/ui/components/badge";
-import { User, Shield, Clock, Key, CheckCircle, CreditCard } from "lucide-react";
+import { CheckCircle, Clock, CreditCard, Key, Shield, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import ButtonCopy from "@ecommerce/ui/components/copy-button";
+import type { PaymentSession } from "../Config";
 import { cn } from "@/lib/utils";
-import { PaymentSession } from "../Config";
 
 interface SidebarProps {
     session: PaymentSession;
@@ -16,9 +16,13 @@ interface SidebarProps {
 export function SessionSidebar({ session, translateSdkKey }: SidebarProps) {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.dir() === "rtl";
-    const user = session?.user;
-    const provider = session?.provider;
-    const sdkParams = session?.sdk_parameters;
+    const user = session.user;
+    const provider = session.provider;
+    const sdkParams = session.sdk_parameters;
+    const providerImage =
+        typeof provider?.image === 'string'
+            ? provider.image
+            : provider?.image?.url || provider?.icon || undefined;
 
     return (
         <div className="space-y-6">
@@ -34,7 +38,6 @@ export function SessionSidebar({ session, translateSdkKey }: SidebarProps) {
                     <CardContent className="p-5 flex flex-col items-center text-center space-y-4">
                         <Link
                             to="/users/show/$id"
-                            /* @ts-ignore */
                             params={{ id: String(user.id) }}
                             className="flex flex-col items-center gap-4 group/avatar"
                         >
@@ -42,7 +45,7 @@ export function SessionSidebar({ session, translateSdkKey }: SidebarProps) {
                                 <Avatar className="h-20 w-20 border-1 border-background shadow-xl group-hover/avatar:scale-105 transition-transform duration-300">
                                     {user.image?.url && <AvatarImage src={user.image.url} alt={user.name || ''} className="object-cover" />}
                                     <AvatarFallback className="bg-primary/5 text-primary text-2xl font-black">
-                                        {(user.name || user.email)?.substring(0, 2).toUpperCase()}
+                                        {(user.name || user.email).substring(0, 2).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                             </div>
@@ -71,9 +74,9 @@ export function SessionSidebar({ session, translateSdkKey }: SidebarProps) {
                     </CardHeader>
                     <CardContent className="p-5 space-y-5">
                         <div className="flex items-center gap-4 bg-muted/20 p-3 rounded-2xl border border-muted/40 transition-colors hover:bg-muted/30">
-                            {provider.image ? (
+                            {providerImage ? (
                                 <Avatar className="h-14 w-14 p-2 rounded-xl object-cover border-1 border-background shadow-sm">
-                                    <AvatarImage src={provider.image.url} className="object-contain" alt={provider.name || ''} />
+                                    <AvatarImage src={providerImage} className="object-contain" alt={provider.name || ''} />
                                     <AvatarFallback className="bg-primary/5 text-primary text-sm font-black">
                                         {(provider.name || provider.identifier)?.substring(0, 2).toUpperCase()}
                                     </AvatarFallback>
@@ -119,6 +122,38 @@ export function SessionSidebar({ session, translateSdkKey }: SidebarProps) {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Payment Context */}
+            <Card className="border-muted/60 overflow-hidden shadow-sm pt-0">
+                <CardHeader className="bg-muted/30 py-2.5 gap-0">
+                    <div className="flex items-center gap-2 justify-center">
+                        <CreditCard className="h-3.5 w-3.5 text-primary" />
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">{t('paymentSessions.labels.payment_context')}</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-5 space-y-3">
+                    {[
+                        ['payment_method', session.payment_method],
+                        ['provider_identifier', session.provider_identifier],
+                        ['transaction_ref', session.transaction_ref],
+                        ['pending_checkout_id', session.pending_checkout_id],
+                        ['order_id', session.order_id],
+                        ['wallet_transaction_id', session.wallet_transaction_id],
+                        ['return_request_id', session.return_request_id],
+                        ['exchange_request_id', session.exchange_request_id],
+                    ].map(([key, value]) => value ? (
+                        <div key={String(key)} className="space-y-1 group">
+                            <p className="text-[10px] text-muted-foreground/80 font-bold px-1">{translateSdkKey(String(key))}</p>
+                            <div className="flex items-center gap-2 p-2 bg-muted/30 rounded-xl border border-muted/40 group-hover:border-primary/20 transition-all">
+                                <p className="text-[11px] font-mono truncate flex-1 text-muted-foreground/80" dir="ltr">
+                                    {String(value)}
+                                </p>
+                                <ButtonCopy className="h-6 w-6 text-muted-foreground p-0 hover:bg-primary/10 rounded-lg" content={String(value)} />
+                            </div>
+                        </div>
+                    ) : null)}
+                </CardContent>
+            </Card>
 
             {/* Timeline */}
             <Card className="border-muted/60 overflow-hidden shadow-sm pt-0">

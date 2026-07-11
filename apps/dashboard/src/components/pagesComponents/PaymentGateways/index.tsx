@@ -1,185 +1,234 @@
-import { DataTable } from '@/components/common/table/AppTable'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ApiResponse, ApiResponseBase } from '@/types/api/http'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@ecommerce/ui/components/dialog'
+import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { paymentGatewayColumns } from './Config'
+import { PaymentGatewayForm } from './Form'
+import { paymentSessionColumns } from './Show/Config'
+import PaymentGatewaysTabs from './Tabs'
+import { unwrapList } from './response'
+import type { ApiResponse, ApiResponseBase } from '@/types/api/http'
+import type { PickedAction } from '@/hooks/useStatusMutations'
+import type { PaymentGatewayEntity } from './Config'
+import type { PaymentSession } from './Show/Config'
+import { DataTable } from '@/components/common/table/AppTable'
 import { useAlertModal } from '@/stores/useAlertModal'
-import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
-import { useState, useEffect } from 'react'
 import { getModalTitle } from '@/util/helpers'
 import { queryKeys } from '@/util/queryKeysFactory'
-import { paymentGatewayColumns, PaymentGatewayEntity } from './Config'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@ecommerce/ui/components/dialog'
-import { PaymentGatewayForm } from './Form'
-import { useQueryClient } from '@tanstack/react-query'
-import PaymentGatewaysTabs from './Tabs'
-import { useNavigate, useSearch } from '@tanstack/react-router'
-import { paymentSessionColumns, type PaymentSession } from './Show/Config'
 import useFetch from '@/hooks/UseFetch'
-import { TableLoader } from '@/components/common/table/TableLoader'
+import { useMutate } from '@/hooks/UseMutate'
+
+const toBoolean = (value: unknown) =>
+  value === true || value === 1 || value === '1' || value === 'true'
 
 const PaymentGateways = () => {
-    const { t } = useTranslation()
-    const alert = useAlertModal()
-    const queryClient = useQueryClient()
-    const navigate = useNavigate()
-    // @ts-ignore
-    const searchParams = useSearch({ from: '/_main/payment-gateways/' })
-    const currentTab = (searchParams as any).tab || 'gateways'
+  const { t } = useTranslation()
+  const alert = useAlertModal()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const searchParams = useSearch({ from: '/_main/payment-gateways/' })
+  const currentTab = (searchParams as any).tab || 'gateways'
 
-    const { data: gatewaysData } = useFetch<ApiResponseBase<PaymentGatewayEntity[]>>({
-        queryKey: queryKeys.paymentGateways.all(),
-        endpoint: 'payment-gateways',
-        suspense: true,
-    })
+  const { data: gatewaysData } = useFetch<
+    ApiResponseBase<Array<PaymentGatewayEntity>>
+  >({
+    queryKey: queryKeys.paymentGateways.all(),
+    endpoint: 'payment-gateways',
+    suspense: true,
+  })
 
-    const { data: sessionsData } = useFetch<ApiResponse<PaymentSession[], 'payment_sessions'>>({
-        queryKey: queryKeys.paymentSessions.filterd({ ...searchParams, paginate: '1' }),
-        endpoint: 'payment-sessions',
-        params: { ...searchParams, paginate: '1' },
-        suspense: true,
-    })
+  const { data: sessionsData } = useFetch<
+    ApiResponse<Array<PaymentSession>, 'payment_sessions'>
+  >({
+    queryKey: queryKeys.paymentSessions.filterd({
+      ...searchParams,
+      paginate: '1',
+    }),
+    endpoint: 'payment-sessions',
+    params: { ...searchParams, paginate: '1' },
+    suspense: true,
+  })
+  const gateways = unwrapList<PaymentGatewayEntity>(gatewaysData).items
+  const sessions = unwrapList<PaymentSession>(sessionsData, 'payment_sessions')
 
-    const [selected, setSelected] = useState<{
-        row: PaymentGatewayEntity
-        type: PickedAction | 'edit'
-    } | null>(null)
+  const [selected, setSelected] = useState<{
+    row: PaymentGatewayEntity
+    type: PickedAction | 'edit'
+  } | null>(null)
 
-    const currentId = selected?.row.id || ''
+  const { mutateAsync: changeActive, isPending: activePending } = useMutate({
+    endpoint: (row: PaymentGatewayEntity) => `payment-gateways/${row.id}`,
+    body: (row: PaymentGatewayEntity) => ({ is_active: !toBoolean(row.is_active) }),
+    method: 'patch',
+    mutationKey: queryKeys.paymentGateways.all(),
+    invalidates: [queryKeys.paymentGateways.all()],
+  })
 
-    const { mutateAsync: changeActive, isPending: activePending } =
-        useStatusMutation(
-            String(currentId),
-            'active',
-            'payment-gateways',
-            queryKeys.paymentGateways.getPaymentGateway(currentId),
-            [queryKeys.paymentGateways.all()],
-        )
+  useEffect(() => {
+    alert.setPending(activePending)
+  }, [activePending])
 
-    useEffect(() => {
-        alert.setPending(activePending)
-    }, [activePending])
-
-    const openAction = (type: PickedAction | 'edit' | 'show', row: PaymentGatewayEntity) => {
-        if (type === 'edit') {
-            setSelected({ row, type })
-            return
-        }
-
-        if (type === 'show') {
-            // Navigate to sessions tab with provider filter
-            // @ts-ignore
-            navigate({
-                to: '.',
-                search: (prev: any) => ({
-                    ...prev,
-                    tab: 'sessions',
-                    'filters[provider]': [row.identifier], // assuming row.id is the provider id
-                }),
-            })
-            return
-        }
-
-        setSelected({ row, type })
-
-        const handler = async () => {
-            if (type === 'active') {
-                await changeActive({ is_active: !row.is_active })
-            }
-            alert.setIsOpen(false)
-        }
-
-        const { title, desc } = getModalTitle(type as any, 'paymentGateways', t)
-        alert.setModel({
-            isOpen: true,
-            variant: 'default',
-            title,
-            desc,
-            pending: activePending,
-            handleConfirm: handler,
-        })
-        alert.setHandler(handler)
+  const openAction = (
+    type: PickedAction | 'edit' | 'show',
+    row: PaymentGatewayEntity,
+  ) => {
+    if (type === 'edit') {
+      setSelected({ row, type })
+      return
     }
 
-    return (
-        <>
-            <PaymentGatewaysTabs />
+    if (type === 'show') {
+      // Navigate to sessions tab with provider filter
+      navigate({
+        to: '.',
+        search: (prev: any) => ({
+          ...prev,
+          tab: 'sessions',
+          'filters[provider]': [row.identifier], // assuming row.id is the provider id
+        }),
+      })
+      return
+    }
 
-            {currentTab === 'gateways' && (
-                <div className='flex flex-col gap-4'>
-                    <DataTable
-                        data={gatewaysData?.data || []}
-                        columns={paymentGatewayColumns(openAction as any)}
-                    />
+    setSelected({ row, type })
 
-                    <Dialog open={selected?.type === 'edit'} onOpenChange={() => setSelected(null)}>
-                        <DialogContent className="max-w-2xl! pe-0 ps-2">
-                            <DialogHeader>
-                                <DialogTitle>{t('actions.edit')} {selected?.row.name}</DialogTitle>
-                            </DialogHeader>
-                            {selected?.row && (
-                                <PaymentGatewayForm
-                                    id={selected.row.id}
-                                    onSuccess={() => {
-                                        setSelected(null)
-                                        queryClient.invalidateQueries({ queryKey: queryKeys.paymentGateways.all() })
-                                    }}
-                                />
-                            )}
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            )}
+    const handler = async () => {
+      if (type === 'active') {
+        await changeActive(row)
+      }
+      alert.setIsOpen(false)
+    }
 
-            {currentTab === 'sessions' && (
-                <DataTable
-                    data={sessionsData?.data?.payment_sessions || []}
-                    columns={paymentSessionColumns(t)}
-                    rowUrl={(row) => `/payment-gateways/sessions/${row.id}`}
-                    filters={[
-                        {
-                            id: 'filters[provider]',
-                            title: t('menu.paymentGateways'),
-                            endpoint: 'payment-gateways',
-                            queryKey: queryKeys.paymentGateways.all(),
-                            select: (res: any) => res.data.map((item: any) => ({ label: item.name, value: item.identifier })),
-                            multiple: false,
-                        },
-                        // {
-                        //     id: 'filters[order_id]',
-                        //     label: t('menu.orders'),
-                        //     endpoint
-                        // },
-                        {
-                            id: 'filters[user_id]',
-                            title: t('Form.labels.user_id'),
-                            endpoint: 'users',
-                            queryKey: queryKeys.user.all(),
-                            select: (res: any) => res.data.map((item: any) => ({ label: item.full_name, value: item.id })),
-                            multiple: false,
-                        },
-                        {
-                            id: 'filters[status]',
-                            title: t('status.title'),
-                            options: [
-                                { label: t('paymentSessions.status.pending'), value: 'pending' },
-                                { label: t('paymentSessions.status.processing'), value: 'processing' },
-                                { label: t('paymentSessions.status.completed'), value: 'completed' },
-                                { label: t('paymentSessions.status.failed'), value: 'failed' },
-                                { label: t('paymentSessions.status.canceled'), value: 'canceled' },
-                                { label: t('paymentSessions.status.expired'), value: 'expired' },
-                            ],
-                            multiple: false,
-                        },
-                        // {
-                        //     id: 'filters[completed_at]',
-                        //     title: 'table.createdAt',
-                        //     type: 'date',
-                        // }
-                    ]}
-                    meta={sessionsData?.data?.meta}
+    const { title, desc } = getModalTitle(type, 'paymentGateways', t)
+    alert.setModel({
+      isOpen: true,
+      variant: 'default',
+      title,
+      desc,
+      pending: activePending,
+      handleConfirm: handler,
+    })
+    alert.setHandler(handler)
+  }
+
+  return (
+    <>
+      <PaymentGatewaysTabs />
+
+      {currentTab === 'gateways' && (
+        <div className="flex flex-col gap-4">
+          <DataTable
+            data={gateways}
+            columns={paymentGatewayColumns(openAction)}
+          />
+
+          <Dialog
+            open={selected?.type === 'edit'}
+            onOpenChange={() => setSelected(null)}
+          >
+            <DialogContent className="max-w-2xl! pe-0 ps-2">
+              <DialogHeader>
+                <DialogTitle>
+                  {t('actions.edit')} {selected?.row.name}
+                </DialogTitle>
+              </DialogHeader>
+              {selected?.row && (
+                <PaymentGatewayForm
+                  id={selected.row.id}
+                  onSuccess={() => {
+                    setSelected(null)
+                    queryClient.invalidateQueries({
+                      queryKey: queryKeys.paymentGateways.all(),
+                    })
+                  }}
                 />
-            )}
-        </>
-    )
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+
+      {currentTab === 'sessions' && (
+        <DataTable
+          data={sessions.items}
+          columns={paymentSessionColumns(t)}
+          rowUrl={(row) => `/payment-gateways/sessions/${row.id}`}
+          filters={[
+            {
+              id: 'filters[provider]',
+              title: t('menu.paymentGateways'),
+              endpoint: 'payment-gateways',
+              queryKey: queryKeys.paymentGateways.all(),
+              select: (res: unknown) =>
+                unwrapList<PaymentGatewayEntity>(res).items.map((item) => ({
+                  label: item.name,
+                  value: item.identifier,
+                })),
+              multiple: false,
+            },
+            // {
+            //     id: 'filters[order_id]',
+            //     label: t('menu.orders'),
+            //     endpoint
+            // },
+            {
+              id: 'filters[user_id]',
+              title: t('Form.labels.user_id'),
+              endpoint: 'users',
+              queryKey: queryKeys.user.all(),
+              select: (res: unknown) =>
+                unwrapList<any>(res).items.map((item) => ({
+                  label:
+                    item.full_name || item.name || item.email || `#${item.id}`,
+                  value: item.id,
+                })),
+              multiple: false,
+            },
+            {
+              id: 'filters[status]',
+              title: t('status.title'),
+              options: [
+                {
+                  label: t('paymentSessions.status.pending'),
+                  value: 'pending',
+                },
+                {
+                  label: t('paymentSessions.status.processing'),
+                  value: 'processing',
+                },
+                {
+                  label: t('paymentSessions.status.completed'),
+                  value: 'completed',
+                },
+                { label: t('paymentSessions.status.failed'), value: 'failed' },
+                {
+                  label: t('paymentSessions.status.canceled'),
+                  value: 'canceled',
+                },
+                {
+                  label: t('paymentSessions.status.expired'),
+                  value: 'expired',
+                },
+              ],
+              multiple: false,
+            },
+            // {
+            //     id: 'filters[completed_at]',
+            //     title: 'table.createdAt',
+            //     type: 'date',
+            // }
+          ]}
+          meta={sessions.meta}
+        />
+      )}
+    </>
+  )
 }
 
 export default PaymentGateways

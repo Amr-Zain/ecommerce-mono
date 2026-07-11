@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CreditCardIcon, Key01Icon, Clock01Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
-import { PaymentSession } from "./Config";
+import { Cancel01Icon, Clock01Icon, CreditCardIcon, Key01Icon } from "@hugeicons/core-free-icons";
+import ButtonCopy from "@ecommerce/ui/components/copy-button";
 import { OrderInfo } from "./components/OrderInfo";
 import { PaymobDetails } from "./components/PaymobDetails";
 import { TabbyDetails } from "./components/TabbyDetails";
@@ -10,15 +10,18 @@ import { ProviderResponseCard } from "./components/ProviderResponseCard";
 import { CheckoutUrlsCard } from "./components/CheckoutUrlsCard";
 import { MetadataCard } from "./components/MetadataCard";
 import { SessionSidebar } from "./components/SessionSidebar";
-import { ShowHeader } from "@/components/common/show";
-import ButtonCopy from "@ecommerce/ui/components/copy-button";
 import { PriceDisplay } from "./components/PriceDisplay";
 import { getSessionStatusColor } from "./Config";
+import type { PaymentSession } from "./Config";
+import { ShowHeader } from "@/components/common/show";
 import { cn } from "@/lib/utils";
 
 interface PaymentSessionShowProps {
     session: PaymentSession;
 }
+
+const isRecord = (value: unknown): value is Record<string, any> =>
+    !!value && typeof value === 'object' && !Array.isArray(value);
 
 /**
  * PaymentSessionShow Component
@@ -29,10 +32,10 @@ interface PaymentSessionShowProps {
 export default function PaymentSessionShow({ session }: PaymentSessionShowProps) {
     const { t } = useTranslation();
 
-    const order = session?.order;
-    const provider = session?.provider;
-    const providerResponse = session?.provider_response;
-    const sdkParams = session?.sdk_parameters;
+    const order = session.order;
+    const provider = session.provider;
+    const providerResponse = isRecord(session.provider_response) ? session.provider_response : null;
+    const sdkParams = isRecord(session.sdk_parameters) ? session.sdk_parameters : null;
 
     // Translation helper for dynamic labels and settings keys
     const translateLabel = (key: string): string => {
@@ -44,7 +47,8 @@ export default function PaymentSessionShow({ session }: PaymentSessionShowProps)
     };
 
     // Construction of checkout and redirection URLs from various response sources
-    const checkoutUrls: { label: string; url: string }[] = [
+    const checkoutUrls: Array<{ label: string; url: string }> = [
+        ...(session.checkout_url ? [{ label: translateLabel('checkout_url'), url: session.checkout_url }] : []),
         ...(sdkParams?.checkout_url ? [{ label: translateLabel('sdk_checkout_url'), url: sdkParams.checkout_url }] : []),
         ...(sdkParams?.redirection_url ? [{ label: translateLabel('sdk_redirection_url'), url: sdkParams.redirection_url }] : []),
         ...(providerResponse?.checkout_url ? [{ label: translateLabel('provider_checkout_url'), url: providerResponse.checkout_url }] : []),
@@ -66,16 +70,16 @@ export default function PaymentSessionShow({ session }: PaymentSessionShowProps)
                     ) : undefined
                 }
                 badges={[
-                    ...(session.status ? [{
+                    ...[{
                         variant: 'outline' as const,
                         className: cn('capitalize font-semibold px-3 py-1.5 text-sm border', getSessionStatusColor(session.status)),
                         children: t(`paymentSessions.status.${session.status}`),
-                    }] : []),
-                    ...(session.amount ? [{
+                    }],
+                    ...[{
                         variant: 'secondary' as const,
                         className: 'px-3 py-1.5 flex items-center gap-1',
                         children: <PriceDisplay amount={session.amount} currencyCode={session.currency} size="md" />,
-                    }] : []),
+                    }],
                     ...(session.expires_at ? [{
                         variant: 'outline' as const,
                         className: 'px-3 py-1.5 text-xs font-medium text-muted-foreground border-muted flex items-center gap-1',

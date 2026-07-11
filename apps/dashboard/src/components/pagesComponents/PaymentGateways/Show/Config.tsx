@@ -1,11 +1,11 @@
-import { ColumnDef } from '@tanstack/react-table'
-import { DateColumn, textColumn } from '@/components/features/sharedColumns'
 import { Badge } from '@ecommerce/ui/components/badge'
-import { cn } from '@/lib/utils'
 import { Link } from '@tanstack/react-router'
 import { Eye } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
+import type { Image } from '@/types/api/general'
+import { cn } from '@/lib/utils'
+import { DateColumn, textColumn } from '@/components/features/sharedColumns'
 import { SARIcon } from '@/components/common/Icons'
-import { Image } from '@/types/api/general'
 
 export interface PaymentSessionUser {
     id: number
@@ -25,7 +25,7 @@ export interface PaymentSessionOrder {
     shopify_id: string | null
     shopify_order_id: string | null
     shopify_name: string | null
-    order_number: number | null
+    order_number: string | number | null
     status: string
     financial_status: string
     fulfillment_status: string
@@ -49,7 +49,7 @@ export interface PaymentSessionProvider {
     identifier: string | null
     name: string | null
     description: string | null
-    image: Image | null
+    image: Image | string | null
     icon: string | null
     settings: Record<string, any> | null
     is_active: boolean | null
@@ -76,9 +76,9 @@ export interface ProviderResponse {
     is_test?: boolean
     confirmed?: boolean
     cancelable?: boolean
-    refunds?: any[]
-    captures?: any[]
-    order_history?: any[]
+    refunds?: Array<any>
+    captures?: Array<any>
+    order_history?: Array<any>
     [key: string]: any
 
     // --- Paymob Intention format (pending state) ---
@@ -111,7 +111,7 @@ export interface ProviderResponse {
         integration_id?: number
         use_cvc_with_moto?: boolean
     }>
-    split_payment_methods?: any[]
+    split_payment_methods?: Array<any>
 
     // --- Tabby-style top-level ---
     phase?: string
@@ -127,7 +127,7 @@ export interface ProviderResponse {
             id?: string
             meta?: any | null
             order?: {
-                items?: any[]
+                items?: Array<any>
                 tax_amount?: string | number
                 updated_at?: string
                 reference_id?: string
@@ -150,7 +150,7 @@ export interface ProviderResponse {
                 }
             }
             monthly_billing?: any | null
-            available_products?: any[]
+            available_products?: Array<any>
         }
         merchant_urls?: Record<string, string>
     }
@@ -164,7 +164,7 @@ export interface ProviderResponse {
     }
     order?: {
         reference_id?: string
-        items?: any[]
+        items?: Array<any>
         tax_amount?: string | number
         shipping_amount?: string | number
         discount_amount?: string | number
@@ -212,7 +212,7 @@ export interface ProviderResponse {
     type?: string
     accept_fees?: number
     issuer_bank?: string | null
-    transaction_processed_callback_responses?: any[] | null
+    transaction_processed_callback_responses?: Array<any> | null
     obj?: {
         id?: number
         data?: {
@@ -327,14 +327,23 @@ export interface PaymentSession {
     user: PaymentSessionUser | null
     order: PaymentSessionOrder | null
     provider: PaymentSessionProvider | null
+    provider_identifier?: string | null
+    payment_method?: string | null
     status: 'pending' | 'processing' | 'completed' | 'failed' | 'canceled' | 'expired'
-    amount: string
+    amount: string | number
     currency: string
+    transaction_ref?: string | null
+    checkout_url?: string | null
     provider_order_id: string | null
     failure_reason: string | null
     provider_response: ProviderResponse | null
     sdk_parameters: Record<string, any> | null
-    metadata: any[]
+    metadata: unknown
+    pending_checkout_id?: string | null
+    order_id?: string | null
+    wallet_transaction_id?: string | null
+    return_request_id?: string | null
+    exchange_request_id?: string | null
     created_at: string
     updated_at: string
     completed_at: string | null
@@ -342,7 +351,7 @@ export interface PaymentSession {
 }
 
 export const getSessionStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
+    switch (status.toLowerCase()) {
         case 'completed':
         case 'success':
         case 'paid':
@@ -366,7 +375,7 @@ export const getSessionStatusColor = (status: string) => {
     }
 }
 
-export const paymentSessionColumns = (t: (key: string) => string): ColumnDef<PaymentSession>[] => [
+export const paymentSessionColumns = (t: (key: string) => string): Array<ColumnDef<PaymentSession>> => [
     textColumn<PaymentSession>('user.name' as any, 'Form.labels.user_name', {
         render: ({ row }) => {
             const user = row.original.user
@@ -374,7 +383,6 @@ export const paymentSessionColumns = (t: (key: string) => string): ColumnDef<Pay
             return (
                 <Link
                     to="/users/show/$id"
-                    /* @ts-ignore */
                     params={{ id: String(user.id) }}
                     className="font-medium text-primary hover:text-primary/80 hover:underline transition-colors"
                     onClick={(e) => e.stopPropagation()}

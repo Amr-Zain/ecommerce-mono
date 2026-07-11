@@ -5,13 +5,13 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 interface ProviderResponseCardProps {
-    providerResponse: any;
+    providerResponse: unknown;
 }
 
 export function ProviderResponseCard({ providerResponse }: ProviderResponseCardProps) {
     const { t } = useTranslation();
 
-    if (!providerResponse) return null;
+    if (!providerResponse || typeof providerResponse !== 'object') return null;
 
     const handledKeys = [
         'obj', 'raw', 'intention_detail', 'object', 'special_reference',
@@ -24,8 +24,11 @@ export function ProviderResponseCard({ providerResponse }: ProviderResponseCardP
     const remainingEntries = Object.entries(providerResponse).filter(
         ([key, val]) => !handledKeys.includes(key) && val != null && typeof val !== 'object'
     );
+    const nestedEntries = Object.entries(providerResponse).filter(
+        ([key, val]) => !handledKeys.includes(key) && val != null && typeof val === 'object'
+    );
 
-    if (remainingEntries.length === 0) return null;
+    if (remainingEntries.length === 0 && nestedEntries.length === 0) return null;
 
     return (
         <Card className="border-muted/60 overflow-hidden pt-0 shadow-sm">
@@ -36,7 +39,7 @@ export function ProviderResponseCard({ providerResponse }: ProviderResponseCardP
                 </div>
             </CardHeader>
             <CardContent className="p-4 pt-5">
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                {remainingEntries.length > 0 && <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                     {remainingEntries.map(([key, val]: [any, any]) => (
                         <div key={key} className="space-y-1.5 p-3 rounded-xl bg-muted/5 border border-muted/20">
                             <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.15em]">{key.replace(/_/g, ' ')}</p>
@@ -49,7 +52,19 @@ export function ProviderResponseCard({ providerResponse }: ProviderResponseCardP
                             )}
                         </div>
                     ))}
-                </div>
+                </div>}
+                {nestedEntries.length > 0 && (
+                    <div className={cn('grid gap-4', remainingEntries.length > 0 && 'mt-4')}>
+                        {nestedEntries.map(([key, val]) => (
+                            <div key={key} className="space-y-2 rounded-xl border border-muted/20 bg-muted/5 p-3">
+                                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.15em]">{key.replace(/_/g, ' ')}</p>
+                                <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-background/70 p-3 text-[11px] font-mono text-muted-foreground">
+                                    {JSON.stringify(val, null, 2)}
+                                </pre>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </CardContent>
         </Card>
     );

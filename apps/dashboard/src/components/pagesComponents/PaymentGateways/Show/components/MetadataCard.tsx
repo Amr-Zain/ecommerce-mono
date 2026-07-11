@@ -3,13 +3,15 @@ import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface MetadataCardProps {
-    metadata: any[];
+    metadata: unknown;
 }
 
 export function MetadataCard({ metadata }: MetadataCardProps) {
     const { t } = useTranslation();
 
-    if (!metadata || metadata.length === 0) return null;
+    const items = Array.isArray(metadata) ? metadata : metadata && typeof metadata === 'object' ? [metadata] : []
+
+    if (items.length === 0) return null;
 
     return (
         <Card className="border-muted/60 overflow-hidden pt-0 shadow-sm">
@@ -21,15 +23,17 @@ export function MetadataCard({ metadata }: MetadataCardProps) {
             </CardHeader>
             <CardContent className="p-4 pt-5">
                 <div className="grid gap-4">
-                    {metadata.map((item: any, idx: number) => (
-                        <div key={idx} className="p-4 rounded-2xl bg-muted/5 border border-muted/20 relative overflow-hidden">
+                    {items.map((item, idx: number) => (
+                        <div key={typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item) || idx} className="p-4 rounded-2xl bg-muted/5 border border-muted/20 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-1 h-full bg-primary/20" />
                             {typeof item === 'object' && item !== null ? (
                                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                                     {Object.entries(item).map(([k, v]) => (
                                         <div key={k} className="space-y-1">
                                             <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">{k}</p>
-                                            <p className="text-xs font-bold leading-relaxed">{String(v)}</p>
+                                            <p className="text-xs font-bold leading-relaxed break-all">
+                                                {typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}
+                                            </p>
                                         </div>
                                     ))}
                                 </div>

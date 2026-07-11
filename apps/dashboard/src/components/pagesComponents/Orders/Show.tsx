@@ -2,19 +2,19 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  Package01Icon,
-  CreditCardIcon,
-  Location01Icon,
-  User02Icon,
-  CheckmarkCircle01Icon,
-  TruckIcon,
-  Time01Icon,
-  Cancel01Icon,
-  ReloadIcon,
   Alert01Icon,
+  Cancel01Icon,
+  CheckmarkCircle01Icon,
+  CreditCardIcon,
   Loading02Icon,
+  Location01Icon,
+  Package01Icon,
+  ReloadIcon,
+  Time01Icon,
+  TruckIcon,
+  User02Icon,
 } from '@hugeicons/core-free-icons'
-import { HugeiconsIcon, type HugeiconsIconProps, type IconSvgElement } from '@hugeicons/react'
+import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Card,
   CardContent,
@@ -34,21 +34,41 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@ecommerce/ui/components/dialog'
-import { SARIcon } from '@/components/common/Icons'
-import { useMutate } from '@/hooks/UseMutate'
-import { ApiResponseBase } from '@/types/api/http'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@ecommerce/ui/components/alert-dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@ecommerce/ui/components/select'
+import { StatusBadge, getStatusColor } from './Config'
+import type { HugeiconsIconProps, IconSvgElement } from '@hugeicons/react'
+import type { ApiResponseBase } from '@/types/api/http'
+import type {
   AdminOrderTransitionPayload,
-  getAllowedOrderTransitions,
-  ORDER_STATUSES,
   OrderDetail,
   OrderStatus,
+} from '@/types/api/order'
+import { SARIcon } from '@/components/common/Icons'
+import { useMutate } from '@/hooks/UseMutate'
+import {
   MANUAL_PAYMENT_METHODS,
+  ORDER_STATUSES,
   PAYMENT_STATUSES,
+  getAllowedOrderTransitions,
 } from '@/types/api/order'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { cn, hasPermission } from '@/lib/utils'
-import { StatusBadge, getStatusColor } from './Config'
 import { ShowHeader, ShowInfoCard } from '@/components/common/show'
 
 const H = (icon: IconSvgElement) => {
@@ -79,8 +99,10 @@ const money = (value: number, currency = 'SAR') =>
 const paymentLabel = (value?: string | null) =>
   value ? value.replaceAll('_', ' ') : '-'
 
-const paymentMethodSummary = (methods: string[], fallback: string) => {
-  const uniqueMethods = Array.from(new Set(methods.filter(Boolean).map(paymentLabel)))
+const paymentMethodSummary = (methods: Array<string>, fallback: string) => {
+  const uniqueMethods = Array.from(
+    new Set(methods.filter(Boolean).map(paymentLabel)),
+  )
   if (uniqueMethods.length === 0) return fallback
   if (uniqueMethods.length === 1) return uniqueMethods[0]
   return 'External methods'
@@ -94,20 +116,24 @@ const pendingPaymentStatuses = [
   PAYMENT_STATUSES.awaitingConfirmation,
   PAYMENT_STATUSES.processingPayment,
   PAYMENT_STATUSES.requiresReview,
-] as readonly string[]
+] as ReadonlyArray<string>
 
 const verificationPaymentStatuses = [
   PAYMENT_STATUSES.awaitingConfirmation,
   PAYMENT_STATUSES.processingPayment,
   PAYMENT_STATUSES.requiresReview,
-] as readonly string[]
+] as ReadonlyArray<string>
 
 function buildPaymentBreakdown(order: OrderDetail) {
-  const originalPayments = order.payments.filter((payment) => !payment.refund_source)
+  const originalPayments = order.payments.filter(
+    (payment) => !payment.refund_source,
+  )
   const completed = originalPayments.filter(
     (payment) => payment.payment_status === PAYMENT_STATUSES.completed,
   )
-  const pending = originalPayments.filter((payment) => pendingPaymentStatuses.includes(payment.payment_status))
+  const pending = originalPayments.filter((payment) =>
+    pendingPaymentStatuses.includes(payment.payment_status),
+  )
   const externalCompleted = completed.filter(
     (payment) => payment.payment_method !== 'wallet',
   )
@@ -123,8 +149,9 @@ function buildPaymentBreakdown(order: OrderDetail) {
   const remainingDue = Math.max(0, Number(order.total_price || 0) - paidTotal)
   const needsVerification = pending.some(
     (payment) =>
-      (MANUAL_PAYMENT_METHODS as readonly string[]).includes(payment.payment_method) ||
-      verificationPaymentStatuses.includes(payment.payment_status),
+      (MANUAL_PAYMENT_METHODS as ReadonlyArray<string>).includes(
+        payment.payment_method,
+      ) || verificationPaymentStatuses.includes(payment.payment_status),
   )
   const externalPaidLabel = `${paymentMethodSummary(
     externalCompleted.map((payment) => payment.payment_method),
@@ -137,7 +164,18 @@ function buildPaymentBreakdown(order: OrderDetail) {
       )} awaiting verification`
     : 'Awaiting payment or verification'
 
-  return { awaiting, awaitingLabel, completed, externalPaid, externalPaidLabel, needsVerification, paidTotal, pending, remainingDue, walletPaid }
+  return {
+    awaiting,
+    awaitingLabel,
+    completed,
+    externalPaid,
+    externalPaidLabel,
+    needsVerification,
+    paidTotal,
+    pending,
+    remainingDue,
+    walletPaid,
+  }
 }
 
 export default function OrderShow({ order }: OrderShowProps) {
@@ -151,7 +189,9 @@ export default function OrderShow({ order }: OrderShowProps) {
     order.remaining_refundable_amount,
   )
   const [cancelManualRefund, setCancelManualRefund] = useState(0)
-  const currency = order.payments?.[0]?.currency ?? 'SAR'
+  const [confirmStatusOpen, setConfirmStatusOpen] = useState(false)
+  const [confirmPaymentOpen, setConfirmPaymentOpen] = useState(false)
+  const currency = order.payments[0]?.currency ?? 'SAR'
   const allowedTransitions = useMemo(
     () => getAllowedOrderTransitions(order.status),
     [order.status],
@@ -167,18 +207,19 @@ export default function OrderShow({ order }: OrderShowProps) {
     cancellationRefundAttempt?.payment_status ===
     PAYMENT_STATUSES.processingPayment
   const cancellationRefundRequiresReview =
-    cancellationRefundAttempt?.payment_status === PAYMENT_STATUSES.requiresReview
+    cancellationRefundAttempt?.payment_status ===
+    PAYMENT_STATUSES.requiresReview
   const cancellationRefundBlocked = Boolean(cancellationRefundAttempt)
   const canUpdateOrder = hasPermission('orders', 'update')
   const canConfirmPayment =
     !cancellationRefundBlocked &&
-    (MANUAL_PAYMENT_METHODS as readonly string[]).includes(
+    (MANUAL_PAYMENT_METHODS as ReadonlyArray<string>).includes(
       order.payment_method,
     ) &&
     order.payments.some(
       (payment) =>
         !payment.refund_source &&
-        (MANUAL_PAYMENT_METHODS as readonly string[]).includes(
+        (MANUAL_PAYMENT_METHODS as ReadonlyArray<string>).includes(
           payment.payment_method,
         ) &&
         (payment.payment_status === PAYMENT_STATUSES.pending ||
@@ -245,7 +286,17 @@ export default function OrderShow({ order }: OrderShowProps) {
       setCancelDialogOpen(true)
       return
     }
-    statusMutation.mutate({ status: selectedStatus })
+    setConfirmStatusOpen(true)
+  }
+
+  const confirmStatusChange = () => {
+    if (!selectedStatus || cancellationRefundBlocked || !canUpdateOrder) return
+    statusMutation.mutate(
+      { status: selectedStatus },
+      {
+        onSuccess: () => setConfirmStatusOpen(false),
+      },
+    )
   }
 
   return (
@@ -264,12 +315,20 @@ export default function OrderShow({ order }: OrderShowProps) {
         badges={[
           {
             children: (
-              <StatusBadge status={order.status} labelPrefix="orders.status" t={t} />
+              <StatusBadge
+                status={order.status}
+                labelPrefix="orders.status"
+                t={t}
+              />
             ),
           },
           {
             children: (
-              <StatusBadge status={order.payment_status} labelPrefix="orders.paymentStatus" t={t} />
+              <StatusBadge
+                status={order.payment_status}
+                labelPrefix="orders.paymentStatus"
+                t={t}
+              />
             ),
           },
           {
@@ -356,10 +415,28 @@ export default function OrderShow({ order }: OrderShowProps) {
                   </Badge>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <PaymentMetric label="Wallet paid" value={paymentBreakdown.walletPaid} currency={currency} />
-                  <PaymentMetric label={paymentBreakdown.externalPaidLabel} value={paymentBreakdown.externalPaid} currency={currency} />
-                  <PaymentMetric label={paymentBreakdown.awaitingLabel} value={paymentBreakdown.awaiting || paymentBreakdown.remainingDue} currency={currency} />
-                  <PaymentMetric label="Refunded or reserved" value={order.refunded_amount + order.reserved_refund_amount} currency={currency} />
+                  <PaymentMetric
+                    label="Wallet paid"
+                    value={paymentBreakdown.walletPaid}
+                    currency={currency}
+                  />
+                  <PaymentMetric
+                    label={paymentBreakdown.externalPaidLabel}
+                    value={paymentBreakdown.externalPaid}
+                    currency={currency}
+                  />
+                  <PaymentMetric
+                    label={paymentBreakdown.awaitingLabel}
+                    value={
+                      paymentBreakdown.awaiting || paymentBreakdown.remainingDue
+                    }
+                    currency={currency}
+                  />
+                  <PaymentMetric
+                    label="Refunded or reserved"
+                    value={order.refunded_amount + order.reserved_refund_amount}
+                    currency={currency}
+                  />
                 </div>
                 {paymentBreakdown.pending.length > 0 && (
                   <div className="mt-4 space-y-2 rounded-md border bg-background p-3">
@@ -372,7 +449,8 @@ export default function OrderShow({ order }: OrderShowProps) {
                         className="flex flex-wrap items-center justify-between gap-2 text-sm"
                       >
                         <span className="capitalize">
-                          {paymentLabel(payment.payment_method)} - {paymentLabel(payment.payment_status)}
+                          {paymentLabel(payment.payment_method)} -{' '}
+                          {paymentLabel(payment.payment_status)}
                         </span>
                         <span className="font-black">
                           {money(payment.amount, payment.currency)}
@@ -487,25 +565,38 @@ export default function OrderShow({ order }: OrderShowProps) {
                   {t('orders.labels.change_status')}
                 </label>
                 <div className="flex gap-2">
-                  <select
-                    className="h-10 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm"
+                  <Select
                     value={selectedStatus}
                     disabled={
                       !hasPermission('orders', 'update') ||
                       cancellationRefundBlocked ||
                       allowedTransitions.length === 0
                     }
-                    onChange={(event) =>
-                      setSelectedStatus(event.target.value as OrderStatus)
+                    onValueChange={(value) =>
+                      setSelectedStatus(value as OrderStatus)
                     }
                   >
-                    <option value="">{t('orders.labels.select_status')}</option>
-                    {allowedTransitions.map((status) => (
-                      <option key={status} value={status}>
-                        {t(`orders.status.${status}`)}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="h-10 min-w-0 flex-1">
+                      <SelectValue
+                        placeholder={t('orders.labels.select_status')}
+                      />
+                    </SelectTrigger>
+                    <SelectContent align="start">
+                      {allowedTransitions.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                'size-2 rounded-full',
+                                getStatusColor(status),
+                              )}
+                            />
+                            {t(`orders.status.${status}`)}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     onClick={submitStatusChange}
                     disabled={
@@ -517,14 +608,14 @@ export default function OrderShow({ order }: OrderShowProps) {
                     className="shrink-0"
                   >
                     <Truck className="h-4 w-4" />
-                    {t('actions.update')}
+                    Review
                   </Button>
                 </div>
                 {!cancellationRefundBlocked &&
                   allowedTransitions.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {t('orders.labels.final_status')}
-                  </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t('orders.labels.final_status')}
+                    </p>
                   )}
               </div>
 
@@ -538,12 +629,87 @@ export default function OrderShow({ order }: OrderShowProps) {
                   confirmPaymentMutation.isPending ||
                   !canUpdateOrder
                 }
-                onClick={() => confirmPaymentMutation.mutate({})}
+                onClick={() => setConfirmPaymentOpen(true)}
               >
                 <CreditCard className="h-4 w-4" />
                 {t('orders.actions.confirm_payment')}
               </Button>
+            </CardContent>
+          </Card>
 
+          <Card className="pt-0">
+            <CardHeader className="border-b bg-muted/30 py-4">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <SARIcon className="h-5 w-5 text-primary" />
+                Financial summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 p-5">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SummaryMetric
+                  label={t('orders.labels.subtotal')}
+                  value={order.subtotal}
+                  currency={currency}
+                />
+                <SummaryMetric
+                  label={t('orders.labels.shipping_fee')}
+                  value={order.shipping_fee}
+                  currency={currency}
+                />
+                <SummaryMetric
+                  label={t('orders.labels.discount')}
+                  value={order.discount_amount}
+                  currency={currency}
+                  tone="success"
+                  prefix="-"
+                />
+                <SummaryMetric
+                  label={t('orders.labels.vat')}
+                  value={order.vat_value}
+                  currency={currency}
+                />
+              </div>
+              {order.coupon_code_snapshot && (
+                <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold">
+                      Coupon {order.coupon_code_snapshot}
+                    </span>
+                    <span>- {money(order.discount_amount, currency)}</span>
+                  </div>
+                </div>
+              )}
+              <Separator />
+              <TotalRow
+                label={t('orders.labels.total_price')}
+                value={order.total_price}
+                currency={currency}
+                strong
+              />
+              <div className="rounded-lg bg-muted/30 p-3">
+                <TotalRow
+                  label={t('orders.labels.paid_amount')}
+                  value={order.original_paid_amount}
+                  currency={currency}
+                />
+                <TotalRow
+                  label={t('orders.labels.refunded_amount')}
+                  value={order.refunded_amount}
+                  currency={currency}
+                />
+                <TotalRow
+                  label={t('orders.labels.reserved_refund_amount')}
+                  value={order.reserved_refund_amount}
+                  currency={currency}
+                />
+                <Separator className="my-2" />
+                <TotalRow
+                  label={t('orders.labels.remaining_refundable_amount')}
+                  value={order.remaining_refundable_amount}
+                  currency={currency}
+                  strong
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -556,15 +722,24 @@ export default function OrderShow({ order }: OrderShowProps) {
             </CardHeader>
             <CardContent className="space-y-4 p-5">
               {order.status_history.map((entry) => (
-                <div key={entry.id || `${entry.new_status}-${entry.created_at}`} className="border-s ps-4">
+                <div
+                  key={entry.id || `${entry.new_status}-${entry.created_at}`}
+                  className="border-s ps-4"
+                >
                   <div className="flex items-center justify-between gap-3">
-                    <StatusBadge status={entry.new_status} labelPrefix="orders.status" t={t} />
+                    <StatusBadge
+                      status={entry.new_status}
+                      labelPrefix="orders.status"
+                      t={t}
+                    />
                     <span className="text-xs text-muted-foreground">
                       {new Date(entry.created_at).toLocaleString()}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {entry.actor_type ? t(`orders.actors.${entry.actor_type}`) : '-'}
+                    {entry.actor_type
+                      ? t(`orders.actors.${entry.actor_type}`)
+                      : '-'}
                     {entry.reason ? `: ${entry.reason}` : ''}
                   </p>
                 </div>
@@ -578,8 +753,14 @@ export default function OrderShow({ order }: OrderShowProps) {
             titleIcon={<User className="h-5 w-5 text-primary" />}
             items={[
               { label: t('orders.labels.name'), value: order.user_name },
-              { label: t('orders.labels.email'), value: order.user_email || '-' },
-              { label: t('orders.labels.phone'), value: order.user_phone || '-' },
+              {
+                label: t('orders.labels.email'),
+                value: order.user_email || '-',
+              },
+              {
+                label: t('orders.labels.phone'),
+                value: order.user_phone || '-',
+              },
             ]}
           />
 
@@ -588,8 +769,14 @@ export default function OrderShow({ order }: OrderShowProps) {
             title={t('orders.labels.shipping_address')}
             titleIcon={<MapPin className="h-5 w-5 text-primary" />}
             items={[
-              { label: t('orders.labels.country'), value: order.country_name_snapshot || '-' },
-              { label: t('orders.labels.city'), value: order.city_name_snapshot || '-' },
+              {
+                label: t('orders.labels.country'),
+                value: order.country_name_snapshot || '-',
+              },
+              {
+                label: t('orders.labels.city'),
+                value: order.city_name_snapshot || '-',
+              },
               {
                 label: t('orders.labels.address'),
                 value:
@@ -601,51 +788,81 @@ export default function OrderShow({ order }: OrderShowProps) {
               },
             ]}
           />
-
-          <Card className={cn('border', getStatusColor(order.payment_status))}>
-            <CardContent className="space-y-2 p-5">
-              <TotalRow
-                label={t('orders.labels.subtotal')}
-                value={order.subtotal}
-                currency={currency}
-              />
-              <TotalRow
-                label={t('orders.labels.shipping_fee')}
-                value={order.shipping_fee}
-                currency={currency}
-              />
-              <TotalRow
-                label={t('orders.labels.discount')}
-                value={-order.discount_amount}
-                currency={currency}
-              />
-              <TotalRow
-                label={t('orders.labels.vat')}
-                value={order.vat_value}
-                currency={currency}
-              />
-              <Separator />
-              <TotalRow
-                label={t('orders.labels.total_price')}
-                value={order.total_price}
-                currency={currency}
-                strong
-              />
-              <Separator />
-              <TotalRow label={t('orders.labels.paid_amount')} value={order.original_paid_amount} currency={currency} />
-              <TotalRow label={t('orders.labels.refunded_amount')} value={order.refunded_amount} currency={currency} />
-              <TotalRow label={t('orders.labels.reserved_refund_amount')} value={order.reserved_refund_amount} currency={currency} />
-              <TotalRow label={t('orders.labels.remaining_refundable_amount')} value={order.remaining_refundable_amount} currency={currency} strong />
-            </CardContent>
-          </Card>
         </div>
       </div>
+
+      <AlertDialog open={confirmStatusOpen} onOpenChange={setConfirmStatusOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm order status change</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move order {order.order_number} from{' '}
+              {t(`orders.status.${order.status}`)} to{' '}
+              {selectedStatus ? t(`orders.status.${selectedStatus}`) : '-'}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={statusMutation.isPending}>
+              {t('actions.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={statusMutation.isPending || !selectedStatus}
+              onClick={confirmStatusChange}
+            >
+              <Truck className="h-4 w-4" />
+              Confirm change
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={confirmPaymentOpen}
+        onOpenChange={setConfirmPaymentOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('orders.actions.confirm_payment')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Confirming payment will mark the pending manual payment for order{' '}
+              {order.order_number} as paid.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={confirmPaymentMutation.isPending}>
+              {t('actions.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={
+                confirmPaymentMutation.isPending ||
+                !canConfirmPayment ||
+                !canUpdateOrder
+              }
+              onClick={() =>
+                confirmPaymentMutation.mutate(
+                  {},
+                  {
+                    onSuccess: () => setConfirmPaymentOpen(false),
+                  },
+                )
+              }
+            >
+              <CreditCard className="h-4 w-4" />
+              Confirm payment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('orders.actions.cancel_order')}</DialogTitle>
-            <DialogDescription>{t('orders.messages.cancel_warning')}</DialogDescription>
+            <DialogDescription>
+              {t('orders.messages.cancel_warning')}
+            </DialogDescription>
           </DialogHeader>
           <Textarea
             value={cancelReason}
@@ -658,7 +875,9 @@ export default function OrderShow({ order }: OrderShowProps) {
               <div>
                 <p className="text-sm font-semibold">Refund allocation</p>
                 <p className="text-xs text-muted-foreground">
-                  Split exactly {money(order.remaining_refundable_amount, currency)} before cancelling.
+                  Split exactly{' '}
+                  {money(order.remaining_refundable_amount, currency)} before
+                  cancelling.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
@@ -670,7 +889,9 @@ export default function OrderShow({ order }: OrderShowProps) {
                     max={order.remaining_refundable_amount}
                     step="0.01"
                     value={cancelWalletRefund}
-                    onChange={(event) => setCancelWalletRefund(Number(event.target.value || 0))}
+                    onChange={(event) =>
+                      setCancelWalletRefund(Number(event.target.value || 0))
+                    }
                   />
                 </label>
                 <label className="space-y-1 text-xs font-medium">
@@ -681,7 +902,9 @@ export default function OrderShow({ order }: OrderShowProps) {
                     max={order.remaining_refundable_amount}
                     step="0.01"
                     value={cancelOriginalRefund}
-                    onChange={(event) => setCancelOriginalRefund(Number(event.target.value || 0))}
+                    onChange={(event) =>
+                      setCancelOriginalRefund(Number(event.target.value || 0))
+                    }
                   />
                 </label>
                 <label className="space-y-1 text-xs font-medium">
@@ -692,14 +915,19 @@ export default function OrderShow({ order }: OrderShowProps) {
                     max={order.remaining_refundable_amount}
                     step="0.01"
                     value={cancelManualRefund}
-                    onChange={(event) => setCancelManualRefund(Number(event.target.value || 0))}
+                    onChange={(event) =>
+                      setCancelManualRefund(Number(event.target.value || 0))
+                    }
                   />
                 </label>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+            >
               {t('actions.cancel')}
             </Button>
             <Button
@@ -716,17 +944,28 @@ export default function OrderShow({ order }: OrderShowProps) {
                   reason: cancelReason.trim() || undefined,
                   refund_allocations:
                     order.remaining_refundable_amount > 0
-                      ? [
+                      ? ([
                           cancelWalletRefund
-                            ? { destination: 'wallet', amount: cancelWalletRefund }
+                            ? {
+                                destination: 'wallet',
+                                amount: cancelWalletRefund,
+                              }
                             : null,
                           cancelOriginalRefund
-                            ? { destination: 'original_payment', amount: cancelOriginalRefund }
+                            ? {
+                                destination: 'original_payment',
+                                amount: cancelOriginalRefund,
+                              }
                             : null,
                           cancelManualRefund
-                            ? { destination: 'manual', amount: cancelManualRefund }
+                            ? {
+                                destination: 'manual',
+                                amount: cancelManualRefund,
+                              }
                             : null,
-                        ].filter(Boolean) as AdminOrderTransitionPayload['refund_allocations']
+                        ].filter(
+                          Boolean,
+                        ) as AdminOrderTransitionPayload['refund_allocations'])
                       : undefined,
                 })
               }
@@ -751,7 +990,10 @@ function RetryCancellationRefund({
   onSuccess: () => void
 }) {
   const { t } = useTranslation()
-  const mutation = useMutate<ApiResponseBase<OrderDetail>, Record<string, never>>({
+  const mutation = useMutate<
+    ApiResponseBase<OrderDetail>,
+    Record<string, never>
+  >({
     endpoint: `orders/${orderId}/cancellation-refunds/${refundId}/retry`,
     mutationKey: ['orders', orderId, 'cancellation-refund', refundId],
     method: 'post',
@@ -789,6 +1031,39 @@ function PaymentMetric({
       </p>
       <p className="mt-1 flex items-center gap-1 text-sm font-black tabular-nums">
         {money(value, currency)}
+        {currency === 'SAR' && <SARIcon className="h-3.5 w-3.5" />}
+      </p>
+    </div>
+  )
+}
+
+function SummaryMetric({
+  label,
+  value,
+  currency,
+  tone,
+  prefix = '',
+}: {
+  label: string
+  value: number
+  currency: string
+  tone?: 'success' | 'default'
+  prefix?: string
+}) {
+  return (
+    <div
+      className={cn(
+        'rounded-lg border bg-background p-3',
+        tone === 'success' &&
+          'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+      )}
+    >
+      <p className="text-[10px] font-bold uppercase text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-1 flex items-center gap-1 text-sm font-black tabular-nums">
+        {prefix}
+        {money(Math.abs(value), currency)}
         {currency === 'SAR' && <SARIcon className="h-3.5 w-3.5" />}
       </p>
     </div>
