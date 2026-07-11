@@ -34,10 +34,16 @@ type Location = {
 
 type CheckoutTotals = {
   subtotal: number
-  shipping_fee: number
-  discount_amount: number
-  vat_amount: number
-  total_price: number
+  shipping_fee?: number
+  shippingFee?: number
+  discount_amount?: number
+  discountAmount?: number
+  vat_amount?: number
+  vatAmount?: number
+  total_price?: number
+  totalPrice?: number
+  vatRate?: number
+  vat_rate?: number
 }
 
 type CheckoutPreview = {
@@ -45,8 +51,10 @@ type CheckoutPreview = {
   coupon: {
     id: string
     code: string
-    discount_type: string
-    discount_value: number
+    discount_type?: string
+    discountType?: string
+    discount_value?: number
+    discountValue?: number
   } | null
   totals: CheckoutTotals
   loyalty?: {
@@ -117,10 +125,18 @@ type VerifyPaymentResult = {
 
 type PaymentMethodOption = {
   id: string
+  payment_method?: string | null
   label: string
   provider?: string | null
   provider_identifier?: string | null
   provider_name?: string | null
+  logo_url?: string | null
+  icon_url?: string | null
+  provider_logo_url?: string | null
+  method_icon_url?: string | null
+  enabled?: boolean
+  disabled_reason?: string | null
+  installment_plans?: number[]
 }
 
 type CreateAddressInput = {
@@ -141,6 +157,7 @@ type CheckoutPreviewInput = {
 
 type PlaceOrderInput = CheckoutPreviewInput & {
   paymentMethod: string
+  providerIdentifier?: string
   notes?: string
 }
 
@@ -199,7 +216,10 @@ function useCreateAddress() {
 }
 
 function useCheckoutPreview() {
-  return useMutate<{ success: boolean; data: CheckoutPreview }, CheckoutPreviewInput>({
+  return useMutate<
+    { success: boolean; data: CheckoutPreview },
+    CheckoutPreviewInput
+  >({
     authRequired: true,
     unauthorizedReturnTo: "/cart?step=address",
     endpoint: clientEndpoints.checkoutPreview,
@@ -213,16 +233,26 @@ function useCheckoutPaymentMethods() {
     endpoint: clientEndpoints.checkoutPaymentMethods,
     queryKey: queryKeys.checkoutPaymentMethods(),
     select: (response) => {
-      const data = (response as { data?: { payment_methods?: unknown } })?.data
-      return Array.isArray(data?.payment_methods)
-        ? (data.payment_methods as PaymentMethodOption[])
-        : []
+      const root = response as {
+        data?: unknown
+        payment_methods?: unknown
+      }
+      const data = root.data as
+        | { data?: unknown; payment_methods?: unknown }
+        | undefined
+      const nested = data?.data as { payment_methods?: unknown } | undefined
+      const methods =
+        root.payment_methods ?? data?.payment_methods ?? nested?.payment_methods
+      return Array.isArray(methods) ? (methods as PaymentMethodOption[]) : []
     },
   })
 }
 
 function usePlaceOrder() {
-  return useMutate<{ success: boolean; data: PlaceOrderResult }, PlaceOrderInput>({
+  return useMutate<
+    { success: boolean; data: PlaceOrderResult },
+    PlaceOrderInput
+  >({
     authRequired: true,
     unauthorizedReturnTo: "/cart?step=address",
     endpoint: clientEndpoints.checkoutPlaceOrder,

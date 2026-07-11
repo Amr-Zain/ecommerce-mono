@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="64" viewBox="0 0 160 64" role="img" aria-label="Moyasar">
+  <rect width="160" height="64" rx="14" fill="#0EA5E9"/>
+  <path d="M31 43V21h9l8 10 8-10h9v22h-9V31l-8 10-8-10v12z" fill="#fff"/>
+  <text x="111" y="38" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#fff">Moyasar</text>
+</svg>

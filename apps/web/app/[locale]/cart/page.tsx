@@ -57,6 +57,14 @@ function isInsufficientLoyaltyPointsError(error: unknown) {
   return message.toLowerCase().includes("insufficient loyalty points")
 }
 
+function numberFrom(...values: unknown[]) {
+  for (const value of values) {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return 0
+}
+
 export default function CartPage() {
   const t = useTranslations("Experience")
   const searchParams = useSearchParams()
@@ -126,6 +134,15 @@ export default function CartPage() {
   const loyaltyDiscount = Number(
     preview?.loyalty?.discount_amount ?? preview?.loyalty?.discountAmount ?? 0
   )
+  const totalDiscount = numberFrom(
+    totals?.discount_amount,
+    totals?.discountAmount
+  )
+  const couponDiscount = Math.max(0, totalDiscount - loyaltyDiscount)
+  const previewCoupon = preview?.coupon
+  const couponCodeForSummary = previewCoupon?.code ?? appliedCoupon
+  const couponTypeForSummary =
+    previewCoupon?.discount_type ?? previewCoupon?.discountType
   const redeemedPoints = Number(preview?.loyalty?.points ?? 0)
   const availableLoyaltyPoints = Number(
     loyalty.data?.account.available_points ??
@@ -133,12 +150,16 @@ export default function CartPage() {
       0
   )
   const pricing = {
-    subtotal: totals?.subtotal ?? subtotal,
+    subtotal: numberFrom(totals?.subtotal, subtotal),
     savings,
-    shipping: totals?.shipping_fee ?? 0,
-    discount: totals?.discount_amount ?? 0,
-    vat: totals?.vat_amount ?? 0,
-    total: totals?.total_price ?? subtotal,
+    shipping: numberFrom(totals?.shipping_fee, totals?.shippingFee),
+    discount: totalDiscount,
+    couponCode: couponCodeForSummary || undefined,
+    couponType: couponTypeForSummary,
+    couponDiscount,
+    loyaltyDiscount,
+    vat: numberFrom(totals?.vat_amount, totals?.vatAmount),
+    total: numberFrom(totals?.total_price, totals?.totalPrice, subtotal),
   }
   const walletAvailable = Number(
     wallet.data?.available_balance ?? wallet.data?.availableBalance ?? 0
@@ -227,7 +248,8 @@ export default function CartPage() {
   const submitOrder = (
     paymentMethod: string,
     notes?: string,
-    requestedWalletAmount = appliedWalletAmount
+    requestedWalletAmount = appliedWalletAmount,
+    providerIdentifier?: string
   ) => {
     if (!canUseCheckout()) return
     placeOrder.mutate(
@@ -248,6 +270,7 @@ export default function CartPage() {
             : undefined,
         couponCode: appliedCoupon || undefined,
         rewardId: selectedRewardId ? Number(selectedRewardId) : undefined,
+        providerIdentifier,
         notes,
       },
       {

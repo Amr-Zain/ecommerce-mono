@@ -17,7 +17,12 @@ import { Button } from "@ecommerce/ui/components/button"
 import { Input } from "@ecommerce/ui/components/input"
 import { Textarea } from "@ecommerce/ui/components/textarea"
 import { PricingSummary, type Pricing } from "@/components/cart/step-cart"
-import type { PaymentMethodOption, PlaceOrderResult } from "@/hooks/api/use-checkout"
+import { InstallmentOffer } from "@/components/payment/installment-offer"
+import { PaymentMethodLogo } from "@/components/payment/payment-method-logo"
+import type {
+  PaymentMethodOption,
+  PlaceOrderResult,
+} from "@/hooks/api/use-checkout"
 import type { LoyaltyReward } from "@/hooks/api/use-loyalty"
 import { cn } from "@/lib/utils"
 
@@ -41,7 +46,8 @@ interface PaymentStepProps {
   onPlaceOrder: (
     paymentMethod: PaymentMethod,
     notes?: string,
-    walletAmount?: number
+    walletAmount?: number,
+    providerIdentifier?: string
   ) => void
   availablePaymentMethods?: PaymentMethodOption[]
 }
@@ -115,8 +121,11 @@ export function PaymentStep({
   onPlaceOrder,
   availablePaymentMethods = [],
 }: PaymentStepProps) {
-  const defaultOnlineMethod = availablePaymentMethods[0]?.id ?? "card"
-  const [method, setMethod] = React.useState<PaymentMethod>(defaultOnlineMethod)
+  const enabledPaymentMethods = availablePaymentMethods.filter(
+    (item) => item.enabled !== false
+  )
+  const defaultOnlineMethod = enabledPaymentMethods[0]?.id ?? ""
+  const [method, setMethod] = React.useState<PaymentMethod>("")
   const [notes, setNotes] = React.useState("")
 
   if (result?.order_number) return <SuccessScreen result={result} />
@@ -132,51 +141,76 @@ export function PaymentStep({
   )
   const walletCoversOrder = walletApplied >= pricing.total && pricing.total > 0
   const availableMethodIds =
-    availablePaymentMethods.length > 0
-      ? availablePaymentMethods.map((item) => item.id)
-      : ["card", "bank_transfer", "cod"]
-  const resolvedMethod = availableMethodIds.includes(method)
-    ? method
+    enabledPaymentMethods.length > 0
+      ? enabledPaymentMethods.map((item) => item.id)
+      : []
+  const requestedMethod = method || defaultOnlineMethod
+  const resolvedMethod = availableMethodIds.includes(requestedMethod)
+    ? requestedMethod
     : defaultOnlineMethod
-  const selectedMethod = walletCoversOrder
+  const selectedMethodId = walletCoversOrder
     ? "wallet"
     : resolvedMethod === "wallet"
       ? defaultOnlineMethod
       : resolvedMethod
+  const selectedOption = availablePaymentMethods.find(
+    (item) => item.id === selectedMethodId && item.enabled !== false
+  )
+  const selectedPaymentMethod =
+    selectedOption?.payment_method || selectedOption?.id || selectedMethodId
 
   const methods: Array<{
     id: PaymentMethod
+    paymentMethod: PaymentMethod
+    providerIdentifier?: string | null
+    option?: PaymentMethodOption
     label: string
     sub: string
+    enabled: boolean
+    disabledReason?: string | null
+    installmentPlans?: number[]
     icon: typeof CreditCardIcon
   }> = walletCoversOrder
     ? [
         {
           id: "wallet",
+          paymentMethod: "wallet",
           label: "Wallet",
           sub: "Pay the full order from wallet balance",
+          enabled: true,
           icon: Wallet01Icon,
         },
       ]
-    : (availablePaymentMethods.length > 0
-        ? availablePaymentMethods
-        : [
-            { id: "card", label: "Card / Online Payment" },
-            { id: "bank_transfer", label: "Bank Transfer" },
-            { id: "cod", label: "Cash on Delivery" },
-          ]
-      ).map((item) => ({
+    : availablePaymentMethods.map((item) => ({
         id: item.id,
+        paymentMethod: item.payment_method || item.id,
+        providerIdentifier: item.provider_identifier,
+        option: item as PaymentMethodOption,
         label: item.label || paymentMethodLabel(item.id),
         sub: paymentMethodSub(item),
-        icon: item.id === "cod" || item.id === "bank_transfer" ? BankIcon : item.id === "wallet" ? Wallet01Icon : CreditCardIcon,
+        enabled: item.enabled !== false,
+        disabledReason: item.disabled_reason,
+        installmentPlans: item.installment_plans,
+        icon:
+          item.id === "cod" || item.id === "bank_transfer"
+            ? BankIcon
+            : item.id === "wallet"
+              ? Wallet01Icon
+              : CreditCardIcon,
       }))
   const actionLabel = isLoading
     ? "Processing..."
     : walletCoversOrder
       ? "Place Order"
-      : ["card", "stripe_checkout", "tap_checkout", "moyasar", "apple_pay", "tabby"].includes(selectedMethod)
-        ? selectedMethod === "tabby"
+      : [
+            "card",
+            "stripe_checkout",
+            "tap_checkout",
+            "moyasar",
+            "apple_pay",
+            "tabby",
+          ].includes(selectedPaymentMethod)
+        ? selectedPaymentMethod === "tabby"
           ? "Continue to Tabby"
           : "Continue to Payment"
         : "Place Order"
@@ -326,44 +360,77 @@ export function PaymentStep({
                   {remainingDue.toFixed(2)}
                   {walletCoversOrder
                     ? " from wallet."
-                    : ` by ${selectedMethod.replaceAll("_", " ")}.`}
+                    : ` by ${selectedPaymentMethod.replaceAll("_", " ")}.`}
                 </div>
               </div>
             </div>
           </div>
         </div>
-        {methods.map(({ id, label, sub, icon }) => (
-          <button
-            key={id}
-            onClick={() => !walletCoversOrder && setMethod(id)}
-            className={cn(
-              "flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left",
-              selectedMethod === id
-                ? "border-primary bg-primary/5"
-                : "border-border bg-card"
-            )}
-          >
-            <HugeiconsIcon icon={icon} className="size-5" />
-            <div className="flex-1">
-              <p className="text-sm font-bold">{label}</p>
-              <p className="text-xs text-muted-foreground">{sub}</p>
-            </div>
-            <div
+        {methods.map(
+          ({ id, label, sub, icon, enabled, disabledReason, option }) => (
+            <button
+              key={id}
+              disabled={!enabled}
+              onClick={() => !walletCoversOrder && enabled && setMethod(id)}
               className={cn(
-                "size-4 rounded-full border-2",
-                selectedMethod === id && "border-primary bg-primary"
+                "flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left",
+                selectedMethodId === id
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-card",
+                !enabled && "cursor-not-allowed opacity-55"
               )}
-            />
-          </button>
-        ))}
-
-        {["card", "stripe_checkout", "tap_checkout", "moyasar", "apple_pay"].includes(selectedMethod) && remainingDue > 0 && (
-          <p className="rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
-            Wallet funds are reserved while online payment is pending. Your order
-            is created only after the provider confirms payment.
+            >
+              {option ? (
+                <PaymentMethodLogo method={option} />
+              ) : (
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
+                  <HugeiconsIcon icon={icon} className="size-5" />
+                </span>
+              )}
+              <div className="flex-1">
+                <p className="text-sm font-bold">{label}</p>
+                <p className="text-xs text-muted-foreground">{sub}</p>
+                {!enabled && disabledReason && (
+                  <p className="mt-1 text-xs font-medium text-destructive">
+                    {disabledReason}
+                  </p>
+                )}
+                <InstallmentOffer
+                  amount={remainingDue}
+                  method={option}
+                  compact
+                  className="mt-3"
+                />
+              </div>
+              <div
+                className={cn(
+                  "size-4 rounded-full border-2",
+                  selectedMethodId === id && "border-primary bg-primary"
+                )}
+              />
+            </button>
+          )
+        )}
+        {!walletCoversOrder && methods.length === 0 && (
+          <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+            No payment method is currently available for checkout.
           </p>
         )}
-        {selectedMethod === "tabby" && remainingDue > 0 && (
+
+        {[
+          "card",
+          "stripe_checkout",
+          "tap_checkout",
+          "moyasar",
+          "apple_pay",
+        ].includes(selectedPaymentMethod) &&
+          remainingDue > 0 && (
+            <p className="rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
+              Wallet funds are reserved while online payment is pending. Your
+              order is created only after the provider confirms payment.
+            </p>
+          )}
+        {selectedPaymentMethod === "tabby" && remainingDue > 0 && (
           <p className="rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
             Tabby will review the BNPL session. We create the order only after
             Tabby returns an approved payment status.
@@ -386,10 +453,15 @@ export function PaymentStep({
       <PricingSummary
         pricing={pricing}
         onNext={() =>
-          onPlaceOrder(selectedMethod, notes.trim() || undefined, walletApplied)
+          onPlaceOrder(
+            selectedPaymentMethod,
+            notes.trim() || undefined,
+            walletApplied,
+            selectedOption?.provider_identifier || undefined
+          )
         }
         actionLabel={actionLabel}
-        disabled={isLoading}
+        disabled={isLoading || (!walletCoversOrder && methods.length === 0)}
       />
     </div>
   )
@@ -404,9 +476,13 @@ function paymentMethodLabel(method: string) {
 }
 
 function paymentMethodSub(method: PaymentMethodOption) {
-  if (method.id === "apple_pay") return "Pay with Apple Pay when supported by your device"
-  if (method.id === "tabby") return "Buy now, pay later with Tabby"
-  if (method.id === "bank_transfer") return "Awaiting admin confirmation"
-  if (method.id === "cod") return "Pay when your order arrives"
-  return method.provider_name ? `Processed by ${method.provider_name}` : "Secure online payment"
+  const methodId = method.payment_method || method.id
+  if (methodId === "apple_pay")
+    return "Pay with Apple Pay when supported by your device"
+  if (methodId === "tabby") return "Buy now, pay later with Tabby"
+  if (methodId === "bank_transfer") return "Awaiting admin confirmation"
+  if (methodId === "cod") return "Pay when your order arrives"
+  return method.provider_name
+    ? `Processed by ${method.provider_name}`
+    : "Secure online payment"
 }

@@ -9,10 +9,13 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link, useRouter } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
+import { normalizeUploadUrl } from "@/lib/media-url"
 import * as React from "react"
+import { useSession } from "next-auth/react"
 
 import { logoutAction } from "@/actions/auth"
 import { useCommerceSessionSync } from "@/hooks/api/use-commerce-session-sync"
+import { useCurrentUser } from "@/hooks/api/use-current-user"
 import {
   Avatar,
   AvatarFallback,
@@ -47,8 +50,22 @@ function HeaderAccountDropdown({
   name: string
 }) {
   const router = useRouter()
+  const { data: session } = useSession()
+  const { data: currentUser } = useCurrentUser()
   const syncCommerceSession = useCommerceSessionSync()
   const [loggingOut, startLogout] = React.useTransition()
+  const profile = currentUser?.data
+  const avatar =
+    profile?.avatar?.path ??
+    profile?.avatar?.url ??
+    (typeof profile?.image === "string"
+      ? profile.image
+      : profile?.image?.path ?? profile?.image?.url) ??
+    session?.user.image ??
+    image
+  const resolvedImage = normalizeUploadUrl(avatar)
+  const resolvedName =
+    profile?.name || session?.user.name || session?.user.email || name
 
   const logout = () => {
     startLogout(async () => {
@@ -70,15 +87,15 @@ function HeaderAccountDropdown({
         }
       >
         <Avatar className="size-9 rounded-sm">
-          {image && <AvatarImage src={image} alt={name} />}
+          {resolvedImage && <AvatarImage src={resolvedImage} alt={resolvedName} />}
           <AvatarFallback className="rounded-full font-semibold">
-            {initials(name)}
+            {initials(resolvedName)}
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="truncate">{name}</DropdownMenuLabel>
+          <DropdownMenuLabel className="truncate">{resolvedName}</DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>

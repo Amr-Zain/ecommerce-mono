@@ -9,6 +9,13 @@ const queryKeys = {
   cities: (countryId?: string) => ["cities", countryId ?? ""] as const,
   countries: () => ["countries"] as const,
   currentUser: () => ["current-user"] as const,
+  accountSessions: () => ["current-user", "sessions"] as const,
+  paymentSessions: (params?: Record<string, unknown>) =>
+    params === undefined
+      ? (["current-user", "payment-sessions"] as const)
+      : (["current-user", "payment-sessions", params] as const),
+  paymentSession: (id?: string) =>
+    ["current-user", "payment-sessions", id ?? ""] as const,
   loyalty: () => ["loyalty"] as const,
   loyaltyRewards: () => ["loyalty", "rewards"] as const,
   loyaltyTransactions: (params?: Record<string, unknown>) =>
@@ -29,7 +36,8 @@ const queryKeys = {
     page === undefined
       ? (["products", id, "reviews"] as const)
       : (["products", id, "reviews", page] as const),
-  productReviewEligibility: (id: string) => ["products", id, "review-eligibility"] as const,
+  productReviewEligibility: (id: string) =>
+    ["products", id, "review-eligibility"] as const,
   products: (params?: Record<string, unknown>) =>
     ["products", params ?? {}] as const,
   wishlist: () => ["wishlist"] as const,

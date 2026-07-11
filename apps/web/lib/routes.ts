@@ -20,16 +20,22 @@ export const ROUTES = {
     root: "/profile",
     addresses: "/profile/addresses",
     wallet: "/profile/wallet",
+    payments: "/profile/payments",
+    paymentSession: (id: string | number | bigint) => `/profile/payments/${id}`,
+    security: "/profile/security",
     loyalty: "/profile/loyalty",
     wishlist: "/profile/wishlist",
     returns: "/profile/returns",
-    returnRequest: (type: "return" | "exchange", id: string | number | bigint) =>
-      `/profile/returns/${type}/${id}`,
+    returnRequest: (
+      type: "return" | "exchange",
+      id: string | number | bigint
+    ) => `/profile/returns/${type}/${id}`,
     notifications: "/profile/notifications",
     orders: {
       root: "/profile/orders",
       detail: (id: string | number | bigint) => `/profile/orders/${id}`,
-      exchange: (id: string | number | bigint) => `/profile/orders/${id}/exchange`,
+      exchange: (id: string | number | bigint) =>
+        `/profile/orders/${id}/exchange`,
     },
     support: {
       root: "/profile/support",

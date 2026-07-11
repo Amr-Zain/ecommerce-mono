@@ -126,7 +126,7 @@ function useWalletWithdrawals(page = 1, limit = 5, status?: string | null) {
 function useCreateWalletDeposit() {
   return useMutate<
     { success: boolean; data: DepositResult },
-    { amount: number; paymentMethod: string }
+    { amount: number; paymentMethod: string; providerIdentifier?: string }
   >({
     authRequired: true,
     endpoint: clientEndpoints.walletDeposits,

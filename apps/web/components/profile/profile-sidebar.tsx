@@ -14,12 +14,14 @@ import {
   PackageIcon,
   Location01Icon,
   Wallet01Icon,
+  CreditCardIcon,
   ArrowLeftRightIcon,
   Ticket01Icon,
   Logout01Icon,
   Camera01Icon,
   FavouriteIcon,
   GiftIcon,
+  SecurityCheckIcon,
 } from "@hugeicons/core-free-icons"
 import { toast } from "@ecommerce/ui/components/sonner"
 import {
@@ -32,15 +34,24 @@ import {
 
 const SIDEBAR_LINKS = [
   { name: "My account", href: ROUTES.profile.root, icon: UserCircleIcon },
-    { name: "My Wishlist", href: ROUTES.profile.wishlist, icon: FavouriteIcon },
+  { name: "My Wishlist", href: ROUTES.profile.wishlist, icon: FavouriteIcon },
   { name: "My Orders", href: ROUTES.profile.orders.root, icon: PackageIcon },
   // {
   //   name: "Order Details",
   //   href: "/profile/orders/details",
   //   icon: DocumentValidationIcon,
   // },
-  { name: "My Addresses", href: ROUTES.profile.addresses, icon: Location01Icon },
+  {
+    name: "My Addresses",
+    href: ROUTES.profile.addresses,
+    icon: Location01Icon,
+  },
   { name: "My Wallet", href: ROUTES.profile.wallet, icon: Wallet01Icon },
+  {
+    name: "Payment Activity",
+    href: ROUTES.profile.payments,
+    icon: CreditCardIcon,
+  },
   { name: "My Loyalty", href: ROUTES.profile.loyalty, icon: GiftIcon },
   // { name: "Payment", href: "/profile/payment", icon: CreditCardIcon },
   // { name: "Gift Cards", href: "/profile/gift-cards", icon: GiftIcon },
@@ -50,16 +61,24 @@ const SIDEBAR_LINKS = [
     icon: ArrowLeftRightIcon,
   },
   // { name: "Email Newsletter", href: "/profile/newsletter", icon: Mail01Icon },
-  { name: "Support Tickets", href: ROUTES.profile.support.root, icon: Ticket01Icon },
+  {
+    name: "Support Tickets",
+    href: ROUTES.profile.support.root,
+    icon: Ticket01Icon,
+  },
+  { name: "Security", href: ROUTES.profile.security, icon: SecurityCheckIcon },
 ]
 
 function getMediaUrl(media?: ProfileMedia | string | null) {
   if (!media) return null
-  const url = typeof media === "string" ? media : media.url ?? media.path
+  const url = typeof media === "string" ? media : (media.url ?? media.path)
   return normalizeUploadUrl(url)
 }
 
-function getProfileImage(profile?: CurrentUserProfile, sessionImage?: string | null) {
+function getProfileImage(
+  profile?: CurrentUserProfile,
+  sessionImage?: string | null
+) {
   return (
     getMediaUrl(profile?.avatar) ??
     getMediaUrl(profile?.image) ??
@@ -103,7 +122,10 @@ export function ProfileSidebar() {
         { image: attachHash },
         {
           onSuccess: async (response) => {
-            const updatedImage = getProfileImage(response.data, session?.user.image)
+            const updatedImage = getProfileImage(
+              response.data,
+              session?.user.image
+            )
             await updateSession({
               user: {
                 image: updatedImage,
@@ -114,7 +136,9 @@ export function ProfileSidebar() {
         }
       )
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Profile photo upload failed")
+      toast.error(
+        error instanceof Error ? error.message : "Profile photo upload failed"
+      )
     } finally {
       setUploading(false)
     }
@@ -157,15 +181,19 @@ export function ProfileSidebar() {
           </button>
         </div>
         <div>
-          <h2 className="text-lg font-bold">
-            {displayName}
-          </h2>
-          <p className="text-sm text-muted-foreground">{profile?.email || session?.user.email}</p>
+          <h2 className="text-lg font-bold">{displayName}</h2>
+          <p className="text-sm text-muted-foreground">
+            {profile?.email || session?.user.email}
+          </p>
           {tier?.name && (
             <Badge
               variant="secondary"
               className="mt-2 w-fit"
-              style={tier.color ? { borderColor: tier.color, color: tier.color } : undefined}
+              style={
+                tier.color
+                  ? { borderColor: tier.color, color: tier.color }
+                  : undefined
+              }
             >
               {tier.name} {tier.multiplier ? `${tier.multiplier}x` : ""}
             </Badge>

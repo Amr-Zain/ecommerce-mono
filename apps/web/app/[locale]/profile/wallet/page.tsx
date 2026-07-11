@@ -5,7 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import * as React from "react"
 import { useSearchParams } from "next/navigation"
 import { Link } from "@/i18n/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { useTranslations } from "next-intl"
 
 import {
@@ -48,6 +48,8 @@ import {
   useWalletWithdrawals,
   type WalletWithdrawal,
 } from "@/hooks/api/use-wallet"
+import { useCheckoutPaymentMethods } from "@/hooks/api/use-checkout"
+import { PaymentMethodLogo } from "@/components/payment/payment-method-logo"
 import { AppFormComplete, type FormField } from "@ecommerce/forms"
 
 const money = (amount: number, currency = "SAR") =>
@@ -76,6 +78,12 @@ const transactionStatuses = [
   "reversed",
   "requires_review",
 ]
+const walletDepositExcludedMethods = new Set([
+  "bank_transfer",
+  "cod",
+  "tabby",
+  "wallet",
+])
 type DepositFormValues = { amount: string }
 type WithdrawalFormValues = {
   amount: string
@@ -145,9 +153,12 @@ export default function WalletPage() {
   )
   const withdrawals = useWalletWithdrawals(withdrawalPage, 5, withdrawalStatus)
   const deposit = useCreateWalletDeposit()
+  const paymentMethods = useCheckoutPaymentMethods()
   const verifyDeposit = useVerifyWalletDeposit(depositId)
   const cancelDeposit = useCancelWalletDeposit(depositId)
   const withdrawal = useCreateWalletWithdrawal()
+  const [selectedDepositMethod, setSelectedDepositMethod] =
+    React.useState<string>("")
   const depositForm = useForm<DepositFormValues>({
     defaultValues: { amount: "" },
     mode: "onChange",
@@ -162,11 +173,20 @@ export default function WalletPage() {
     },
     mode: "onChange",
   })
-  const depositAmount = depositForm.watch("amount")
-  const withdrawAmount = withdrawalForm.watch("amount")
-  const bank = withdrawalForm.watch("bank")
-  const accountName = withdrawalForm.watch("accountName")
-  const iban = withdrawalForm.watch("iban")
+  const depositAmount = useWatch({
+    control: depositForm.control,
+    name: "amount",
+  })
+  const withdrawAmount = useWatch({
+    control: withdrawalForm.control,
+    name: "amount",
+  })
+  const bank = useWatch({ control: withdrawalForm.control, name: "bank" })
+  const accountName = useWatch({
+    control: withdrawalForm.control,
+    name: "accountName",
+  })
+  const iban = useWatch({ control: withdrawalForm.control, name: "iban" })
   const handledDepositReturn = React.useRef(false)
 
   React.useEffect(() => {
@@ -182,12 +202,36 @@ export default function WalletPage() {
   }, [cancelDeposit, depositId, depositStatus, verifyDeposit])
 
   const data = wallet.data
+  const depositMethods = React.useMemo(
+    () =>
+      (paymentMethods.data ?? []).filter(
+        (method) =>
+          method.enabled !== false &&
+          !walletDepositExcludedMethods.has(method.payment_method || method.id)
+      ),
+    [paymentMethods.data]
+  )
+  const activeDepositMethodId = depositMethods.some(
+    (method) => method.id === selectedDepositMethod
+  )
+    ? selectedDepositMethod
+    : (depositMethods[0]?.id ?? "")
+  const activeDepositMethod = depositMethods.find(
+    (method) => method.id === activeDepositMethodId
+  )
   const availableBalance =
     data?.available_balance ?? data?.availableBalance ?? 0
   const pendingBalance = data?.pending_balance ?? data?.pendingBalance ?? 0
   const submitDeposit = (values: DepositFormValues) => {
+    if (!activeDepositMethod) return
     deposit.mutate(
-      { amount: Number(values.amount), paymentMethod: "stripe_checkout" },
+      {
+        amount: Number(values.amount),
+        paymentMethod:
+          activeDepositMethod.payment_method || activeDepositMethod.id,
+        providerIdentifier:
+          activeDepositMethod.provider_identifier || undefined,
+      },
       {
         onSuccess: (response) => {
           if (response.data.redirect_url)
@@ -271,6 +315,8 @@ export default function WalletPage() {
       },
     },
   ]
+  const depositSubmitDisabled =
+    deposit.isPending || Number(depositAmount) < 1 || !activeDepositMethod
   const withdrawalFields: FormField<WithdrawalFormValues>[] = [
     {
       type: "number",
@@ -359,12 +405,54 @@ export default function WalletPage() {
               <DialogTitle>{t("addFundsTitle")}</DialogTitle>
               <DialogDescription>{t("addFundsDescription")}</DialogDescription>
             </DialogHeader>
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">Payment method</p>
+              {paymentMethods.isPending ? (
+                <p className="rounded-xl border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                  Loading payment methods...
+                </p>
+              ) : depositMethods.length > 0 ? (
+                <div className="grid gap-2">
+                  {depositMethods.map((method) => {
+                    const active = activeDepositMethodId === method.id
+                    return (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => setSelectedDepositMethod(method.id)}
+                        className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
+                          active
+                            ? "border-primary bg-primary/5 font-semibold"
+                            : "bg-card hover:bg-muted/40"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <PaymentMethodLogo method={method} />
+                          <span className="min-w-0">
+                            <span className="block">{method.label}</span>
+                            {method.provider_name && (
+                              <span className="block text-xs text-muted-foreground">
+                                {method.provider_name}
+                              </span>
+                            )}
+                          </span>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  No online payment provider is enabled for wallet deposits.
+                </p>
+              )}
+            </div>
             <AppFormComplete
               form={depositForm}
               fields={depositFields}
               onSubmit={submitDeposit}
               isLoading={deposit.isPending}
-              submitDisabled={Number(depositAmount) < 1}
+              submitDisabled={depositSubmitDisabled}
               submitButtonText={t("continueToPayment")}
               loadingButtonText={t("starting")}
             />

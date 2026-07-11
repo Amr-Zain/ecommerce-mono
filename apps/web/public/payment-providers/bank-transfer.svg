@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="64" viewBox="0 0 160 64" role="img" aria-label="Bank transfer">
+  <rect width="160" height="64" rx="14" fill="#ECFDF5"/>
+  <path d="M80 15 35 34h90zM43 38h10v13H43zm21 0h10v13H64zm21 0h10v13H85zm21 0h10v13h-10zM36 54h88v6H36z" fill="#047857"/>
+</svg>

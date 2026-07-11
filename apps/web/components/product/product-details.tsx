@@ -5,12 +5,17 @@ import { Share08Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import Image from "next/image"
 import * as React from "react"
+import { useSession } from "next-auth/react"
 
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
+import { InstallmentOffer } from "@/components/payment/installment-offer"
 import { AddToCartButton } from "@/components/product/add-to-cart-button"
 import { WishlistButton } from "@/components/product/wishlist-button"
+import { Link } from "@/i18n/navigation"
+import { useCheckoutPaymentMethods } from "@/hooks/api/use-checkout"
 import type { ProductDetail } from "@/hooks/api/use-products"
+import { ROUTES } from "@/lib/routes"
 import { cn } from "@/lib/utils"
 import { Stars } from "./product-reviews"
 
@@ -18,9 +23,15 @@ type Variant = ProductDetail["variants"][number]
 
 function defaultVariant(variants: Variant[]) {
   return (
-    [...variants].filter((variant) => variant.is_default && variant.available).sort((a, b) => a.price - b.price)[0] ??
-    [...variants].filter((variant) => variant.available).sort((a, b) => a.price - b.price)[0] ??
-    [...variants].filter((variant) => variant.is_default).sort((a, b) => a.price - b.price)[0] ??
+    [...variants]
+      .filter((variant) => variant.is_default && variant.available)
+      .sort((a, b) => a.price - b.price)[0] ??
+    [...variants]
+      .filter((variant) => variant.available)
+      .sort((a, b) => a.price - b.price)[0] ??
+    [...variants]
+      .filter((variant) => variant.is_default)
+      .sort((a, b) => a.price - b.price)[0] ??
     [...variants].sort((a, b) => a.price - b.price)[0]
   )
 }
@@ -31,6 +42,8 @@ function variantImages(variant: Variant | undefined, productImages: string[]) {
 
 function ProductDetails({ product }: { product: ProductDetail }) {
   const t = useTranslations("Product")
+  const session = useSession()
+  const paymentMethods = useCheckoutPaymentMethods()
   const initial = defaultVariant(product.variants)
   const [selected, setSelected] = React.useState(initial)
   const [selectedImage, setSelectedImage] = React.useState(
@@ -57,12 +70,16 @@ function ProductDetails({ product }: { product: ProductDetail }) {
 
   const chooseValue = (attributeId: string, valueId: string) => {
     const currentValues = new Map(
-      (selected?.attributes ?? []).map((item) => [item.attribute_id, item.value_id])
+      (selected?.attributes ?? []).map((item) => [
+        item.attribute_id,
+        item.value_id,
+      ])
     )
     const candidates = product.variants
       .filter((variant) =>
         variant.attributes.some(
-          (item) => item.attribute_id === attributeId && item.value_id === valueId
+          (item) =>
+            item.attribute_id === attributeId && item.value_id === valueId
         )
       )
       .sort((a, b) => {
@@ -97,12 +114,24 @@ function ProductDetails({ product }: { product: ProductDetail }) {
   }
 
   if (!selected) return null
+  const installmentMethod = paymentMethods.data?.find(
+    (method) =>
+      method.enabled !== false &&
+      (method.payment_method || method.id) === "tabby" &&
+      method.installment_plans?.length
+  )
 
   return (
     <section className="grid gap-8 lg:grid-cols-[1.05fr_1fr]">
       <div className="space-y-4">
         <div className="relative grid min-h-[520px] place-items-center overflow-hidden rounded-xl bg-muted p-6">
-          <Image src={selectedImage} alt={product.name} fill priority className="object-contain p-6" />
+          <Image
+            src={selectedImage}
+            alt={product.name}
+            fill
+            priority
+            className="object-contain p-6"
+          />
         </div>
         <div className="flex gap-3 overflow-x-auto py-1">
           {images.map((image) => (
@@ -111,7 +140,10 @@ function ProductDetails({ product }: { product: ProductDetail }) {
               type="button"
               variant="outline"
               onClick={() => setSelectedImage(image)}
-              className={cn("relative size-20 shrink-0 overflow-hidden p-0", image === selectedImage && "ring-2 ring-ring")}
+              className={cn(
+                "relative size-20 shrink-0 overflow-hidden p-0",
+                image === selectedImage && "ring-2 ring-ring"
+              )}
             >
               <Image src={image} alt="" fill className="object-cover" />
             </Button>
@@ -123,9 +155,13 @@ function ProductDetails({ product }: { product: ProductDetail }) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="mb-3 flex flex-wrap gap-2">
-              {(product.tags ?? []).map((tag) => <Badge key={tag}>{tag}</Badge>)}
+              {(product.tags ?? []).map((tag) => (
+                <Badge key={tag}>{tag}</Badge>
+              ))}
             </div>
-            <h1 className="text-3xl font-semibold leading-tight">{product.name}</h1>
+            <h1 className="text-3xl leading-tight font-semibold">
+              {product.name}
+            </h1>
             <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
               <Stars rating={product.reviews.average} />
               <span>{product.reviews.average}</span>
@@ -133,12 +169,21 @@ function ProductDetails({ product }: { product: ProductDetail }) {
             </div>
           </div>
           <div className="flex gap-1">
-            <WishlistButton productId={product.id} productName={product.name} className="rounded-full" />
+            <WishlistButton
+              productId={product.id}
+              productName={product.name}
+              className="rounded-full"
+            />
             <Button
               variant="ghost"
               size="icon-sm"
               className="rounded-full"
-              onClick={() => void navigator.share?.({ title: product.name, url: window.location.href })}
+              onClick={() =>
+                void navigator.share?.({
+                  title: product.name,
+                  url: window.location.href,
+                })
+              }
             >
               <HugeiconsIcon icon={Share08Icon} />
             </Button>
@@ -147,25 +192,49 @@ function ProductDetails({ product }: { product: ProductDetail }) {
 
         <div>
           <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-semibold">{t("sar")} {selected.price.toFixed(2)}</span>
-            {selected.compare_at_price ? <span className="text-sm text-muted-foreground line-through">{t("sar")} {selected.compare_at_price.toFixed(2)}</span> : null}
+            <span className="text-3xl font-semibold">
+              {t("sar")} {selected.price.toFixed(2)}
+            </span>
+            {selected.compare_at_price ? (
+              <span className="text-sm text-muted-foreground line-through">
+                {t("sar")} {selected.compare_at_price.toFixed(2)}
+              </span>
+            ) : null}
           </div>
-          {product.description ? <p className="mt-3 text-sm leading-6 text-muted-foreground">{product.description}</p> : null}
+          {product.description ? (
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              {product.description}
+            </p>
+          ) : null}
         </div>
+
+        <InstallmentOffer amount={selected.price} method={installmentMethod} />
 
         <div className="space-y-5 rounded-xl border p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold">{t("selectVariant")}</p>
-            <Badge variant="outline">{selected.sku ?? t("variantId", { id: selected.id })}</Badge>
+            <Badge variant="outline">
+              {selected.sku ?? t("variantId", { id: selected.id })}
+            </Badge>
           </div>
           {[...groups].map(([attributeId, group]) => (
             <div key={attributeId} className="space-y-2">
               <p className="text-sm font-semibold">{group.name}</p>
               <div className="flex flex-wrap gap-2">
                 {[...group.values].map(([valueId, value]) => {
-                  const active = selected.attributes.some((item) => item.attribute_id === attributeId && item.value_id === valueId)
+                  const active = selected.attributes.some(
+                    (item) =>
+                      item.attribute_id === attributeId &&
+                      item.value_id === valueId
+                  )
                   return (
-                    <Button key={valueId} type="button" variant={active ? "default" : "outline"} disabled={!canChoose(attributeId, valueId)} onClick={() => chooseValue(attributeId, valueId)}>
+                    <Button
+                      key={valueId}
+                      type="button"
+                      variant={active ? "default" : "outline"}
+                      disabled={!canChoose(attributeId, valueId)}
+                      onClick={() => chooseValue(attributeId, valueId)}
+                    >
                       {value}
                     </Button>
                   )
@@ -176,8 +245,18 @@ function ProductDetails({ product }: { product: ProductDetail }) {
         </div>
 
         <div className="grid gap-2 rounded-xl border p-4 text-sm sm:grid-cols-2">
-          <div><span className="text-muted-foreground">SKU</span><p className="font-semibold">{selected.sku ?? t("notAvailable")}</p></div>
-          <div><span className="text-muted-foreground">Availability</span><p className="font-semibold">{selected.available ? t("inStock", { count: selected.stock_quantity }) : t("unavailable")}</p></div>
+          <div>
+            <span className="text-muted-foreground">SKU</span>
+            <p className="font-semibold">{selected.sku ?? t("notAvailable")}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Availability</span>
+            <p className="font-semibold">
+              {selected.available
+                ? t("inStock", { count: selected.stock_quantity })
+                : t("unavailable")}
+            </p>
+          </div>
         </div>
 
         <AddToCartButton
@@ -189,6 +268,19 @@ function ProductDetails({ product }: { product: ProductDetail }) {
           available={selected.available}
           className="h-10 w-full rounded-full"
         />
+        {session.status === "authenticated" && (
+          <Button
+            variant="outline"
+            className="h-10 w-full rounded-full"
+            render={
+              <Link
+                href={`${ROUTES.profile.payments}?product_id=${product.id}`}
+              />
+            }
+          >
+            View your payment history for this product
+          </Button>
+        )}
       </div>
     </section>
   )

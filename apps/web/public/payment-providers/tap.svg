@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="64" viewBox="0 0 160 64" role="img" aria-label="Tap Payments">
+  <rect width="160" height="64" rx="14" fill="#111827"/>
+  <circle cx="38" cy="32" r="18" fill="#22C55E"/>
+  <text x="92" y="40" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800" fill="#fff">Tap</text>
+</svg>
