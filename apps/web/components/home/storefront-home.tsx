@@ -5,6 +5,7 @@ import { type Category, type Product } from "./data"
 import { PhoneBanner } from "./phone-banner"
 import { ProductSection } from "./product-section"
 import { PromoSection, type SliderItem } from "./promo-section"
+import { getTranslations } from "next-intl/server"
 
 type HomeProduct = {
   id: string
@@ -28,13 +29,29 @@ type HomeCollection = {
 
 type HomeResponse = {
   data: {
-    sliders: Array<{ id: string; title: string; image?: string | null; sort_order: number }>
+    sliders: Array<{
+      id: string
+      title: string
+      image?: string | null
+      sort_order: number
+    }>
     collections: HomeCollection[]
     new_arrivals: HomeProduct[]
     best_selling: HomeProduct[]
     looking_for: HomeCollection[]
-    show_rooms: { count: number; title: string; body: string; image?: string | null }
+    show_rooms: {
+      count: number
+      title: string
+      body: string
+      image?: string | null
+    }
     recently_viewed: HomeProduct[]
+    active_offer: {
+      title: string
+      cta_label: string
+      url: string
+      expires_at: string
+    } | null
   }
 }
 
@@ -85,7 +102,20 @@ async function getHomeData() {
 }
 
 export async function StorefrontHome() {
-  const home = (await getHomeData())?.data
+  const [homeResponse, t] = await Promise.all([
+    getHomeData(),
+    getTranslations("Campaign"),
+  ])
+  const home = homeResponse?.data
+  const campaign = home?.active_offer
+    ? {
+        title: home.active_offer.title,
+        ctaLabel: home.active_offer.cta_label,
+        url: home.active_offer.url,
+        expiresAt: home.active_offer.expires_at,
+        expiryLabel: t("offerEnds"),
+      }
+    : null
   const sliders: SliderItem[] =
     home?.sliders
       .filter((slider) => slider.image)
@@ -104,6 +134,7 @@ export async function StorefrontHome() {
         title="Best Selling"
         products={mapProducts(home?.best_selling ?? [])}
         savings
+        campaign={campaign}
       />
       <ProductSection
         title="New Arrivals"

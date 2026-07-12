@@ -4,6 +4,7 @@ export function stableCacheKey(namespace: string, parts: Record<string, unknown>
 
 export const publicCacheKeys = {
   home: (langId: string) => stableCacheKey('client:home', { langId }),
+  storefront: (langId: string) => stableCacheKey('client:storefront', { langId }),
   productCatalog: (langId: string, query: Record<string, unknown>) =>
     stableCacheKey('client:products:catalog', { langId, query }),
   productDetail: (langId: string, id: string | number | bigint) =>
@@ -34,11 +35,12 @@ export const publicCacheKeys = {
 
 export function stableStringify(value: unknown): string {
   if (value === null || value === undefined) return '';
-  if (typeof value === 'bigint') return value.toString();
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') return value.toString();
+  if (typeof value === 'symbol') return value.description ?? '';
+  if (typeof value === 'function') return value.name;
   if (value instanceof Date) return value.toISOString();
   if (Array.isArray(value)) return `[${value.map((item) => stableStringify(item)).join(',')}]`;
-  if (typeof value !== 'object') return String(value);
-
   return Object.keys(value as Record<string, unknown>)
     .sort()
     .map((key) => `${key}=${stableStringify((value as Record<string, unknown>)[key])}`)

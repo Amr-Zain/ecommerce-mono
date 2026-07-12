@@ -1,7 +1,4 @@
-import {
-  Search01Icon,
-  Store04Icon,
-} from "@hugeicons/core-free-icons"
+import { Search01Icon, Store04Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { getLocale, getTranslations } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
@@ -17,41 +14,55 @@ import { HeaderCommerceControls } from "./header-commerce-controls"
 import { LocaleSwitch } from "./locale-switch"
 import { StorefrontNavigation } from "./storefront-navigation"
 import { cmsPageTitle, getCmsPages, pickCmsPages } from "@/lib/server/cms-pages"
+import { getStorefrontConfiguration } from "@/lib/server/storefront-settings"
 
 export async function StorefrontHeader() {
-  const saleItems = Array.from({ length: 8 })
   const locale = await getLocale()
   const t = await getTranslations("Header")
-  const [collections, cmsPages] = await Promise.all([
-    publicBackendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
-      revalidate: 60,
-      tags: [cacheTags.categories],
-      retries: 0,
-    }).then((response) => response.data).catch(() => []),
+  const [collections, cmsPages, storefront] = await Promise.all([
+    publicBackendGet<{ data: CollectionTreeItem[] }>(
+      "/client/collections/tree",
+      {
+        revalidate: 60,
+        tags: [cacheTags.categories],
+        retries: 0,
+      }
+    )
+      .then((response) => response.data)
+      .catch(() => []),
     getCmsPages(locale),
+    getStorefrontConfiguration(locale),
   ])
   const headerPages = pickCmsPages(cmsPages, ["returns", "payment", "warranty"])
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-      <div className="bg-secondary-foreground text-secondary">
-        <div className="storefront-marquee mx-auto h-8 overflow-hidden text-[11px] font-semibold">
-          <div className="animate-storefront-marquee flex h-full w-max items-center">
-            {[...saleItems, ...saleItems].map((_, index) => (
-              <div
-                key={index}
-                className="flex min-w-max items-center gap-3 px-5 text-primary-foreground/90"
-              >
-                <span>{t("saleTag")}</span>
-                {/* <span className="text-primary-foreground/70">+</span> */}
-              </div>
-            ))}
+      {storefront.announcement.enabled && storefront.announcement.text ? (
+        <div className="bg-secondary-foreground text-secondary">
+          <div className="storefront-marquee mx-auto h-8 overflow-hidden text-[11px] font-semibold">
+            <div className="animate-storefront-marquee flex h-full w-max items-center">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <Link
+                  key={index}
+                  href={storefront.announcement.url || ROUTES.products.root}
+                  className="flex min-w-max items-center gap-3 px-5 text-primary-foreground/90"
+                >
+                  <span>{storefront.announcement.text}</span>
+                  <span
+                    aria-hidden="true"
+                    className="text-primary-foreground/50"
+                  >
+                    •
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
       <div className="border-b">
         <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-4 text-xs text-muted-foreground sm:px-6">
-          <div className="flex items-center gap-5">
+          <div className="hidden items-center gap-5 sm:flex">
             {headerPages.map((page) => (
               <Link
                 key={page.slug}
@@ -61,7 +72,7 @@ export async function StorefrontHeader() {
                 {cmsPageTitle(page)}
               </Link>
             ))}
-              <Link
+            <Link
               href={ROUTES.static.showRooms}
               className="transition-colors hover:text-foreground"
             >
@@ -85,7 +96,9 @@ export async function StorefrontHeader() {
           <div className="grid size-8 place-items-center rounded-full bg-foreground text-background">
             <HugeiconsIcon icon={Store04Icon} strokeWidth={2} />
           </div>
-          <span className="text-base font-semibold">{t("brandName")}</span>
+          <span className="text-base font-semibold">
+            {storefront.brand_name}
+          </span>
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium lg:flex">
           <StorefrontNavigation collections={collections} />
@@ -93,46 +106,51 @@ export async function StorefrontHeader() {
             href={ROUTES.products.root}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
           >
-            {t("todaysDeal")}
+            {t("shopAll")}
           </Link>
           <Link
-            href={`${ROUTES.products.root}?sort=rating-desc`}
+            href={`${ROUTES.products.root}?catalog_sort=rating_desc`}
+            className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
+          >
+            {t("bestSellers")}
+          </Link>
+          <Link
+            href={`${ROUTES.products.root}?catalog_sort=newest`}
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
           >
             {t("newArrivals")}
-          </Link>
-          <Link
-            href={`${ROUTES.products.root}?sort=rating-desc`}
-            className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
-          >
-            {t("newArrivals")}
-            {/* <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" /> */}
-          </Link>
-          <Link
-            href={ROUTES.collections.root}
-            className="inline-flex items-center gap-1 transition-colors hover:text-foreground/70"
-          >
-            {t("pages")}
             {/* <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" /> */}
           </Link>
         </nav>
         <div className="ms-auto hidden w-full max-w-xs items-center md:flex">
-          <div className="relative w-full">
+          <form
+            action={`/${locale}${ROUTES.products.root}`}
+            className="relative w-full"
+          >
             <HugeiconsIcon
               icon={Search01Icon}
               className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             />
             <Input
+              name="search"
               aria-label={t("searchLabel")}
               placeholder={t("searchPlaceholder")}
               className="h-9 ps-9 text-xs"
             />
-          </div>
+          </form>
         </div>
         <div className="flex items-center gap-2.5">
           <HeaderCommerceControls />
           <HeaderAccountControls locale={locale} />
-          <div className="lg:hidden"><StorefrontNavigation collections={collections} /></div>
+          <div className="lg:hidden">
+            <StorefrontNavigation
+              collections={collections}
+              pages={headerPages.map((page) => ({
+                slug: page.slug,
+                title: cmsPageTitle(page),
+              }))}
+            />
+          </div>
         </div>
       </div>
     </header>

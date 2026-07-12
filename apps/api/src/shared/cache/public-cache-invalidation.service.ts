@@ -15,6 +15,7 @@ export const PUBLIC_CACHE_EVENTS = {
   staticPagesChanged: 'static-pages.changed',
   showRoomsChanged: 'showrooms.changed',
   reviewsChanged: 'reviews.changed',
+  settingsChanged: 'settings.changed',
 } as const;
 
 export type PublicCacheEvent = (typeof PUBLIC_CACHE_EVENTS)[keyof typeof PUBLIC_CACHE_EVENTS];
@@ -69,6 +70,8 @@ function resolvePublicCacheTags(event: PublicCacheEvent, payload: PublicCacheEve
             publicCacheTags.product(payload.productId),
             publicCacheTags.reviews(payload.productId),
           ];
+    case PUBLIC_CACHE_EVENTS.settingsChanged:
+      return [publicCacheTags.settings, publicCacheTags.home];
   }
 }
 

@@ -18,9 +18,11 @@ export type PublicCachePolicy = {
 };
 
 const one = (value: unknown): string | undefined => {
-  if (Array.isArray(value)) return value[0] === undefined ? undefined : String(value[0]);
+  if (Array.isArray(value)) return one(value[0]);
   if (value === undefined || value === null || value === '') return undefined;
-  return String(value);
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') return value.toString();
+  return undefined;
 };
 
 export const PUBLIC_CACHE_POLICIES: PublicCachePolicy[] = [
@@ -29,7 +31,20 @@ export const PUBLIC_CACHE_POLICIES: PublicCachePolicy[] = [
     path: /^\/client\/home$/,
     ttl: CACHE_TTL.public,
     key: ({ langId }) => publicCacheKeys.home(langId),
-    tags: () => [publicCacheTags.home, publicCacheTags.sliders, publicCacheTags.collections, publicCacheTags.products],
+    tags: () => [
+      publicCacheTags.home,
+      publicCacheTags.sliders,
+      publicCacheTags.collections,
+      publicCacheTags.products,
+      publicCacheTags.settings,
+    ],
+  },
+  {
+    method: 'GET',
+    path: /^\/client\/home\/storefront$/,
+    ttl: CACHE_TTL.public,
+    key: ({ langId }) => publicCacheKeys.storefront(langId),
+    tags: () => [publicCacheTags.settings],
   },
   {
     method: 'GET',

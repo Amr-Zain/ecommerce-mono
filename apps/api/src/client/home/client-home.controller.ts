@@ -14,8 +14,12 @@ export class ClientHomeController {
   @Public()
   @Get()
   getHomePage(@I18nLang() lang: string) {
-    console.log('caaaaaaaa');
-
     return this.homeService.getHomePage(lang);
+  }
+
+  @Public()
+  @Get('storefront')
+  getStorefrontConfiguration(@I18nLang() lang: string) {
+    return this.homeService.getStorefrontConfiguration(lang);
   }
 }

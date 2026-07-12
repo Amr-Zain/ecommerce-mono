@@ -5,6 +5,7 @@ export const CACHE_TTL = {
 
 export const publicCacheTags = {
   home: 'content:home',
+  settings: 'content:settings',
   products: 'catalog:products',
   product: (id: string | number | bigint) => `catalog:product:${id.toString()}`,
   collections: 'catalog:collections',

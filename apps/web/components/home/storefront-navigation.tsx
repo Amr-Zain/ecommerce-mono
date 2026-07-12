@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { Menu02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import Image from "next/image"
@@ -31,13 +31,19 @@ import {
   NavigationMenuTrigger,
 } from "@ecommerce/ui/components/navigation-menu"
 import type { CollectionTreeItem } from "@/hooks/api/use-products"
+import { Input } from "@ecommerce/ui/components/input"
+
+type NavigationPage = { slug: string; title: string }
 
 function StorefrontNavigation({
   collections,
+  pages = [],
 }: {
   collections: CollectionTreeItem[]
+  pages?: NavigationPage[]
 }) {
   const t = useTranslations("Header")
+  const locale = useLocale()
   return (
     <>
       <NavigationMenu className="hidden lg:flex">
@@ -137,6 +143,58 @@ function StorefrontNavigation({
             </DrawerDescription>
           </DrawerHeader>
           <div className="overflow-y-auto px-4 pb-6">
+            <form
+              action={`/${locale}${ROUTES.products.root}`}
+              className="mb-4 flex gap-2"
+            >
+              <Input
+                name="search"
+                aria-label={t("searchLabel")}
+                placeholder={t("searchPlaceholder")}
+              />
+              <Button type="submit">{t("searchLabel")}</Button>
+            </form>
+            <nav className="mb-5 grid grid-cols-2 gap-2 text-sm">
+              <Link
+                className="rounded-md border p-2 font-medium"
+                href={ROUTES.products.root}
+              >
+                {t("shopAll")}
+              </Link>
+              <Link
+                className="rounded-md border p-2 font-medium"
+                href={`${ROUTES.products.root}?catalog_sort=rating_desc`}
+              >
+                {t("bestSellers")}
+              </Link>
+              <Link
+                className="rounded-md border p-2 font-medium"
+                href={`${ROUTES.products.root}?catalog_sort=newest`}
+              >
+                {t("newArrivals")}
+              </Link>
+              <Link
+                className="rounded-md border p-2 font-medium"
+                href={ROUTES.static.showRooms}
+              >
+                {t("showRooms")}
+              </Link>
+              <Link
+                className="rounded-md border p-2 font-medium"
+                href={ROUTES.profile.support.root}
+              >
+                {t("contact")}
+              </Link>
+              {pages.map((page) => (
+                <Link
+                  key={page.slug}
+                  className="rounded-md border p-2 font-medium"
+                  href={`/${page.slug}`}
+                >
+                  {page.title}
+                </Link>
+              ))}
+            </nav>
             <Button
               render={<Link href={ROUTES.collections.root} />}
               variant="outline"

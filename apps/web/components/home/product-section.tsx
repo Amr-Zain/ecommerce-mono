@@ -15,6 +15,7 @@ import {
   type Product as ProductCardProduct,
 } from "@/components/product/product-card"
 import { SavingsCard } from "./savings-card"
+import type { Campaign } from "./savings-card"
 import { SectionHeader } from "./section-header"
 
 function InlineControls() {
@@ -52,11 +53,13 @@ export function ProductSection({
   title,
   products,
   savings,
+  campaign,
   auto = false,
 }: {
   title: string
   products: HomeProduct[]
   savings?: boolean
+  campaign?: Campaign | null
   auto?: boolean
 }) {
   if (products.length === 0) return null
@@ -65,8 +68,12 @@ export function ProductSection({
     <section className="py-8">
       <AutoSlider auto={auto} delay={4500}>
         <SectionHeader title={title} actions={<InlineControls />} />
-        <div className={savings ? "grid gap-4 md:grid-cols-[1.05fr_3fr]" : ""}>
-          {savings ? <SavingsCard /> : null}
+        <div
+          className={
+            savings && campaign ? "grid gap-4 md:grid-cols-[1.05fr_3fr]" : ""
+          }
+        >
+          {savings && campaign ? <SavingsCard campaign={campaign} /> : null}
           <CarouselContent className="-ms-3">
             {products.map((product, idx) => {
               const mappedProduct: ProductCardProduct = {
@@ -94,9 +101,9 @@ export function ProductSection({
               return (
                 <CarouselItem
                   key={`${title}-${mappedProduct.id}`}
-                  className="basis-full ps-3 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                  className="basis-1/2 ps-3 sm:basis-1/3 lg:basis-1/4 xl:basis-1/5"
                 >
-                  <NewProductCard product={mappedProduct} view="grid" />
+                  <NewProductCard product={mappedProduct} view="grid" compact />
                 </CarouselItem>
               )
             })}

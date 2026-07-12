@@ -6,9 +6,13 @@ import {
   ICollectionsRepository,
   PRODUCTS_REPOSITORY,
   IProductsRepository,
+  Collection,
+  Product,
 } from '@/common/interfaces';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
+import { AppSettingsService } from '@/shared/settings/settings.service';
+import { STOREFRONT_DEFAULT_VALUES, toStorefrontConfiguration } from '@/shared/settings/storefront-settings.constants';
 
 @Injectable()
 export class ClientHomeService {
@@ -16,7 +20,13 @@ export class ClientHomeService {
     @Inject(SLIDERS_REPOSITORY) private readonly slidersRepo: ISlidersRepository,
     @Inject(COLLECTIONS_REPOSITORY) private readonly collectionsRepo: ICollectionsRepository,
     @Inject(PRODUCTS_REPOSITORY) private readonly productsRepo: IProductsRepository,
+    private readonly settings: AppSettingsService,
   ) {}
+
+  async getStorefrontConfiguration(langId: string = 'en') {
+    const settings = await this.settings.getSettingsMap();
+    return toStorefrontConfiguration({ ...STOREFRONT_DEFAULT_VALUES, ...settings }, langId);
+  }
 
   async getHomePage(langId: string = 'en') {
     const sliderQuery: AdvancedQueryDto = {
@@ -35,10 +45,11 @@ export class ClientHomeService {
       filters: { isActive: true },
     };
 
-    const [slidersResult, collectionsResult, productsResult] = await Promise.all([
+    const [slidersResult, collectionsResult, productsResult, storefront] = await Promise.all([
       this.slidersRepo.findAll(sliderQuery, langId),
       this.collectionsRepo.findAll(collectionQuery, langId),
       this.productsRepo.findAll(productQuery, langId),
+      this.getStorefrontConfiguration(langId),
     ]);
 
     const sliders = Array.isArray(slidersResult) ? slidersResult : slidersResult.data;
@@ -48,7 +59,7 @@ export class ClientHomeService {
     const homeCollections = collections.map((collection) => this.formatCollection(collection));
 
     return {
-      activeOffer: null,
+      activeOffer: storefront.campaign.enabled ? storefront.campaign : null,
       sliders: sliders.map((slider) => ({
         id: slider.id,
         title: slider.translations?.[0]?.title ?? '',
@@ -69,7 +80,7 @@ export class ClientHomeService {
     };
   }
 
-  private formatCollection(collection: any) {
+  private formatCollection(collection: Collection) {
     return {
       id: collection.id,
       slug: collection.slug,
@@ -80,11 +91,17 @@ export class ClientHomeService {
     };
   }
 
-  private formatProduct(product: any) {
+  private formatProduct(product: Product) {
+    const source = product as Product & {
+      price?: unknown;
+      compareAtPrice?: unknown;
+      stock?: unknown;
+    };
+    const collection = this.productCollection(product.collection);
     const variants = product.variants ?? [];
     const variant = variants[0];
-    const price = Number(product.price ?? variant?.price ?? 0);
-    const compareAtPrice = Number(product.compareAtPrice ?? variant?.compareAtPrice ?? price);
+    const price = Number(source.price ?? variant?.price ?? 0);
+    const compareAtPrice = Number(source.compareAtPrice ?? variant?.compareAtPrice ?? price);
     const finalPrice = Math.min(price, compareAtPrice || price);
 
     return {
@@ -96,8 +113,8 @@ export class ClientHomeService {
         ...(product.gallery ?? []).map((item: unknown) => this.mediaPath(item)),
       ].filter(Boolean),
       category: {
-        id: product.collection?.id ?? product.collectionId,
-        name: product.collection?.translations?.[0]?.name ?? '',
+        id: collection?.id ?? product.collectionId,
+        name: collection?.translations?.[0]?.name ?? '',
       },
       pricing: {
         price: compareAtPrice || price,
@@ -108,9 +125,17 @@ export class ClientHomeService {
             compareAtPrice > finalPrice ? Math.round(((compareAtPrice - finalPrice) / compareAtPrice) * 100) : 0,
         },
       },
-      stock: Number(product.stock ?? variant?.stockQuantity ?? 0),
+      stock: Number(source.stock ?? variant?.stockQuantity ?? 0),
       hasVariation: Boolean(product.hasVariants),
       firstVariationId: variant?.id ?? null,
+    };
+  }
+
+  private productCollection(value: unknown) {
+    if (!value || typeof value !== 'object') return null;
+    return value as {
+      id?: bigint;
+      translations?: Array<{ name?: string | null }>;
     };
   }
 

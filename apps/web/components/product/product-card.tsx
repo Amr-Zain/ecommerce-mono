@@ -48,6 +48,7 @@ interface ProductCardProps {
   product: Product
   view: "grid" | "list"
   hideActions?: boolean
+  compact?: boolean
 }
 
 function ImageSlider({
@@ -147,6 +148,7 @@ export function ProductCard({
   product,
   view,
   hideActions = false,
+  compact = false,
 }: ProductCardProps) {
   const t = useTranslations("Product")
   const allImages = React.useMemo(() => {
@@ -172,7 +174,11 @@ export function ProductCard({
               {product.badge}
             </Badge>
           )}
-          <ImageSlider images={allImages} alt={product.name} productId={product.id} />
+          <ImageSlider
+            images={allImages}
+            alt={product.name}
+            productId={product.id}
+          />
         </div>
 
         {/* Right: all content stacked */}
@@ -208,11 +214,13 @@ export function ProductCard({
             <div className="mt-3 flex items-center gap-3">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-base font-bold text-foreground">
-                  {t("sar")}{product.price.toFixed(2)}
+                  {t("sar")}
+                  {product.price.toFixed(2)}
                 </span>
                 {product.oldPrice && (
                   <span className="text-xs text-muted-foreground line-through">
-                    {t("sar")}{product.oldPrice.toFixed(2)}
+                    {t("sar")}
+                    {product.oldPrice.toFixed(2)}
                   </span>
                 )}
               </div>
@@ -234,14 +242,20 @@ export function ProductCard({
 
   // Grid View (Default)
   return (
-    <div className="group flex flex-col justify-between overflow-hidden rounded-xl border bg-card transition-all hover:shadow-md">
+    <div
+      className={cn(
+        "group flex flex-col justify-between overflow-hidden border bg-card transition-all hover:shadow-md",
+        compact ? "rounded-lg" : "rounded-xl"
+      )}
+    >
       {/* Image container */}
       <div className="relative aspect-square w-full bg-muted/60">
         {/* Badge */}
         {product.badge && (
           <Badge
             className={cn(
-              "absolute start-3.5 top-3.5 z-10 rounded-full border-0 px-2.5 py-0.5 text-[10px] font-bold",
+              "absolute z-10 rounded-full border-0 py-0.5 text-[10px] font-bold",
+              compact ? "start-2 top-2 px-2" : "start-3.5 top-3.5 px-2.5",
               product.badge.toLowerCase().includes("off")
                 ? "bg-destructive text-destructive-foreground"
                 : "bg-emerald-500 text-white"
@@ -255,17 +269,29 @@ export function ProductCard({
         <WishlistButton
           productId={product.id}
           productName={product.name}
-          className="absolute end-3.5 top-3.5 z-10 size-8 bg-background/95 text-muted-foreground shadow-xs transition-all hover:scale-110"
-          iconClassName="size-4.5"
+          className={cn(
+            "absolute z-10 bg-background/95 text-muted-foreground shadow-xs transition-all hover:scale-110",
+            compact ? "end-2 top-2 size-7" : "end-3.5 top-3.5 size-8"
+          )}
+          iconClassName={compact ? "size-4" : "size-4.5"}
         />
 
-        <ImageSlider images={allImages} alt={product.name} productId={product.id} />
+        <ImageSlider
+          images={allImages}
+          alt={product.name}
+          productId={product.id}
+        />
       </div>
 
       {/* Details */}
-      <div className="flex flex-1 flex-col p-4">
+      <div className={cn("flex flex-1 flex-col", compact ? "p-3" : "p-4")}>
         <div className="flex-1">
-          <span className="text-xs font-bold text-foreground">
+          <span
+            className={cn(
+              "font-bold text-foreground",
+              compact ? "text-[11px]" : "text-xs"
+            )}
+          >
             {product.brand}
           </span>
           <h3 className="mt-1 line-clamp-2 text-xs font-medium text-muted-foreground">
@@ -276,13 +302,20 @@ export function ProductCard({
         {/* Pricing & Add to Cart */}
         {!hideActions && (
           <>
-            <div className="mt-3 flex items-baseline gap-2">
+            <div
+              className={cn(
+                "flex items-baseline gap-2",
+                compact ? "mt-2" : "mt-3"
+              )}
+            >
               <span className="text-sm font-bold text-foreground">
-                {t("sar")}{product.price.toFixed(2)}
+                {t("sar")}
+                {product.price.toFixed(2)}
               </span>
               {product.oldPrice && (
                 <span className="text-[10px] text-muted-foreground line-through">
-                  {t("sar")}{product.oldPrice.toFixed(2)}
+                  {t("sar")}
+                  {product.oldPrice.toFixed(2)}
                 </span>
               )}
             </div>
@@ -294,7 +327,10 @@ export function ProductCard({
               price={product.price}
               oldPrice={product.oldPrice}
               available={product.available}
-              className="mt-4 h-9 w-full gap-2 rounded-lg bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+              className={cn(
+                "w-full gap-2 rounded-lg bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90",
+                compact ? "mt-3 h-8" : "mt-4 h-9"
+              )}
             />
           </>
         )}

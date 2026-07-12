@@ -66,7 +66,7 @@ const publicCachePolicies: PublicCachePolicy[] = [
     tags: () => [],
   },
   {
-    matches: pattern(/^(?:home|sliders|faqs)$/),
+    matches: pattern(/^(?:home(?:\/storefront)?|sliders|faqs)$/),
     revalidate: 60,
     tags: () => [],
   },

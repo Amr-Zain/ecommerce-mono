@@ -43,14 +43,14 @@
     "returnHome": "العودة للرئيسية",
     "pageNotFound": "الصفحة غير موجودة",
     "somethingWrong": "حدث خطأ ما",
-    "showroomsEmpty": "لا توجد معارض متاحة حالياً"
-    ,"cartLoadTitle": "تعذر تحميل سلة التسوق"
-    ,"cartLoadDescription": "عناصرك ما زالت محفوظة. تحقق من الاتصال وحاول تحميل السلة مرة أخرى."
-    ,"errorDescription": "تعذر إكمال تحميل هذه الصفحة. حاول مرة أخرى أو عد إلى المتجر."
-    ,"notFoundDescription": "ربما تم نقل الصفحة أو أن العنصر الذي تبحث عنه لم يعد متاحاً."
-    ,"showroomsEmptyDescription": "نجهز مواقع جديدة. تسوق عبر الإنترنت وتحقق مرة أخرى قريباً."
-    ,"browseCollections": "تصفح المجموعات"
-    ,"continueShopping": "متابعة التسوق"
+    "showroomsEmpty": "لا توجد معارض متاحة حالياً",
+    "cartLoadTitle": "تعذر تحميل سلة التسوق",
+    "cartLoadDescription": "عناصرك ما زالت محفوظة. تحقق من الاتصال وحاول تحميل السلة مرة أخرى.",
+    "errorDescription": "تعذر إكمال تحميل هذه الصفحة. حاول مرة أخرى أو عد إلى المتجر.",
+    "notFoundDescription": "ربما تم نقل الصفحة أو أن العنصر الذي تبحث عنه لم يعد متاحاً.",
+    "showroomsEmptyDescription": "نجهز مواقع جديدة. تسوق عبر الإنترنت وتحقق مرة أخرى قريباً.",
+    "browseCollections": "تصفح المجموعات",
+    "continueShopping": "متابعة التسوق"
   },
   "Seo": {
     "siteName": "متجر",
@@ -363,6 +363,9 @@
     "loading": "جاري تحميل الإشعارات...",
     "empty": "لا توجد إشعارات بعد"
   },
+  "Campaign": {
+    "offerEnds": "ينتهي العرض:"
+  },
   "Header": {
     "saleTag": "تخفيضات الجمعة السوداء 22%",
     "showRooms": "صالات العرض",
@@ -374,7 +377,9 @@
     "searchPlaceholder": "اكتب هنا",
     "searchLabel": "بحث",
     "login": "تسجيل الدخول",
-    "collections": "المجموعات"
+    "collections": "المجموعات",
+    "shopAll": "تسوق الكل",
+    "bestSellers": "الأكثر مبيعاً"
   },
   "Footer": {
     "brandName": "Ecommerce",
@@ -390,6 +395,7 @@
     "help": "مساعدة",
     "ctaTitle": "احصل على أحدث العروض والخصومات",
     "ctaPlaceholder": "بريدك الإلكتروني",
+    "downloadApps": "تسوق بسهولة من تطبيقات الهاتف.",
     "appStore": "تحميل من App Store",
     "googlePlay": "احصل عليه من Google Play",
     "payments": "مدفوعات آمنة | lemon squeezy | VISA | Mastercard",
