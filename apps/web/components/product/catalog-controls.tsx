@@ -21,7 +21,10 @@ import {
 import { Button } from "@ecommerce/ui/components/button"
 import { Checkbox } from "@ecommerce/ui/components/checkbox"
 import { Input } from "@ecommerce/ui/components/input"
-import { RadioGroup, RadioGroupItem } from "@ecommerce/ui/components/radio-group"
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@ecommerce/ui/components/radio-group"
 import {
   Select,
   SelectContent,
@@ -70,7 +73,8 @@ function CatalogControls({
   const currentSort = String(searchParams.catalog_sort ?? "newest")
   const sortItems = sortOptions(t)
   const currentSortLabel =
-    sortItems.find((option) => option.value === currentSort)?.label ?? t("sortBy")
+    sortItems.find((option) => option.value === currentSort)?.label ??
+    t("sortBy")
   const update = (key: string, value: string) => {
     const params = toUrlSearchParams(searchParams)
     params.set(key, value)
@@ -83,20 +87,20 @@ function CatalogControls({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Breadcrumb>
           <BreadcrumbList>
-          {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={crumb.label}>
-              {index > 0 ? <BreadcrumbSeparator /> : null}
-              <BreadcrumbItem>
-              {crumb.href ? (
-                <BreadcrumbLink render={<Link href={crumb.href} />}>
-                  {crumb.label}
-                </BreadcrumbLink>
-              ) : (
-                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-              )}
-              </BreadcrumbItem>
-            </React.Fragment>
-          ))}
+            {breadcrumbs.map((crumb, index) => (
+              <React.Fragment key={crumb.label}>
+                {index > 0 ? <BreadcrumbSeparator /> : null}
+                <BreadcrumbItem>
+                  {crumb.href ? (
+                    <BreadcrumbLink render={<Link href={crumb.href} />}>
+                      {crumb.label}
+                    </BreadcrumbLink>
+                  ) : (
+                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                  )}
+                </BreadcrumbItem>
+              </React.Fragment>
+            ))}
           </BreadcrumbList>
         </Breadcrumb>
         <div className="flex items-center gap-3 self-end sm:self-auto">
@@ -119,7 +123,9 @@ function CatalogControls({
             onValueChange={(value) => value && update("catalog_sort", value)}
           >
             <SelectTrigger size="sm" className="w-full min-w-40 sm:w-44">
-              <SelectValue placeholder={currentSortLabel}>{currentSortLabel}</SelectValue>
+              <SelectValue placeholder={currentSortLabel}>
+                {currentSortLabel}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent
               alignItemWithTrigger={false}
@@ -129,7 +135,7 @@ function CatalogControls({
                 <SelectItem
                   key={option.value}
                   value={option.value}
-                  className="items-start py-2 pe-9 ps-2 leading-relaxed *:[span]:last:whitespace-normal *:[span]:last:break-words"
+                  className="items-start py-2 ps-2 pe-9 leading-relaxed *:[span]:last:break-words *:[span]:last:whitespace-normal"
                 >
                   {option.label}
                 </SelectItem>
@@ -211,7 +217,9 @@ function Sidebar({
                 collection={collection}
                 counts={collectionCounts}
                 selected={values(searchParams, "collection")}
-                onChange={(slug, checked) => toggle("collection", slug, checked)}
+                onChange={(slug, checked) =>
+                  toggle("collection", slug, checked)
+                }
               />
             ))}
           </Accordion>
@@ -265,15 +273,17 @@ function Sidebar({
             navigate((params) => params.set("min_discount", value))
           }
         >
-        {[10, 25, 50].map((discount) => (
-          <label
-            key={discount}
-            className="flex cursor-pointer items-center gap-2.5 text-sm"
-          >
-            <RadioGroupItem value={String(discount)} />
-            <span className="font-medium">{t("orMore", { value: discount })}</span>
-          </label>
-        ))}
+          {[10, 25, 50].map((discount) => (
+            <label
+              key={discount}
+              className="flex cursor-pointer items-center gap-2.5 text-sm"
+            >
+              <RadioGroupItem value={String(discount)} />
+              <span className="font-medium">
+                {t("orMore", { value: discount })}
+              </span>
+            </label>
+          ))}
         </RadioGroup>
       </FilterSection>
     </aside>
@@ -320,8 +330,7 @@ function CollectionFilterNode({
         <AccordionTrigger
           aria-label={t("show", { name: collection.name })}
           className="flex-none px-2"
-        >
-        </AccordionTrigger>
+        ></AccordionTrigger>
       </div>
       <AccordionContent className="space-y-2 ps-3">
         <Accordion>

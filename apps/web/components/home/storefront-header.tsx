@@ -1,10 +1,9 @@
-import { Search01Icon, Store04Icon } from "@hugeicons/core-free-icons"
+import { Store04Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { getLocale, getTranslations } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 
-import { Input } from "@ecommerce/ui/components/input"
 import { ThemeSwitch } from "@/components/shared/theme-switch"
 import type { CollectionTreeItem } from "@/hooks/api/use-products"
 import { publicBackendGet } from "@/lib/server/backend"
@@ -15,6 +14,7 @@ import { LocaleSwitch } from "./locale-switch"
 import { StorefrontNavigation } from "./storefront-navigation"
 import { cmsPageTitle, getCmsPages, pickCmsPages } from "@/lib/server/cms-pages"
 import { getStorefrontConfiguration } from "@/lib/server/storefront-settings"
+import { StorefrontSearch } from "./storefront-search"
 
 export async function StorefrontHeader() {
   const locale = await getLocale()
@@ -122,23 +122,7 @@ export async function StorefrontHeader() {
             {/* <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" /> */}
           </Link>
         </nav>
-        <div className="ms-auto hidden w-full max-w-xs items-center md:flex">
-          <form
-            action={`/${locale}${ROUTES.products.root}`}
-            className="relative w-full"
-          >
-            <HugeiconsIcon
-              icon={Search01Icon}
-              className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <Input
-              name="search"
-              aria-label={t("searchLabel")}
-              placeholder={t("searchPlaceholder")}
-              className="h-9 ps-9 text-xs"
-            />
-          </form>
-        </div>
+        <StorefrontSearch collections={collections} />
         <div className="flex items-center gap-2.5">
           <HeaderCommerceControls />
           <HeaderAccountControls locale={locale} />

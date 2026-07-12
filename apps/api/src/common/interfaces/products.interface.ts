@@ -99,7 +99,7 @@ export interface CatalogQuery {
   minPrice?: number;
   maxPrice?: number;
   minDiscount?: number;
-  catalogSort?: 'newest' | 'price_asc' | 'price_desc' | 'rating_desc';
+  catalogSort?: 'relevance' | 'newest' | 'price_asc' | 'price_desc' | 'rating_desc';
 }
 
 export const PRODUCTS_REPOSITORY = Symbol('IProductsRepository');

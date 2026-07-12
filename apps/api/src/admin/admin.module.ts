@@ -21,6 +21,7 @@ import { AdminTicketsModule } from './tickets/admin-tickets.module';
 import { AdminLoyaltyModule } from './loyalty/admin-loyalty.module';
 import { AdminPaymentGatewaysModule } from './payment-gateways/payment-gateways.module';
 import { RouterModule } from '@nestjs/core';
+import { AdminSearchModule } from './search/admin-search.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { RouterModule } from '@nestjs/core';
     AdminTicketsModule,
     AdminLoyaltyModule,
     AdminPaymentGatewaysModule,
+    AdminSearchModule,
 
     RouterModule.register([
       {
@@ -71,6 +73,7 @@ import { RouterModule } from '@nestjs/core';
           { path: '', module: AdminTicketsModule },
           { path: '', module: AdminLoyaltyModule },
           { path: '', module: AdminPaymentGatewaysModule },
+          { path: '', module: AdminSearchModule },
         ],
       },
     ]),

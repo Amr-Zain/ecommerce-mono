@@ -25,6 +25,7 @@ import { NotificationModule } from './shared/notifications/notification.module';
 import { EmailModule } from './shared/email/email.module';
 import { CacheModule } from './shared/cache/cache.module';
 import { PublicCacheInterceptor } from './shared/cache/public-cache.interceptor';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { PublicCacheInterceptor } from './shared/cache/public-cache.interceptor'
     }),
     DomainEventsModule,
     CacheModule,
+    SearchModule,
     NotificationModule,
     EmailModule,
     PrismaModule,

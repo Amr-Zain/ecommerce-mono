@@ -21,6 +21,7 @@ import { ClientWalletModule } from './wallet/client-wallet.module';
 import { ClientTicketsModule } from './tickets/client-tickets.module';
 import { ClientLoyaltyModule } from './loyalty/client-loyalty.module';
 import { RouterModule } from '@nestjs/core';
+import { ClientSearchModule } from './search/client-search.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { RouterModule } from '@nestjs/core';
     ClientTicketsModule,
     ClientLoyaltyModule,
     ProfileModule,
+    ClientSearchModule,
 
     RouterModule.register([
       {
@@ -71,6 +73,7 @@ import { RouterModule } from '@nestjs/core';
           { path: '', module: ClientTicketsModule },
           { path: '', module: ClientLoyaltyModule },
           { path: '', module: ProfileModule },
+          { path: '', module: ClientSearchModule },
         ],
       },
     ]),
