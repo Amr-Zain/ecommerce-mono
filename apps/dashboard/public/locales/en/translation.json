@@ -1829,5 +1829,59 @@
       "ship": "Mark the replacement as shipped?",
       "complete": "Complete this exchange request?"
     }
+  },
+  "commandSearch": {
+    "open": "Search navigation",
+    "title": "Navigation search",
+    "description": "Search the dashboard navigation",
+    "placeholder": "What do you need?"
+  },
+  "themeCustomizer": {
+    "title": "Customizer",
+    "description": "Customize dashboard theme and layout.",
+    "open": "Customize dashboard",
+    "toggleSidebar": "Toggle sidebar",
+    "theme": "Theme",
+    "layout": "Layout",
+    "reset": "Reset",
+    "radius": "Radius",
+    "mode": "Mode",
+    "latinFont": "English font",
+    "arabicFont": "Arabic font",
+    "modes": { "light": "Light", "dark": "Dark", "system": "System" },
+    "import": "Import theme CSS",
+    "importTitle": "Import custom theme",
+    "importDescription": "Paste CSS variables from :root and .dark blocks. Only supported theme variables are accepted.",
+    "brandColors": "Brand colors",
+    "clearColor": "Clear color",
+    "choosePreset": "Choose a preset",
+    "random": "Random preset",
+    "sidebarVariant": "Sidebar variant",
+    "sidebarCollapse": "Sidebar collapse",
+    "sidebarSide": "Sidebar position",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveError": "Save failed — retry",
+    "accountSynced": "Synced to your account",
+    "advanced": "Advanced customization",
+    "advancedDescription": "Create more themes in the TweakCN editor, then import their CSS here.",
+    "openTweakcn": "Open TweakCN",
+    "options": {
+      "sidebar": "Default", "floating": "Floating", "inset": "Inset",
+      "offcanvas": "Off canvas", "icon": "Icons", "none": "Always open",
+      "left": "Left", "right": "Right"
+    },
+    "colors": {
+      "primary": "Primary", "primary-foreground": "Primary foreground",
+      "secondary": "Secondary", "secondary-foreground": "Secondary foreground",
+      "accent": "Accent", "accent-foreground": "Accent foreground",
+      "muted": "Muted", "muted-foreground": "Muted foreground"
+    },
+    "errors": {
+      "invalidCss": "The CSS theme is invalid.",
+      "missingThemeBlocks": "Add a :root or .dark theme block.",
+      "unsupportedVariable": "The theme contains an unsupported CSS variable.",
+      "invalidVariableValue": "The theme contains an invalid CSS variable value."
+    }
   }
 }

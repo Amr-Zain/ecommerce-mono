@@ -1,5 +1,9 @@
 @import '@fontsource/inter';
+@import '@fontsource/manrope';
+@import '@fontsource/poppins';
 @import '@fontsource/noto-sans-arabic';
+@import '@fontsource/cairo';
+@import '@fontsource/tajawal';
 @import '@fontsource/jetbrains-mono';
 
 @import 'tailwindcss';
@@ -185,12 +189,15 @@
   --radius: 0.45rem;
   --sidebar: oklch(0.988 0.003 106.5);
   --sidebar-foreground: oklch(0.153 0.006 107.1);
-  --sidebar-primary: oklch(0.228 0.013 107.4);
-  --sidebar-primary-foreground: oklch(0.988 0.003 106.5);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: oklch(0.966 0.005 106.5);
   --sidebar-accent-foreground: oklch(0.228 0.013 107.4);
   --sidebar-border: oklch(0.93 0.007 106.5);
   --sidebar-ring: oklch(0.737 0.021 106.9);
+  --scrollbar-track: color-mix(in oklch, var(--background) 94%, var(--foreground) 6%);
+  --scrollbar-thumb: color-mix(in oklch, var(--muted-foreground) 48%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, var(--primary) 72%, var(--muted-foreground));
 
   --header: oklch(1 0 0);
   --header-foreground: oklch(0.153 0.006 107.1);
@@ -256,8 +263,8 @@
   --chart-5: oklch(0.286 0.016 107.4);
   --sidebar: oklch(0.228 0.013 107.4);
   --sidebar-foreground: oklch(0.988 0.003 106.5);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.988 0.003 106.5);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: oklch(0.286 0.016 107.4);
   --sidebar-accent-foreground: oklch(0.988 0.003 106.5);
   --sidebar-border: oklch(1 0 0 / 10%);
@@ -297,12 +304,13 @@
   }
 
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
     --font-mono: 'JetBrains Mono', monospace;
+    scrollbar-gutter: stable;
   }
 
   html:lang(ar) {
-    font-family: 'Noto Sans Arabic', 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   button:not(:disabled),
@@ -312,6 +320,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
 
   [data-sidebar="menu-button"] {
@@ -345,37 +354,87 @@
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
 
-
   ::-webkit-scrollbar-track {
-    background: hsl(var(--card));
+    background: var(--scrollbar-track);
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--card) / 0.4);
+    min-height: 36px;
+    border: 2px solid transparent;
     border-radius: 9999px;
-    transition: background-color 0.2s ease;
+    background: var(--scrollbar-thumb);
+    background-clip: padding-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--card) / 0.7);
+    background: var(--scrollbar-thumb-hover);
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track);
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--primary) / 0.5) hsl(var(--card));
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 
-  /* Hide scrollbar on collapsed sidebar */
+  [data-sidebar="content"] {
+    overscroll-behavior: contain;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  [data-sidebar="content"]::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  [data-sidebar="content"]::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   [data-collapsible="icon"] [data-sidebar="content"] {
     scrollbar-width: none;
   }
 
   [data-collapsible="icon"] [data-sidebar="content"]::-webkit-scrollbar {
     display: none;
+  }
+
+  [data-slot="command-list"],
+  [data-slot="scroll-area-viewport"] {
+    overscroll-behavior: contain;
+  }
+
+  .dashboard-tooltip,
+  [data-slot="tooltip-content"] {
+    background: var(--primary) !important;
+    color: var(--primary-foreground) !important;
+    text-wrap: balance;
+  }
+
+  .dashboard-tooltip > [data-side],
+  [data-slot="tooltip-content"] > [data-side] {
+    background: var(--primary) !important;
+    fill: var(--primary) !important;
+  }
+
+  .dashboard-tooltip > [data-side="left"] {
+    top: 50% !important;
+    right: -0.25rem !important;
+    left: auto !important;
+    transform: translateY(-50%) rotate(45deg) !important;
+  }
+
+  .dashboard-tooltip > [data-side="right"] {
+    top: 50% !important;
+    right: auto !important;
+    left: -0.25rem !important;
+    transform: translateY(-50%) rotate(45deg) !important;
   }
 
   /* Autofill fix (background + text) */

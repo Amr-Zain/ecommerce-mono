@@ -1,139 +1,112 @@
-
-import { useState, useRef } from 'react'
-import { Command as CommandPrimitive } from 'cmdk'
+import { useEffect, useMemo, useState } from 'react'
 import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandItem,
-    CommandList,
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
 } from '@ecommerce/ui/components/command'
-import {
-    Popover,
-    PopoverContent,
-    PopoverAnchor,
-} from '@ecommerce/ui/components/popover'
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Search01Icon } from "@hugeicons/core-free-icons"
+import { Button } from '@ecommerce/ui/components/button'
+import { Kbd } from '@ecommerce/ui/components/kbd'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Search01Icon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
-import {
-    getDashboardMenuItems,
-    getProductsAndShowRoomsMenuItems,
-    getEarningMenuItems,
-    getSettingsMenuItems,
-    usersMenuItems,
-} from '@/util/data'
-import { cn, hasPermission } from '@/lib/utils'
+
 import { useAuthStore } from '@/stores/authStore'
-import { useMemo } from 'react'
+import { getNavigationGroups } from '@/util/navigation'
 
 export function HeaderSearch() {
-    const { t } = useTranslation()
-    const navigate = useNavigate()
-    const [open, setOpen] = useState(false)
-    const containerRef = useRef<HTMLDivElement>(null)
-    const user = useAuthStore((state) => state.user)
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const user = useAuthStore((state) => state.user)
 
-    const flatMenuItems = useMemo(() => {
-        const filterMenuItems = (items: any[]): any[] => {
-            return items
-                .map((item) => {
-                    if (item.subItems && item.subItems.length > 0) {
-                        const filteredSubItems = filterMenuItems(item.subItems)
-                        if (filteredSubItems.length > 0) {
-                            return { ...item, subItems: filteredSubItems }
-                        }
-                        return null
-                    }
+  const groups = useMemo(() => getNavigationGroups(), [user])
 
-                    if (item.checkPermission) {
-                        const entity = item.permissionEntity ?? item.title.slice(5).replace(/_/g, '-')
-                        return hasPermission(entity, 'index') ? item : null
-                    }
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        setOpen((current) => !current)
+      }
+    }
 
-                    return item
-                })
-                .filter((item): item is any => item !== null)
-        }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
-        const allMenus = [
-            ...getDashboardMenuItems,
-            ...getProductsAndShowRoomsMenuItems,
-            ...getEarningMenuItems,
-            ...getSettingsMenuItems(),
-            ...usersMenuItems,
-        ]
+  const handleSelect = (url: string) => {
+    setOpen(false)
+    navigate({ to: url })
+  }
 
-        const filteredMenus = filterMenuItems(allMenus)
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        className="relative h-9 w-9 shrink-0 items-center justify-center gap-2 px-0 text-muted-foreground shadow-sm sm:w-40 sm:justify-start sm:px-3 lg:w-56"
+        aria-label={t('commandSearch.open', { defaultValue: 'Search navigation' })}
+        aria-keyshortcuts="Control+K Meta+K"
+        onClick={() => setOpen(true)}
+      >
+        <HugeiconsIcon icon={Search01Icon} className="size-4 shrink-0 sm:me-1" />
+        <span className="hidden truncate sm:inline">{t('Text.search')}</span>
+        <Kbd className="absolute end-1.5 hidden sm:inline-flex">
+          <span className="hidden font-sans text-xs md:inline">Ctrl+</span>K
+        </Kbd>
+      </Button>
 
-        return filteredMenus.reduce((acc: any[], item: any) => {
-            const addUnique = (newItem: any) => {
-                if (!newItem.url) return
-                if (!acc.some((i: any) => i.url === newItem.url)) {
-                    acc.push(newItem)
-                }
-            }
-
-            if (item.url) {
-                addUnique({ title: item.title, url: item.url, icon: item.icon })
-            }
-
-            if (item.subItems) {
-                item.subItems.forEach((subItem: any) => {
-                    addUnique({
-                        title: subItem.title,
-                        url: subItem.url,
-                        icon: item.icon,
-                        category: item.title
-                    })
-                })
-            }
-            return acc
-        }, [])
-    }, [user])
-
-    return (
-        <Command className="relative hidden sm:block w-64 overflow-visible bg-transparent p-0 rounded-none border-none">
-            <Popover open={open} onOpenChange={setOpen}>
-                <PopoverAnchor >
-                    <div className="relative" ref={containerRef}>
-                        <HugeiconsIcon icon={Search01Icon} className="absolute start-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
-                        <CommandPrimitive.Input
-                            placeholder={t('Text.search')}
-                            className={cn(
-                                "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-                                "ps-10 w-64 bg-background/50 h-10"
-                            )}
-                            onFocus={() => setOpen(true)}
-                            onClick={() => setOpen(true)}
-                        />
-                    </div>
-                </PopoverAnchor>
-                <PopoverContent
-                    className="p-0 w-64"
-                    align="start"
-                >
-                    <CommandList>
-                        <CommandEmpty>{t('Text.noResults')}</CommandEmpty>
-                        <CommandGroup heading={t('Text.navigation')}>
-                            {flatMenuItems.map((item, index) => (
-                                <CommandItem
-                                    key={index}
-                                    value={`${t(item.title)} ${item.url}`}
-                                    onSelect={() => {
-                                        setOpen(false)
-                                        navigate({ to: item.url })
-                                    }}
-                                >
-                                    {item.icon ? <item.icon className="mr-2 h-4 w-4" /> : <HugeiconsIcon icon={Search01Icon} className="mr-2 h-4 w-4" />}
-                                    <span>{t(item.title)}</span>
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    </CommandList>
-                </PopoverContent>
-            </Popover>
+      <CommandDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={t('commandSearch.title', { defaultValue: 'Navigation search' })}
+        description={t('commandSearch.description', {
+          defaultValue: 'Search the dashboard navigation',
+        })}
+        className="top-1/2! max-w-[calc(100%-2rem)] -translate-y-1/2! sm:max-w-xl"
+      >
+        <Command className="rounded-xl p-1">
+          <CommandInput
+            autoFocus
+            placeholder={t('commandSearch.placeholder', { defaultValue: 'What do you need?' })}
+          />
+          <CommandList className="max-h-[min(420px,60vh)]">
+            <CommandEmpty>{t('Text.noResults')}</CommandEmpty>
+            {groups.map((group) => (
+              <CommandGroup
+                key={group.label}
+                heading={t(group.label)}
+                className="[&_[cmdk-group-items]]:grid [&_[cmdk-group-items]]:gap-px"
+              >
+                {group.items.flatMap((item) => {
+                  const searchableItems = item.subItems?.length ? item.subItems : [item]
+                  return searchableItems.map((searchItem) => {
+                    const Icon = searchItem.icon ?? item.icon
+                    return (
+                      <CommandItem
+                        key={searchItem.url}
+                        value={`${t(searchItem.title)} ${t(group.label)} ${searchItem.url}`}
+                        onSelect={() => handleSelect(searchItem.url)}
+                        className="min-h-10 items-center py-2"
+                      >
+                        {Icon ? <Icon className="size-4" /> : <HugeiconsIcon icon={Search01Icon} className="size-4" />}
+                        <span className="truncate">{t(searchItem.title)}</span>
+                        <span className="ms-auto hidden truncate text-xs text-muted-foreground sm:block">
+                          {searchItem.url}
+                        </span>
+                      </CommandItem>
+                    )
+                  })
+                })}
+              </CommandGroup>
+            ))}
+          </CommandList>
         </Command>
-    )
+      </CommandDialog>
+    </>
+  )
 }

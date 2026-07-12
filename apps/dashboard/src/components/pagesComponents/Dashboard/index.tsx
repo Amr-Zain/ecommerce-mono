@@ -18,7 +18,6 @@ import {
   Globe2,
 } from 'lucide-react'
 import { StatsCard } from '@/components/common/charts/StatsCard'
-import dashboardHero from '@/assets/dashboard-hero.jpg'
 import { useTranslation } from 'react-i18next'
 import {
   DashboardQueryParams,
@@ -277,47 +276,25 @@ export function Dashboard({
 
   return (
     <div className="space-y-6">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-hero p-8 text-white shadow-lg">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-4xl font-bold mb-2 tracking-tight">
-              {t('dashboard.welcome')}
-            </h1>
-            <p className="text-lg opacity-90 max-w-md">
-              {t('dashboard.businessDesc')}
-            </p>
-          </div>
-          {hasHomePermission && (
-            <div className="flex gap-4">
-              <div className="bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20">
-                <p className="text-xs uppercase opacity-70 mb-1">
-                  {t('dashboard.revenueToday')}
-                </p>
-                <p className="text-2xl font-bold flex items-center gap-1">
-                  {data?.financial?.revenue_today}{' '}
-                  <SARIcon className="h-5 w-5" />
-                </p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md p-4 rounded-lg border border-white/20">
-                <p className="text-xs uppercase opacity-70 mb-1">
-                  {t('dashboard.ordersToday')}
-                </p>
-                <p className="text-2xl font-bold">
-                  {data?.orders?.orders_today}
-                </p>
-              </div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.welcome')}</h1>
+          <p className="text-sm text-muted-foreground">{t('dashboard.businessDesc')}</p>
+        </div>
+        {hasHomePermission && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border bg-card px-4 py-3 shadow-sm">
+              <p className="text-xs font-medium text-muted-foreground">{t('dashboard.revenueToday')}</p>
+              <p className="mt-1 flex items-center gap-1 text-xl font-semibold tabular-nums">
+                {data?.financial?.revenue_today}<SARIcon className="size-4 text-muted-foreground" />
+              </p>
             </div>
-          )}
-        </div>
-        <div className="absolute inset-0 z-0">
-          <img
-            src={dashboardHero}
-            alt="Dashboard analytics"
-            className="w-full h-full object-cover opacity-20"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/60 via-primary/40 to-transparent" />
-        </div>
+            <div className="rounded-xl border bg-card px-4 py-3 shadow-sm">
+              <p className="text-xs font-medium text-muted-foreground">{t('dashboard.ordersToday')}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums">{data?.orders?.orders_today}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {hasHomePermission && (

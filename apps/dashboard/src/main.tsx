@@ -42,16 +42,16 @@ ReactDOM.createRoot(document.getElementById('app') as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<LoaderPage />}>
-        <ThemeProvider defaultTheme="dark" storageKey="dashboard-theme">
-          <NetworkWrapper>
-            <AuthBootstrapProvider>
-              <DashboardHttpProvider>
+        <NetworkWrapper>
+          <AuthBootstrapProvider>
+            <DashboardHttpProvider>
+              <ThemeProvider defaultTheme="dark" storageKey="dashboard-theme">
                 <RouterProvider router={router} />
-              </DashboardHttpProvider>
-            </AuthBootstrapProvider>
-            <Toaster />
-          </NetworkWrapper>
-        </ThemeProvider>
+              </ThemeProvider>
+            </DashboardHttpProvider>
+          </AuthBootstrapProvider>
+          <Toaster />
+        </NetworkWrapper>
       </Suspense>
     </QueryClientProvider>
   </React.StrictMode>,

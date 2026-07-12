@@ -11,6 +11,7 @@
   "MAX_LENGTH": "{property} يجب أن يكون على الأكثر {constraints.0} حرفاً",
   "INVALID_MEDIA_MODEL": "اسم الكيان ({property}) غير صالح",
   "IS_ARRAY": "{property} يجب أن يكون مصفوفة",
+  "IS_OBJECT": "{property} يجب أن يكون كائناً",
   "INVALID_URL": "{property} يجب أن يكون رابطاً صالحاً",
   "MIN_FILE_SIZE": "{property} يجب أن يكون على الأقل {constraints.0} ميجابايت",
   "IS_NOT_EMPTY": "{property} مطلوب ",
@@ -21,5 +22,6 @@
   "IS_POSITIVE": "{property} يجب أن يكون رقماً موجباً",
   "IS_ENUM": "{property} يجب أن يكون قيمة صالحة من القائمة",
   "INVALID_DATE": "{property} يجب أن يكون تاريخاً صالحاً",
+  "INVALID_THEME_RADIUS": "يجب أن تكون قيمة {property} صالحة بين 0 و 2rem",
   "DATE_NOT_PAST": "{property} يجب أن يكون اليوم أو تاريخاً مستقبلياً"
 }

@@ -1,9 +1,8 @@
 import { HugeiconsIcon } from '@hugeicons/react'
-import type { IconSvgElement, HugeiconsIconProps } from '@hugeicons/react'
 import {
   Award01Icon,
+  BalanceScaleIcon,
   BarChartIcon,
-  Notification01Icon,
   Book01Icon,
   Building03Icon,
   ChartColumnStackedIcon,
@@ -14,8 +13,8 @@ import {
   HelpCircleIcon,
   Home01Icon,
   Message01Icon,
+  Notification01Icon,
   PercentIcon,
-  BalanceScaleIcon,
   Settings01Icon,
   Shield01Icon,
   ShoppingCart01Icon,
@@ -24,7 +23,8 @@ import {
   UserMultipleIcon,
   Wallet01Icon,
 } from '@hugeicons/core-free-icons'
-import { MenuItem } from '@/types/components/sidebar'
+import type { HugeiconsIconProps, IconSvgElement } from '@hugeicons/react'
+import type { MenuItem } from '@/types/components/sidebar'
 
 const H = (icon: IconSvgElement) => {
   const Comp = (props: Omit<HugeiconsIconProps, 'icon'>) => (
@@ -53,7 +53,7 @@ const Store = H(Store01Icon)
 const Users2 = H(UserMultipleIcon)
 const Wallet = H(Wallet01Icon)
 
-export const getDashboardMenuItems: MenuItem[] = [
+export const getDashboardMenuItems: Array<MenuItem> = [
   // {
   //   title: 'menu.overview',
   //   url: '/',
@@ -92,7 +92,7 @@ export const getDashboardMenuItems: MenuItem[] = [
     checkPermission: true,
   },
 ]
-export const getProductsAndShowRoomsMenuItems: MenuItem[] = [
+export const getProductsAndShowRoomsMenuItems: Array<MenuItem> = [
   {
     title: 'menu.products',
     url: '/products',
@@ -176,13 +176,13 @@ export const getProductsAndShowRoomsMenuItems: MenuItem[] = [
     title: 'menu.show-rooms',
     url: '/show-rooms',
     icon: Building2,
-    //badge: 'Pro',
+    // badge: 'Pro',
     /*     permission: 'users.index'
      */
     checkPermission: true,
   },
 ]
-export const getEarningMenuItems: MenuItem[] = [
+export const getEarningMenuItems: Array<MenuItem> = [
   {
     title: 'menu.earning_rules',
     url: '/earning-rules',
@@ -225,7 +225,7 @@ export const getEarningMenuItems: MenuItem[] = [
     icon: Search,
   },
 ] */
-export const getSettingsMenuItems: any = (not_count?: number) => [
+export const getSettingsMenuItems = (not_count?: number): Array<MenuItem> => [
   {
     title: 'menu.messages',
     url: '/messages',
@@ -318,12 +318,12 @@ export const getSettingsMenuItems: any = (not_count?: number) => [
     icon: HelpCircle,
   }, */
 ]
-export const usersMenuItems: MenuItem[] = [
+export const usersMenuItems: Array<MenuItem> = [
   {
     title: 'menu.roles',
     url: '/roles',
     icon: Shield,
-    //badge: 'Pro',
+    // badge: 'Pro',
     /*     permission: 'users.index'
      */
     checkPermission: true,
@@ -332,7 +332,7 @@ export const usersMenuItems: MenuItem[] = [
     title: 'menu.supervisors',
     url: '/supervisors',
     icon: Users2,
-    //badge: 'Pro',
+    // badge: 'Pro',
     /*     permission: 'users.index'
      */
     checkPermission: true,

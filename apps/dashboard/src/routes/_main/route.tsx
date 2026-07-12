@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { setupZodI18n } from '@/errorMap'
+import { useTheme } from '@/components/providers/themeProvider'
 
 export const Route = createFileRoute('/_main')({
   beforeLoad: ({ location }) => {
@@ -102,7 +103,7 @@ function LayoutContent() {
       <DashboardHeader />
 
       <main className="flex-1 overflow-auto">
-        <div className="w-full p-6">
+        <div className="w-full px-4 py-5 lg:px-6 lg:py-6">
           <Outlet />
         </div>
       </main>
@@ -121,13 +122,23 @@ function LayoutContent() {
 }
 
 export function Layout() {
+  const { preferences } = useTheme()
+  const sidebar = (
+    <AppSidebar
+      side={preferences.sidebar.side}
+      variant={preferences.sidebar.variant}
+      collapsible={preferences.sidebar.collapsible}
+    />
+  )
+  const content = (
+    <SidebarInset className="min-w-0 overflow-hidden">
+      <LayoutContent />
+    </SidebarInset>
+  )
   return (
     <TooltipProvider>
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-background">
-          <AppSidebar />
-          <LayoutContent />
-        </div>
+      <SidebarProvider className={preferences.sidebar.collapsible === 'none' ? 'sidebar-none-mode' : undefined}>
+        {preferences.sidebar.side === 'left' ? <>{sidebar}{content}</> : <>{content}{sidebar}</>}
       </SidebarProvider>
     </TooltipProvider>
   )

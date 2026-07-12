@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowDown01Icon, UserCircleIcon, Logout01Icon, UserIcon } from "@hugeicons/core-free-icons"
+import { ArrowDown01Icon, Logout01Icon, UserCircleIcon, UserIcon } from "@hugeicons/core-free-icons"
 import { useMemo, useState } from 'react'
 
 import {
@@ -13,6 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
@@ -27,33 +28,36 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@ecommerce/ui/components/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@ecommerce/ui/components/tooltip'
 
 import { useTranslation } from 'react-i18next'
-import {
-  getDashboardMenuItems,
-  getSettingsMenuItems,
-  usersMenuItems,
-  getEarningMenuItems,
-  getProductsAndShowRoomsMenuItems,
-} from '@/util/data'
-import { MenuItem as MenuItemComponent } from './MenuItem'
-import { MenuItem } from '@/types/components/sidebar'
-import { cn, hasPermission } from '@/lib/utils'
-import { Logo } from '../common/Icons'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useAuthStore } from '@/stores/authStore'
+import { Logo } from '../common/Icons'
 import ConfirmModal from '../common/uiComponents/ConfirmModal'
+import { MenuItem as MenuItemComponent } from './MenuItem'
+import type { ApiResponse } from '@/types/api/http'
+import type { SidebarCollapsible, SidebarSide, SidebarVariant } from '@/types/dashboard-preferences'
+import { cn } from '@/lib/utils'
+import { getNavigationGroups } from '@/util/navigation'
+import { useAuthStore } from '@/stores/authStore'
 import { useMutate } from '@/hooks/UseMutate'
-import { ApiResponse } from '@/types/api/http'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { NotificationsResponse } from '@/routes/_main/settings/notifications'
 import useFetch from '@/hooks/UseFetch'
 
-export function AppSidebar() {
+export function AppSidebar({
+  side,
+  variant,
+  collapsible,
+}: {
+  side: SidebarSide
+  variant: SidebarVariant
+  collapsible: SidebarCollapsible
+}) {
   const { t, i18n } = useTranslation()
   const { state } = useSidebar()
-  const user = useAuthStore((state) => state.user)
-  const clearUser = useAuthStore((state) => state.clearUser)
+  const user = useAuthStore((store) => store.user)
+  const clearUser = useAuthStore((store) => store.clearUser)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const navigate = useNavigate()
@@ -80,67 +84,23 @@ export function AppSidebar() {
     select: (res: any) => res?.data?.unread_notifications_count || 0 as any,
     enabled: false
   })
-  const filterMenuItems = (items: MenuItem[]): MenuItem[] => {
-    return items
-      .map((item) => {
-        // If it has sub-items, we check sub-items instead of the item itself as requested
-        if (item.subItems && item.subItems.length > 0) {
-          const filteredSubItems = filterMenuItems(item.subItems)
-          // Parent is visible only if it has visible sub-items
-          if (filteredSubItems.length > 0) {
-            return { ...item, subItems: filteredSubItems }
-          }
-          return null
-        }
-
-        // If it's a leaf item, check permission if required
-        if (item.checkPermission) {
-          const entity = item.permissionEntity ?? item.title.slice(5).replace(/_/g, '-')
-          return hasPermission(entity, 'index') ? item : null
-        }
-
-        return item
-      })
-      .filter((item): item is MenuItem => item !== null)
-  }
-
-  const groups = [
-    {
-      label: t('menu.dashboard'),
-      items: filterMenuItems(getDashboardMenuItems),
-    },
-    {
-      label: t('menu.earning'),
-      items: filterMenuItems(getEarningMenuItems),
-    },
-    {
-      label: t('menu.productsAndShowRooms'),
-      items: filterMenuItems(getProductsAndShowRoomsMenuItems),
-    },
-    {
-      label: t('menu.users'),
-      items: filterMenuItems(usersMenuItems),
-    },
-    {
-      label: t('menu.settings'),
-      items: filterMenuItems(getSettingsMenuItems(unreadCount || 0)),
-    },
-  ].filter((group) => group.items.length > 0)
+  const groups = getNavigationGroups(unreadCount || 0)
 
   return (
     <Sidebar
-      side={isRTL ? 'right' : 'left'}
-      collapsible="icon"
-      className="fixed h-screen"
+      side={side}
+      variant={variant}
+      collapsible={collapsible}
+      className="h-screen"
     >
       <SidebarHeader className="group">
         <SidebarMenu>
-          <SidebarMenuItem className="flex justify-between items-center">
+          <SidebarMenuItem className="group/header relative flex min-h-12 items-center justify-between">
             <Link
               to="/"
               className={cn(
-                'grow !cursor-pointer',
-                state === 'collapsed' ? 'group-hover:hidden flex' : 'flex'
+                'flex min-w-0 grow !cursor-pointer transition-opacity',
+                state === 'collapsed' && 'md:group-hover/header:pointer-events-none md:group-hover/header:opacity-0',
               )}
             >
               <SidebarMenuButton
@@ -152,17 +112,17 @@ export function AppSidebar() {
               >
                 <div
                   className={cn(
-                    'data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground relative flex',
+                    'relative flex items-center data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground',
                     state === 'collapsed' ? '' : 'gap-2',
                   )}
                 >
                   <div
                     className={cn(
-                      'rounded-full bg-gradient-primary flex items-center justify-center shrink-0 shadow-glow',
+                      'flex shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm',
                       state !== 'expanded' ? 'size-8' : 'size-9',
                     )}
                   >
-                    <Logo className="w-5 h-5 text-white" />
+                    <Logo className="size-5 text-current" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <h2 className="font-semibold truncate">{t('menu.dashboard')}</h2>
@@ -171,12 +131,30 @@ export function AppSidebar() {
                 </div>
               </SidebarMenuButton>
             </Link>
-            <SidebarTrigger
-              className={cn(
-                'p-2 size-8 rounded-md transition-colors cursor-w-resize',
-                state === 'expanded' ? 'ms-auto block' : 'hidden group-hover:block mx-auto',
-              )}
-            />
+            {collapsible !== 'none' && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <SidebarTrigger
+                      aria-label={t('themeCustomizer.toggleSidebar', { defaultValue: 'Toggle sidebar' })}
+                      className={cn(
+                        'size-8 rounded-md transition-all',
+                        state === 'expanded'
+                          ? 'ms-auto cursor-w-resize'
+                          : 'pointer-events-none absolute inset-0 m-auto opacity-0 md:group-hover/header:pointer-events-auto md:group-hover/header:opacity-100',
+                      )}
+                    />
+                  }
+                />
+                <TooltipContent
+                  side={side === 'left' ? 'right' : 'left'}
+                  align="center"
+                  className="dashboard-tooltip"
+                >
+                  {t('themeCustomizer.toggleSidebar', { defaultValue: 'Toggle sidebar' })}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -184,12 +162,16 @@ export function AppSidebar() {
       <SidebarContent>
         {groups.map((group, index) => (
           <div key={group.label}>
-            <SidebarGroup>
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroup className="p-0">
+              <SidebarGroupLabel>{t(group.label)}</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className='gap-2'>
+                <SidebarMenu className="gap-0.5 group-data-[collapsible=icon]:items-center">
                   {group.items.map((item) => (
-                    <MenuItemComponent key={item.title} item={item} />
+                    <MenuItemComponent
+                      key={item.title}
+                      item={item}
+                      tooltipSide={side === 'left' ? 'right' : 'left'}
+                    />
                   ))}
                 </SidebarMenu>
               </SidebarGroupContent>
@@ -204,7 +186,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="w-full data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground" />}>
-                <div className="flex aspect-square bg-gradient-primary size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
                 </div>
                 <div className="grid flex-1 text-start text-sm leading-tight">
@@ -251,6 +233,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      {collapsible !== 'none' && <SidebarRail />}
       <ConfirmModal
         title={t('modals.logout.title')}
         desc={

@@ -1849,5 +1849,59 @@
       "ship": "هل تريد تسجيل شحن البديل؟",
       "complete": "هل تريد إكمال طلب الاستبدال؟"
     }
+  },
+  "commandSearch": {
+    "open": "البحث في التنقل",
+    "title": "البحث في التنقل",
+    "description": "ابحث في عناصر التنقل بلوحة التحكم",
+    "placeholder": "ما الذي تبحث عنه؟"
+  },
+  "themeCustomizer": {
+    "title": "تخصيص المظهر",
+    "description": "خصص ألوان وتخطيط لوحة التحكم.",
+    "open": "تخصيص لوحة التحكم",
+    "toggleSidebar": "تبديل الشريط الجانبي",
+    "theme": "المظهر",
+    "layout": "التخطيط",
+    "reset": "إعادة الضبط",
+    "radius": "استدارة الحواف",
+    "mode": "الوضع",
+    "latinFont": "خط الإنجليزية",
+    "arabicFont": "خط العربية",
+    "modes": { "light": "فاتح", "dark": "داكن", "system": "النظام" },
+    "import": "استيراد CSS للمظهر",
+    "importTitle": "استيراد مظهر مخصص",
+    "importDescription": "ألصق متغيرات CSS من كتلتي :root و .dark. تُقبل متغيرات المظهر المدعومة فقط.",
+    "brandColors": "ألوان العلامة",
+    "clearColor": "مسح اللون",
+    "choosePreset": "اختر مظهراً",
+    "random": "مظهر عشوائي",
+    "sidebarVariant": "شكل الشريط الجانبي",
+    "sidebarCollapse": "طي الشريط الجانبي",
+    "sidebarSide": "موضع الشريط الجانبي",
+    "saving": "جارٍ الحفظ…",
+    "saved": "تم الحفظ",
+    "saveError": "فشل الحفظ — أعد المحاولة",
+    "accountSynced": "متزامن مع حسابك",
+    "advanced": "تخصيص متقدم",
+    "advancedDescription": "أنشئ المزيد من المظاهر في محرر TweakCN ثم استورد CSS هنا.",
+    "openTweakcn": "فتح TweakCN",
+    "options": {
+      "sidebar": "افتراضي", "floating": "عائم", "inset": "داخلي",
+      "offcanvas": "خارج الشاشة", "icon": "أيقونات", "none": "مفتوح دائماً",
+      "left": "يسار", "right": "يمين"
+    },
+    "colors": {
+      "primary": "الأساسي", "primary-foreground": "نص الأساسي",
+      "secondary": "الثانوي", "secondary-foreground": "نص الثانوي",
+      "accent": "التمييز", "accent-foreground": "نص التمييز",
+      "muted": "الخافت", "muted-foreground": "نص الخافت"
+    },
+    "errors": {
+      "invalidCss": "ملف CSS للمظهر غير صالح.",
+      "missingThemeBlocks": "أضف كتلة :root أو .dark للمظهر.",
+      "unsupportedVariable": "يحتوي المظهر على متغير CSS غير مدعوم.",
+      "invalidVariableValue": "يحتوي المظهر على قيمة غير صالحة لمتغير CSS."
+    }
   }
 }

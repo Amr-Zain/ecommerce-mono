@@ -1,4 +1,3 @@
-import { isPathActive } from '@/util/helpers'
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { Link, useLocation } from '@tanstack/react-router'
@@ -31,18 +30,26 @@ import {
 } from '@ecommerce/ui/components/dropdown-menu'
 
 import { useTranslation } from 'react-i18next'
+import type { MenuItem as IMenuItem } from '@/types/components/sidebar'
+import { isPathActive } from '@/util/helpers'
 import { cn } from '@/lib/utils'
-import { MenuItem as IMenuItem } from '@/types/components/sidebar'
 
-export const MenuItem = ({ item }: { item: IMenuItem }) => {
+export const MenuItem = ({
+  item,
+  tooltipSide,
+}: {
+  item: IMenuItem
+  tooltipSide: 'left' | 'right'
+}) => {
   const pathname = useLocation().pathname
-  const hasSubItems = item.subItems && item.subItems.length > 0
+  const subItems = item.subItems ?? []
+  const hasSubItems = subItems.length > 0
   const isActive = useMemo(
     () => isPathActive(item.url, pathname),
     [item.url, pathname],
   )
   const { i18n, t } = useTranslation()
-  const { state } = useSidebar()
+  const { isMobile, setOpenMobile, state } = useSidebar()
 
   const isRTL = useMemo(() => i18n.dir() === 'rtl', [i18n])
   const isCollapsed = state === 'collapsed'
@@ -50,6 +57,15 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
   const translatedTitle = useMemo(() => t(item.title), [item.title, t])
 
   const Icon = item.icon
+  const closeMobileSidebar = () => {
+    if (isMobile) setOpenMobile(false)
+  }
+  const tooltip = {
+    children: translatedTitle,
+    side: tooltipSide,
+    align: 'center' as const,
+    className: 'dashboard-tooltip',
+  }
 
 
   if (hasSubItems) {
@@ -58,7 +74,7 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
       return (
         <SidebarMenuItem>
           <DropdownMenu>
-            <DropdownMenuTrigger render={<SidebarMenuButton isActive={isActive} tooltip={translatedTitle} className="cursor-pointer" />}>
+            <DropdownMenuTrigger render={<SidebarMenuButton isActive={isActive} tooltip={tooltip} className="cursor-pointer" />}>
               {Icon && <Icon />}
               <span className="truncate">{translatedTitle}</span>
             </DropdownMenuTrigger>
@@ -73,11 +89,11 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-              {item?.subItems?.map((subItem: IMenuItem) => {
+              {subItems.map((subItem: IMenuItem) => {
                 const subIsActive = isPathActive(subItem.url, pathname)
                 const translatedSubTitle = t(subItem.title)
                 return (
-                  <DropdownMenuItem key={subItem.title} render={<Link to={subItem.url} preload="intent" className="w-full" />} className={cn("justify-start text-start", subIsActive && 'bg-accent font-medium')}>
+                  <DropdownMenuItem key={subItem.title} render={<Link to={subItem.url} preload="intent" className="w-full" onClick={closeMobileSidebar} />} className={cn("justify-start text-start", subIsActive && 'bg-accent font-medium')}>
                     {translatedSubTitle}
                   </DropdownMenuItem>
                 )
@@ -96,8 +112,8 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
         defaultOpen={isActive}
         className="group/collapsible"
       >
-        <SidebarMenuItem data-expanded={state === 'expanded'}>
-          <CollapsibleTrigger render={<SidebarMenuButton isActive={isActive} tooltip={translatedTitle} className="cursor-pointer justify-between" />}>
+        <SidebarMenuItem data-expanded>
+          <CollapsibleTrigger render={<SidebarMenuButton isActive={isActive} tooltip={tooltip} className="cursor-pointer justify-between" />}>
             <span className="flex items-center gap-2 min-w-0">
               {Icon && <Icon />}
               <span className="truncate">{translatedTitle}</span>
@@ -115,14 +131,14 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
             </span>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <SidebarMenuSub>
-              {item?.subItems?.map((subItem) => {
+            <SidebarMenuSub className="gap-0.5">
+              {subItems.map((subItem) => {
                 const subIsActive = isPathActive(subItem.url, pathname)
                 const translatedSubTitle = t(subItem.title)
                 return (
                   <SidebarMenuSubItem key={subItem.title}>
                     <SidebarMenuSubButton asChild isActive={subIsActive}>
-                      <Link to={subItem.url} preload="intent">
+                      <Link to={subItem.url} preload="intent" onClick={closeMobileSidebar}>
                         <span>{translatedSubTitle}</span>
                       </Link>
                     </SidebarMenuSubButton>
@@ -138,8 +154,8 @@ export const MenuItem = ({ item }: { item: IMenuItem }) => {
 
   return (
     <SidebarMenuItem key={item.title}>
-      <SidebarMenuButton asChild isActive={isActive} tooltip={translatedTitle}>
-        <Link to={item.url} preload="intent" className="cursor-pointer">
+      <SidebarMenuButton asChild isActive={isActive} tooltip={tooltip}>
+        <Link to={item.url} preload="intent" className="cursor-pointer" onClick={closeMobileSidebar}>
           {Icon && <Icon />}
           <span className="truncate">{translatedTitle}</span>
           {item.badge && (

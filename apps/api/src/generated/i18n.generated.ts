@@ -219,6 +219,9 @@ export type I18nTranslations = {
         "order not found": string;
         "product not found": string;
         "productvariant not found": string;
+        "dashboard_theme_variables_limit": string;
+        "dashboard_theme_variable_unsupported": string;
+        "dashboard_theme_variable_invalid": string;
     };
     "validation": {
         "NOT_EMPTY": string;
@@ -233,6 +236,7 @@ export type I18nTranslations = {
         "MAX_LENGTH": string;
         "INVALID_MEDIA_MODEL": string;
         "IS_ARRAY": string;
+        "IS_OBJECT": string;
         "INVALID_URL": string;
         "MIN_FILE_SIZE": string;
         "IS_NOT_EMPTY": string;
@@ -243,6 +247,7 @@ export type I18nTranslations = {
         "IS_POSITIVE": string;
         "IS_ENUM": string;
         "INVALID_DATE": string;
+        "INVALID_THEME_RADIUS": string;
         "DATE_NOT_PAST": string;
     };
 };

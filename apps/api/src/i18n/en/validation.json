@@ -11,6 +11,7 @@
   "MAX_LENGTH": "{property} must be at most {constraints.0} characters",
   "INVALID_MEDIA_MODEL": "{property} must be a valid entity name",
   "IS_ARRAY": "{property} must be an array",
+  "IS_OBJECT": "{property} must be an object",
   "INVALID_URL": "{property} must be a valid url",
   "MIN_FILE_SIZE": "{property} must be at least {constraints.0} mb",
   "IS_NOT_EMPTY": "{property} required",
@@ -21,5 +22,6 @@
   "IS_POSITIVE": "{property} must be a positive number",
   "IS_ENUM": "{property} must be a valid value",
   "INVALID_DATE": "{property} must be a valid date",
+  "INVALID_THEME_RADIUS": "{property} must be a valid radius between 0 and 2rem",
   "DATE_NOT_PAST": "{property} must be today or a future date"
 }
