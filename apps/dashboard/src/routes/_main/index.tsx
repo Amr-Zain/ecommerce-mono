@@ -12,7 +12,7 @@ import { Dashboard } from '@/components/pagesComponents/Dashboard'
 import { DashboardSkeleton } from '@/components/pagesComponents/Dashboard/Skeleton'
 import useFetch from '@/hooks/UseFetch'
 import { hasPermission } from '@/lib/utils'
-import { useAuthStore } from '@/stores/authStore'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
 import { prefetchOptions } from '@/util/preFetcher'
 import { queryKeys } from '@/util/queryKeysFactory'
 
@@ -59,9 +59,10 @@ export const Route = createFileRoute('/_main/')({
 })
 
 function Index() {
-  const hasHomePermission = useAuthStore((state) =>
-    (state.user?.permissions['dashboard-home'] || []).includes('index'),
-  )
+  const { data: user } = useDashboardProfile()
+  const hasHomePermission = (
+    user?.permissions['dashboard-home'] || []
+  ).includes('index')
   const search = useSearch({ from: '/_main/' })
   const dashboardParams: DashboardQueryParams = {
     preset: search.preset,

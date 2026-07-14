@@ -1,14 +1,15 @@
+import { createFileRoute } from '@tanstack/react-router'
+
+import type { RouterContext } from '@/main'
+import type { ApiResponse } from '@/types/api/http'
+import type { StaticPage } from '@/types/api/staticPages'
 import { TableLoader } from '@/components/common/table/TableLoader'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
 import StaticPages from '@/components/pagesComponents/StaticPages'
 import useFetch from '@/hooks/UseFetch'
-import { RouterContext } from '@/main'
-import { ApiResponse } from '@/types/api/http'
-import { StaticPage } from '@/types/api/staticPages'
+import { searchParamsValidate } from '@/types/api/general'
 import { prefetchOptions } from '@/util/preFetcher'
 import { queryKeys } from '@/util/queryKeysFactory'
-import { createFileRoute } from '@tanstack/react-router'
-
 import { routePermission } from '@/lib/utils'
 
 export const Route = createFileRoute('/_main/static-pages/')({
@@ -17,18 +18,13 @@ export const Route = createFileRoute('/_main/static-pages/')({
     return context
   },
   component: Index,
-  validateSearch: (search: Record<string, unknown>): { search?: string } => {
-    return {
-      search: search.search as string,
-    }
-  },
-  pendingComponent: () => <TableLoader breadcrumbs={{ entityKey: 'menu.pages' }} />,
-  loaderDeps: ({ search }) => ({
-    search: {
-      search: search.search as string,
-    }
-  }),
-  loader: async ({ context, deps: { search } }) => {
+  validateSearch: (search: Record<string, unknown>) =>
+    searchParamsValidate(search),
+  pendingComponent: () => (
+    <TableLoader breadcrumbs={{ entityKey: 'menu.pages' }} />
+  ),
+  loaderDeps: ({ search }) => ({ search: searchParamsValidate(search) }),
+  loader: ({ context, deps: { search } }) => {
     const { queryClient } = context as RouterContext
     queryClient.ensureQueryData(
       prefetchOptions({
@@ -38,12 +34,11 @@ export const Route = createFileRoute('/_main/static-pages/')({
       }),
     )
   },
-  //beforeLoad:({location})=> checkPermission(/* location.href */'users.index'),
 })
 
 function Index() {
   const search = Route.useLoaderDeps().search
-  const { data } = useFetch<ApiResponse<StaticPage[], 'static_pages'>>({
+  const { data } = useFetch<ApiResponse<Array<StaticPage>, 'static_pages'>>({
     queryKey: queryKeys.pages.filterd(search),
     endpoint: `static-pages?paginate=1`,
     suspense: true,
@@ -52,7 +47,7 @@ function Index() {
   return (
     <>
       <SmartBreadcrumbs entityKey="menu.static-pages" />
-      <StaticPages data={data!} />
+      <StaticPages data={data} />
     </>
   )
 }

@@ -15,7 +15,7 @@ export interface DashboardRequestOptions extends HttpRequestOptions {
 /**
  * Dashboard HTTP adapter.
  * Uses the existing Axios instance which already handles:
- * - Bearer token injection from Zustand authStore
+ * - Bearer token injection from the in-memory dashboard session
  * - 401 → refresh token rotation
  * - Accept-Language header
  */

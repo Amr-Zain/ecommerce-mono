@@ -2,7 +2,6 @@ import { CountryPhoneCodes } from './country-phone-code';
 import { twMerge } from "tailwind-merge";
 import { type ClassValue, clsx } from "clsx";
 import { ColumnFiltersState } from '@tanstack/react-table';
-import { useAuthStore } from '@/stores/authStore';
 import { redirect } from '@tanstack/react-router'
 import { PickedAction } from '@/hooks/useStatusMutations';
 import { TFn } from '@/lib/schema/validation';

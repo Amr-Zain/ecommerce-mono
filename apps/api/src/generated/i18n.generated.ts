@@ -19,6 +19,7 @@ export type I18nTranslations = {
         "auth_logged_out_all_devices": string;
         "auth_password_reset_code_sent": string;
         "auth_password_reset_successful": string;
+        "auth_password_changed_successfully": string;
         "auth_phone_verified_successfully": string;
         "auth_session_revoked_successfully": string;
         "notification_update_title": string;

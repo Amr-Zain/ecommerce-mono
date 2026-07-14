@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Edit01Icon, Delete01Icon } from '@hugeicons/core-free-icons'
 import { HasPermission } from '@/components/common/HasPermission'
-import type { PermissionAction } from '@/stores/authStore'
+import type { PermissionAction } from '@/types/auth'
 
 type RouterTo = LinkProps<RegisteredRouter>['to']
 

@@ -18,7 +18,7 @@ import { queryClient } from '@/components/providers/tabstackQueryProvider'
 import axiosInstance from '@/services/instance'
 import { toast } from 'sonner'
 import { i18n as I18nType } from 'i18next'
-import { useAuthStore } from '@/stores/authStore'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
 import { useNotificationStream } from '@/hooks/useNotificationStream'
 import { API_BASE_URL } from '@/lib/env'
 
@@ -55,7 +55,8 @@ const PopoverNotifications = () => {
   const { t, i18n } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
-  const userType = useAuthStore((state) => state.user?.user_type)
+  const { data: user } = useDashboardProfile()
+  const userType = user?.user_type
 
   useNotificationStream(!!userType)
 

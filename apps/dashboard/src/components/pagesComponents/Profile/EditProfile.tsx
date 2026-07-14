@@ -1,16 +1,16 @@
 import { useTranslation } from 'react-i18next'
-import AppForm from '@/components/common/form/AppForm'
-import { FieldProp } from '@/types/components/form'
-import { useMutate } from '@/hooks/UseMutate'
-import { useAuthStore, UserAuth } from '@/stores/authStore'
-
-import {
-  buildEditProfileSchema,
-  EditProfileFormData,
-} from '@/lib/schema'
-import { generateFinalOut } from '@/util/helpers'
 import { useState } from 'react'
 import type { ApiResponseBase } from '@/types/api/http'
+import type { DashboardProfileResponse } from '@/types/api/auth'
+import type { FieldProp } from '@/types/components/form'
+import type { EditProfileFormData } from '@/lib/schema'
+import AppForm from '@/components/common/form/AppForm'
+import { useMutate } from '@/hooks/UseMutate'
+
+import { buildEditProfileSchema } from '@/lib/schema'
+import { toMediaValue } from '@/util/helpers'
+import { ADMIN_AUTH_HEADERS } from '@/lib/dashboard-session'
+import { queryKeys } from '@/util/queryKeysFactory'
 
 export default function EditProfileForm({
   initialValues,
@@ -19,13 +19,15 @@ export default function EditProfileForm({
 }) {
   const { t } = useTranslation()
   const [currentPhoneLimit, setCurrentPhoneLimit] = useState<number | null>(0)
-  const [phoneStartingNumber, setPhoneStartingNumber] = useState<number | null>(0)
+  const [phoneStartingNumber, setPhoneStartingNumber] = useState<number | null>(
+    0,
+  )
 
-  const fields: FieldProp<EditProfileFormData>[] = [
+  const fields: Array<FieldProp<EditProfileFormData>> = [
     {
       type: 'imgUploader',
       name: 'image',
-      label: 'Profle Image',
+      label: t('Form.labels.image'),
       span: 2,
       inputProps: {
         maxFiles: 1,
@@ -45,6 +47,7 @@ export default function EditProfileForm({
       name: 'email',
       label: t('Form.labels.email'),
       placeholder: t('Form.labels.emailPlaceholder'),
+      inputProps: { readOnly: true },
     },
 
     {
@@ -55,37 +58,67 @@ export default function EditProfileForm({
         phoneCodeName: 'phone_code',
         phoneNumberName: 'phone',
         setCurrentPhoneLimit,
-        setPhoneStartingNumber
+        setPhoneStartingNumber,
       },
       span: 2,
     },
   ]
-  const updateUser = useAuthStore((state) => state.updateUser)
-  const { mutate, isPending } = useMutate<ApiResponseBase<UserAuth>>({
-    mutationKey: ['profile'],
+  const profileMutation = useMutate<
+    ApiResponseBase<DashboardProfileResponse>,
+    { name: string; phone: string; phone_code: string }
+  >({
+    mutationKey: ['profile', 'update'],
     endpoint: 'profile',
-    onSuccess: (data) => {
-      updateUser(data.data)
-    },
-    method: 'patch',
+    general: true,
+    authRequired: true,
+    headers: ADMIN_AUTH_HEADERS,
+    invalidates: [queryKeys.auth.profile()],
+    method: 'put',
+  })
+  const imageMutation = useMutate<
+    ApiResponseBase<DashboardProfileResponse>,
+    { image: string }
+  >({
+    mutationKey: ['profile', 'image'],
+    endpoint: 'profile/image',
+    general: true,
+    authRequired: true,
+    headers: ADMIN_AUTH_HEADERS,
+    invalidates: [queryKeys.auth.profile()],
+    method: 'put',
   })
 
-  const handleSubmit = (values: EditProfileFormData) => {
-    if (values?.image && typeof values.image === 'string' && values.image.startsWith('http')) {
-      delete values.image
-      delete initialValues.image
+  const handleSubmit = async (values: EditProfileFormData) => {
+    await profileMutation.mutateAsync({
+      name: values.full_name,
+      phone: values.phone,
+      phone_code: values.phone_code,
+    })
+
+    const mediaValue = values.image ? toMediaValue(values.image) : undefined
+    if (
+      mediaValue &&
+      typeof mediaValue !== 'object' &&
+      !String(mediaValue).startsWith('http') &&
+      String(mediaValue) !== initialValues.image
+    ) {
+      await imageMutation.mutateAsync({ image: String(mediaValue) })
     }
-    mutate(generateFinalOut(initialValues, values))
   }
 
   return (
     <div>
       <AppForm<EditProfileFormData>
-        schema={buildEditProfileSchema(t, currentPhoneLimit, phoneStartingNumber) as any}
+        schema={buildEditProfileSchema(
+          t,
+          currentPhoneLimit,
+          phoneStartingNumber,
+        )}
         fields={fields}
         defaultValues={initialValues}
+        values={initialValues}
         onSubmit={handleSubmit}
-        isLoading={isPending}
+        isLoading={profileMutation.isPending || imageMutation.isPending}
         gridColumns={2}
         spacing="md"
         className="bg-card border border-border rounded-lg shadow-sm"

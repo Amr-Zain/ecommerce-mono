@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/authStore'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
+import { getDashboardAccessToken } from '@/lib/dashboard-session'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { toast } from 'sonner'
 import { ADMIN_API_BASE_URL } from '@/lib/env'
@@ -102,7 +103,8 @@ function getNotificationLink(notification: NotificationPayload): string | null {
 
 export function useNotificationStream(enabled = true) {
   const queryClient = useQueryClient()
-  const token = useAuthStore((state) => state.token)
+  useDashboardProfile()
+  const token = getDashboardAccessToken()
   const abortRef = useRef<AbortController | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 

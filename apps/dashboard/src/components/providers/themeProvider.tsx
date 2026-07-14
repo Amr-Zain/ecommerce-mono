@@ -4,7 +4,7 @@ import type { ApiResponseBase } from '@/types/api/http'
 import type { AppearanceSaveStatus, DashboardPreferences, ThemeMode, ThemeVariables } from '@/types/dashboard-preferences'
 import useFetch from '@/hooks/UseFetch'
 import { useMutate } from '@/hooks/UseMutate'
-import { useAuthStore } from '@/stores/authStore'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
 import { createDefaultDashboardPreferences } from '@/types/dashboard-preferences'
 import { allowedThemeVariables, getDashboardFontFamily, getThemePreset } from '@/components/theme-customizer/theme-config'
 
@@ -33,7 +33,7 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const user = useAuthStore((state) => state.user)
+  const { data: user } = useDashboardProfile()
   const userId = user?.id
   const language = user?.settings.language
   const cacheKey = userId ? `${storageKey}:${userId}` : storageKey
@@ -217,7 +217,10 @@ export function normalizeDashboardPreferences(
     mode: oneOf(record.mode, ['light', 'dark', 'system'], defaults.mode),
     theme: {
       source: oneOf(theme.source, ['default', 'shadcn', 'tweakcn', 'imported'], defaults.theme.source),
-      presetId: stringOrNull(theme.presetId ?? theme.preset_id),
+      presetId: stringOrNull(
+        theme.presetId !== undefined ? theme.presetId : theme.preset_id,
+        defaults.theme.presetId,
+      ),
       customVariables: {
         light: themeVariables(customVariables.light),
         dark: themeVariables(customVariables.dark),
@@ -250,8 +253,8 @@ function oneOf<T extends string>(value: unknown, options: ReadonlyArray<T>, fall
   return typeof value === 'string' && options.includes(value as T) ? value as T : fallback
 }
 
-function stringOrNull(value: unknown): string | null {
-  return typeof value === 'string' ? value : null
+function stringOrNull(value: unknown, fallback: string | null): string | null {
+  return value === null ? null : typeof value === 'string' ? value : fallback
 }
 
 function themeVariables(value: unknown): ThemeVariables {

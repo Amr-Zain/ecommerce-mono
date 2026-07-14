@@ -8,21 +8,20 @@ import {
   TooltipTrigger,
 } from './tooltip'
 import { useTheme } from '@/components/providers/themeProvider'
-import gif from "@/assets/logo-animation.gif"
 
 export function ThemeToggle() {
-  const { setTheme, theme } = useTheme()
+  const { isDarkMode, setTheme } = useTheme()
   const { startTransition } = useThemeTransition()
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     setMounted(true)
   }, [])
   const handleThemeToggle = useCallback(() => {
-    const newMode = theme === 'dark' ? 'light' : 'dark'
+    const newMode = isDarkMode ? 'light' : 'dark'
     startTransition(() => {
       setTheme(newMode)
     })
-  }, [setTheme, startTransition, theme])
+  }, [isDarkMode, setTheme, startTransition])
   const { t } = useTranslation()
   if (!mounted) {
     return null
@@ -31,12 +30,11 @@ export function ThemeToggle() {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger >
+        <TooltipTrigger>
           <ThemeToggleButton
-            theme={theme as any}
+            theme={isDarkMode ? 'dark' : 'light'}
             onClick={handleThemeToggle}
-            variant="gif"
-            url={gif}
+            variant="circle"
           />
         </TooltipTrigger>
         <TooltipContent>

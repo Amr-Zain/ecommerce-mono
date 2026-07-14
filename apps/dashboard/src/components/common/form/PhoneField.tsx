@@ -29,6 +29,8 @@ import { CountryDetails } from '@/types/api/country'
 import useFetch from '@/hooks/UseFetch'
 import { ApiResponseBase } from '@/types/api/http'
 import { Image } from '@/types/api/general'
+import { dashboardFormControlClassName } from './controlStyles'
+import { cn } from '@/lib/utils'
 
 interface CountryCodeData {
   id: number
@@ -192,7 +194,11 @@ function PhoneField<T extends FieldValues>({
             >
               <FormControl>
                 <SelectTrigger
-                  className={`text-text p-1 sm:p-4 ${codeClass} bg-background! h-10!`}
+                  className={cn(
+                    dashboardFormControlClassName,
+                    'w-full justify-between bg-background! dark:bg-input/30!',
+                    codeClass,
+                  )}
                   dir={t('lang')}
                 >
                   <SelectValue placeholder={t('Form.labels.phoneCode')} />

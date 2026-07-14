@@ -4,23 +4,18 @@ import { useCallback } from 'react';
 import { Button } from './button';
 import { cn } from '../../lib/utils';
 
-type AnimationVariant = 
-  | 'circle' 
-  | 'circle-blur' 
-  | 'gif'
-  | 'polygon';
-type StartPosition = 
-  | 'center' 
-  | 'top-left' 
-  | 'top-right' 
-  | 'bottom-left' 
+type AnimationVariant = 'circle' | 'circle-blur' | 'polygon';
+type StartPosition =
+  | 'center'
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
   | 'bottom-right';
 export interface ThemeToggleButtonProps {
   theme?: 'light' | 'dark';
   showLabel?: boolean;
   variant?: AnimationVariant;
   start?: StartPosition;
-  url?: string; // For gif variant
   className?: string;
   onClick?: () => void;
 }
@@ -29,17 +24,15 @@ export const ThemeToggleButton = ({
   showLabel = false,
   variant = 'circle',
   start = 'center',
-  url,
   className,
   onClick,
 }: ThemeToggleButtonProps) => {
-  
   const handleClick = useCallback(() => {
     // Inject animation styles for this specific transition
     const styleId = `theme-transition-${Date.now()}`;
     const style = document.createElement('style');
     style.id = styleId;
-    
+
     // Generate animation CSS based on variant
     let css = '';
     const positions = {
@@ -49,10 +42,12 @@ export const ThemeToggleButton = ({
       'bottom-left': 'bottom left',
       'bottom-right': 'bottom right',
     };
-    
+
     if (variant === 'circle') {
-      const cx = start === 'center' ? '50' : start.includes('left') ? '0' : '100';
-      const cy = start === 'center' ? '50' : start.includes('top') ? '0' : '100';
+      const cx =
+        start === 'center' ? '50' : start.includes('left') ? '0' : '100';
+      const cy =
+        start === 'center' ? '50' : start.includes('top') ? '0' : '100';
       css = `
         @supports (view-transition-name: root) {
           ::view-transition-old(root) { 
@@ -73,8 +68,10 @@ export const ThemeToggleButton = ({
         }
       `;
     } else if (variant === 'circle-blur') {
-      const cx = start === 'center' ? '50' : start.includes('left') ? '0' : '100';
-      const cy = start === 'center' ? '50' : start.includes('top') ? '0' : '100';
+      const cx =
+        start === 'center' ? '50' : start.includes('left') ? '0' : '100';
+      const cy =
+        start === 'center' ? '50' : start.includes('top') ? '0' : '100';
       css = `
         @supports (view-transition-name: root) {
           ::view-transition-old(root) { 
@@ -93,40 +90,6 @@ export const ThemeToggleButton = ({
             to {
               clip-path: circle(150% at ${cx}% ${cy}%);
               filter: blur(0);
-            }
-          }
-        }
-      `;
-    } else if (variant === 'gif' && url) {
-      css = `
-        @supports (view-transition-name: root) {
-          ::view-transition-old(root) {
-            animation: fade-out 0.4s ease-out;
-          }
-          ::view-transition-new(root) {
-            animation: gif-reveal 2.5s cubic-bezier(0.4, 0, 0.2, 1);
-            mask-image: url('${url}');
-            mask-size: 0%;
-            mask-repeat: no-repeat;
-            mask-position: center;
-          }
-          @keyframes fade-out {
-            to {
-              opacity: 0;
-            }
-          }
-          @keyframes gif-reveal {
-            0% {
-              mask-size: 0%;
-            }
-            20% {
-              mask-size: 35%;
-            }
-            60% {
-              mask-size: 35%;
-            }
-            100% {
-              mask-size: 300%;
             }
           }
         }
@@ -159,11 +122,11 @@ export const ThemeToggleButton = ({
         }
       `;
     }
-    
+
     if (css) {
       style.textContent = css;
       document.head.appendChild(style);
-      
+
       // Clean up animation styles after transition
       setTimeout(() => {
         const styleEl = document.getElementById(styleId);
@@ -172,10 +135,10 @@ export const ThemeToggleButton = ({
         }
       }, 3000);
     }
-    
+
     // Call the onClick handler if provided
     onClick?.();
-  }, [onClick, variant, start, url, theme]);
+  }, [onClick, variant, start, theme]);
   return (
     <Button
       variant="ghost"
@@ -184,7 +147,7 @@ export const ThemeToggleButton = ({
       className={cn(
         'relative overflow-hidden transition-all',
         showLabel && 'gap-2',
-        className
+        className,
       )}
       aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
     >
@@ -194,9 +157,7 @@ export const ThemeToggleButton = ({
         <Moon className="h-[1.2rem] w-[1.2rem]" />
       )}
       {showLabel && (
-        <span className="text-sm">
-          {theme === 'light' ? 'Light' : 'Dark'}
-        </span>
+        <span className="text-sm">{theme === 'light' ? 'Light' : 'Dark'}</span>
       )}
     </Button>
   );

@@ -1,17 +1,18 @@
 import React from 'react'
-import {
-  SortingState,
+import { useNavigate, useRouter, useSearch } from '@tanstack/react-router'
+import type {
   ColumnFiltersState,
-  VisibilityState,
   PaginationState,
+  SortingState,
+  VisibilityState,
 } from '@tanstack/react-table'
-import { useSearch, useNavigate, useRouter } from '@tanstack/react-router'
-import { DataTableSearchParams } from '@/types/components/table'
 import type { Meta } from '@/types/api/http'
+import type { DataTableSearchParams } from '@/types/components/table'
+import { getPaginationLimit, getPaginationPage } from '@/util/pagination'
 
 interface UseDataTableStateProps {
   enableUrlState: boolean
-  pageSizeOptions: number[]
+  pageSizeOptions: Array<number>
   meta?: Meta
   initialState?: {
     sorting?: SortingState
@@ -30,23 +31,21 @@ export function useDataTableState({
 }: UseDataTableStateProps) {
   const navigate = useNavigate()
   const router = useRouter()
-  const urlParams = enableUrlState
-    ? (useSearch({} as any) as DataTableSearchParams)
-    : EMPTY_PARAMS
+  const urlParams = enableUrlState ? useSearch({} as any) : EMPTY_PARAMS
 
   const isServerPaginated = !!meta
 
   const computeInitialPagination = React.useCallback((): PaginationState => {
     if (enableUrlState) {
       return {
-        pageIndex: ((urlParams.page as number) || 1) - 1,
-        pageSize: (urlParams.limit as number) || pageSizeOptions[0],
+        pageIndex: (Number(urlParams.page) || 1) - 1,
+        pageSize: Number(urlParams.limit) || pageSizeOptions[0],
       }
     }
-    if (isServerPaginated && meta) {
+    if (meta) {
       return {
-        pageIndex: Math.max(0, (meta.current_page ?? 1) - 1),
-        pageSize: meta.per_page ?? pageSizeOptions[0],
+        pageIndex: Math.max(0, getPaginationPage(meta) - 1),
+        pageSize: getPaginationLimit(meta, pageSizeOptions[0]),
       }
     }
     return (
@@ -59,21 +58,26 @@ export function useDataTableState({
     pageSizeOptions,
     isServerPaginated,
     meta?.current_page,
+    meta?.page,
     meta?.per_page,
+    meta?.limit,
     initialState?.pagination,
   ])
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    initialState?.columnFilters || []
+    initialState?.columnFilters || [],
   )
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({})
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = React.useState<
+    Record<string, boolean>
+  >({})
   const [globalFilter, setGlobalFilter] = React.useState<string>(
-    (urlParams.search as string) || ''
+    (urlParams.search as string) || '',
   )
   const [paginationState, setPaginationState] = React.useState<PaginationState>(
-    computeInitialPagination
+    computeInitialPagination,
   )
 
   const updateUrl = React.useCallback(
@@ -93,21 +97,28 @@ export function useDataTableState({
 
       navigate({ search: next as any, replace: true })
     },
-    [enableUrlState, navigate, router.state.location.search]
+    [enableUrlState, navigate, router.state.location.search],
   )
 
   React.useEffect(() => {
-    if (!isServerPaginated || !meta) return
+    if (!meta || enableUrlState) return
     const desired: PaginationState = {
-      pageIndex: Math.max(0, (meta.current_page ?? 1) - 1),
-      pageSize: meta.per_page ?? paginationState.pageSize,
+      pageIndex: Math.max(0, getPaginationPage(meta) - 1),
+      pageSize: getPaginationLimit(meta, paginationState.pageSize),
     }
     setPaginationState((curr) =>
       curr.pageIndex !== desired.pageIndex || curr.pageSize !== desired.pageSize
         ? desired
-        : curr
+        : curr,
     )
-  }, [isServerPaginated, meta?.current_page, meta?.per_page])
+  }, [
+    isServerPaginated,
+    enableUrlState,
+    meta?.current_page,
+    meta?.page,
+    meta?.per_page,
+    meta?.limit,
+  ])
 
   React.useEffect(() => {
     if (enableUrlState) {
@@ -116,8 +127,8 @@ export function useDataTableState({
         setGlobalFilter(searchVal)
       }
 
-      const page = (urlParams.page as number) || 1
-      const limit = (urlParams.limit as number) || pageSizeOptions[0]
+      const page = Number(urlParams.page) || 1
+      const limit = Number(urlParams.limit) || pageSizeOptions[0]
       const desiredPagination = {
         pageIndex: page - 1,
         pageSize: limit,

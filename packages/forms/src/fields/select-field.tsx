@@ -181,25 +181,27 @@ function SelectField<T extends FieldValues, TData = unknown>({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            "w-full justify-between h-10 bg-background!",
-            className,
-          )}
-          disabled={disabled}
-          onClick={(e) => {
-            const target = e.target as HTMLElement;
-            if (target.closest("[data-clear-button]")) {
-              e.preventDefault();
-              return;
-            }
-          }}
-        >
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "h-10 w-full justify-between bg-background!",
+              className,
+            )}
+            disabled={disabled}
+            onClick={(e) => {
+              const target = e.target as HTMLElement;
+              if (target.closest("[data-clear-button]")) {
+                e.preventDefault();
+              }
+            }}
+          />
+        }
+      >
           <span className="truncate flex-1 text-start">
             {selectedLabel || (
               <span className="text-muted-foreground">{placeholder}</span>
@@ -226,7 +228,6 @@ function SelectField<T extends FieldValues, TData = unknown>({
               className="h-4 w-4 opacity-50"
             />
           </div>
-        </Button>
       </PopoverTrigger>
 
       <PopoverContent className="p-0 overflow-hidden w-[--radix-popover-trigger-width] min-w-56">

@@ -243,21 +243,32 @@ export const buildEditProfileSchema = (
     .object({
       image: stringOrUidHashObject(t, { required: false }),
       full_name: requiredString(t, labels.name, 2),
-      phone_code: requiredString(t, labels.phoneCode, 1, 3),
+      phone_code: requiredString(t, labels.phoneCode, 1, 3).or(z.literal('')),
       phone: digitsOnlyString(
         t,
         labels.phone,
         currentPhoneLimit ?? 0,
         currentPhoneLimit ?? 0,
-      ),
+      ).or(z.literal('')),
       email: zodString.email(),
     })
     .superRefine((v, ctx) => {
-      if (phoneStartingNumber === null || phoneStartingNumber === undefined)
+      const phone = String(v.phone)
+      if (!phone && !v.phone_code) return
+
+      if (!phone || !v.phone_code) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [!v.phone_code ? 'phone_code' : 'phone'],
+          message: t('Validation.required', {
+            field: !v.phone_code ? labels.phoneCode : labels.phone,
+          }),
+        })
         return
+      }
+
+      if (phoneStartingNumber === null) return
       const requiredPrefix = String(phoneStartingNumber)
-      const phone = String(v.phone ?? '')
-      console.log('pre', requiredPrefix, phone)
 
       if (!phone.startsWith(requiredPrefix)) {
         ctx.addIssue({

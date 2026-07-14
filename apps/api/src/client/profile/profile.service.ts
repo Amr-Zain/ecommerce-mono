@@ -215,7 +215,8 @@ export class ProfileService {
   }
 
   async revokeSession(userId: bigint, sessionId: bigint) {
-    await this.refreshTokensRepository.revokeSession(userId, sessionId);
+    const revoked = await this.refreshTokensRepository.revokeSession(userId, sessionId);
+    if (!revoked) throw new NotFoundException('Active session not found');
     return { message: 'Session revoked successfully' };
   }
 

@@ -89,22 +89,22 @@ export interface DashboardPreferences {
   };
 }
 
-export function createDefaultDashboardPreferences(language?: unknown): DashboardPreferences {
+export function createDefaultDashboardPreferences(_language?: unknown): DashboardPreferences {
   return {
     version: 1,
     mode: 'dark',
     theme: {
-      source: 'default',
-      presetId: null,
+      source: 'tweakcn',
+      presetId: 'violet-bloom',
       customVariables: { light: {}, dark: {} },
       overrides: { light: {}, dark: {} },
     },
-    radius: '0.45rem',
-    fonts: { latin: 'inter', arabic: 'noto-sans-arabic' },
+    radius: '1rem',
+    fonts: { latin: 'poppins', arabic: 'cairo' },
     sidebar: {
       variant: 'inset',
-      collapsible: 'offcanvas',
-      side: language === 'ar' ? 'right' : 'left',
+      collapsible: 'icon',
+      side: 'left',
     },
   };
 }

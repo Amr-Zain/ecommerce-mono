@@ -1,18 +1,22 @@
 import { useTranslation } from 'react-i18next'
+import { useState } from 'react'
+import type { FieldProp } from '@/types/components/form'
+import type {ChangePasswordFormData} from '@/lib/schema';
+import type { ApiResponse } from '@/types/api/http'
 import AppForm from '@/components/common/form/AppForm'
-import { FieldProp } from '@/types/components/form'
 import { useMutate } from '@/hooks/UseMutate'
 import {
-  buildChangePasswordSchema,
-  type ChangePasswordFormData,
+  
+  buildChangePasswordSchema
 } from '@/lib/schema'
-import { ApiResponse } from '@/types/api/http'
+import { ADMIN_AUTH_HEADERS } from '@/lib/dashboard-session'
 
 export default function ChangePasswordForm() {
   const { t } = useTranslation()
-  const schema = buildChangePasswordSchema(t) 
+  const schema = buildChangePasswordSchema(t)
+  const [formVersion, setFormVersion] = useState(0)
 
-  const fields: FieldProp<ChangePasswordFormData>[] = [
+  const fields: Array<FieldProp<ChangePasswordFormData>> = [
     {
       type: 'password',
       name: 'current_password',
@@ -34,19 +38,28 @@ export default function ChangePasswordForm() {
     },
   ]
 
-  const { mutate, isPending } = useMutate<ApiResponse, any>({
-    mutationKey: ['profile/change-password'],
-    endpoint: 'profile/change-password',
-    formData: true,
-    method: 'post',
+  const { mutateAsync, isPending } = useMutate<
+    ApiResponse,
+    { current_password: string; new_password: string }
+  >({
+    mutationKey: ['auth', 'change-password'],
+    endpoint: 'auth/change-password',
+    general: true,
+    authRequired: true,
+    headers: ADMIN_AUTH_HEADERS,
+    onSuccess: () => setFormVersion((version) => version + 1),
   })
 
-  const handleSubmit = (values: ChangePasswordFormData) => {
-    mutate(values)
+  const handleSubmit = async (values: ChangePasswordFormData) => {
+    await mutateAsync({
+      current_password: values.current_password,
+      new_password: values.password,
+    })
   }
 
   return (
     <AppForm<ChangePasswordFormData>
+      key={formVersion}
       schema={schema}
       fields={fields}
       defaultValues={{

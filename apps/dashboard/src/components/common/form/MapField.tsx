@@ -29,6 +29,7 @@ import { ScrollArea } from '@ecommerce/ui/components/scroll-area'
 import { Input } from '@ecommerce/ui/components/input'
 import { MapsLocation01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
+import { dashboardFormControlClassName } from './controlStyles'
 
 export interface Position {
   lat: number
@@ -272,7 +273,7 @@ export default function MapField<T extends FieldValues>({
                     }
                   }}
                   disabled={disabled}
-                  className="ps-10"
+                  className={cn(dashboardFormControlClassName, 'ps-10')}
                 />
                 <HugeiconsIcon
                   icon={MapsLocation01Icon}
@@ -384,7 +385,7 @@ export default function MapField<T extends FieldValues>({
         </>
       ) : (
         <div
-          className="w-full animate-pulse rounded-md bg-muted"
+          className="w-full animate-pulse rounded-lg bg-muted"
           style={{ height }}
         />
       )}

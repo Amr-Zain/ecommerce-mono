@@ -12,6 +12,7 @@
   "auth_logged_out_all_devices": "Logged out from all devices",
   "auth_password_reset_code_sent": "If the email exists, a reset code has been sent",
   "auth_password_reset_successful": "Password reset successfully",
+  "auth_password_changed_successfully": "Password changed successfully",
   "auth_phone_verified_successfully": "Phone verified successfully",
   "auth_session_revoked_successfully": "Session revoked successfully",
   "notification_update_title": "New update",

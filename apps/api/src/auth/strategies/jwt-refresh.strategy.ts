@@ -5,6 +5,12 @@ import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { RefreshTokensRepository } from '../repositories/refresh-tokens.repository';
 import { Request } from 'express';
+import { AUTH_COOKIE, AUTH_USER_TYPES, getRefreshTokenCookieName } from '../../common/constants/auth.constants';
+
+type RefreshRequest = Request & {
+  refreshToken?: string;
+  refreshTokenCookieName?: string;
+};
 
 interface EnrichedRefreshToken {
   id: bigint;
@@ -41,11 +47,22 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
 
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (request: Request) => {
+        (request: RefreshRequest) => {
           let token: string | null = null;
           if (request && request.cookies) {
-            token = (request.cookies as Record<string, string>)['refreshToken'] || null;
+            const cookies = request.cookies as Record<string, string>;
+            const expectedUserType = request.headers['x-user-type'];
+            const userType = typeof expectedUserType === 'string' ? expectedUserType : undefined;
+            const cookieName = getRefreshTokenCookieName(userType);
+            token = cookies[cookieName] || null;
+            request.refreshTokenCookieName = token ? cookieName : undefined;
+
+            if (!token && userType === AUTH_USER_TYPES.admin && cookies[AUTH_COOKIE.refreshToken]) {
+              token = cookies[AUTH_COOKIE.refreshToken];
+              request.refreshTokenCookieName = AUTH_COOKIE.refreshToken;
+            }
           }
+          request.refreshToken = token ?? undefined;
           return token;
         },
         ExtractJwt.fromBodyField('refreshToken'),

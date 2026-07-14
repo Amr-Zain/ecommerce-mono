@@ -1,37 +1,52 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { TabsList, TabsTrigger } from '@ecommerce/ui/components/tabs'
-import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
-import type { TabItem } from '@/components/ui/AnimatedTabs'
-import { motion, AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import ProfileCard from './ProfileCard'
 import EditProfileForm from './EditProfile'
 import ChangePasswordForm from './ChangePassword'
-import { useAuthStore } from '@/stores/authStore'
 import ProfileSettings from './ProfileSettings'
+import ProfileSessions from './Sessions'
+import type { TabItem } from '@/components/ui/AnimatedTabs'
 import { SmartBreadcrumbs } from '@/components/layout/SmartBreadcrumbs'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
+import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
 
 export default function Profile() {
   const { t } = useTranslation()
-  const profile = useAuthStore((state) => state.user)!
+  const { data: profile } = useDashboardProfile()
 
-  const initialValues = {
-    full_name: profile?.name,
-    email: profile?.email,
-    phone: profile?.phone || '',
-    phone_code: profile?.phone_code || '',
-    image: profile?.image?.url || '',
-  }
+  const initialValues = useMemo(
+    () => ({
+      full_name: profile?.name ?? '',
+      email: profile?.email ?? '',
+      phone: profile?.phone || '',
+      phone_code: profile?.phone_code || '',
+      image: profile?.image?.url || profile?.image?.path || '',
+    }),
+    [
+      profile?.email,
+      profile?.image?.path,
+      profile?.image?.url,
+      profile?.name,
+      profile?.phone,
+      profile?.phone_code,
+    ],
+  )
 
-  const items: TabItem[] = [
+  if (!profile) return null
+
+  const items: Array<TabItem> = [
     { value: 'edit-profile', label: t('tabs.editProfile') },
     { value: 'change-password', label: t('tabs.changePassword') },
     { value: 'settings', label: t('tabs.settings') },
+    { value: 'sessions', label: t('tabs.sessions') },
   ]
 
   return (
     <>
-      <SmartBreadcrumbs entityKey='menu.profile' />
+      <SmartBreadcrumbs entityKey="menu.profile" />
       <div className="@container w-full">
         <AnimatedTabs
           defaultValue="edit-profile"
@@ -44,6 +59,7 @@ export default function Profile() {
                     key={item.value}
                     value={item.value}
                     className="whitespace-nowrap cursor-pointer"
+                    onClick={() => onChange(item.value)}
                   >
                     {item.label}
                   </TabsTrigger>
@@ -59,6 +75,7 @@ export default function Profile() {
                         key={item.value}
                         value={item.value}
                         className="whitespace-nowrap"
+                        onClick={() => onChange(item.value)}
                       >
                         {item.label}
                       </TabsTrigger>
@@ -97,6 +114,17 @@ export default function Profile() {
                         transition={{ duration: 0.2 }}
                       >
                         <ProfileSettings />
+                      </motion.div>
+                    )}
+                    {activeValue === 'sessions' && (
+                      <motion.div
+                        key="sessions"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ProfileSessions />
                       </motion.div>
                     )}
                   </AnimatePresence>

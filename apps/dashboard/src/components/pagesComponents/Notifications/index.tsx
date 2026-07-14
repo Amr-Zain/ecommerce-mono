@@ -16,7 +16,7 @@ import { queryClient } from '@/components/providers/tabstackQueryProvider'
 import { notificationColumns } from './Config'
 import axiosInstance from '@/services/instance'
 import { toast } from 'sonner'
-import { useAuthStore } from '@/stores/authStore'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
 import { API_BASE_URL } from '@/lib/env'
 
 const NotificationsTable = ({
@@ -32,7 +32,8 @@ const NotificationsTable = ({
     type: PickedAction
     isActive?: boolean
   } | null>(null)
-  const userType = useAuthStore((state) => state.user?.user_type)
+  const { data: user } = useDashboardProfile()
+  const userType = user?.user_type
   const currentId = selected?.id || ''
 
 

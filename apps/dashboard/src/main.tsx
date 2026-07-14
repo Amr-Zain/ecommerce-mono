@@ -4,7 +4,6 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import './styles.css'
 import './i18n'
 import {
-  QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
 import { Toaster } from '@ecommerce/ui/components/sonner'
@@ -17,10 +16,9 @@ import { queryClient } from './components/providers/tabstackQueryProvider'
 import { ThemeProvider } from './components/providers/themeProvider'
 import { AuthBootstrapProvider } from './components/providers/AuthBootstrapProvider'
 import { DashboardHttpProvider } from './components/providers/HttpAdapterProvider'
+import type { RouterContext } from '@/types/router'
 
-export type RouterContext = {
-  queryClient: QueryClient
-}
+export type { RouterContext } from '@/types/router'
 
 export const router = createRouter({
   routeTree,

@@ -12,6 +12,7 @@
   "auth_logged_out_all_devices": "تم تسجيل الخروج من جميع الأجهزة",
   "auth_password_reset_code_sent": "إذا كان البريد الإلكتروني موجودًا، فقد تم إرسال رمز إعادة التعيين",
   "auth_password_reset_successful": "تمت إعادة تعيين كلمة المرور بنجاح",
+  "auth_password_changed_successfully": "تم تغيير كلمة المرور بنجاح",
   "auth_phone_verified_successfully": "تم تأكيد رقم الهاتف بنجاح",
   "auth_session_revoked_successfully": "تم إلغاء الجلسة بنجاح",
   "notification_update_title": "تحديث جديد",

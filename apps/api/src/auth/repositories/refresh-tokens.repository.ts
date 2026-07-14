@@ -16,11 +16,43 @@ export class RefreshTokensRepository extends BaseRepository<RefreshTokenPayload>
     return this.prisma.refreshToken;
   }
 
-  async revokeByToken(token: string): Promise<void> {
-    await this.prisma.refreshToken.updateMany({
-      where: { token, isRevoked: false },
+  async revokeByToken(token: string, userId?: bigint): Promise<boolean> {
+    const result = await this.prisma.refreshToken.updateMany({
+      where: { token, userId, isRevoked: false },
       data: { isRevoked: true },
     });
+    return result.count > 0;
+  }
+
+  async consumeActiveToken(token: string, userId: bigint) {
+    const session = await this.prisma.refreshToken.findFirst({
+      where: {
+        token,
+        userId,
+        isRevoked: false,
+        expiresAt: { gt: new Date() },
+      },
+      select: {
+        id: true,
+        deviceInfo: true,
+        ipAddress: true,
+      },
+    });
+
+    if (!session) return null;
+
+    const result = await this.prisma.refreshToken.updateMany({
+      where: {
+        id: session.id,
+        token,
+        userId,
+        isRevoked: false,
+        expiresAt: { gt: new Date() },
+      },
+      data: { isRevoked: true },
+    });
+
+    return result.count === 1 ? session : null;
   }
 
   findActiveWithUser(token: string) {
@@ -82,15 +114,18 @@ export class RefreshTokensRepository extends BaseRepository<RefreshTokenPayload>
     });
   }
 
-  async revokeSession(userId: bigint, sessionId: bigint): Promise<void> {
-    await this.prisma.refreshToken.updateMany({
+  async revokeSession(userId: bigint, sessionId: bigint): Promise<boolean> {
+    const result = await this.prisma.refreshToken.updateMany({
       where: {
         id: sessionId,
         userId,
+        isRevoked: false,
+        expiresAt: { gt: new Date() },
       },
       data: {
         isRevoked: true,
       },
     });
+    return result.count > 0;
   }
 }

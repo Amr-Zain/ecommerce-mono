@@ -1,28 +1,30 @@
-"use client";
+'use client'
 
-import React from "react";
+import React from 'react'
 import {
+  useForm
+} from 'react-hook-form'
+import { AppForm as SharedAppForm } from '@ecommerce/forms'
+import { useTranslation } from 'react-i18next'
+import Field from './Field'
+import type {
   DefaultValues,
   FieldValues,
   SubmitHandler,
-  useForm,
-  UseFormReturn,
-} from "react-hook-form";
-import { AppForm as SharedAppForm } from "@ecommerce/forms";
-import { z } from "zod/v4";
-import { zodFormResolver } from "@/lib/schema/resolver";
-import Field from "./Field";
-import { FieldProp } from "@/types/components/form";
-import { useTranslation } from "react-i18next";
+  UseFormReturn} from 'react-hook-form';
+import type { z } from 'zod/v4'
+import type { FieldProp } from '@/types/components/form'
+import { zodFormResolver } from '@/lib/schema/resolver'
 
 interface GeneralFormConfig<T extends FieldValues> {
   schema: z.ZodType<unknown>
-  fields: FieldProp<T>[]
+  fields: Array<FieldProp<T>>
   defaultValues?: DefaultValues<T>
   values?: T
   onSubmit: SubmitHandler<T>
   onError?: (errors: unknown) => void
   submitButtonText?: string
+  loadingButtonText?: string
   resetButtonText?: string
   showResetButton?: boolean
   showSubmitButton?: boolean
@@ -36,11 +38,11 @@ interface GeneralFormConfig<T extends FieldValues> {
 }
 
 interface FormLayoutConfig {
-  containerClassName?: string;
-  fieldContainerClassName?: string;
-  buttonContainerClassName?: string;
-  submitButtonClassName?: string;
-  resetButtonClassName?: string;
+  containerClassName?: string
+  fieldContainerClassName?: string
+  buttonContainerClassName?: string
+  submitButtonClassName?: string
+  resetButtonClassName?: string
 }
 
 function AppForm<T extends FieldValues>({
@@ -50,16 +52,17 @@ function AppForm<T extends FieldValues>({
   values,
   onSubmit,
   onError,
-  submitButtonText = "Submit",
-  resetButtonText = "Reset",
+  submitButtonText = 'Submit',
+  loadingButtonText,
+  resetButtonText = 'Reset',
   showResetButton = false,
   showSubmitButton = true,
   isLoading = false,
   submitDisabled = false,
-  className = "",
-  formClassName = "",
+  className = '',
+  formClassName = '',
   gridColumns = 1,
-  spacing = "md",
+  spacing = 'md',
   providedForm,
   ...layoutConfig
 }: GeneralFormConfig<T> & FormLayoutConfig) {
@@ -82,6 +85,7 @@ function AppForm<T extends FieldValues>({
       onSubmit={onSubmit}
       onError={onError}
       submitButtonText={submitButtonText}
+      loadingButtonText={loadingButtonText}
       resetButtonText={resetButtonText}
       showResetButton={showResetButton}
       showSubmitButton={showSubmitButton}
@@ -93,18 +97,20 @@ function AppForm<T extends FieldValues>({
       spacing={spacing}
       platform="dashboard"
       resetValues={defaultValues}
-      dir={i18n.dir() as "ltr" | "rtl"}
+      dir={i18n.dir()}
       {...layoutConfig}
       renderField={({ field, form: currentForm, label }) => (
         <Field
           {...field}
           label={label}
-          control={field.type === "custom" ? field.control : currentForm.control}
+          control={
+            field.type === 'custom' ? field.control : currentForm.control
+          }
         />
       )}
     />
   )
 }
 
-export default AppForm;
-export type { GeneralFormConfig, FormLayoutConfig };
+export default AppForm
+export type { GeneralFormConfig, FormLayoutConfig }

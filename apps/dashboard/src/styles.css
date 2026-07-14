@@ -28,6 +28,8 @@
 
 @layer utilities {
 
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button,
   .no-spinner::-webkit-outer-spin-button,
   .no-spinner::-webkit-inner-spin-button,
   .no-spinner input::-webkit-outer-spin-button,
@@ -36,6 +38,7 @@
     margin: 0;
   }
 
+  input[type='number'],
   .no-spinner[type='number'],
   .no-spinner input[type='number'] {
     -moz-appearance: textfield;
@@ -181,6 +184,7 @@
   --border: oklch(0.93 0.007 106.5);
   --input: oklch(0.93 0.007 106.5);
   --ring: oklch(0.737 0.021 106.9);
+  --autofill-background: var(--background);
   --chart-1: oklch(0.88 0.011 106.6);
   --chart-2: oklch(0.58 0.031 107.3);
   --chart-3: oklch(0.466 0.025 107.3);
@@ -256,6 +260,11 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.58 0.031 107.3);
+  --autofill-background: color-mix(
+    in oklch,
+    var(--background) 95.5%,
+    var(--foreground) 4.5%
+  );
   --chart-1: oklch(0.88 0.011 106.6);
   --chart-2: oklch(0.58 0.031 107.3);
   --chart-3: oklch(0.466 0.025 107.3);
@@ -447,14 +456,17 @@
   select:-webkit-autofill,
   select:-webkit-autofill:hover,
   select:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset !important;
+    background-color: var(--autofill-background) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--autofill-background) inset !important;
+    box-shadow: 0 0 0 1000px var(--autofill-background) inset !important;
     /* Match text to theme */
-    -webkit-text-fill-color: hsl(var(--foreground)) !important;
-    caret-color: hsl(var(--foreground)) !important;
+    -webkit-text-fill-color: var(--foreground) !important;
+    color: var(--foreground) !important;
+    caret-color: var(--foreground) !important;
 
     /* Keep corners/borders looking right */
     border-radius: inherit;
-    border-color: hsl(var(--border)) !important;
+    border-color: var(--input) !important;
 
     /* Kill the yellow flash */
     transition:
@@ -466,9 +478,11 @@
   input:-moz-autofill,
   textarea:-moz-autofill,
   select:-moz-autofill {
-    box-shadow: 0 0 0 1000px hsl(var(--background)) inset !important;
-    color: hsl(var(--foreground)) !important;
-    caret-color: hsl(var(--foreground)) !important;
+    background-color: var(--autofill-background) !important;
+    box-shadow: 0 0 0 1000px var(--autofill-background) inset !important;
+    color: var(--foreground) !important;
+    caret-color: var(--foreground) !important;
+    border-color: var(--input) !important;
   }
 
   .copy-button-icon {

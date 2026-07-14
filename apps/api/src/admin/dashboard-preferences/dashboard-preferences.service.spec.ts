@@ -17,13 +17,25 @@ describe('DashboardPreferencesService', () => {
     service = new DashboardPreferencesService(prisma as never, i18n as never);
   });
 
-  it('returns direction-aware defaults when preferences are absent', async () => {
+  it('returns the canonical dashboard defaults when preferences are absent', async () => {
     prisma.user.findUnique.mockResolvedValue({ userType: 'admin', settings: { language: 'ar', allow_notifications: true } });
 
     const result = await service.get(1n);
 
     expect(result).toEqual(createDefaultDashboardPreferences('ar'));
-    expect(result.sidebar.side).toBe('right');
+    expect(result).toEqual({
+      version: 1,
+      mode: 'dark',
+      theme: {
+        source: 'tweakcn',
+        presetId: 'violet-bloom',
+        customVariables: { light: {}, dark: {} },
+        overrides: { light: {}, dark: {} },
+      },
+      radius: '1rem',
+      fonts: { latin: 'poppins', arabic: 'cairo' },
+      sidebar: { variant: 'inset', collapsible: 'icon', side: 'left' },
+    });
   });
 
   it('merges preferences without replacing sibling user settings', async () => {

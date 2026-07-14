@@ -1,5 +1,10 @@
-import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowDown01Icon, Logout01Icon, UserCircleIcon, UserIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  ArrowDown01Icon,
+  Logout01Icon,
+  UserCircleIcon,
+  UserIcon,
+} from '@hugeicons/core-free-icons'
 import { useMemo, useState } from 'react'
 
 import {
@@ -28,19 +33,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@ecommerce/ui/components/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@ecommerce/ui/components/tooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@ecommerce/ui/components/tooltip'
 
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import { Logo } from '../common/Icons'
 import ConfirmModal from '../common/uiComponents/ConfirmModal'
 import { MenuItem as MenuItemComponent } from './MenuItem'
-import type { ApiResponse } from '@/types/api/http'
-import type { SidebarCollapsible, SidebarSide, SidebarVariant } from '@/types/dashboard-preferences'
+import type {
+  SidebarCollapsible,
+  SidebarSide,
+  SidebarVariant,
+} from '@/types/dashboard-preferences'
 import { cn } from '@/lib/utils'
 import { getNavigationGroups } from '@/util/navigation'
-import { useAuthStore } from '@/stores/authStore'
-import { useMutate } from '@/hooks/UseMutate'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
+import { useDashboardLogout } from '@/hooks/useDashboardLogout'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { NotificationsResponse } from '@/routes/_main/settings/notifications'
 import useFetch from '@/hooks/UseFetch'
@@ -56,21 +68,15 @@ export function AppSidebar({
 }) {
   const { t, i18n } = useTranslation()
   const { state } = useSidebar()
-  const user = useAuthStore((store) => store.user)
-  const clearUser = useAuthStore((store) => store.clearUser)
+  const { data: user } = useDashboardProfile()
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const navigate = useNavigate()
-  const isRTL = useMemo(() => i18n.dir(i18n.language) === 'rtl', [i18n.language]);
-  const { mutateAsync: logoutAsync, isPending: isLoggingOut } = useMutate<ApiResponse>({
-    endpoint: 'auth/logout',
-    mutationKey: ['logout'],
-    method: 'post',
-    onSuccess: () => {
-      clearUser()
-      navigate({ to: '/auth/login' })
-    },
-  })
+  const isRTL = useMemo(
+    () => i18n.dir(i18n.language) === 'rtl',
+    [i18n.language],
+  )
+  const { mutateAsync: logoutAsync, isPending: isLoggingOut } =
+    useDashboardLogout()
 
   const handleConfirmLogout = async () => {
     await logoutAsync({})
@@ -81,8 +87,8 @@ export function AppSidebar({
     queryKey: queryKeys.notifications.list(),
     params: { per_page: 5 },
     //  const unreadCount = data?.data?.unread_notifications_count || 0
-    select: (res: any) => res?.data?.unread_notifications_count || 0 as any,
-    enabled: false
+    select: (res: any) => res?.data?.unread_notifications_count || (0 as any),
+    enabled: false,
   })
   const groups = getNavigationGroups(unreadCount || 0)
 
@@ -100,7 +106,8 @@ export function AppSidebar({
               to="/"
               className={cn(
                 'flex min-w-0 grow !cursor-pointer transition-opacity',
-                state === 'collapsed' && 'md:group-hover/header:pointer-events-none md:group-hover/header:opacity-0',
+                state === 'collapsed' &&
+                  'md:group-hover/header:pointer-events-none md:group-hover/header:opacity-0',
               )}
             >
               <SidebarMenuButton
@@ -125,7 +132,9 @@ export function AppSidebar({
                     <Logo className="size-5 text-current" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <h2 className="font-semibold truncate">{t('menu.dashboard')}</h2>
+                    <h2 className="font-semibold truncate">
+                      {t('menu.dashboard')}
+                    </h2>
                     <p className="text-xs truncate">{t('menu.adminPanel')}</p>
                   </div>
                 </div>
@@ -136,7 +145,9 @@ export function AppSidebar({
                 <TooltipTrigger
                   render={
                     <SidebarTrigger
-                      aria-label={t('themeCustomizer.toggleSidebar', { defaultValue: 'Toggle sidebar' })}
+                      aria-label={t('themeCustomizer.toggleSidebar', {
+                        defaultValue: 'Toggle sidebar',
+                      })}
                       className={cn(
                         'size-8 rounded-md transition-all',
                         state === 'expanded'
@@ -151,7 +162,9 @@ export function AppSidebar({
                   align="center"
                   className="dashboard-tooltip"
                 >
-                  {t('themeCustomizer.toggleSidebar', { defaultValue: 'Toggle sidebar' })}
+                  {t('themeCustomizer.toggleSidebar', {
+                    defaultValue: 'Toggle sidebar',
+                  })}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -185,7 +198,14 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
-              <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="w-full data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground" />}>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton
+                    size="lg"
+                    className="w-full data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
+                  />
+                }
+              >
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                   <HugeiconsIcon icon={UserCircleIcon} className="size-4" />
                 </div>
@@ -197,13 +217,22 @@ export function AppSidebar({
                     {user?.email || 'admin@company.com'}
                   </span>
                 </div>
-                <HugeiconsIcon icon={ArrowDown01Icon} className="ms-auto transition-transform duration-200 group-data-popup-open/menu-button:rotate-180" />
+                <HugeiconsIcon
+                  icon={ArrowDown01Icon}
+                  className="ms-auto transition-transform duration-200 group-data-popup-open/menu-button:rotate-180"
+                />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" dir={isRTL ? 'rtl' : 'ltr'}>
+              <DropdownMenuContent
+                className="w-56"
+                align="end"
+                dir={isRTL ? 'rtl' : 'ltr'}
+              >
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col gap-1">
-                      <p className="text-sm font-medium leading-none">{user?.name}</p>
+                      <p className="text-sm font-medium leading-none">
+                        {user?.name}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
                       </p>
@@ -212,21 +241,23 @@ export function AppSidebar({
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem render={<Link to={'/profile'} preload="intent" />}>
+                  <DropdownMenuItem
+                    render={<Link to={'/profile'} preload="intent" />}
+                  >
                     <HugeiconsIcon icon={UserIcon} className="me-2 h-4 w-4" />
                     {t('Text.profile')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      setConfirmOpen(true)
-                    }}
-                    className='flex gap-2 cursor-pointer'
+                    onClick={() => setConfirmOpen(true)}
+                    className="flex gap-2 cursor-pointer"
                   >
-                  <HugeiconsIcon icon={Logout01Icon} className="me-2 h-4 w-4" />
-                  {t('Text.logout')}
-                </DropdownMenuItem>
+                    <HugeiconsIcon
+                      icon={Logout01Icon}
+                      className="me-2 h-4 w-4"
+                    />
+                    {t('Text.logout')}
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -236,8 +267,7 @@ export function AppSidebar({
       {collapsible !== 'none' && <SidebarRail />}
       <ConfirmModal
         title={t('modals.logout.title')}
-        desc={
-          t('modals.logout.desc')}
+        desc={t('modals.logout.desc')}
         open={confirmOpen}
         setOpen={setConfirmOpen}
         onClick={handleConfirmLogout}

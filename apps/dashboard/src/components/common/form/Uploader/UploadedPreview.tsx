@@ -74,13 +74,15 @@ export default function UploadedPreview({
       {fileList.length < (maxCount || 1) && (
         <div
           {...getRootProps()}
-          className={cn(`max-w-40 p-4 border-1 border-dashed border-sidebar-border py-6 rounded-lg cursor-pointer transition-all ${
-            isDragActive && draggable
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400'
-          } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-            ${hasError ? 'border-destructive hover:border-destructive' : ''}
-            `)}
+          className={cn(
+            'max-w-40 rounded-lg border border-dashed border-input bg-background p-4 py-6 text-muted-foreground transition-colors',
+            'hover:border-ring hover:bg-muted/50',
+            isDragActive && draggable && 'border-primary bg-primary/5',
+            disabled
+              ? 'cursor-not-allowed opacity-50'
+              : 'cursor-pointer',
+            hasError && 'border-destructive hover:border-destructive',
+          )}
         >
           <input {...getInputProps()} />
           <button
@@ -88,8 +90,8 @@ export default function UploadedPreview({
             className="bg-transparent border-none flex flex-col items-center justify-center h-full w-full relative"
             onClick={() => !disabled && open()}
           >
-            <div className="flex flex-col justify-center items-center gap-2 text-gray-500">
-              <div className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center">
+            <div className="flex flex-col justify-center items-center gap-2 text-muted-foreground">
+              <div className="flex size-8 items-center justify-center rounded-full border border-input bg-muted/40">
                 <HugeiconsIcon
                   icon={PlusSignIcon}
                   strokeWidth={2}

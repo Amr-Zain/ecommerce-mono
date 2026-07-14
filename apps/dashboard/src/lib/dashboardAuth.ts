@@ -1,44 +1,14 @@
 import type {
+  DashboardSession,
+  DashboardUser,
   PermissionAction,
-  UserAuth,
   UserPermissions,
-} from '@/stores/authStore'
-
-type RawPermission =
-  | string
-  | {
-      title?: string
-      action?: string
-      name?: string
-    }
-
-type RawPermissions = Record<string, RawPermission[]>
-
-export interface DashboardApiUser {
-  id: string | number
-  name?: string | null
-  email?: string | null
-  phone?: string | null
-  role?: {
-    id: string | number
-    name?: string | null
-    permissions?: RawPermissions
-  } | null
-  userType?: string | null
-  user_type?: string | null
-  isActive?: boolean
-  is_active?: boolean
-  isEmailVerified?: boolean
-  is_email_verified?: boolean
-  isPhoneVerified?: boolean
-  is_phone_verified?: boolean
-}
-
-export interface DashboardAuthResponse {
-  access_token?: string
-  accessToken?: string
-  user?: DashboardApiUser
-}
+} from '@/types/auth'
+import type {
+  DashboardApiPermissions,
+  DashboardAuthResponse,
+  DashboardUserApiShape,
+} from '@/types/api/auth'
 
 export function unwrapApiData<T>(payload: any): T {
   return (payload?.data ?? payload) as T
@@ -48,39 +18,60 @@ export function getAccessTokenUserType(accessToken?: string | null) {
   try {
     const payload = accessToken?.split('.')[1]
     if (!payload) return null
-    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+    const decoded = JSON.parse(
+      atob(payload.replace(/-/g, '+').replace(/_/g, '/')),
+    )
     return typeof decoded.userType === 'string' ? decoded.userType : null
   } catch {
     return null
   }
 }
 
-export function isDashboardUser(user?: Pick<UserAuth, 'user_type'> | null) {
+export function isDashboardUser(
+  user?: Pick<DashboardUser, 'user_type'> | null,
+) {
   return user?.user_type === 'admin' || user?.user_type === 'super_admin'
 }
 
-export function mapDashboardAuthResponse(response: DashboardAuthResponse): UserAuth {
-  const token = response.access_token ?? response.accessToken ?? ''
+export function mapDashboardAuthResponse(
+  response: Partial<DashboardAuthResponse>,
+): DashboardSession {
+  const token = response.access_token
+  const sessionId = response.session_id
   if (!response.user || !token) {
     throw new Error('Invalid dashboard auth response')
   }
 
-  return mapDashboardUser(response.user, token)
+  return {
+    accessToken: token,
+    user: mapDashboardUser(response.user, sessionId),
+  }
 }
 
-export function mapDashboardUser(apiUser: DashboardApiUser, token: string): UserAuth {
+export function mapDashboardUser(
+  apiUser: DashboardUserApiShape,
+  sessionId?: string,
+  current?: DashboardUser | null,
+): DashboardUser {
   const roleName = apiUser.role?.name ?? ''
-  const apiUserType = apiUser.user_type ?? apiUser.userType
-  const permissions = normalizePermissions(apiUser.role?.permissions ?? {})
+  const apiUserType = apiUser.user_type
+  const permissions = apiUser.role?.permissions
+    ? normalizePermissions(apiUser.role.permissions)
+    : current?.permissions ?? {}
+  const settings = apiUser.settings
 
   return {
     id: Number(apiUser.id),
-    name: apiUser.name ?? '',
-    email: apiUser.email ?? '',
-    phone_code: '',
-    phone: apiUser.phone ?? '',
-    country: null,
-    image: null,
+    session_id: sessionId ?? current?.session_id,
+    name: apiUser.name ?? current?.name ?? '',
+    email: apiUser.email ?? current?.email ?? '',
+    phone_code:
+      apiUser.phone_code ?? current?.phone_code ?? '',
+    phone: apiUser.phone ?? current?.phone ?? '',
+    gender: apiUser.gender ?? current?.gender ?? null,
+    birth_date: apiUser.birth_date ?? current?.birth_date ?? null,
+    country: apiUser.country ?? current?.country ?? null,
+    image: apiUser.avatar ?? apiUser.image ?? current?.image ?? null,
     user_type:
       roleName === 'Super Admin'
         ? 'super_admin'
@@ -88,22 +79,40 @@ export function mapDashboardUser(apiUser: DashboardApiUser, token: string): User
           ? apiUserType
           : roleName
             ? 'admin'
-            : 'user',
-    is_active: apiUser.is_active ?? apiUser.isActive ?? true,
-    is_verified: apiUser.is_email_verified ?? apiUser.isEmailVerified ?? null,
-    is_banned: false,
-    is_suspended: false,
+            : current?.user_type ?? 'user',
+    is_active:
+      apiUser.is_active ?? current?.is_active ?? true,
+    is_email_verified:
+      apiUser.is_email_verified ??
+      current?.is_email_verified ??
+      false,
+    is_phone_verified:
+      apiUser.is_phone_verified ?? current?.is_phone_verified ?? false,
+    is_banned:
+      apiUser.is_banned ?? current?.is_banned ?? false,
+    is_suspended:
+      apiUser.is_suspended ??
+      current?.is_suspended ??
+      false,
     settings: {
-      language: 'en',
-      allow_notifications: true,
+      language:
+        settings?.language === 'ar' || settings?.language === 'en'
+          ? settings.language
+          : current?.settings.language ?? 'en',
+      allow_notifications:
+        settings?.allow_notifications ??
+        current?.settings.allow_notifications ??
+        true,
+      market: settings?.market ?? current?.settings.market,
     },
     location: {
-      lat: 0,
-      lng: 0,
+      lat: apiUser.location?.lat ?? current?.location.lat ?? 0,
+      lng: apiUser.location?.lng ?? current?.location.lng ?? 0,
     },
+    addresses: apiUser.addresses ?? current?.addresses,
+    tier: apiUser.tier ?? current?.tier,
+    loyalty: apiUser.loyalty ?? current?.loyalty,
     permissions,
-    token,
-    verification_token: null,
     role: apiUser.role
       ? {
           id: Number(apiUser.role.id),
@@ -113,7 +122,9 @@ export function mapDashboardUser(apiUser: DashboardApiUser, token: string): User
   }
 }
 
-function normalizePermissions(rawPermissions: RawPermissions): UserPermissions {
+function normalizePermissions(
+  rawPermissions: DashboardApiPermissions,
+): UserPermissions {
   const permissions: UserPermissions = {}
 
   Object.entries(rawPermissions).forEach(([key, actions]) => {
@@ -137,17 +148,17 @@ function normalizePermissions(rawPermissions: RawPermissions): UserPermissions {
 function addPermissionKey(
   permissions: UserPermissions,
   key: string,
-  actions: PermissionAction[],
+  actions: Array<PermissionAction>,
 ) {
-  permissions[key] = Array.from(new Set([...(permissions[key] ?? []), ...actions]))
+  permissions[key] = Array.from(
+    new Set([...(permissions[key] ?? []), ...actions]),
+  )
 }
 
-function mapActions(actions: RawPermission[]): PermissionAction[] {
-  const rawActions = actions
-    .map((action) => normalizeAction(action))
-    .filter((action): action is string => !!action)
+function mapActions(actions: Array<string>): Array<PermissionAction> {
+  const rawActions = actions.map((action) => action.toLowerCase())
 
-  const mapped: PermissionAction[] = []
+  const mapped: Array<PermissionAction> = []
 
   rawActions.forEach((action) => {
     if (action === 'list') mapped.push('index')
@@ -162,22 +173,6 @@ function mapActions(actions: RawPermission[]): PermissionAction[] {
   })
 
   return Array.from(new Set(mapped))
-}
-
-function normalizeAction(action: RawPermission) {
-  if (typeof action === 'string') return action
-
-  const value = action.action ?? action.name ?? action.title
-  if (!value) return null
-
-  const lower = value.toLowerCase()
-  if (lower.startsWith('list ')) return 'list'
-  if (lower.startsWith('read ') || lower.startsWith('view ')) return 'read'
-  if (lower.startsWith('create ')) return 'create'
-  if (lower.startsWith('update ') || lower.startsWith('edit ')) return 'update'
-  if (lower.startsWith('delete ')) return 'delete'
-
-  return lower
 }
 
 function isPermissionAction(action: string): action is PermissionAction {

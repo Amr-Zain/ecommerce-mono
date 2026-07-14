@@ -769,7 +769,27 @@
   "tabs": {
     "editProfile": "Edit Profile",
     "changePassword": "Change Password",
-    "settings": "Settings"
+    "settings": "Settings",
+    "sessions": "Sessions"
+  },
+  "profileSessions": {
+    "title": "Active sessions",
+    "description": "Review the devices signed in to your dashboard account and revoke access you do not recognize.",
+    "loading": "Loading active sessions",
+    "loadError": "Active sessions could not be loaded. Try again.",
+    "emptyTitle": "No active sessions",
+    "emptyDescription": "Dashboard sessions will appear here after you sign in.",
+    "unknownDevice": "Unknown device",
+    "unknown": "Unknown",
+    "current": "Current",
+    "active": "Active",
+    "ip": "IP address",
+    "started": "Started",
+    "expires": "Expires",
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke this session?",
+    "revokeDescription": "This signs out {{device}} when its access token expires.",
+    "revokeCurrentDescription": "This is your current session. Revoking it will sign you out immediately."
   },
   "buttons": {
     "add": "Add",
@@ -902,9 +922,49 @@
   },
   "Auth": {
     "login": {
+      "forgotPassword": "Forgot password?",
       "title": "Welcome back",
       "subtitle": "Enter your credentials to access your dashboard",
-      "submit": "Login"
+      "submit": "Sign in",
+      "loading": "Signing in...",
+      "eyebrow": "Dashboard administration",
+      "brandTitle": "Run your commerce operations from one focused workspace.",
+      "brandSubtitle": "Monitor performance, manage daily workflows, and keep every administrative tool within reach.",
+      "authorizedOnly": "Protected access for authorized administrators only.",
+      "features": {
+        "insights": {
+          "title": "Clear operational insight",
+          "description": "Follow the metrics and activity that need your attention."
+        },
+        "workspace": {
+          "title": "A workspace tailored to you",
+          "description": "Use your saved language, appearance, and layout preferences."
+        },
+        "security": {
+          "title": "Account-scoped access",
+          "description": "Your role and permissions determine every available action."
+        }
+      }
+    },
+    "passwordReset": {
+      "requestTitle": "Reset your password",
+      "requestDescription": "Enter your administrator email and we will send you a four-digit reset code.",
+      "resetTitle": "Enter the reset code",
+      "resetDescription": "We sent a reset code to {{email}}.",
+      "code": "Reset code",
+      "codePlaceholder": "Enter the 4-digit code",
+      "codeLength": "The reset code must contain 4 characters",
+      "sendCode": "Send reset code",
+      "sendingCode": "Sending code...",
+      "resetPassword": "Reset password",
+      "resettingPassword": "Resetting password...",
+      "useDifferentEmail": "Use a different email",
+      "backToLogin": "Back to sign in"
+    },
+    "errors": {
+      "invalidCredentials": "The email or password is incorrect. Please try again.",
+      "passwordResetRequestFailed": "We could not send the reset code. Please try again.",
+      "passwordResetFailed": "The reset code is invalid or expired. Please request a new code."
     },
     "fields": {
       "email": {
@@ -1867,15 +1927,24 @@
     "advancedDescription": "Create more themes in the TweakCN editor, then import their CSS here.",
     "openTweakcn": "Open TweakCN",
     "options": {
-      "sidebar": "Default", "floating": "Floating", "inset": "Inset",
-      "offcanvas": "Off canvas", "icon": "Icons", "none": "Always open",
-      "left": "Left", "right": "Right"
+      "sidebar": "Default",
+      "floating": "Floating",
+      "inset": "Inset",
+      "offcanvas": "Off canvas",
+      "icon": "Icons",
+      "none": "Always open",
+      "left": "Left",
+      "right": "Right"
     },
     "colors": {
-      "primary": "Primary", "primary-foreground": "Primary foreground",
-      "secondary": "Secondary", "secondary-foreground": "Secondary foreground",
-      "accent": "Accent", "accent-foreground": "Accent foreground",
-      "muted": "Muted", "muted-foreground": "Muted foreground"
+      "primary": "Primary",
+      "primary-foreground": "Primary foreground",
+      "secondary": "Secondary",
+      "secondary-foreground": "Secondary foreground",
+      "accent": "Accent",
+      "accent-foreground": "Accent foreground",
+      "muted": "Muted",
+      "muted-foreground": "Muted foreground"
     },
     "errors": {
       "invalidCss": "The CSS theme is invalid.",

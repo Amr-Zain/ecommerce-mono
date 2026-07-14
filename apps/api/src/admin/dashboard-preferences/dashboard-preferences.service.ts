@@ -74,8 +74,13 @@ export class DashboardPreferencesService {
       version: 1,
       mode: this.oneOf(raw.mode, ['light', 'dark', 'system'], defaults.mode),
       theme: {
-        source: this.oneOf(theme.source, ['default', 'shadcn', 'tweakcn', 'imported'], 'default'),
-        presetId: typeof theme.presetId === 'string' ? theme.presetId.slice(0, 80) : null,
+        source: this.oneOf(theme.source, ['default', 'shadcn', 'tweakcn', 'imported'], defaults.theme.source),
+        presetId:
+          theme.presetId === null
+            ? null
+            : typeof theme.presetId === 'string'
+              ? theme.presetId.slice(0, 80)
+              : defaults.theme.presetId,
         customVariables: {
           light: this.validVariables(customVariables.light),
           dark: this.validVariables(customVariables.dark),

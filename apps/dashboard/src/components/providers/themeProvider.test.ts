@@ -42,6 +42,27 @@ describe('normalizeDashboardPreferences', () => {
     }, 'ar')
 
     expect(preferences.theme.customVariables.light).toEqual({ primary: '#123456' })
-    expect(preferences.sidebar.side).toBe('right')
+    expect(preferences.sidebar.side).toBe('left')
+    expect(preferences.radius).toBe('1rem')
+    expect(preferences.fonts).toEqual({ latin: 'poppins', arabic: 'cairo' })
+    expect(preferences.sidebar.collapsible).toBe('icon')
+  })
+
+  it('uses the canonical Violet Bloom defaults for incomplete preferences', () => {
+    const preferences = normalizeDashboardPreferences({ version: 1 }, 'ar')
+
+    expect(preferences).toEqual({
+      version: 1,
+      mode: 'dark',
+      theme: {
+        source: 'tweakcn',
+        presetId: 'violet-bloom',
+        customVariables: { light: {}, dark: {} },
+        overrides: { light: {}, dark: {} },
+      },
+      radius: '1rem',
+      fonts: { latin: 'poppins', arabic: 'cairo' },
+      sidebar: { variant: 'inset', collapsible: 'icon', side: 'left' },
+    })
   })
 })

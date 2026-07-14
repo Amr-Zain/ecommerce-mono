@@ -15,14 +15,14 @@ import { Search01Icon } from '@hugeicons/core-free-icons'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 
-import { useAuthStore } from '@/stores/authStore'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
 import { getNavigationGroups } from '@/util/navigation'
 
 export function HeaderSearch() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const user = useAuthStore((state) => state.user)
+  const { data: user } = useDashboardProfile()
 
   const groups = useMemo(() => getNavigationGroups(), [user])
 
@@ -80,7 +80,7 @@ export function HeaderSearch() {
               <CommandGroup
                 key={group.label}
                 heading={t(group.label)}
-                className="[&_[cmdk-group-items]]:grid [&_[cmdk-group-items]]:gap-px"
+                className="[&_[cmdk-group-items]]:grid [&_[cmdk-group-items]]:gap-0.5"
               >
                 {group.items.flatMap((item) => {
                   const searchableItems = item.subItems?.length ? item.subItems : [item]

@@ -39,7 +39,6 @@ import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { Variants, motion, AnimatePresence } from 'motion/react'
 import { lazy, Suspense, useMemo, useCallback, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { useAuthStore } from '@/stores/authStore'
 import { DashboardFilters } from './DashboardFilters'
 import {
   BusinessMetricsGrid,

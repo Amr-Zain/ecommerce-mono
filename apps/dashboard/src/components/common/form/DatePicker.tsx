@@ -23,6 +23,7 @@ import {
 } from "react-day-picker";
 import { formatDMY } from "@/util/date";
 import { useTranslation } from "react-i18next";
+import { dashboardFormControlClassName } from "./controlStyles";
 
 export interface DateFieldsProps<T extends FieldValues> {
   control?: Control<T>;
@@ -68,36 +69,28 @@ function DateFields<T extends FieldValues>({
 
     return (
       <Popover>
-        <PopoverTrigger >
-          <FormControl>
+        <FormControl>
+          <PopoverTrigger
+            render={
             <Button
+              type="button"
               variant="outline"
               className={cn(
-                // base
-                "rounded-md border bg-background text-foreground w-full min-w-0",
-                "shadow-xs transition-[color,box-shadow] outline-none",
-                "focus-within:border-ring",
-                "focus-within:ring-[3px] focus-within:ring-ring/50",
-                "aria-invalid:border-destructive",
-                "aria-invalid:focus-within:ring-destructive/20",
-                "dark:aria-invalid:focus-within:ring-destructive/40",
-
-                // disabled parity (optional)
-                "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-
+                dashboardFormControlClassName,
+                "justify-start font-normal",
                 className
               )}
-
-            >
-              <span>{displayText}</span>
-              <HugeiconsIcon
-                icon={Calendar01Icon}
-                strokeWidth={2}
-                className="ms-auto h-4 w-4"
-              />
-            </Button>
-          </FormControl>
-        </PopoverTrigger>
+            />
+            }
+          >
+            <span className="truncate">{displayText}</span>
+            <HugeiconsIcon
+              icon={Calendar01Icon}
+              strokeWidth={2}
+              className="ms-auto h-4 w-4"
+            />
+          </PopoverTrigger>
+        </FormControl>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode={mode}
@@ -132,7 +125,7 @@ function DateFields<T extends FieldValues>({
   return (
     <div className="flex flex-col">
       {label && (
-        <FormLabel className="font-medium text-gray-700">{label}</FormLabel>
+        <FormLabel className="font-medium text-foreground">{label}</FormLabel>
       )}
       {renderCalendar()}
     </div>

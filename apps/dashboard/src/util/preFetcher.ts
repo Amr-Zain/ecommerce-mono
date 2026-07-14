@@ -1,8 +1,10 @@
-import axiosInstance from "@/services/instance";
-import { QueryKey } from "@tanstack/react-query";
 import axios from "axios";
 import { redirect } from "@tanstack/react-router";
-import { useAuthStore } from "@/stores/authStore";
+import type { QueryKey } from "@tanstack/react-query";
+
+import axiosInstance from "@/services/instance";
+import { clearDashboardSession } from '@/lib/dashboard-session'
+import { getSafeDashboardRedirect } from '@/lib/auth-redirect'
 import { ADMIN_API_BASE_URL, API_BASE_URL } from "@/lib/env";
 
 
@@ -36,8 +38,14 @@ export function prefetchOptions(
                 return res.data;
             } catch (error) {
                 if (axios.isAxiosError(error) && error.response?.status === 401) {
-                    useAuthStore.getState().clearUser();
-                    throw redirect({ to: "/auth/login" });
+                    clearDashboardSession({ redirect: false });
+                    const returnTo = typeof window === 'undefined'
+                        ? '/'
+                        : `${window.location.pathname}${window.location.search}${window.location.hash}`;
+                    throw redirect({
+                        to: "/auth/login",
+                        search: { redirect: getSafeDashboardRedirect(returnTo) },
+                    });
                 }
                 throw error;
             }

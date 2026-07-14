@@ -399,7 +399,7 @@
     },
     "logout": {
       "title": "تسجيل الخروج",
-      "desc": "هل تريد تسجيل الدخول؟"
+      "desc": "هل أنت متأكد من رغبتك في تسجيل الخروج؟"
     },
     "is_approved": {
       "title": "الموافقة",
@@ -694,7 +694,27 @@
   "tabs": {
     "editProfile": "تعديل الملف الشخصي",
     "changePassword": "تغيير كلمة المرور",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "sessions": "الجلسات"
+  },
+  "profileSessions": {
+    "title": "الجلسات النشطة",
+    "description": "راجع الأجهزة المسجلة الدخول إلى حساب لوحة التحكم وألغِ أي جلسة لا تعرفها.",
+    "loading": "جارٍ تحميل الجلسات النشطة",
+    "loadError": "تعذر تحميل الجلسات النشطة. حاول مرة أخرى.",
+    "emptyTitle": "لا توجد جلسات نشطة",
+    "emptyDescription": "ستظهر جلسات لوحة التحكم هنا بعد تسجيل الدخول.",
+    "unknownDevice": "جهاز غير معروف",
+    "unknown": "غير معروف",
+    "current": "الحالية",
+    "active": "نشطة",
+    "ip": "عنوان IP",
+    "started": "بدأت",
+    "expires": "تنتهي",
+    "revoke": "إلغاء",
+    "revokeTitle": "هل تريد إلغاء هذه الجلسة؟",
+    "revokeDescription": "سيتم تسجيل خروج {{device}} عند انتهاء رمز الوصول الخاص به.",
+    "revokeCurrentDescription": "هذه جلستك الحالية. سيؤدي إلغاؤها إلى تسجيل خروجك فورًا."
   },
   "buttons": {
     "add": "إضافة",
@@ -803,9 +823,49 @@
   },
   "Auth": {
     "login": {
+      "forgotPassword": "نسيت كلمة المرور؟",
       "title": "مرحباً بعودتك",
       "subtitle": "أدخل بيانات اعتمادك للوصول إلى لوحة التحكم",
-      "submit": "تسجيل الدخول"
+      "submit": "تسجيل الدخول",
+      "loading": "جارٍ تسجيل الدخول...",
+      "eyebrow": "إدارة لوحة التحكم",
+      "brandTitle": "أدِر عمليات تجارتك من مساحة عمل واحدة ومتكاملة.",
+      "brandSubtitle": "تابع الأداء، وأدِر مهامك اليومية، واجعل جميع أدوات الإدارة في متناولك.",
+      "authorizedOnly": "وصول محمي ومخصص للمسؤولين المصرح لهم فقط.",
+      "features": {
+        "insights": {
+          "title": "رؤية تشغيلية واضحة",
+          "description": "تابع المؤشرات والأنشطة التي تتطلب اهتمامك."
+        },
+        "workspace": {
+          "title": "مساحة عمل تناسبك",
+          "description": "استخدم تفضيلات اللغة والمظهر والتخطيط المحفوظة لحسابك."
+        },
+        "security": {
+          "title": "وصول مرتبط بالحساب",
+          "description": "يحدد دورك وصلاحياتك كل إجراء متاح داخل لوحة التحكم."
+        }
+      }
+    },
+    "passwordReset": {
+      "requestTitle": "إعادة تعيين كلمة المرور",
+      "requestDescription": "أدخل بريد المسؤول وسنرسل رمز إعادة تعيين مكوناً من أربعة أرقام.",
+      "resetTitle": "أدخل رمز إعادة التعيين",
+      "resetDescription": "أرسلنا رمز إعادة التعيين إلى {{email}}.",
+      "code": "رمز إعادة التعيين",
+      "codePlaceholder": "أدخل الرمز المكون من 4 أرقام",
+      "codeLength": "يجب أن يتكون رمز إعادة التعيين من 4 محارف",
+      "sendCode": "إرسال رمز إعادة التعيين",
+      "sendingCode": "جارٍ إرسال الرمز...",
+      "resetPassword": "إعادة تعيين كلمة المرور",
+      "resettingPassword": "جارٍ إعادة تعيين كلمة المرور...",
+      "useDifferentEmail": "استخدام بريد إلكتروني مختلف",
+      "backToLogin": "العودة إلى تسجيل الدخول"
+    },
+    "errors": {
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
+      "passwordResetRequestFailed": "تعذر إرسال رمز إعادة التعيين. حاول مرة أخرى.",
+      "passwordResetFailed": "رمز إعادة التعيين غير صالح أو منتهي الصلاحية. اطلب رمزاً جديداً."
     },
     "fields": {
       "email": {
@@ -1887,15 +1947,24 @@
     "advancedDescription": "أنشئ المزيد من المظاهر في محرر TweakCN ثم استورد CSS هنا.",
     "openTweakcn": "فتح TweakCN",
     "options": {
-      "sidebar": "افتراضي", "floating": "عائم", "inset": "داخلي",
-      "offcanvas": "خارج الشاشة", "icon": "أيقونات", "none": "مفتوح دائماً",
-      "left": "يسار", "right": "يمين"
+      "sidebar": "افتراضي",
+      "floating": "عائم",
+      "inset": "داخلي",
+      "offcanvas": "خارج الشاشة",
+      "icon": "أيقونات",
+      "none": "مفتوح دائماً",
+      "left": "يسار",
+      "right": "يمين"
     },
     "colors": {
-      "primary": "الأساسي", "primary-foreground": "نص الأساسي",
-      "secondary": "الثانوي", "secondary-foreground": "نص الثانوي",
-      "accent": "التمييز", "accent-foreground": "نص التمييز",
-      "muted": "الخافت", "muted-foreground": "نص الخافت"
+      "primary": "الأساسي",
+      "primary-foreground": "نص الأساسي",
+      "secondary": "الثانوي",
+      "secondary-foreground": "نص الثانوي",
+      "accent": "التمييز",
+      "accent-foreground": "نص التمييز",
+      "muted": "الخافت",
+      "muted-foreground": "نص الخافت"
     },
     "errors": {
       "invalidCss": "ملف CSS للمظهر غير صالح.",

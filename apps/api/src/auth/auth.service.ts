@@ -45,6 +45,7 @@ import {
   AUTH_USER_TYPES,
   EMAIL_OTP_PURPOSES,
   AuthConfigSecretKey,
+  getRefreshTokenCookieName,
 } from '../common/constants/auth.constants';
 import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
 
@@ -203,16 +204,18 @@ export class AuthService {
     }
 
     // Generate tokens
-    const { accessToken, refreshToken } = await this.generateTokens(user, deviceInfo, ipAddress);
+    const { accessToken, refreshToken, sessionId } = await this.generateTokens(user, deviceInfo, ipAddress);
     await this.anonymousSessions.claim(anonymousToken, user.id);
 
     return {
       accessToken,
       refreshToken,
+      sessionId,
       user: {
         id: user.id.toString(),
         name: user.name || '',
         email: user.email || '',
+        userType: user.userType ?? AUTH_USER_TYPES.admin,
         role: user.role
           ? {
               id: user.role.id.toString(),
@@ -259,7 +262,7 @@ export class AuthService {
     user: AuthUserPayload,
     deviceInfo?: string,
     ipAddress?: string,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string; sessionId: string }> {
     // Generate unique token ID for refresh token
     const tokenId = randomBytes(AUTH_SECURITY.refreshTokenIdBytes).toString(AUTH_ENCODING.hex);
 
@@ -287,7 +290,7 @@ export class AuthService {
     });
 
     // Store refresh token in database
-    await this.refreshTokensRepository.create({
+    const session = await this.refreshTokensRepository.create({
       userId: user.id,
       token: tokenId,
       deviceInfo,
@@ -295,7 +298,7 @@ export class AuthService {
       expiresAt: new Date(Date.now() + this.parseExpirationToMs(refreshExpiration)),
     });
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, sessionId: session.id.toString() };
   }
 
   private generateAccessToken(user: AuthUserPayload): string {
@@ -319,16 +322,22 @@ export class AuthService {
     });
   }
 
-  private authResult(user: AuthUserPayload, accessToken: string, refreshToken: string): AuthResponseDto {
+  private authResult(
+    user: AuthUserPayload,
+    accessToken: string,
+    refreshToken: string,
+    sessionId: string,
+  ): AuthResponseDto {
     return {
       accessToken,
       refreshToken,
+      sessionId,
       user: {
         id: user.id.toString(),
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || undefined,
-        userType: user.userType ?? undefined,
+        userType: user.userType ?? AUTH_USER_TYPES.client,
         role: user.role
           ? {
               id: user.role.id.toString(),
@@ -521,17 +530,19 @@ export class AuthService {
     }
 
     // Generate access and refresh tokens
-    const { accessToken, refreshToken } = await this.generateTokens(user, deviceInfo, ipAddress);
+    const { accessToken, refreshToken, sessionId } = await this.generateTokens(user, deviceInfo, ipAddress);
     await this.anonymousSessions.claim(anonymousToken, user.id);
 
     return {
       accessToken,
       refreshToken,
+      sessionId,
       user: {
         id: user.id.toString(),
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || undefined,
+        userType: user.userType ?? AUTH_USER_TYPES.client,
         role: user.role
           ? {
               id: user.role.id.toString(),
@@ -561,23 +572,30 @@ export class AuthService {
       throw new UnauthorizedException(this.i18n.t('errors.invalid_refresh_token'));
     }
 
-    // Revoke old refresh token
-    await this.refreshTokensRepository.revokeByToken(decoded.jti);
+    const previousSession = await this.refreshTokensRepository.consumeActiveToken(decoded.jti, user.id);
+    if (!previousSession) {
+      throw new UnauthorizedException(this.i18n.t('errors.invalid_refresh_token'));
+    }
 
-    // Generate new tokens
-    const { accessToken, refreshToken } = await this.generateTokens(user);
-    return this.authResult(user, accessToken, refreshToken);
+    const { accessToken, refreshToken, sessionId } = await this.generateTokens(
+      user,
+      previousSession.deviceInfo ?? undefined,
+      previousSession.ipAddress ?? undefined,
+    );
+    return this.authResult(user, accessToken, refreshToken, sessionId);
   }
 
   /**
    * Logout (revoke refresh token)
    */
-  async logout(refreshToken: string): Promise<{ message: string }> {
+  async logout(userId: bigint, refreshToken: string): Promise<{ message: string }> {
     const decoded = this.jwtService.decode<JwtPayload>(refreshToken);
 
-    if (decoded?.jti) {
-      await this.refreshTokensRepository.revokeByToken(decoded.jti);
+    if (!decoded?.jti || decoded.sub !== userId.toString()) {
+      throw new UnauthorizedException(this.i18n.t('errors.invalid_refresh_token'));
     }
+
+    await this.refreshTokensRepository.revokeByToken(decoded.jti, userId);
 
     return { message: this.i18n.t('common.auth_logged_out_successfully') };
   }
@@ -639,6 +657,27 @@ export class AuthService {
     });
 
     return { message: this.i18n.t('common.auth_password_reset_successful') };
+  }
+
+  /**
+   * Change an authenticated dashboard administrator's password.
+   */
+  async changePassword(userId: bigint, currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    const user = await this.usersRepository.findOne({ id: userId });
+
+    if (!user || user.userType !== AUTH_USER_TYPES.admin || !user.password) {
+      throw new BadRequestException(this.i18n.t('errors.invalid_credentials'));
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      throw new BadRequestException(this.i18n.t('errors.invalid_credentials'));
+    }
+
+    const password = await bcrypt.hash(newPassword, AUTH_SECURITY.bcryptRounds);
+    await this.usersRepository.update(userId, { password });
+
+    return { message: this.i18n.t('common.auth_password_changed_successfully') };
   }
 
   private async deliverEmailChallenge(
@@ -745,7 +784,10 @@ export class AuthService {
    * Revoke specific session
    */
   async revokeSession(userId: bigint, sessionId: bigint): Promise<{ message: string }> {
-    await this.refreshTokensRepository.revokeSession(userId, sessionId);
+    const revoked = await this.refreshTokensRepository.revokeSession(userId, sessionId);
+    if (!revoked) {
+      throw new NotFoundException('Active session not found');
+    }
     return { message: this.i18n.t('common.auth_session_revoked_successfully') };
   }
 
@@ -754,16 +796,22 @@ export class AuthService {
    */
   handleAuthResponse(
     res: Response,
-    authResult: { accessToken: string; refreshToken: string; user?: Record<string, unknown> },
+    authResult: AuthResponseDto,
     platform: string,
+    previousCookieName?: string,
   ): Response {
     if (platform === AUTH_PLATFORMS.browser) {
-      res.cookie(AUTH_COOKIE.refreshToken, authResult.refreshToken, {
+      const cookieName = getRefreshTokenCookieName(authResult.user.userType);
+      res.cookie(cookieName, authResult.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === AUTH_ENVIRONMENTS.production,
         sameSite: AUTH_COOKIE.sameSite,
         maxAge: AUTH_SECURITY.refreshCookieMaxAgeMs,
       });
+
+      if (previousCookieName && previousCookieName !== cookieName) {
+        res.clearCookie(previousCookieName);
+      }
 
       const { refreshToken: _r, ...resultWithoutRefresh } = authResult;
       const snakeCaseResult = CaseTransformer.transformToSnake(resultWithoutRefresh);
@@ -777,8 +825,8 @@ export class AuthService {
   /**
    * Clear refresh token cookie from the client response
    */
-  clearRefreshTokenCookie(res: Response) {
-    res.clearCookie(AUTH_COOKIE.refreshToken);
+  clearRefreshTokenCookie(res: Response, cookieName: string) {
+    res.clearCookie(cookieName);
   }
 
   private getJwtSigningSecretOrThrow(envKey: AuthConfigSecretKey): string {

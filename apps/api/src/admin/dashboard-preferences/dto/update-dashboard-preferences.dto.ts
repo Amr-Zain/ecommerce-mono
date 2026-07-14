@@ -31,13 +31,13 @@ class ThemeVariableModesDto {
 
 class DashboardThemeDto {
   @IsIn(DASHBOARD_THEME_SOURCES, { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
-  @ApiProperty({ enum: DASHBOARD_THEME_SOURCES, example: 'default' })
+  @ApiProperty({ enum: DASHBOARD_THEME_SOURCES, example: 'tweakcn' })
   source!: DashboardThemeSource;
 
   @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   @MaxLength(80, { message: i18nValidationMessage<I18nTranslations>('validation.MAX_LENGTH') })
-  @ApiPropertyOptional({ example: 'blue', nullable: true })
+  @ApiPropertyOptional({ example: 'violet-bloom', nullable: true })
   presetId!: string | null;
 
   @ValidateNested()
@@ -57,7 +57,7 @@ class DashboardSidebarDto {
   variant!: DashboardSidebarVariant;
 
   @IsIn(DASHBOARD_SIDEBAR_COLLAPSIBLE, { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
-  @ApiProperty({ enum: DASHBOARD_SIDEBAR_COLLAPSIBLE, example: 'offcanvas' })
+  @ApiProperty({ enum: DASHBOARD_SIDEBAR_COLLAPSIBLE, example: 'icon' })
   collapsible!: DashboardSidebarCollapsible;
 
   @IsIn(DASHBOARD_SIDEBAR_SIDES, { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
@@ -67,11 +67,11 @@ class DashboardSidebarDto {
 
 class DashboardFontsDto {
   @IsIn(DASHBOARD_LATIN_FONTS, { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
-  @ApiProperty({ enum: DASHBOARD_LATIN_FONTS, example: 'inter' })
+  @ApiProperty({ enum: DASHBOARD_LATIN_FONTS, example: 'poppins' })
   latin!: (typeof DASHBOARD_LATIN_FONTS)[number];
 
   @IsIn(DASHBOARD_ARABIC_FONTS, { message: i18nValidationMessage<I18nTranslations>('validation.IS_ENUM') })
-  @ApiProperty({ enum: DASHBOARD_ARABIC_FONTS, example: 'noto-sans-arabic' })
+  @ApiProperty({ enum: DASHBOARD_ARABIC_FONTS, example: 'cairo' })
   arabic!: (typeof DASHBOARD_ARABIC_FONTS)[number];
 }
 
@@ -95,7 +95,7 @@ export class UpdateDashboardPreferencesDto {
   @Matches(/^\d+(?:\.\d+)?rem$/, {
     message: i18nValidationMessage<I18nTranslations>('validation.INVALID_THEME_RADIUS'),
   })
-  @ApiProperty({ example: '0.45rem', description: 'Border radius in rem, between 0 and 2rem' })
+  @ApiProperty({ example: '1rem', description: 'Border radius in rem, between 0 and 2rem' })
   radius!: string;
 
   @ValidateNested()

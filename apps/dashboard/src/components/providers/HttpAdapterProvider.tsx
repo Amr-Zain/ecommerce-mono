@@ -4,8 +4,8 @@ import React from 'react'
 import { HttpProvider } from '@ecommerce/http'
 import { toast } from 'sonner'
 import { createDashboardHttpAdapter } from '@/lib/http-adapter'
-import { useAuthStore } from '@/stores/authStore'
 import { router } from '@/main'
+import { clearDashboardSession } from '@/lib/dashboard-session'
 
 /**
  * Dashboard-specific HttpProvider.
@@ -24,8 +24,7 @@ export function DashboardHttpProvider({
     () =>
       createDashboardHttpAdapter({
         onUnauthorized: () => {
-          useAuthStore.getState().clearUser()
-          router.navigate({ to: '/auth/login' })
+          clearDashboardSession()
         },
         onRequestError: (error) => {
           toast.error(getErrorToastMessage(error))

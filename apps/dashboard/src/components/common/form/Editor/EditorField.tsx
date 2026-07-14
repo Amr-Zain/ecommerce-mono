@@ -190,7 +190,7 @@ function EditorField<T extends FieldValues>({
 
 const wrapper = cn(
   // base
-  "rounded-md border bg-background text-foreground w-full min-w-0",
+  "w-full min-w-0 rounded-lg border border-input bg-background text-foreground dark:bg-input/30",
   "shadow-xs transition-[color,box-shadow] outline-none",
 
   // focus (match Input’s ring & border, but use focus-within so inner editor can trigger it)

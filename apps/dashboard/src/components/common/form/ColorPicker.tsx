@@ -11,6 +11,7 @@ import {
     PopoverTrigger,
 } from '@ecommerce/ui/components/popover'
 import { Input } from '@ecommerce/ui/components/input'
+import { dashboardFormControlClassName } from './controlStyles'
 
 type ButtonProps = React.ComponentProps<typeof Button>
 
@@ -39,25 +40,40 @@ const ColorPicker = forwardRef<
 
         return (
             <Popover onOpenChange={setOpen} open={open}>
-                <PopoverTrigger disabled={disabled} onBlur={onBlur}>
+                <PopoverTrigger
+                    disabled={disabled}
+                    onBlur={onBlur}
+                    render={
                     <Button
                         {...props}
-                        className={cn('block', className)}
+                        type="button"
+                        className={cn(
+                            dashboardFormControlClassName,
+                            'justify-start gap-3 font-normal',
+                            className,
+                        )}
+                        disabled={disabled}
                         name={name}
-                        onClick={() => {
-                            setOpen(true)
-                        }}
                         size={size}
-                        style={{
-                            backgroundColor: parsedValue,
-                        }}
                         variant="outline"
-                    >
-                        <div className="w-full h-full" />
-                    </Button>
+                    />
+                    }
+                >
+                    <span
+                        aria-hidden="true"
+                        className="size-5 shrink-0 rounded-md border border-border shadow-xs"
+                        style={{ backgroundColor: parsedValue }}
+                    />
+                    <span className="truncate font-mono text-sm uppercase">
+                        {parsedValue}
+                    </span>
                 </PopoverTrigger>
-                <PopoverContent className="w-full">
-                    <HexColorPicker color={parsedValue} onChange={onChange} />
+                <PopoverContent className="w-72">
+                    <HexColorPicker
+                        className="w-full!"
+                        color={parsedValue}
+                        onChange={onChange}
+                    />
                     <Input
                         maxLength={7}
                         onChange={(e) => {
@@ -65,7 +81,10 @@ const ColorPicker = forwardRef<
                         }}
                         ref={ref}
                         value={parsedValue}
-                        className="mt-2"
+                        className={cn(
+                            dashboardFormControlClassName,
+                            'mt-2 font-mono uppercase',
+                        )}
                     />
                 </PopoverContent>
             </Popover>

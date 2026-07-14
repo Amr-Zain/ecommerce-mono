@@ -27,6 +27,12 @@ import MapField from '@/components/common/form/MapField'
 import MultiLangField from '@/components/common/form/MultiLangField'
 import FileUploadField from '@/components/common/form/Uploader/FileUploadField'
 import { ColorPicker } from '@/components/common/form/ColorPicker'
+import {
+  dashboardFormControlClassName,
+  dashboardFormTextareaClassName,
+  dashboardNumberControlClassName,
+} from '@/components/common/form/controlStyles'
+import { cn } from '@/lib/utils'
 
 type FieldTypeOf<T extends FieldValues> = FieldProp<T>['type']
 
@@ -58,6 +64,7 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
         disabled={inputProps.disabled}
         {...field}
         {...inputProps}
+        className={cn(dashboardFormControlClassName, inputProps.className)}
       />
     )
   },
@@ -69,6 +76,7 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
         placeholder={props.placeholder}
         {...field}
         {...inputProps}
+        className={cn(dashboardNumberControlClassName, inputProps.className)}
       />
     )
   },
@@ -80,6 +88,7 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
         placeholder={props.placeholder}
         {...field}
         {...inputProps}
+        className={cn(dashboardFormControlClassName, inputProps.className)}
       />
     )
   },
@@ -90,6 +99,7 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
         placeholder={props.placeholder || ''}
         {...field}
         {...inputProps}
+        className={cn(dashboardFormControlClassName, inputProps.className)}
       />
     )
   },
@@ -101,6 +111,7 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
         rows={(inputProps as any).rows ?? 4}
         {...field}
         {...inputProps}
+        className={cn(dashboardFormTextareaClassName, inputProps.className)}
       />
     )
   },
@@ -121,7 +132,17 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
   },
   select: ({ props, field }) => {
     const inputProps = ensureObj(props.inputProps)
-    return <SelectField field={field} {...inputProps} />
+    return (
+      <SelectField
+        field={field}
+        {...inputProps}
+        className={cn(
+          dashboardFormControlClassName,
+          'justify-between bg-background! dark:bg-input/30!',
+          inputProps.className,
+        )}
+      />
+    )
   },
   checkbox: ({ props, field }) => {
     const inputProps = ensureObj(props.inputProps)
@@ -259,6 +280,7 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
         rows={(inputProps as any).rows ?? 4}
         {...field}
         {...inputProps}
+        className={cn(dashboardFormTextareaClassName, inputProps.className)}
       />
     )
   },
@@ -357,7 +379,7 @@ export const inputMapper = <T extends FieldValues>(): InputMapper<T> => ({
         name={field.name}
         disabled={inputProps.disabled}
         size={inputProps.size}
-        className={inputProps.className}
+        className={cn(dashboardFormControlClassName, inputProps.className)}
       />
     )
   },

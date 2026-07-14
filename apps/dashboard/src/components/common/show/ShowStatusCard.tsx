@@ -9,7 +9,7 @@ import { Badge } from '@ecommerce/ui/components/badge'
 import { Switch } from '@ecommerce/ui/components/switch'
 import { useTranslation } from 'react-i18next'
 import { HasPermission } from '@/components/common/HasPermission'
-import type { PermissionAction } from '@/stores/authStore'
+import type { PermissionAction } from '@/types/auth'
 
 export interface ShowStatusCardProps {
   isActive: boolean

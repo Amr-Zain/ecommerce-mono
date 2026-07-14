@@ -2,16 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@ecommerce/ui/componen
 import { Avatar, AvatarFallback, AvatarImage } from '@ecommerce/ui/components/avatar'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuthStore } from '@/stores/authStore'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
 
 export default function ProfileCard() {
   const { t } = useTranslation()
-  const user = useAuthStore(
-    (state) => state.user!
-  )
+  const { data: user } = useDashboardProfile()
 
   const initials = useMemo(() => {
-    const name = user?.name?.trim()
+    const name = user?.name.trim()
     if (!name) return 'A'
     return name
       .split(/\s+/)

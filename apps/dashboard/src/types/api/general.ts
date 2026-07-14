@@ -1,4 +1,3 @@
-
 export type Image = {
   path: string
   url?: string
@@ -15,6 +14,7 @@ export type Image = {
 
 export interface Filters {
   page?: string
+  limit?: string
   search?: string
   'filters[isActive]'?: string
   'filters[createdAt]'?: string
@@ -22,11 +22,12 @@ export interface Filters {
 }
 
 export const toStr = (v: unknown): string | undefined =>
-  v == null ? undefined : String(v);
+  v == null ? undefined : String(v)
 
 export const searchParamsValidate = (search: Record<any, any>): Filters => {
   return cleanObject({
     page: toStr(search.page),
+    limit: toStr(search.limit),
     search: toStr(search.search),
     ['filters[isActive]']: toStr(search['filters[isActive]']),
     ['filters[createdAt]']: toStr(search['filters[createdAt]']),
@@ -34,7 +35,9 @@ export const searchParamsValidate = (search: Record<any, any>): Filters => {
   })
 }
 
-export const cleanObject = <T extends Record<string, any>>(obj: T): Partial<T> => {
+export const cleanObject = <T extends Record<string, any>>(
+  obj: T,
+): Partial<T> => {
   const cleanedEntries = Object.entries(obj).filter(
     ([key, value]) => value != null,
   )

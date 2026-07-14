@@ -67,7 +67,7 @@ export interface DataTableProps<TData, TValue> {
 }
 
 
-import { PermissionAction } from "@/stores/authStore";
+import type { PermissionAction } from '@/types/auth'
 
 export type RowAction<RowData> = {
   label: string | ((row: RowData) => string)

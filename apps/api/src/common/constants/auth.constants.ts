@@ -53,8 +53,13 @@ export type EmailOtpPurpose = (typeof EMAIL_OTP_PURPOSES)[keyof typeof EMAIL_OTP
 
 export const AUTH_COOKIE = {
   refreshToken: 'refreshToken',
+  adminRefreshToken: 'adminRefreshToken',
   sameSite: 'lax',
 } as const;
+
+export function getRefreshTokenCookieName(userType?: string) {
+  return userType === AUTH_USER_TYPES.admin ? AUTH_COOKIE.adminRefreshToken : AUTH_COOKIE.refreshToken;
+}
 
 export const AUTH_ENCODING = {
   hex: 'hex',

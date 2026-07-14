@@ -11,10 +11,17 @@ import { Request, Response } from 'express';
 import { PermissionUtil } from '../common/utils/permission.util';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AUTH_COOKIE, AUTH_USER_TYPES, getRefreshTokenCookieName } from '../common/constants/auth.constants';
+
+type RefreshRequest = Request & {
+  refreshToken?: string;
+  refreshTokenCookieName?: string;
+};
 
 interface AuthUser {
   id: bigint;
@@ -95,12 +102,11 @@ export class AuthController {
   @Post('refresh')
   async refresh(
     @CurrentUser() user: AuthUserPayload,
-    @Req() req: Request,
+    @Req() req: RefreshRequest,
     @Res() res: Response,
     @Body() body: Partial<RefreshTokenDto>,
   ) {
-    const cookies = req.cookies as Record<string, string> | undefined;
-    const token = cookies?.['refreshToken'] || body?.refreshToken;
+    const token = req.refreshToken || body?.refreshToken;
     if (!token) {
       throw new UnauthorizedException('Refresh token is required');
     }
@@ -112,23 +118,35 @@ export class AuthController {
 
     const platform = (req.headers['x-platform'] as string) || 'browser';
     const authResult = await this.authService.refreshAccessToken(user, token);
-    return this.authService.handleAuthResponse(res, authResult, platform);
+    return this.authService.handleAuthResponse(res, authResult, platform, req.refreshTokenCookieName);
   }
 
   @ApiBearerAuth('access-token')
   @Post('logout')
-  async logout(@Req() req: Request, @Res() res: Response, @Body() refreshTokenDto: RefreshTokenDto) {
+  async logout(
+    @CurrentUser() user: AuthUserPayload,
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ) {
     const cookies = req.cookies as Record<string, string> | undefined;
-    const token = cookies?.['refreshToken'] || refreshTokenDto.refreshToken;
+    const cookieName = getRefreshTokenCookieName(user.userType ?? undefined);
+    let selectedCookieName = cookieName;
+    let token = cookies?.[cookieName] || refreshTokenDto.refreshToken;
+
+    if (!token && user.userType === AUTH_USER_TYPES.admin && cookies?.[AUTH_COOKIE.refreshToken]) {
+      token = cookies[AUTH_COOKIE.refreshToken];
+      selectedCookieName = AUTH_COOKIE.refreshToken;
+    }
     if (!token) {
       throw new UnauthorizedException('Refresh token is required');
     }
 
     // Revoke token
-    const result = await this.authService.logout(token);
+    const result = await this.authService.logout(user.id, token);
 
     // Clear cookie if present
-    this.authService.clearRefreshTokenCookie(res);
+    this.authService.clearRefreshTokenCookie(res, selectedCookieName);
 
     return res.status(200).json(result);
   }
@@ -149,6 +167,12 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto.email, resetPasswordDto.code, resetPasswordDto.newPassword);
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post('change-password')
+  async changePassword(@CurrentUser() user: AuthUserPayload, @Body() changePasswordDto: ChangePasswordDto) {
+    return this.authService.changePassword(user.id, changePasswordDto.currentPassword, changePasswordDto.newPassword);
   }
 
   @ApiBearerAuth('access-token')

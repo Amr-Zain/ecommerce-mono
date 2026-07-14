@@ -1,26 +1,38 @@
 import React from 'react'
 import {
-  useReactTable,
+  flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
-  flexRender,
-  type VisibilityState,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
 } from '@tanstack/react-table'
-import { Table, TableHead, TableHeader, TableRow } from '@ecommerce/ui/components/table'
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@ecommerce/ui/components/table'
 import { Card } from '@ecommerce/ui/components/card'
 import { DataTablePagination } from './TablePagination'
 import { DataTableToolbar } from './TableToolbar'
 import { DataTableBody } from './TableBody'
+import type { VisibilityState } from '@tanstack/react-table'
+import type { DataTableProps } from '@/types/components/table'
+import type { Meta } from '@/types/api/http'
 import { useDataTableState } from '@/hooks/table/useDataTableState'
 import { useDataTableColumns } from '@/hooks/table/useDataTableColumns'
 import { serializeFilters } from '@/util/helpers'
-import type { DataTableProps } from '@/types/components/table'
-import type { Meta } from '@/types/api/http'
+import {
+  getPaginationLimit,
+  getPaginationPage,
+  getPaginationPageCount,
+} from '@/util/pagination'
 
-const serializeColumnVisibility = (visibility: VisibilityState): string[] =>
+const serializeColumnVisibility = (
+  visibility: VisibilityState,
+): Array<string> =>
   Object.entries(visibility)
     .filter(([_, v]) => v)
     .map(([c]) => c)
@@ -45,7 +57,7 @@ export function DataTable<TData, TValue>({
   rowUrl,
 }: DataTableProps<TData, TValue>) {
   // Derive data and meta: apiResponse takes precedence over legacy data/meta props
-  const data: TData[] = apiResponse
+  const data: Array<TData> = apiResponse
     ? ((apiResponse as any)?.data?.items ?? [])
     : (dataProp ?? [])
   const meta: Meta | undefined = apiResponse
@@ -57,8 +69,8 @@ export function DataTable<TData, TValue>({
     ...initialState,
     pagination: meta
       ? {
-          pageIndex: Math.max(0, (meta.current_page ?? meta.page ?? 1) - 1),
-          pageSize: meta.per_page ?? meta.limit ?? pageSizeOptions[0],
+          pageIndex: Math.max(0, getPaginationPage(meta) - 1),
+          pageSize: getPaginationLimit(meta, pageSizeOptions[0]),
         }
       : { pageIndex: 0, pageSize: pageSizeOptions[0] },
   }
@@ -106,31 +118,35 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
 
     manualPagination: isServerPaginated,
-    manualFiltering: enableUrlState || isServerPaginated,
-    pageCount: isServerPaginated && meta ? meta.total_pages : undefined,
+    manualFiltering: true,
+    pageCount:
+      isServerPaginated && meta
+        ? getPaginationPageCount(meta, paginationState.pageSize)
+        : undefined,
 
     onSortingChange: setSorting,
 
     onColumnFiltersChange: (updater) => {
       setColumnFilters(updater)
-      if (enableUrlState) {
-        const newFilters =
-          typeof updater === 'function' ? updater(columnFilters) : updater
-        const filters = serializeFilters(newFilters)
-        updateUrl({
-          filters: Object.keys(filters).length > 0 ? filters : undefined,
-        })
-      }
+      const newFilters =
+        typeof updater === 'function' ? updater(columnFilters) : updater
+      const serializedFilters = serializeFilters(newFilters)
+      updateUrl({
+        filters:
+          Object.keys(serializedFilters).length > 0
+            ? serializedFilters
+            : undefined,
+      })
     },
 
     onColumnVisibilityChange: (updater) => {
       setColumnVisibility(updater)
-      if (enableUrlState) {
-        const newVisibility =
-          typeof updater === 'function' ? updater(columnVisibility) : updater
-        const columns = serializeColumnVisibility(newVisibility)
-        updateUrl({ columns: columns.length > 0 ? columns : undefined })
-      }
+      const newVisibility =
+        typeof updater === 'function' ? updater(columnVisibility) : updater
+      const visibleColumns = serializeColumnVisibility(newVisibility)
+      updateUrl({
+        columns: visibleColumns.length > 0 ? visibleColumns : undefined,
+      })
     },
 
     onRowSelectionChange: setRowSelection,
@@ -139,15 +155,15 @@ export function DataTable<TData, TValue>({
       const next =
         typeof updater === 'function' ? updater(globalFilter) : updater
       setGlobalFilter(next)
-      if (enableUrlState && searchKey) updateUrl({ search: next || undefined })
+      if (searchKey) updateUrl({ search: next || undefined })
     },
 
     onPaginationChange: (updater) => {
       setPaginationState((curr) => {
         const next = typeof updater === 'function' ? updater(curr) : updater
         if (
-          enableUrlState &&
-          (next.pageIndex !== curr.pageIndex || next.pageSize !== curr.pageSize)
+          next.pageIndex !== curr.pageIndex ||
+          next.pageSize !== curr.pageSize
         ) {
           updateUrl({ page: next.pageIndex + 1, limit: next.pageSize })
         }
@@ -170,18 +186,18 @@ export function DataTable<TData, TValue>({
   })
 
   React.useEffect(() => {
-    if (enableUrlState && searchKey) {
+    if (searchKey) {
       table
         .getColumn(String(searchKey))
-        ?.setFilterValue((searchParams as any).search || '')
+        ?.setFilterValue(searchParams.search || '')
     }
-  }, [enableUrlState, searchKey])
+  }, [searchKey, searchParams.search, table])
 
   React.useEffect(() => {
     if (onRowSelectionChange && selectable) {
       const selected = table
         .getFilteredSelectedRowModel()
-        .rows.map((r) => r.original as TData)
+        .rows.map((r) => r.original)
       onRowSelectionChange(selected)
     }
   }, [rowSelection, selectable, onRowSelectionChange])
@@ -213,9 +229,9 @@ export function DataTable<TData, TValue>({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>

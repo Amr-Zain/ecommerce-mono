@@ -1,4 +1,9 @@
 export const queryKeys = {
+  auth: {
+    all: () => ['auth'] as const,
+    profile: () => [...queryKeys.auth.all(), 'profile'] as const,
+    sessions: () => [...queryKeys.auth.all(), 'sessions'] as const,
+  },
   users: {
     all: () => ['users'],
     usersFilterd: ({
@@ -38,8 +43,9 @@ export const queryKeys = {
       country_id?: string
     }) => {
       const cleaned = Object.fromEntries(
-        Object.entries(params ?? {}).filter(
-          ([, v]) => v !== undefined && v !== '',
+        Object.entries(params).filter(
+          (entry): entry is [string, string] =>
+            typeof entry[1] === 'string' && entry[1].length > 0,
         ),
       )
       return [...queryKeys.cities.paginate(), cleaned]
@@ -77,8 +83,7 @@ export const queryKeys = {
       'one',
       { supervisorsId },
     ],
-    filterd: (search: any) =>
-      [...queryKeys.supervisors.all(), search] as const,
+    filterd: (search: any) => [...queryKeys.supervisors.all(), search] as const,
   },
 
   roles: {
@@ -211,7 +216,8 @@ export const queryKeys = {
     filterd: (filters?: Record<string, any>) =>
       ['tickets', 'filterd', filters] as const,
     getTicket: (id: string | number) => ['tickets', 'one', id] as const,
-    messages: (id: string | number) => ['tickets', 'one', id, 'messages'] as const,
+    messages: (id: string | number) =>
+      ['tickets', 'one', id, 'messages'] as const,
   },
 
   exchanges: {
@@ -288,7 +294,8 @@ export const queryKeys = {
 
   dashboard: {
     all: () => ['dashboard'] as const,
-    statistics: (params?: unknown) => [...queryKeys.dashboard.all(), 'statistics', params] as const,
+    statistics: (params?: unknown) =>
+      [...queryKeys.dashboard.all(), 'statistics', params] as const,
   },
 
   settings: {

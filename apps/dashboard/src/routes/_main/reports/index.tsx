@@ -16,7 +16,7 @@ import {
 } from '@/components/pagesComponents/Dashboard/AnalyticsCharts'
 import { DashboardFilters } from '@/components/pagesComponents/Dashboard/DashboardFilters'
 import useFetch from '@/hooks/UseFetch'
-import { useAuthStore } from '@/stores/authStore'
+import { useDashboardProfile } from '@/hooks/useDashboardProfile'
 import { DashboardQueryParams, DashboardStatistics } from '@/types/api/dashboard'
 import { ApiResponseBase } from '@/types/api/http'
 import { queryKeys } from '@/util/queryKeysFactory'
@@ -46,7 +46,10 @@ function ReportsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const search = useSearch({ from: '/_main/reports/' })
-  const hasHomePermission = useAuthStore((state) => (state.user?.permissions['dashboard-home'] || []).includes('index'))
+  const { data: user } = useDashboardProfile()
+  const hasHomePermission = (
+    user?.permissions['dashboard-home'] || []
+  ).includes('index')
   const params: DashboardQueryParams = {
     preset: search.preset,
     from: search.from,

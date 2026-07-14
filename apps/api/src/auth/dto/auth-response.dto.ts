@@ -12,12 +12,14 @@ export class AuthResponseDto {
     description: 'refreshToken',
   })
   refreshToken!: string;
+  @ApiProperty({ example: '42', description: 'Active refresh-token session id' })
+  sessionId!: string;
   user!: {
     id: string;
     name?: string;
     email?: string;
     phone?: string;
-    userType?: string;
+    userType: string;
     role?: {
       id: string;
       name: string;
