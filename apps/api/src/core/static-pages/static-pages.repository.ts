@@ -1,12 +1,14 @@
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { BaseRepository, QueryOptions, TranslationFields } from '@/common/repositories/base.repository';
+import { QueryOptions, TranslationFields } from '@/common/repositories/base.repository';
+import { MediaAwareRepository } from '@/common/repositories/media-aware.repository';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { Prisma, PrismaService } from '@/prisma';
 import { Injectable } from '@nestjs/common';
 import { MediaService } from '@/media/media.service';
 import { MediaType } from '@/media/enums/media-type.enum';
 import { IStaticPagesRepository } from '@/common/interfaces';
+import type { ClientStaticPageView } from '@/common/interfaces/static-pages.interface';
 
 type StaticPage = Prisma.StaticPageGetPayload<{
   include: {
@@ -18,7 +20,8 @@ type StaticPage = Prisma.StaticPageGetPayload<{
 const PAGE_SECTION_MEDIA_MODEL = 'pagesection';
 
 @Injectable()
-export class StaticPagesRepository extends BaseRepository<StaticPage> implements IStaticPagesRepository {
+export class StaticPagesRepository extends MediaAwareRepository<StaticPage> implements IStaticPagesRepository {
+  protected readonly mediaModel = 'staticpage';
   protected readonly mediaConfig = {
     image: { collection: 'image', single: true, allowedTypes: [MediaType.IMAGE, MediaType.DOCUMENT] },
   };
@@ -42,6 +45,25 @@ export class StaticPagesRepository extends BaseRepository<StaticPage> implements
 
   getModel() {
     return this.prisma.staticPage;
+  }
+
+  findClientList(query: AdvancedQueryDto, langId: string): Promise<ClientStaticPageView[]> {
+    return this.getAllStticPagesWithAllSections(query, {
+      select: {
+        id: true,
+        slug: true,
+        translations: { where: { langId }, select: { title: true, content: true, langId: true } },
+        sections: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' as const },
+          select: {
+            id: true,
+            sortOrder: true,
+            translations: { where: { langId }, select: { title: true, content: true, langId: true } },
+          },
+        },
+      },
+    }) as unknown as Promise<ClientStaticPageView[]>;
   }
 
   async getAllStaticPages(query: AdvancedQueryDto) {

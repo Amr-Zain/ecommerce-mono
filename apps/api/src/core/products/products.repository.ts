@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { BaseRepository, QueryOptions, TranslationFields } from '@/common/repositories/base.repository';
+import { QueryOptions, TranslationFields } from '@/common/repositories/base.repository';
+import { MediaAwareRepository } from '@/common/repositories/media-aware.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MediaService } from '@/media/media.service';
 import { Prisma } from '@prisma/client';
@@ -61,7 +62,8 @@ type CatalogProductEntry = {
 type CatalogMatch = { product: CatalogProductEntry };
 
 @Injectable()
-export class ProductsRepository extends BaseRepository<ProductType> implements IProductsRepository {
+export class ProductsRepository extends MediaAwareRepository<ProductType> implements IProductsRepository {
+  protected readonly mediaModel = 'product';
   protected readonly mediaConfig = {
     image: { collection: 'image', single: true },
     gallery: { collection: 'gallery', single: false },

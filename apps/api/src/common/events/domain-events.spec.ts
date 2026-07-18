@@ -71,13 +71,11 @@ describe('durable domain events', () => {
   });
 
   it('skips an idempotent consumer after a receipt exists', async () => {
-    const prisma = {
-      eventConsumerReceipt: {
-        createMany: jest.fn().mockResolvedValue({ count: 0 }),
-        delete: jest.fn(),
-      },
+    const receipts = {
+      claim: jest.fn().mockResolvedValue(false),
+      release: jest.fn(),
     };
-    const consumer = new IdempotentEventConsumer(prisma as never);
+    const consumer = new IdempotentEventConsumer(receipts as never);
     const handler = jest.fn();
 
     await consumer.run(
@@ -92,22 +90,17 @@ describe('durable domain events', () => {
       handler,
     );
 
-    expect(prisma.eventConsumerReceipt.createMany).toHaveBeenCalledWith({
-      data: [{ eventId: 'event-1', consumerName: 'test-consumer' }],
-      skipDuplicates: true,
-    });
+    expect(receipts.claim).toHaveBeenCalledWith('event-1', 'test-consumer');
     expect(handler).not.toHaveBeenCalled();
-    expect(prisma.eventConsumerReceipt.delete).not.toHaveBeenCalled();
+    expect(receipts.release).not.toHaveBeenCalled();
   });
 
   it('runs handler when receipt does not exist, and deletes receipt on error', async () => {
-    const prisma = {
-      eventConsumerReceipt: {
-        createMany: jest.fn().mockResolvedValue({ count: 1 }),
-        delete: jest.fn().mockResolvedValue({}),
-      },
+    const receipts = {
+      claim: jest.fn().mockResolvedValue(true),
+      release: jest.fn().mockResolvedValue(undefined),
     };
-    const consumer = new IdempotentEventConsumer(prisma as never);
+    const consumer = new IdempotentEventConsumer(receipts as never);
     const handler = jest.fn().mockRejectedValue(new Error('handler failed'));
 
     await expect(
@@ -125,8 +118,6 @@ describe('durable domain events', () => {
     ).rejects.toThrow('handler failed');
 
     expect(handler).toHaveBeenCalled();
-    expect(prisma.eventConsumerReceipt.delete).toHaveBeenCalledWith({
-      where: { eventId_consumerName: { eventId: 'event-1', consumerName: 'test-consumer' } },
-    });
+    expect(receipts.release).toHaveBeenCalledWith('event-1', 'test-consumer');
   });
 });

@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Prisma } from '../../prisma';
 import { COUNTRIES_REPOSITORY, Country } from '@/common/interfaces';
 import { CountriesRepository } from '@/core/countries/countries.repository';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
@@ -23,7 +22,10 @@ export class CountriesService {
   }
 
   async updateCountry(id: number, country: UpdateCountryDto): Promise<Country> {
-    const updated = await this.repo.updateCountry(country as Prisma.CountryUpdateInput, id);
+    const updated = await this.repo.updateCountry(
+      country as unknown as Parameters<CountriesRepository['updateCountry']>[0],
+      id,
+    );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.locationsChanged);
     return updated;
   }
@@ -35,7 +37,9 @@ export class CountriesService {
   }
 
   async createCountry(country: CreateCountryDto): Promise<Country> {
-    const created = await this.repo.createCountry(country as Prisma.CountryCreateInput);
+    const created = await this.repo.createCountry(
+      country as unknown as Parameters<CountriesRepository['createCountry']>[0],
+    );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.locationsChanged);
     return created;
   }

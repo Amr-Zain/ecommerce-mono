@@ -11,27 +11,7 @@ export class ClientAttributesService {
       paginate: false,
       filters: { isActive: true },
     };
-    return this.attributesRepo.findAll(query, langId, {
-      select: {
-        id: true,
-        translations: {
-          where: { langId },
-          select: { name: true, langId: true },
-          take: 1,
-        },
-        values: {
-          select: {
-            id: true,
-            isActive: true,
-            translations: {
-              where: { langId },
-              select: { name: true, langId: true },
-              take: 1,
-            },
-          },
-        },
-      },
-    });
+    return this.attributesRepo.findClientList(query, langId);
   }
 
   async findOne(id: number) {

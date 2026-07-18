@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaService } from '../prisma';
+import { MEDIA_REPOSITORY, MediaRepositoryPort } from './media.repository.port';
 import { StorageInterface } from './storage/storage.interface';
 import { Inject } from '@nestjs/common';
 
@@ -9,7 +9,7 @@ export class MediaCleanupTask {
   private readonly logger = new Logger(MediaCleanupTask.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(MEDIA_REPOSITORY) private readonly mediaRepository: MediaRepositoryPort,
     @Inject('StorageInterface') private readonly storage: StorageInterface,
   ) {}
 
@@ -21,13 +21,7 @@ export class MediaCleanupTask {
     const oneHourAgo = new Date();
     oneHourAgo.setHours(oneHourAgo.getHours() - 1);
 
-    const oldMedia = await this.prisma.media.findMany({
-      where: {
-        attachHash: { not: null },
-        modelId: null,
-        createdAt: { lt: oneHourAgo },
-      },
-    });
+    const oldMedia = await this.mediaRepository.findUnattachedBefore(oneHourAgo);
 
     if (oldMedia.length === 0) {
       this.logger.log('No old unattached media found.');
@@ -42,7 +36,7 @@ export class MediaCleanupTask {
         await this.storage.deleteFile(media.path);
 
         // 2. Delete from DB
-        await this.prisma.media.delete({ where: { id: media.id } });
+        await this.mediaRepository.deleteById(media.id);
 
         this.logger.log(`Deleted media: ${media.uuid} (${media.path})`);
       } catch (error) {

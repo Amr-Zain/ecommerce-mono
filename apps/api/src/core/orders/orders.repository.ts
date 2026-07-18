@@ -7,15 +7,18 @@ import {
   IOrdersRepository,
   Order,
   OrderLifecycleRecord,
+  AdminOrderFilter,
+  OrderPersistenceContext,
+  OrderUpdateCommand,
 } from '@/common/interfaces/orders.interface';
-import { PrismaService } from '@/prisma';
+import { PrismaService, resolvePrismaClient } from '@/prisma';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 
 @Injectable()
 export class OrdersRepository extends BaseRepository<Order> implements IOrdersRepository {
   constructor(prisma: PrismaService) {
-    super(prisma, undefined, undefined);
+    super(prisma, undefined);
   }
 
   protected getModel() {
@@ -24,7 +27,7 @@ export class OrdersRepository extends BaseRepository<Order> implements IOrdersRe
 
   async findAdminOrders(
     query: AdvancedQueryDto,
-    where: Prisma.OrderWhereInput,
+    where: AdminOrderFilter,
     langId: string,
   ): Promise<PaginatedResult<AdminOrderRecord> | AdminOrderRecord[]> {
     const include = {
@@ -36,7 +39,7 @@ export class OrdersRepository extends BaseRepository<Order> implements IOrdersRe
 
     if (query.paginate === false) {
       return this.prisma.order.findMany({
-        where,
+        where: where as Prisma.OrderWhereInput,
         include,
         orderBy: { createdAt: 'desc' },
       });
@@ -47,7 +50,7 @@ export class OrdersRepository extends BaseRepository<Order> implements IOrdersRe
         ...query,
         sort: Object.keys(query.sort ?? {}).length > 0 ? query.sort : { createdAt: 'desc' },
       },
-      where,
+      where as Prisma.OrderWhereInput,
       { include },
     );
     return result as PaginatedResult<AdminOrderRecord>;
@@ -88,24 +91,21 @@ export class OrdersRepository extends BaseRepository<Order> implements IOrdersRe
     });
   }
 
-  findLifecycleOrder(id: bigint, tx: Prisma.TransactionClient = this.prisma): Promise<OrderLifecycleRecord | null> {
-    return tx.order.findUnique({ where: { id }, include: { items: true, payments: true } });
+  findLifecycleOrder(id: bigint, context?: OrderPersistenceContext): Promise<OrderLifecycleRecord | null> {
+    return this.db(context).order.findUnique({ where: { id }, include: { items: true, payments: true } });
   }
 
-  findOrderWithPayments(id: bigint, tx: Prisma.TransactionClient = this.prisma) {
-    return tx.order.findUnique({ where: { id }, include: { payments: true } });
+  findOrderWithPayments(id: bigint, context?: OrderPersistenceContext) {
+    return this.db(context).order.findUnique({ where: { id }, include: { payments: true } });
   }
 
-  async lock(id: bigint, tx: Prisma.TransactionClient) {
+  async lock(id: bigint, context: OrderPersistenceContext) {
+    const tx = this.db(context);
     await tx.$queryRaw`SELECT id FROM orders WHERE id = ${id} FOR UPDATE`;
   }
 
-  async updateOrder(
-    id: bigint,
-    data: Prisma.OrderUpdateInput,
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<Order> {
-    return tx.order.update({ where: { id }, data });
+  async updateOrder(id: bigint, data: OrderUpdateCommand, context?: OrderPersistenceContext): Promise<Order> {
+    return this.db(context).order.update({ where: { id }, data: data as Prisma.OrderUpdateInput });
   }
 
   async createStatusHistory(
@@ -118,8 +118,9 @@ export class OrdersRepository extends BaseRepository<Order> implements IOrdersRe
       reason?: string;
       metadata?: unknown;
     },
-    tx: Prisma.TransactionClient = this.prisma,
+    context?: OrderPersistenceContext,
   ) {
+    const tx = this.db(context);
     const toJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
     return tx.orderStatusHistory.create({
       data: {
@@ -134,11 +135,16 @@ export class OrdersRepository extends BaseRepository<Order> implements IOrdersRe
     });
   }
 
-  findOrderItemsWithOrder(ids: bigint[], tx: Prisma.TransactionClient = this.prisma) {
-    return tx.orderItem.findMany({ where: { id: { in: ids } }, include: { order: true } });
+  findOrderItemsWithOrder(ids: bigint[], context?: OrderPersistenceContext) {
+    return this.db(context).orderItem.findMany({ where: { id: { in: ids } }, include: { order: true } });
   }
 
-  async lockOrderItem(id: bigint, tx: Prisma.TransactionClient) {
+  async lockOrderItem(id: bigint, context: OrderPersistenceContext) {
+    const tx = this.db(context);
     await tx.$queryRaw`SELECT id FROM order_items WHERE id = ${id} FOR UPDATE`;
+  }
+
+  private db(context?: OrderPersistenceContext) {
+    return resolvePrismaClient(context, this.prisma);
   }
 }

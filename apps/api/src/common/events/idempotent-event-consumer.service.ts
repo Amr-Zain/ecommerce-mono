@@ -1,23 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma';
 import { DomainEvent } from './domain-event';
+import { EventConsumerReceiptsRepository } from './event-consumer-receipts.repository';
 
 @Injectable()
 export class IdempotentEventConsumer {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly receipts: EventConsumerReceiptsRepository) {}
 
   async run(event: DomainEvent, consumerName: string, handler: () => Promise<void>) {
-    const { count } = await this.prisma.eventConsumerReceipt.createMany({
-      data: [{ eventId: event.eventId, consumerName }],
-      skipDuplicates: true,
-    });
-    if (count === 0) return;
+    if (!(await this.receipts.claim(event.eventId, consumerName))) return;
     try {
       await handler();
     } catch (error) {
-      await this.prisma.eventConsumerReceipt.delete({
-        where: { eventId_consumerName: { eventId: event.eventId, consumerName } },
-      });
+      await this.receipts.release(event.eventId, consumerName);
       throw error;
     }
   }

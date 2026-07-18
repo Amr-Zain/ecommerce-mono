@@ -1,10 +1,11 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { MediaAwareRepository } from '@/common/repositories/media-aware.repository';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PrismaService } from '@/prisma/prisma.service';
+import { resolvePrismaClient } from '@/prisma';
 import { MediaService } from '@/media/media.service';
 import { Prisma } from '@prisma/client';
-import { IVariantsRepository } from '@/common/interfaces';
+import { IVariantsRepository, ProductPersistenceContext } from '@/common/interfaces';
 import { PaginationUtil } from '@/common/utils/pagination.util';
 
 type VariantType = Prisma.ProductVariantGetPayload<{
@@ -28,7 +29,8 @@ type VariantUpdatePayload = Prisma.ProductVariantUpdateInput & {
 };
 
 @Injectable()
-export class VariantsRepository extends BaseRepository<VariantType> implements IVariantsRepository {
+export class VariantsRepository extends MediaAwareRepository<VariantType> implements IVariantsRepository {
+  protected readonly mediaModel = 'productvariant';
   protected readonly mediaConfig = {
     gallery: { collection: 'gallery', single: false },
   };
@@ -330,7 +332,7 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
     });
   }
 
-  async adjustStock(variantId: number | bigint, amount: number, reason: string, tx?: Prisma.TransactionClient) {
+  async adjustStock(variantId: number | bigint, amount: number, reason: string, context?: ProductPersistenceContext) {
     const execute = async (prisma: Prisma.TransactionClient) => {
       const variant = await prisma.productVariant.findUnique({
         where: { id: BigInt(variantId) },
@@ -365,27 +367,28 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
       return updated;
     };
 
-    if (tx) {
-      return execute(tx);
+    if (context) {
+      return execute(this.db(context));
     }
     return this.prisma.$transaction(execute);
   }
 
-  findActiveVariantsWithProduct(ids: bigint[], tx: Prisma.TransactionClient = this.prisma) {
-    return tx.productVariant.findMany({
+  findActiveVariantsWithProduct(ids: bigint[], context?: ProductPersistenceContext) {
+    return this.db(context).productVariant.findMany({
       where: { id: { in: ids }, isActive: true },
       include: { product: true },
     });
   }
 
-  findActiveVariantStocks(ids: bigint[], tx: Prisma.TransactionClient = this.prisma) {
-    return tx.productVariant.findMany({
+  findActiveVariantStocks(ids: bigint[], context?: ProductPersistenceContext) {
+    return this.db(context).productVariant.findMany({
       where: { id: { in: ids }, isActive: true },
       select: { id: true, stockQuantity: true },
     });
   }
 
-  async reserveStock(variantId: bigint, quantity: number, reason: string, tx: Prisma.TransactionClient) {
+  async reserveStock(variantId: bigint, quantity: number, reason: string, context: ProductPersistenceContext) {
+    const tx = this.db(context);
     const reserved = await tx.productVariant.updateMany({
       where: { id: variantId, isActive: true, stockQuantity: { gte: quantity } },
       data: { stockQuantity: { decrement: quantity } },
@@ -402,6 +405,10 @@ export class VariantsRepository extends BaseRepository<VariantType> implements I
       },
     });
     return true;
+  }
+
+  private db(context?: ProductPersistenceContext) {
+    return resolvePrismaClient(context, this.prisma);
   }
 
   async findAll(query: AdvancedQueryDto) {

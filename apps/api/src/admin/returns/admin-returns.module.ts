@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PaymentModule } from '@/shared/payment/payment.module';
 import { AdminReturnsController } from './admin-returns.controller';
 import { AdminReturnsService } from './admin-returns.service';
+import { AdminReturnsRepository } from './admin-returns.repository';
 import { OrderLifecycleModule } from '@/shared/orders/order-lifecycle.module';
 import { ReturnsModule } from '@/core/returns/returns.module';
 import { ProductsModule } from '@/core/products/products.module';
@@ -11,6 +12,6 @@ import { LoyaltyModule } from '@/shared/loyalty/loyalty.module';
 @Module({
   imports: [PaymentModule, OrderLifecycleModule, ReturnsModule, ProductsModule, WalletModule, LoyaltyModule],
   controllers: [AdminReturnsController],
-  providers: [AdminReturnsService],
+  providers: [AdminReturnsService, AdminReturnsRepository],
 })
 export class AdminReturnsModule {}

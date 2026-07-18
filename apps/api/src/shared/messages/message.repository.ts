@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, PrismaService } from '@/prisma';
+import { Prisma, PrismaService, resolvePrismaClient } from '@/prisma';
+import { TransactionContext } from '@/common/persistence';
 import { MESSAGE_STATUSES } from './message.constants';
 
 @Injectable()
@@ -22,32 +23,57 @@ export class MessageRepository {
     return this.prisma.messageTemplate.findMany({ where, orderBy: { createdAt: 'desc' } });
   }
 
-  createTemplate(data: Prisma.MessageTemplateCreateInput) {
-    return this.prisma.messageTemplate.create({ data });
+  createTemplate(data: {
+    key: string;
+    name: string;
+    channel: string;
+    purpose: string;
+    content: unknown;
+    variables?: unknown;
+    isActive: boolean;
+  }) {
+    return this.prisma.messageTemplate.create({
+      data: {
+        ...data,
+        content: data.content as Prisma.InputJsonValue,
+        variables: data.variables as Prisma.InputJsonValue | undefined,
+      },
+    });
   }
 
-  updateTemplate(id: bigint, data: Prisma.MessageTemplateUpdateInput) {
-    return this.prisma.messageTemplate.update({ where: { id }, data });
+  updateTemplate(id: bigint, data: Record<string, unknown>) {
+    return this.prisma.messageTemplate.update({
+      where: { id },
+      data: data as Prisma.MessageTemplateUpdateInput,
+    });
   }
 
   getTemplate(id: bigint) {
     return this.prisma.messageTemplate.findUnique({ where: { id } });
   }
 
+  findTemplateByKey(key: string) {
+    return this.prisma.messageTemplate.findUnique({ where: { key } });
+  }
+
   deleteTemplate(id: bigint) {
     return this.prisma.messageTemplate.delete({ where: { id } });
   }
 
-  findRecipients(where: Prisma.UserWhereInput) {
+  findRecipients(filter: { isActive: boolean; userType?: string; ids?: bigint[] }) {
     return this.prisma.user.findMany({
-      where,
+      where: {
+        isActive: filter.isActive,
+        ...(filter.userType ? { userType: filter.userType } : {}),
+        ...(filter.ids ? { id: { in: filter.ids } } : {}),
+      },
       select: { id: true, email: true, name: true, userType: true, isActive: true, settings: true },
       orderBy: { id: 'asc' },
     });
   }
 
   createCampaign(
-    tx: Prisma.TransactionClient,
+    context: TransactionContext,
     input: {
       templateId: bigint;
       senderId?: bigint;
@@ -70,7 +96,7 @@ export class MessageRepository {
         error: channel === 'email' && !recipient.email ? 'Missing email address' : undefined,
       })),
     );
-    return tx.messageCampaign.create({
+    return resolvePrismaClient(context, this.prisma).messageCampaign.create({
       data: {
         templateId: input.templateId,
         senderId: input.senderId,

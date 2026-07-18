@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MediaService } from '@/media/media.service';
-import { BaseRepository, ScalarFields } from '@/common/repositories/base.repository';
+import { ScalarFields } from '@/common/repositories/base.repository';
+import { MediaAwareRepository } from '@/common/repositories/media-aware.repository';
 import { AdminReview, ClientReview, IReviewsRepository, ReviewOwner } from '@/common/interfaces';
 import { MediaType } from '@/media/enums/media-type.enum';
 import { Prisma } from '@prisma/client';
@@ -28,7 +29,8 @@ const adminReviewInclude = {
 type AdminReviewRecord = Prisma.ReviewGetPayload<{ include: typeof adminReviewInclude }>;
 
 @Injectable()
-export class ReviewsRepository extends BaseRepository<ReviewRecord> implements IReviewsRepository {
+export class ReviewsRepository extends MediaAwareRepository<ReviewRecord> implements IReviewsRepository {
+  protected readonly mediaModel = 'review';
   protected readonly mediaConfig = {
     images: { collection: 'images', single: false, allowedTypes: [MediaType.IMAGE] },
   };
@@ -149,6 +151,24 @@ export class ReviewsRepository extends BaseRepository<ReviewRecord> implements I
       select: this.clientReviewSelect(),
     });
     return review ? this.mergeMedia(review) : null;
+  }
+
+  async hasVerifiedDeliveredPurchase(userId: bigint, productId: bigint): Promise<boolean> {
+    const item = await this.prisma.orderItem.findFirst({
+      where: {
+        isActive: true,
+        OR: [{ productId }, { variant: { productId } }],
+        order: {
+          userId,
+          isActive: true,
+          status: 'delivered',
+          paymentStatus: 'completed',
+          deliveredAt: { not: null },
+        },
+      },
+      select: { id: true },
+    });
+    return Boolean(item);
   }
 
   async createForUser(data: {

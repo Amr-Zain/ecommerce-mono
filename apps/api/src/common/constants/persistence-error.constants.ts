@@ -1,4 +1,4 @@
-export const PRISMA_ERROR_CODES = {
+export const PERSISTENCE_ERROR_CODES = {
   /** Unique constraint violation */
   uniqueConstraint: 'P2002',
   /** Foreign key constraint violation */

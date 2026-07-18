@@ -2,9 +2,9 @@ import { NotFoundException } from '@nestjs/common';
 import { EmailTemplateService } from './email-template.service';
 
 describe('EmailTemplateService', () => {
-  const findUnique = jest.fn();
-  const prisma = { messageTemplate: { findUnique } } as any;
-  const service = new EmailTemplateService(prisma);
+  const findTemplateByKey = jest.fn();
+  const messages = { findTemplateByKey } as any;
+  const service = new EmailTemplateService(messages);
 
   beforeEach(() => jest.clearAllMocks());
 
@@ -31,7 +31,7 @@ describe('EmailTemplateService', () => {
   });
 
   it('renders English email from DB template', async () => {
-    findUnique.mockResolvedValue(makeTemplate());
+    findTemplateByKey.mockResolvedValue(makeTemplate());
     const result = await service.render('emailOtp', 'en', { code: '1234', expiresMinutes: 10 });
     expect(result.subject).toBe('Verification code');
     expect(result.html).toContain('Code: 1234');
@@ -39,7 +39,7 @@ describe('EmailTemplateService', () => {
   });
 
   it('renders Arabic email with RTL content from DB template', async () => {
-    findUnique.mockResolvedValue(makeTemplate());
+    findTemplateByKey.mockResolvedValue(makeTemplate());
     const result = await service.render('emailOtp', 'ar', { code: '5678', expiresMinutes: 10 });
     expect(result.subject).toBe('رمز التحقق');
     expect(result.html).toContain('الرمز: 5678');
@@ -47,7 +47,7 @@ describe('EmailTemplateService', () => {
   });
 
   it('escapes user-controlled variables in HTML but keeps plain text raw', async () => {
-    findUnique.mockResolvedValue(makeTemplate());
+    findTemplateByKey.mockResolvedValue(makeTemplate());
     const result = await service.render('emailOtp', 'en', { code: '<script>alert(1)</script>', expiresMinutes: 10 });
     expect(result.html).not.toContain('<script>');
     expect(result.html).toContain('&lt;script&gt;');
@@ -55,19 +55,19 @@ describe('EmailTemplateService', () => {
   });
 
   it('throws NotFoundException when template is missing', async () => {
-    findUnique.mockResolvedValue(null);
+    findTemplateByKey.mockResolvedValue(null);
     await expect(service.render('emailOtp', 'en', { code: '1234', expiresMinutes: 10 })).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });
 
   it('throws when template is inactive', async () => {
-    findUnique.mockResolvedValue(makeTemplate({ isActive: false }));
+    findTemplateByKey.mockResolvedValue(makeTemplate({ isActive: false }));
     await expect(service.render('emailOtp', 'en', { code: '1234', expiresMinutes: 10 })).rejects.toThrow('is inactive');
   });
 
   it('throws when localized content is missing subject or html', async () => {
-    findUnique.mockResolvedValue(makeTemplate({ content: { en: { subject: '', body: '', html: '' } } }));
+    findTemplateByKey.mockResolvedValue(makeTemplate({ content: { en: { subject: '', body: '', html: '' } } }));
     await expect(service.render('emailOtp', 'en', { code: '1234', expiresMinutes: 10 })).rejects.toThrow(
       'missing subject or html',
     );

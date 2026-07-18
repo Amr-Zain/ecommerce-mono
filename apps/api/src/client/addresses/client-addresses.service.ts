@@ -1,195 +1,69 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { TransactionContext, UNIT_OF_WORK, UnitOfWork } from '@/common/persistence';
 import { CreateAddressDto, UpdateAddressDto } from './dto/address.dto';
+import {
+  CLIENT_ADDRESSES_REPOSITORY,
+  ClientAddressesRepositoryPort,
+  AddressWriteData,
+} from './client-addresses.repository.port';
 
 @Injectable()
 export class ClientAddressesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(CLIENT_ADDRESSES_REPOSITORY) private readonly addresses: ClientAddressesRepositoryPort,
+    @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
+  ) {}
 
-  async findAll(userId: bigint, langId: string = 'en') {
-    return this.prisma.address.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        address: true,
-        cityId: true,
-        countryId: true,
-        streetName: true,
-        buildingNumber: true,
-        isDefault: true,
-        city: {
-          select: {
-            id: true,
-            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
-          },
-        },
-        country: {
-          select: {
-            id: true,
-            phoneCode: true,
-            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
-          },
-        },
-      },
-      orderBy: { isDefault: 'desc' },
+  findAll(userId: bigint, langId = 'en') {
+    return this.addresses.listForUser(userId, langId);
+  }
+
+  create(userId: bigint, dto: CreateAddressDto, langId = 'en') {
+    return this.unitOfWork.execute(async (context) => {
+      const data = this.writeData(dto);
+      await this.assertLocation(data.countryId, data.cityId, context);
+      if (data.isDefault) await this.addresses.clearDefault(userId, context);
+      return this.addresses.createForUser(userId, { ...data, address: dto.address }, langId, context);
     });
   }
 
-  async create(userId: bigint, dto: CreateAddressDto, langId: string = 'en') {
-    return this.prisma.$transaction(async (tx) => {
-      const countryId = dto.countryId ? BigInt(dto.countryId) : null;
-      const cityId = dto.cityId ? BigInt(dto.cityId) : null;
-
-      if (countryId) {
-        const country = await tx.country.findFirst({
-          where: { id: countryId, isActive: true },
-          select: { id: true },
-        });
-        if (!country) {
-          throw new BadRequestException('Selected country is invalid');
-        }
-      }
-
-      if (cityId) {
-        const city = await tx.city.findFirst({
-          where: {
-            id: cityId,
-            isActive: true,
-            ...(countryId ? { countryId } : {}),
-          },
-          select: { id: true, countryId: true },
-        });
-        if (!city) {
-          throw new BadRequestException('Selected city is invalid or does not belong to the selected country');
-        }
-      }
-
-      if (dto.isDefault) {
-        await tx.address.updateMany({
-          where: { userId },
-          data: { isDefault: false },
-        });
-      }
-      return tx.address.create({
-        data: {
-          userId,
-          address: dto.address,
-          cityId,
-          countryId,
-          streetName: dto.streetName,
-          buildingNumber: dto.buildingNumber,
-          isDefault: dto.isDefault ?? false,
-        },
-        select: {
-          id: true,
-          address: true,
-          cityId: true,
-          countryId: true,
-          streetName: true,
-          buildingNumber: true,
-          isDefault: true,
-          city: {
-            select: {
-              id: true,
-              translations: { where: { langId }, select: { name: true, langId: true } },
-            },
-          },
-          country: {
-            select: {
-              id: true,
-              phoneCode: true,
-              translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
-            },
-          },
-        },
-      });
-    });
-  }
-
-  async update(userId: bigint, id: bigint, dto: UpdateAddressDto, langId: string = 'en') {
-    const address = await this.prisma.address.findFirst({ where: { id, userId }, select: { id: true } });
+  async update(userId: bigint, id: bigint, dto: UpdateAddressDto, langId = 'en') {
+    const data = this.writeData(dto);
+    await this.assertLocation(data.countryId, data.cityId);
+    const address = await this.addresses.updateOwned(userId, id, data, langId);
     if (!address) throw new NotFoundException('Address not found');
-
-    const data: Record<string, unknown> = {};
-    if (dto.address !== undefined) data.address = dto.address;
-    if (dto.cityId !== undefined) data.cityId = dto.cityId ? BigInt(dto.cityId) : null;
-    if (dto.countryId !== undefined) data.countryId = dto.countryId ? BigInt(dto.countryId) : null;
-    if (dto.streetName !== undefined) data.streetName = dto.streetName;
-    if (dto.buildingNumber !== undefined) data.buildingNumber = dto.buildingNumber;
-    if (dto.isDefault !== undefined) data.isDefault = dto.isDefault;
-
-    return this.prisma.address.update({
-      where: { id },
-      data,
-      select: {
-        id: true,
-        address: true,
-        cityId: true,
-        countryId: true,
-        streetName: true,
-        buildingNumber: true,
-        isDefault: true,
-        city: {
-          select: {
-            id: true,
-            translations: { where: { langId }, select: { name: true, langId: true } },
-          },
-        },
-        country: {
-          select: {
-            id: true,
-            phoneCode: true,
-            translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
-          },
-        },
-      },
-    });
+    return address;
   }
 
   async remove(userId: bigint, id: bigint) {
-    const address = await this.prisma.address.findFirst({ where: { id, userId }, select: { id: true } });
+    const address = await this.addresses.deleteOwned(userId, id);
     if (!address) throw new NotFoundException('Address not found');
-
-    return this.prisma.address.delete({
-      where: { id },
-    });
+    return address;
   }
 
-  async setDefault(userId: bigint, id: bigint, langId: string = 'en') {
-    const address = await this.prisma.address.findFirst({ where: { id, userId }, select: { id: true } });
+  async setDefault(userId: bigint, id: bigint, langId = 'en') {
+    const address = await this.unitOfWork.execute((context) => this.addresses.setDefault(userId, id, langId, context));
     if (!address) throw new NotFoundException('Address not found');
+    return address;
+  }
 
-    return this.prisma.$transaction(async (tx) => {
-      await tx.address.updateMany({
-        where: { userId },
-        data: { isDefault: false },
-      });
-      return tx.address.update({
-        where: { id },
-        data: { isDefault: true },
-        select: {
-          id: true,
-          address: true,
-          cityId: true,
-          countryId: true,
-          streetName: true,
-          buildingNumber: true,
-          isDefault: true,
-          city: {
-            select: {
-              id: true,
-              translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
-            },
-          },
-          country: {
-            select: {
-              id: true,
-              phoneCode: true,
-              translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
-            },
-          },
-        },
-      });
-    });
+  private writeData(dto: CreateAddressDto | UpdateAddressDto): AddressWriteData {
+    return {
+      ...(dto.address !== undefined ? { address: dto.address } : {}),
+      ...(dto.cityId !== undefined ? { cityId: dto.cityId ? BigInt(dto.cityId) : null } : {}),
+      ...(dto.countryId !== undefined ? { countryId: dto.countryId ? BigInt(dto.countryId) : null } : {}),
+      ...(dto.streetName !== undefined ? { streetName: dto.streetName } : {}),
+      ...(dto.buildingNumber !== undefined ? { buildingNumber: dto.buildingNumber } : {}),
+      ...(dto.isDefault !== undefined ? { isDefault: dto.isDefault } : {}),
+    };
+  }
+
+  private async assertLocation(countryId?: bigint | null, cityId?: bigint | null, context?: TransactionContext) {
+    if (countryId && !(await this.addresses.activeCountryExists(countryId, context))) {
+      throw new BadRequestException('Selected country is invalid');
+    }
+    if (cityId && !(await this.addresses.activeCityExists(cityId, countryId, context))) {
+      throw new BadRequestException('Selected city is invalid or does not belong to the selected country');
+    }
   }
 }

@@ -15,25 +15,7 @@ export class ClientCitiesService {
       paginate: false,
       filters,
     };
-    return this.citiesRepo.findAll(query, langId, {
-      select: {
-        id: true,
-        translations: {
-          where: { langId },
-          select: { name: true, langId: true },
-        },
-        country: {
-          select: {
-            id: true,
-            phoneCode: true,
-            translations: {
-              where: { langId },
-              select: { name: true, langId: true },
-            },
-          },
-        },
-      },
-    });
+    return this.citiesRepo.findClientList(query, langId);
   }
 
   async findOne(id: bigint, langId: string = 'en') {

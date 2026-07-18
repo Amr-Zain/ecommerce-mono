@@ -13,34 +13,6 @@ export class ClientShowRoomsService {
       filters: { ...query.filters, isActive: true },
       sort: query.sort ?? { createdAt: 'desc' },
     };
-    return this.showRoomsRepo.findAll(queryOptions, langId, {
-      select: {
-        id: true,
-        countryId: true,
-        phoneCode: true,
-        phone: true,
-        email: true,
-        url: true,
-        lat: true,
-        lng: true,
-        isActive: true,
-        createdAt: true,
-        country: {
-          select: {
-            id: true,
-            translations: {
-              where: { langId },
-              select: { name: true },
-              take: 1,
-            },
-          },
-        },
-        translations: {
-          where: { langId },
-          select: { name: true, address: true, city: true, langId: true },
-          take: 1,
-        },
-      },
-    });
+    return this.showRoomsRepo.findClientList(queryOptions, langId);
   }
 }

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ClientAddressesController } from './client-addresses.controller';
 import { ClientAddressesService } from './client-addresses.service';
-import { PrismaModule } from '@/prisma/prisma.module';
+import { ClientAddressesRepository } from './client-addresses.repository';
+import { CLIENT_ADDRESSES_REPOSITORY } from './client-addresses.repository.port';
 
 @Module({
-  imports: [PrismaModule],
   controllers: [ClientAddressesController],
-  providers: [ClientAddressesService],
+  providers: [ClientAddressesService, { provide: CLIENT_ADDRESSES_REPOSITORY, useClass: ClientAddressesRepository }],
 })
 export class ClientAddressesModule {}

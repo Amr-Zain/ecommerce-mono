@@ -1,6 +1,5 @@
 import { PaginatedResult } from '../dto/pagination.dto';
 import { IBaseRepository } from './base.repository.interface';
-import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface CollectionTranslation {
   id: bigint;
@@ -28,7 +27,7 @@ export interface Collection {
 export const COLLECTIONS_REPOSITORY = Symbol('ICollectionsRepository');
 
 export interface ICollectionsRepository extends IBaseRepository<Collection> {
-  findAll(query: unknown, langId?: string, options?: QueryOptions): Promise<PaginatedResult<Collection> | Collection[]>;
+  findAll(query: unknown, langId?: string): Promise<PaginatedResult<Collection> | Collection[]>;
   findOneWithChildren(id: number): Promise<Collection | null>;
   findBySlug(slug: string, langId?: string): Promise<Collection | null>;
   findActiveTree(langId?: string): Promise<Collection[]>;

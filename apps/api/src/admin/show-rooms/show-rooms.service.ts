@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Prisma } from '@/prisma';
 import { SHOW_ROOMS_REPOSITORY, ShowRoom } from '@/common/interfaces';
 import { ShowRoomsRepository } from '@/core/show-rooms/show-rooms.repository';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
@@ -23,13 +22,13 @@ export class ShowRoomsService {
   }
 
   async createShowRoom(showRoom: CreateShowRoomDto): Promise<ShowRoom> {
-    const created = await this.repo.create(showRoom as unknown as Prisma.ShowRoomCreateInput);
+    const created = await this.repo.create(showRoom as unknown as Parameters<ShowRoomsRepository['create']>[0]);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.showRoomsChanged);
     return created;
   }
 
   async updateShowRoom(id: number, showRoom: UpdateShowRoomDto): Promise<ShowRoom> {
-    const updated = await this.repo.update(id, showRoom as unknown as Prisma.ShowRoomUpdateInput);
+    const updated = await this.repo.update(id, showRoom as unknown as Parameters<ShowRoomsRepository['update']>[1]);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.showRoomsChanged);
     return updated;
   }

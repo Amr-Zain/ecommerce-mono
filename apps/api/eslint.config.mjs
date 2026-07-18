@@ -52,4 +52,36 @@ export default tseslint.config(
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
   },
+  {
+    files: ['src/**/*.service.ts', 'src/**/*.controller.ts', 'src/**/*.dto.ts', 'src/**/*.task.ts'],
+    ignores: ['src/prisma/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@prisma/client', '@/prisma', '@/prisma/*', '**/prisma', '**/prisma/*'],
+              message: 'Application and HTTP layers must use repository/query ports, never Prisma.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "Identifier[name='PrismaService']",
+          message: 'PrismaService is restricted to persistence infrastructure.',
+        },
+        {
+          selector: "CallExpression[callee.property.name='$transaction']",
+          message: 'Application transactions must use UnitOfWork.',
+        },
+        {
+          selector: "CallExpression[callee.property.name='$queryRaw']",
+          message: 'Raw SQL must live in a query repository.',
+        },
+      ],
+    },
+  },
 );

@@ -2,14 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { RefreshToken } from '@prisma/client';
 import { BaseRepository } from '../../common/repositories/base.repository';
-import { MediaService } from '../../media/media.service';
+import { TransactionContext } from '@/common/persistence';
+import { resolvePrismaClient } from '@/prisma';
 
 export type RefreshTokenPayload = RefreshToken;
 
 @Injectable()
 export class RefreshTokensRepository extends BaseRepository<RefreshTokenPayload> {
-  constructor(prisma: PrismaService, mediaService: MediaService) {
-    super(prisma, mediaService, undefined);
+  constructor(prisma: PrismaService) {
+    super(prisma, undefined);
   }
 
   protected getModel() {
@@ -77,8 +78,8 @@ export class RefreshTokensRepository extends BaseRepository<RefreshTokenPayload>
     });
   }
 
-  async revokeAllUserTokens(userId: bigint): Promise<void> {
-    await this.prisma.refreshToken.updateMany({
+  async revokeAllUserTokens(userId: bigint, context?: TransactionContext): Promise<void> {
+    await resolvePrismaClient(context, this.prisma).refreshToken.updateMany({
       where: { userId, isRevoked: false },
       data: { isRevoked: true },
     });

@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Prisma } from '@/prisma';
 import { SLIDERS_REPOSITORY, Slider } from '@/common/interfaces';
 import { SlidersRepository } from '@/core/sliders/sliders.repository';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
@@ -23,7 +22,7 @@ export class SlidersService {
   }
 
   async updateSlider(id: number, slider: UpdateSliderDto): Promise<Slider> {
-    const updated = await this.repo.update(id, slider as unknown as Prisma.SliderUpdateInput);
+    const updated = await this.repo.update(id, slider as unknown as Parameters<SlidersRepository['update']>[1]);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.slidersChanged);
     return updated;
   }
@@ -35,7 +34,7 @@ export class SlidersService {
   }
 
   async createSlider(slider: CreateSliderDto): Promise<Slider> {
-    const created = await this.repo.create(slider as unknown as Prisma.SliderCreateInput);
+    const created = await this.repo.create(slider as unknown as Parameters<SlidersRepository['create']>[0]);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.slidersChanged);
     return created;
   }

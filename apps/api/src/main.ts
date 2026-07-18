@@ -3,15 +3,11 @@ import { VersioningType, RequestMethod } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { I18nValidationPipe } from 'nestjs-i18n';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { Prisma } from '@prisma/client';
 import { setupSwagger } from './common/swagger/swagger.setup';
 
 import { SnakeToCamelPipe } from './common/pipes/snake-to-camel.pipe';
 import cookieParser from 'cookie-parser';
 
-(Prisma.Decimal.prototype as unknown as { toJSON: () => number }).toJSON = function (this: Prisma.Decimal) {
-  return Number(this.toString());
-};
 (BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function (this: bigint) {
   return this.toString();
 };

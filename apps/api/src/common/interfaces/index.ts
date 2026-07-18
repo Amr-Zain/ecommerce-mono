@@ -20,6 +20,8 @@ export type {
   VariantPriceUpdate,
   ProductUpdatePlan,
   CatalogQuery,
+  ProductPersistenceContext,
+  ProductVariantWithProduct,
 } from './products.interface';
 export { PRODUCTS_REPOSITORY, VARIANTS_REPOSITORY } from './products.interface';
 export type {
@@ -64,13 +66,14 @@ export type {
   AdminOrderRecord,
   ClientOrderRecord,
   OrderLifecycleRecord,
+  OrderItemWithOrder,
+  AdminOrderFilter,
+  OrderPersistenceContext,
   IOrdersRepository,
 } from './orders.interface';
 export { ORDERS_REPOSITORY } from './orders.interface';
 
 export type { IPaymentTransactionsRepository } from './payment-transactions.interface';
 export { PAYMENT_TRANSACTIONS_REPOSITORY } from './payment-transactions.interface';
-export type { IReturnRequestsRepository } from './return-requests.interface';
 export { RETURN_REQUESTS_REPOSITORY } from './return-requests.interface';
-export type { IExchangeRequestsRepository } from './exchange-requests.interface';
 export { EXCHANGE_REQUESTS_REPOSITORY } from './exchange-requests.interface';

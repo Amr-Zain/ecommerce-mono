@@ -2,13 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, OutboxEvent } from '@prisma/client';
 import { PrismaService } from '@/prisma';
 import { DomainEvent } from './domain-event';
+import { TransactionContext } from '@/common/persistence';
+import { resolvePrismaClient } from '@/prisma';
+
+export type OutboxEventRecord = OutboxEvent;
 
 @Injectable()
 export class OutboxEventsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(event: DomainEvent, tx: Prisma.TransactionClient = this.prisma) {
-    return tx.outboxEvent.create({
+  create(event: DomainEvent, context?: TransactionContext | object) {
+    const db =
+      context instanceof TransactionContext
+        ? resolvePrismaClient(context, this.prisma)
+        : ((context as Prisma.TransactionClient | undefined) ?? this.prisma);
+    return db.outboxEvent.create({
       data: {
         eventId: event.eventId,
         eventName: event.eventName,

@@ -11,28 +11,7 @@ export class ClientStaticPagesService {
       paginate: false,
       filters: { isActive: true },
     };
-    return this.staticPagesRepo.getAllStticPagesWithAllSections(query, {
-      select: {
-        id: true,
-        slug: true,
-        translations: {
-          where: { langId },
-          select: { title: true, content: true, langId: true },
-        },
-        sections: {
-          where: { isActive: true },
-          orderBy: { sortOrder: 'asc' as const },
-          select: {
-            id: true,
-            sortOrder: true,
-            translations: {
-              where: { langId },
-              select: { title: true, content: true, langId: true },
-            },
-          },
-        },
-      },
-    });
+    return this.staticPagesRepo.findClientList(query, langId);
   }
 
   async findBySlug(slug: string, langId: string = 'en') {

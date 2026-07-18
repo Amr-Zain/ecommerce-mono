@@ -12,17 +12,6 @@ export class ClientSlidersService {
       filters: { isActive: true },
       sort: { sortOrder: 'asc' },
     };
-    return this.slidersRepo.findAll(query, langId, {
-      select: {
-        id: true,
-        sortOrder: true,
-        startDate: true,
-        endDate: true,
-        translations: {
-          where: { langId },
-          select: { title: true, langId: true },
-        },
-      },
-    });
+    return this.slidersRepo.findClientList(query, langId);
   }
 }

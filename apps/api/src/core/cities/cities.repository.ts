@@ -4,6 +4,8 @@ import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { MediaService } from '@/media/media.service';
 import { ICitiesRepository } from '@/common/interfaces';
+import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
+import type { ClientCityView } from '@/common/interfaces/cities.interface';
 
 type City = Prisma.CityGetPayload<{ include: { translations: true } }>;
 
@@ -43,11 +45,27 @@ export class CitiesRepository extends BaseRepository<City> implements ICitiesRep
   };
 
   constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
-    super(prisma, mediaService, queryBuilder);
+    super(prisma, queryBuilder);
   }
 
   getModel() {
     return this.prisma.city;
+  }
+
+  findClientList(query: AdvancedQueryDto, langId: string): Promise<ClientCityView[]> {
+    return this.findAll(query, langId, {
+      select: {
+        id: true,
+        translations: { where: { langId }, select: { name: true, langId: true } },
+        country: {
+          select: {
+            id: true,
+            phoneCode: true,
+            translations: { where: { langId }, select: { name: true, langId: true } },
+          },
+        },
+      },
+    }) as unknown as Promise<ClientCityView[]>;
   }
 
   async createCity(city: Prisma.CityCreateInput): Promise<City> {

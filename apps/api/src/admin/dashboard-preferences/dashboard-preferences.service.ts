@@ -1,5 +1,5 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, PrismaService } from '@/prisma';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { IUsersRepository, USERS_REPOSITORY } from '@/common/interfaces';
 import {
   ALLOWED_DASHBOARD_THEME_VARIABLES,
   createDefaultDashboardPreferences,
@@ -17,15 +17,12 @@ const UNSAFE_VALUE = /[;{}]|url\s*\(|@import|expression\s*\(/i;
 @Injectable()
 export class DashboardPreferencesService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(USERS_REPOSITORY) private readonly users: IUsersRepository,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
   async get(userId: bigint): Promise<DashboardPreferences> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true, userType: true },
-    });
+    const user = await this.users.findSettingsOwner(userId);
     if (!user) throw new NotFoundException(this.i18n.t('errors.user_not_found'));
     this.assertAdmin(user.userType);
 
@@ -40,23 +37,15 @@ export class DashboardPreferencesService {
     this.validateVariableModes(dto.theme.customVariables, 'customVariables');
     this.validateVariableModes(dto.theme.overrides, 'overrides');
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { settings: true, userType: true },
-    });
+    const user = await this.users.findSettingsOwner(userId);
     if (!user) throw new NotFoundException(this.i18n.t('errors.user_not_found'));
     this.assertAdmin(user.userType);
 
     const settings = this.asRecord(user.settings);
     const preferences = this.normalize(dto, settings.language);
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        settings: {
-          ...settings,
-          dashboard_preferences: preferences,
-        } as unknown as Prisma.InputJsonValue,
-      },
+    await this.users.updateSettings(userId, {
+      ...settings,
+      dashboard_preferences: preferences,
     });
     return preferences;
   }

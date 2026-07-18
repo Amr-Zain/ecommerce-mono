@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, PrismaService } from '@/prisma';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { UNIT_OF_WORK, UnitOfWork } from '@/common/persistence';
 import { createDomainEvent, DOMAIN_EVENTS } from '@/common/events/domain-event';
 import { DomainEventPublisher } from '@/common/events/domain-event-publisher.service';
 import { MessageRepository } from './message.repository';
@@ -22,7 +22,7 @@ export class MessageService {
   constructor(
     private readonly repository: MessageRepository,
     private readonly renderer: MessageRenderer,
-    private readonly prisma: PrismaService,
+    @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
     private readonly events: DomainEventPublisher,
   ) {}
 
@@ -52,8 +52,8 @@ export class MessageService {
       name: dto.name,
       channel: dto.channel,
       purpose: dto.purpose,
-      content: dto.content as unknown as Prisma.InputJsonValue,
-      variables: dto.variables as Prisma.InputJsonValue | undefined,
+      content: dto.content,
+      variables: dto.variables,
       isActive: dto.isActive ?? true,
     });
   }
@@ -69,8 +69,8 @@ export class MessageService {
       name: dto.name,
       channel: dto.channel,
       purpose: dto.purpose,
-      content: dto.content as unknown as Prisma.InputJsonValue | undefined,
-      variables: dto.variables as Prisma.InputJsonValue | undefined,
+      content: dto.content,
+      variables: dto.variables,
       isActive: dto.isActive,
     });
   }
@@ -134,8 +134,8 @@ export class MessageService {
     const channels = this.deliveryChannels(dto.channel);
     const recipients = users.map((user) => ({ userId: user.id, email: user.email, channels }));
 
-    return this.prisma.$transaction(async (tx) => {
-      const campaign = await this.repository.createCampaign(tx, {
+    return this.unitOfWork.execute(async (context) => {
+      const campaign = await this.repository.createCampaign(context, {
         templateId: template.id,
         senderId,
         channel: dto.channel,
@@ -162,7 +162,7 @@ export class MessageService {
           aggregateId: campaign.id.toString(),
           payload: { campaignId: campaign.id.toString() },
         }),
-        tx,
+        context,
       );
 
       return campaign;
@@ -180,7 +180,7 @@ export class MessageService {
   }
 
   private async resolveRecipients(dto: SendMessageDto) {
-    const where: Prisma.UserWhereInput = { isActive: true };
+    const where: { isActive: boolean; userType?: string; ids?: bigint[] } = { isActive: true };
     if (dto.recipientType === MESSAGE_RECIPIENT_TYPES.admin) where.userType = 'admin';
     if (dto.recipientType === MESSAGE_RECIPIENT_TYPES.client) where.userType = 'client';
     if (dto.recipientType === MESSAGE_RECIPIENT_TYPES.specific) {
@@ -193,7 +193,7 @@ export class MessageService {
       }
       const ids = dto.recipientIds.map((id) => BigInt(id));
       where.userType = dto.recipientUserType;
-      where.id = { in: ids };
+      where.ids = ids;
       const users = await this.repository.findRecipients(where);
       if (users.length !== new Set(ids.map((id) => id.toString())).size) {
         throw new BadRequestException(

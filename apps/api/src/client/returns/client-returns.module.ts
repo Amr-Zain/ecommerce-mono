@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { ProductsModule as CoreProductsModule } from '@/core/products/products.module';
 import { ClientReturnsController } from './client-returns.controller';
 import { ClientReturnsService } from './client-returns.service';
+import { ClientReturnsRepository } from './client-returns.repository';
 import { ReturnsModule } from '@/core/returns/returns.module';
 import { OrdersModule } from '@/core/orders/orders.module';
 
 @Module({
   imports: [CoreProductsModule, ReturnsModule, OrdersModule],
   controllers: [ClientReturnsController],
-  providers: [ClientReturnsService],
+  providers: [ClientReturnsService, ClientReturnsRepository],
 })
 export class ClientReturnsModule {}

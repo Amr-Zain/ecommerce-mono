@@ -5,7 +5,6 @@ import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
 import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { Prisma } from '@/prisma';
 import {
   PUBLIC_CACHE_EVENTS,
   PublicCacheInvalidationPublisher,
@@ -19,7 +18,9 @@ export class CollectionsService {
   ) {}
 
   async create(createCollectionDto: CreateCollectionDto): Promise<Collection> {
-    const collection = await this.repo.createCollection(createCollectionDto as unknown as Prisma.CollectionCreateInput);
+    const collection = await this.repo.createCollection(
+      createCollectionDto as Parameters<CollectionsRepository['createCollection']>[0],
+    );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.collectionsChanged);
     return collection;
   }
@@ -36,7 +37,7 @@ export class CollectionsService {
 
   async update(id: number, updateCollectionDto: UpdateCollectionDto): Promise<Collection> {
     const collection = await this.repo.updateCollection(
-      updateCollectionDto as unknown as Prisma.CollectionUpdateInput,
+      updateCollectionDto as Parameters<CollectionsRepository['updateCollection']>[0],
       id,
     );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.collectionsChanged);

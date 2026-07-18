@@ -1,7 +1,6 @@
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { IBaseRepository } from './base.repository.interface';
-import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface ShowRoomTranslation {
   id: bigint;
@@ -27,13 +26,28 @@ export interface ShowRoom {
   translations: ShowRoomTranslation[];
 }
 
+export interface ClientShowRoomView {
+  id: bigint;
+  countryId: bigint;
+  phoneCode: string;
+  phone: string;
+  email: string | null;
+  url: string | null;
+  lat: number | null;
+  lng: number | null;
+  isActive: boolean;
+  createdAt: Date;
+  country: { id: bigint; translations: Array<{ name: string }> };
+  translations: Array<Pick<ShowRoomTranslation, 'name' | 'address' | 'city' | 'langId'>>;
+}
+
 export const SHOW_ROOMS_REPOSITORY = Symbol('IShowRoomsRepository');
 
 export interface IShowRoomsRepository extends IBaseRepository<ShowRoom> {
-  findAll(
+  findAll(query: AdvancedQueryDto, langId?: string): Promise<PaginatedResult<ShowRoom> | ShowRoom[]>;
+  findClientList(
     query: AdvancedQueryDto,
-    langId?: string,
-    options?: QueryOptions,
-  ): Promise<PaginatedResult<ShowRoom> | ShowRoom[]>;
+    langId: string,
+  ): Promise<PaginatedResult<ClientShowRoomView> | ClientShowRoomView[]>;
   findByIdWithAllTranslations(id: number | bigint): Promise<ShowRoom | null>;
 }

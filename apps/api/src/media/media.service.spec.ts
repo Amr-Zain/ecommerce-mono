@@ -1,23 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MediaService } from './media.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { MEDIA_REPOSITORY } from './media.repository.port';
 import { NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 
 describe('MediaService', () => {
   let service: MediaService;
-  let mockPrisma: any;
+  let mockRepository: any;
   let mockStorage: any;
 
   beforeEach(async () => {
-    mockPrisma = {
-      media: {
-        create: jest.fn(),
-        updateMany: jest.fn(),
-        findUnique: jest.fn(),
-        findMany: jest.fn(),
-        delete: jest.fn(),
-      },
+    mockRepository = {
+      create: jest.fn(),
+      findTemporary: jest.fn(),
+      attach: jest.fn(),
+      findByUuid: jest.fn(),
+      findByEntity: jest.fn(),
+      findByEntities: jest.fn(),
+      findProductImages: jest.fn(),
+      findEntityRecords: jest.fn(),
+      deleteEntityRecords: jest.fn(),
+      deleteById: jest.fn(),
     };
 
     mockStorage = {
@@ -29,7 +32,7 @@ describe('MediaService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MediaService,
-        { provide: PrismaService, useValue: mockPrisma },
+        { provide: MEDIA_REPOSITORY, useValue: mockRepository },
         { provide: 'StorageInterface', useValue: mockStorage },
       ],
     }).compile();
@@ -59,7 +62,7 @@ describe('MediaService', () => {
         filename: 'test-hash.jpg',
       });
 
-      mockPrisma.media.create.mockResolvedValue({
+      mockRepository.create.mockResolvedValue({
         id: 1n,
         uuid: randomUUID(),
         path: '/uploads/product/1/test-hash.jpg',
@@ -71,7 +74,7 @@ describe('MediaService', () => {
       const result = await service.uploadMultiple([mockFile], mockDto);
 
       expect(mockStorage.uploadFile).toHaveBeenCalledWith(mockFile, 'product', '1');
-      expect(mockPrisma.media.create).toHaveBeenCalled();
+      expect(mockRepository.create).toHaveBeenCalled();
       expect(result).toHaveLength(1);
       expect(result[0].path).toBe('/uploads/product/1/test-hash.jpg');
       expect(result[0].id).toBe('1');
@@ -82,7 +85,7 @@ describe('MediaService', () => {
       const mockDto = { model: 'product', attachHash: 'hash123' };
 
       mockStorage.uploadFile.mockResolvedValue({ path: '/a.png', filename: 'a.png' });
-      mockPrisma.media.create.mockResolvedValue({ id: 1n });
+      mockRepository.create.mockResolvedValue({ id: 1n });
 
       await service.uploadMultiple([mockFile], mockDto);
       expect(mockStorage.uploadFile).toHaveBeenCalledWith(mockFile, 'product', 'hash123');
@@ -92,13 +95,19 @@ describe('MediaService', () => {
   describe('attachTempMedia', () => {
     it('should update media matching model and attachHash', async () => {
       const dto = { model: 'product', attachHash: 'hash123', modelId: '99' };
-      mockPrisma.media.updateMany.mockResolvedValue({ count: 2 });
+      mockRepository.findTemporary.mockResolvedValue([
+        { id: 1n, path: '/uploads/product/hash123/a.png', attachHash: 'hash123' },
+        { id: 2n, path: '/uploads/product/hash123/b.png', attachHash: 'hash123' },
+      ]);
+      mockStorage.moveDir = jest.fn().mockResolvedValue('/uploads/product/99');
+      mockRepository.attach.mockResolvedValue(undefined);
 
       const result = await service.attachTempMedia(dto);
-      expect(mockPrisma.media.updateMany).toHaveBeenCalledWith({
-        where: { model: 'product', attachHash: 'hash123', modelId: null },
-        data: { modelId: '99', attachHash: null },
-      });
+      expect(mockRepository.findTemporary).toHaveBeenCalledWith('product', ['hash123'], undefined);
+      expect(mockRepository.attach).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ id: 1n, modelId: 99n })]),
+        undefined,
+      );
       expect(result.count).toBe(2);
     });
   });
@@ -106,7 +115,7 @@ describe('MediaService', () => {
   describe('findByUuid', () => {
     it('should return media if found', async () => {
       const mockMedia = { id: 1n, uuid: '123' };
-      mockPrisma.media.findUnique.mockResolvedValue(mockMedia);
+      mockRepository.findByUuid.mockResolvedValue(mockMedia);
 
       const result = await service.findByUuid('123');
       expect(result.id).toBe('1');
@@ -114,7 +123,7 @@ describe('MediaService', () => {
     });
 
     it('should throw NotFoundException if media not found', async () => {
-      mockPrisma.media.findUnique.mockResolvedValue(null);
+      mockRepository.findByUuid.mockResolvedValue(null);
       await expect(service.findByUuid('123')).rejects.toThrow(NotFoundException);
     });
   });
@@ -122,11 +131,11 @@ describe('MediaService', () => {
   describe('deleteByUuid', () => {
     it('should delete from storage and database', async () => {
       const mockMedia = { id: 1n, uuid: '123', path: '/uploads/a.png' };
-      mockPrisma.media.findUnique.mockResolvedValue(mockMedia);
+      mockRepository.findByUuid.mockResolvedValue(mockMedia);
 
       const result = await service.deleteByUuid('123');
       expect(mockStorage.deleteFile).toHaveBeenCalledWith('/uploads/a.png');
-      expect(mockPrisma.media.delete).toHaveBeenCalledWith({ where: { id: 1n } });
+      expect(mockRepository.deleteById).toHaveBeenCalledWith(1n);
       expect(result).toBe(true);
     });
   });

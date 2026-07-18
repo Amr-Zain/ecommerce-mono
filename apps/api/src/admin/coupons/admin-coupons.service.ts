@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
-import { COUPONS_REPOSITORY, ICouponsRepository } from '@/common/interfaces/coupons.interface';
+import { COUPONS_REPOSITORY, Coupon, ICouponsRepository } from '@/common/interfaces/coupons.interface';
 import { CreateCouponDto, UpdateCouponDto } from './dto/coupon.dto';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class AdminCouponsService {
   async findAll() {
     const coupons = await this.couponsRepo.findMany();
     // Sort in memory or rely on default, or we can use advanced query.
-    return coupons.map((c: any) => this.formatCoupon(c));
+    return coupons.map((coupon) => this.formatCoupon(coupon));
   }
 
   async findOne(id: bigint) {
@@ -53,11 +53,11 @@ export class AdminCouponsService {
       }
     }
 
-    const data: any = { ...dto };
-    if (data.startsAt !== undefined) data.startsAt = data.startsAt ? new Date(data.startsAt) : null;
-    if (data.expiresAt !== undefined) data.expiresAt = data.expiresAt ? new Date(data.expiresAt) : null;
+    const data: Record<string, unknown> = { ...dto };
+    if (data.startsAt !== undefined) data.startsAt = data.startsAt ? new Date(String(data.startsAt)) : null;
+    if (data.expiresAt !== undefined) data.expiresAt = data.expiresAt ? new Date(String(data.expiresAt)) : null;
 
-    const coupon = await this.couponsRepo.update(id, data);
+    const coupon = await this.couponsRepo.update(id, data as Partial<Coupon>);
     return this.formatCoupon(coupon);
   }
 
@@ -67,7 +67,7 @@ export class AdminCouponsService {
     return { message: 'Coupon deleted successfully' };
   }
 
-  private formatCoupon(coupon: any) {
+  private formatCoupon(coupon: Coupon) {
     return {
       id: coupon.id.toString(),
       code: coupon.code,

@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
-import { PrismaService } from '@/prisma';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { MediaService } from '@/media/media.service';
 import { CommerceIdentity } from '@/auth/interfaces/commerce-identity.interface';
@@ -9,7 +8,6 @@ import { ClientWishlistRepository } from './client-wishlist.repository';
 @Injectable()
 export class ClientWishlistService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly mediaService: MediaService,
     private readonly wishlistRepository: ClientWishlistRepository,
@@ -41,10 +39,7 @@ export class ClientWishlistService {
     if (identity.type === 'none') {
       throw new BadRequestException('Anonymous session is required');
     }
-    const product = await this.prisma.product.findFirst({
-      where: { id: productId },
-      select: { id: true, isActive: true },
-    });
+    const product = await this.wishlistRepository.findProductState(productId);
 
     if (!product) {
       throw new NotFoundException(this.i18n.t('errors.product_not_found'));

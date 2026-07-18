@@ -11,7 +11,6 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { Prisma } from '../prisma';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
@@ -50,32 +49,41 @@ import {
 import { LoyaltyService } from '@/shared/loyalty/loyalty.service';
 
 /** Same include as local/JWT validation — single source for “user + role + permissions”. */
-export type AuthUserPayload = Prisma.UserGetPayload<{
-  include: {
-    role: {
-      include: {
-        permissions: {
-          select: {
-            id: true;
-            resource: true;
-            action: true;
-          };
-        };
-        translations: true;
-      };
-    };
-  };
-}>;
+export type AuthUserPayload = {
+  id: bigint;
+  name: string | null;
+  email: string | null;
+  roleId: bigint | null;
+  userType: string | null;
+  password: string | null;
+  gender: string | null;
+  phone: string | null;
+  phoneCode: string | null;
+  isPhoneVerified: boolean;
+  isEmailVerified: boolean;
+  isActive: boolean;
+  phoneVerificationCode: string | null;
+  phoneVerificationExpiry: Date | null;
+  settings: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+  role: {
+    id: bigint;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    permissions: Array<{ id: bigint; resource: string; action: string }>;
+    translations: Array<{ id: bigint; recordId: bigint; langId: string; name: string }>;
+  } | null;
+};
 
-type AuthSessionSummary = Prisma.RefreshTokenGetPayload<{
-  select: {
-    id: true;
-    deviceInfo: true;
-    ipAddress: true;
-    createdAt: true;
-    expiresAt: true;
-  };
-}>;
+type AuthSessionSummary = {
+  id: bigint;
+  deviceInfo: string | null;
+  ipAddress: string | null;
+  createdAt: Date;
+  expiresAt: Date;
+};
 
 @Injectable()
 export class AuthService {
@@ -462,8 +470,8 @@ export class AuthService {
         throw new UnauthorizedException(this.i18n.t('errors.invalid_credentials'));
       }
 
-      await this.emailChallenges.consume(EMAIL_OTP_PURPOSES.login, email, dto.code, async (tx) => {
-        await tx.user.update({ where: { id: user!.id }, data: { isEmailVerified: true } });
+      await this.emailChallenges.consume(EMAIL_OTP_PURPOSES.login, email, dto.code, async (context) => {
+        await this.usersRepository.markEmailVerified(user!.id, context);
         await this.domainEvents.publish(
           createDomainEvent({
             eventName: DOMAIN_EVENTS.authEmailVerified,
@@ -476,7 +484,7 @@ export class AuthService {
               name: user!.name ?? undefined,
             },
           }),
-          tx,
+          context,
         );
       });
       user = { ...user, isEmailVerified: true };
@@ -651,9 +659,9 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, AUTH_SECURITY.bcryptRounds);
-    await this.emailChallenges.consume(EMAIL_OTP_PURPOSES.passwordReset, email, code, async (tx) => {
-      await tx.user.update({ where: { id: user.id }, data: { password: hashedPassword } });
-      await tx.refreshToken.updateMany({ where: { userId: user.id, isRevoked: false }, data: { isRevoked: true } });
+    await this.emailChallenges.consume(EMAIL_OTP_PURPOSES.passwordReset, email, code, async (context) => {
+      await this.usersRepository.updatePassword(user.id, hashedPassword, context);
+      await this.refreshTokensRepository.revokeAllUserTokens(user.id, context);
     });
 
     return { message: this.i18n.t('common.auth_password_reset_successful') };

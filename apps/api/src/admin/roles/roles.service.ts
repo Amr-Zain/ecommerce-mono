@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
-import { ROLES_REPOSITORY, Role } from '@/common/interfaces';
-import { RolesRepository } from '@/core/roles/roles.repository';
+import { IRolesRepository, ROLES_REPOSITORY, Role } from '@/common/interfaces';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { AdvancedQueryDto } from '../../common/dto/advanced-query.dto';
@@ -21,7 +20,7 @@ export interface TransformedRole {
 @Injectable()
 export class RolesService {
   constructor(
-    @Inject(ROLES_REPOSITORY) private readonly rolesRepository: RolesRepository,
+    @Inject(ROLES_REPOSITORY) private readonly rolesRepository: IRolesRepository,
     private readonly i18n: I18nService<I18nTranslations>,
   ) {}
 
@@ -82,6 +81,25 @@ export class RolesService {
     }
     await this.rolesRepository.delete(id);
     return this.transformRole(dbRole);
+  }
+
+  async findAllPermissions(): Promise<Record<string, unknown>> {
+    const permissions = await this.rolesRepository.listDistinctPermissions();
+    const categorized: Record<string, { id: string; title: string }[]> = {};
+
+    for (const permission of permissions) {
+      categorized[permission.resource] ??= [];
+      categorized[permission.resource].push({
+        id: permission.id.toString(),
+        title: `${this.title(permission.action)} ${this.title(permission.resource)}`,
+      });
+    }
+
+    return { status: 'success', message: 'Permissions retrieved successfully.', data: categorized };
+  }
+
+  private title(value: string) {
+    return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
   private transformRole(role: Role): TransformedRole {

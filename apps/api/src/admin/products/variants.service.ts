@@ -4,7 +4,6 @@ import { VariantsRepository } from '@/core/products/variants.repository';
 import { CreateVariantDto, AdjustStockDto } from '@/common/dto/product.dto';
 import { UpdateVariantDto } from './dto/update-dtos';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
-import { Prisma } from '@prisma/client';
 import { PricingService } from '@/core/products/pricing.service';
 import {
   PUBLIC_CACHE_EVENTS,
@@ -78,7 +77,7 @@ export class VariantsService {
         : null,
     );
 
-    const data: Prisma.ProductVariantCreateInput = {
+    const data: Parameters<VariantsRepository['createVariant']>[0] = {
       product: { connect: { id: productId } },
       price: computed.price,
       compareAtPrice: computed.compareAtPrice ?? createVariantDto.compareAtPrice,

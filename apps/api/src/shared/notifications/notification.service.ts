@@ -1,10 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Notification } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { Observable } from 'rxjs';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { NotificationEmitter } from './notification-emitter';
-import { NotificationRepository } from './notification.repository';
+import { NotificationRecord, NotificationRepository } from './notification.repository';
 
 @Injectable()
 export class NotificationService {
@@ -86,7 +85,7 @@ export class NotificationService {
   stream(recipientId: bigint, lang: string): Observable<MessageEvent> {
     const eventName = `notification.created.${recipientId.toString()}`;
     return new Observable((subscriber) => {
-      const handler = (notification: Notification) =>
+      const handler = (notification: NotificationRecord) =>
         subscriber.next({ type: 'notification', data: this.format(notification, lang) } as MessageEvent);
       this.emitter.on(eventName, handler);
       const heartbeat = setInterval(
@@ -100,7 +99,7 @@ export class NotificationService {
     });
   }
 
-  private format(notification: Notification, lang: string) {
+  private format(notification: NotificationRecord, lang: string) {
     const args = (notification.args ?? {}) as Record<string, unknown>;
     const storedData = (notification.data ?? {}) as Record<string, unknown>;
     const { entity, ...data } = storedData;

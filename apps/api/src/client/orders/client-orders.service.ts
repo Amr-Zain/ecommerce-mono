@@ -1,32 +1,17 @@
 import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
 import { CancelOrderDto, OrderQueryDto } from './dto/order.dto';
 import { DEFAULT_LANGUAGE } from '@/common/constants/commerce.constants';
 import { ORDER_STATUSES } from './order.constants';
 import { ORDER_STATUS_ACTORS } from '@/shared/payment/payment.constants';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { Prisma } from '@prisma/client';
 import { OrderLifecycleService } from '@/shared/orders/order-lifecycle.service';
-import { IOrdersRepository, ORDERS_REPOSITORY } from '@/common/interfaces';
+import { ClientOrderRecord, IOrdersRepository, ORDERS_REPOSITORY } from '@/common/interfaces';
 import { MediaService } from '@/media/media.service';
-
-type ClientOrderWithRelations = Prisma.OrderGetPayload<{
-  include: {
-    items: {
-      include: {
-        translations: true;
-      };
-    };
-    payments: true;
-    statusHistory: true;
-  };
-}>;
 
 @Injectable()
 export class ClientOrdersService {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly orderLifecycleService: OrderLifecycleService,
     private readonly i18n: I18nService<I18nTranslations>,
     private readonly mediaService: MediaService,
@@ -72,7 +57,7 @@ export class ClientOrdersService {
     return this.findOne(userId, id, langId);
   }
 
-  private async formatOrders(orders: ClientOrderWithRelations[]) {
+  private async formatOrders(orders: ClientOrderRecord[]) {
     const itemsWithProducts = orders.flatMap((order) =>
       order.items
         .filter((item) => item.productId)
@@ -88,7 +73,7 @@ export class ClientOrdersService {
     return orders.map((order) => this.formatOrder(order, imageByItemId));
   }
 
-  private formatOrder(order: ClientOrderWithRelations, imageByItemId: Map<string, string | null>) {
+  private formatOrder(order: ClientOrderRecord, imageByItemId: Map<string, string | null>) {
     const paymentSummary = this.orderLifecycleService.paymentSummary(order.payments);
     return {
       id: order.id.toString(),

@@ -5,22 +5,25 @@ import { EMAIL_OTP_PURPOSES } from '@/common/constants/auth.constants';
 describe('EmailOtpChallengeService', () => {
   const config = { get: jest.fn((key: string) => (key === 'OTP_HASH_SECRET' ? 'test-secret' : undefined)) };
   const i18n = { t: jest.fn((key: string) => key) };
+  const unitOfWork = { execute: jest.fn((handler) => handler({})) };
 
   it('creates a four-digit challenge and stores only its hash', async () => {
     let storedData: Record<string, unknown> | undefined;
-    const tx = {
-      emailOtpChallenge: {
-        findFirst: jest.fn().mockResolvedValue(null),
-        count: jest.fn().mockResolvedValue(0),
-        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
-        create: jest.fn(({ data }) => {
-          storedData = data;
-          return Promise.resolve({ id: 'challenge-1', ...data });
-        }),
-      },
+    const repository = {
+      findRecent: jest.fn().mockResolvedValue(false),
+      countRecent: jest.fn().mockResolvedValue({ recipient: 0, recipientIp: 0 }),
+      invalidateActive: jest.fn().mockResolvedValue(undefined),
+      create: jest.fn((data) => {
+        storedData = data;
+        return Promise.resolve({ id: 'challenge-1' });
+      }),
     };
-    const prisma = { $transaction: jest.fn((handler) => handler(tx)) };
-    const service = new EmailOtpChallengeService(prisma as never, config as never, i18n as never);
+    const service = new EmailOtpChallengeService(
+      repository as never,
+      unitOfWork as never,
+      config as never,
+      i18n as never,
+    );
 
     const result = await service.create({
       recipient: ' USER@Example.com ',
@@ -37,9 +40,13 @@ describe('EmailOtpChallengeService', () => {
   });
 
   it('rejects requests during the resend cooldown', async () => {
-    const tx = { emailOtpChallenge: { findFirst: jest.fn().mockResolvedValue({ id: 'recent' }) } };
-    const prisma = { $transaction: jest.fn((handler) => handler(tx)) };
-    const service = new EmailOtpChallengeService(prisma as never, config as never, i18n as never);
+    const repository = { findRecent: jest.fn().mockResolvedValue(true) };
+    const service = new EmailOtpChallengeService(
+      repository as never,
+      unitOfWork as never,
+      config as never,
+      i18n as never,
+    );
 
     await expect(
       service.create({ recipient: 'user@example.com', purpose: EMAIL_OTP_PURPOSES.login }),

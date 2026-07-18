@@ -1,19 +1,20 @@
 import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService, Prisma } from '../prisma';
+import { TransactionContext } from '@/common/persistence';
 import { StorageInterface } from './storage/storage.interface';
 import { UploadMediaDto } from './dto/upload-media.dto';
 import { AttachMediaDto } from './dto/attach-media.dto';
 import { MediaType } from './enums/media-type.enum';
 import { randomUUID } from 'crypto';
 import * as path from 'path';
-import { MediaRecord, MEDIA_SELECT } from './media.types';
+import { MediaRecord } from './media.types';
+import { MEDIA_REPOSITORY, MediaRepositoryPort } from './media.repository.port';
 
 @Injectable()
 export class MediaService {
   private readonly logger = new Logger(MediaService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(MEDIA_REPOSITORY) private readonly media: MediaRepositoryPort,
     @Inject('StorageInterface') private readonly storage: StorageInterface,
   ) {}
 
@@ -63,22 +64,19 @@ export class MediaService {
       const logicalType = dto.type || this.getLogicalType(mimeType);
 
       // 3. Save to DB
-      const result = await this.prisma.media.create({
-        data: {
-          model: dto.model,
-          modelId: dto.modelId ? BigInt(dto.modelId) : null,
-          attachHash: dto.modelId ? null : attachHash,
-          collection: dto.collection || 'default',
-          path: filePath,
-          filename: filename,
-          originalName: file.originalname,
-          extension: extension,
-          mimeType: mimeType,
-          type: logicalType,
-          size: file.size,
-          isMain: dto.isMain || false,
-          metadata: {},
-        },
+      const result = await this.media.create({
+        model: dto.model,
+        modelId: dto.modelId ? BigInt(dto.modelId) : null,
+        attachHash: dto.modelId ? null : attachHash,
+        collection: dto.collection || 'default',
+        path: filePath,
+        filename: filename,
+        originalName: file.originalname,
+        extension: extension,
+        mimeType: mimeType,
+        type: logicalType,
+        size: file.size,
+        isMain: dto.isMain || false,
       });
 
       // Prisma BigInt conversion mapping safely to JSON response
@@ -94,16 +92,8 @@ export class MediaService {
   /**
    * Links temporarily uploaded media to a model once it has been created
    */
-  async attachTempMedia(dto: AttachMediaDto, tx?: Prisma.TransactionClient) {
-    const prisma = tx || this.prisma;
-
-    const mediaItems = await prisma.media.findMany({
-      where: {
-        model: dto.model,
-        attachHash: dto.attachHash,
-        modelId: null,
-      },
-    });
+  async attachTempMedia(dto: AttachMediaDto, context?: TransactionContext) {
+    const mediaItems = await this.media.findTemporary(dto.model, [dto.attachHash], context);
 
     if (mediaItems.length === 0) return { count: 0 };
 
@@ -113,37 +103,26 @@ export class MediaService {
     // 2. Update DB records
     const bigIntModelId = BigInt(dto.modelId);
 
-    for (const item of mediaItems) {
-      const newPath = item.path.replace(`/uploads/${dto.model}/${dto.attachHash}`, newPathBase);
-
-      await prisma.media.update({
-        where: { id: item.id },
-        data: {
-          modelId: bigIntModelId,
-          attachHash: null,
-          path: newPath,
-        },
-      });
-    }
+    await this.media.attach(
+      mediaItems.map((item) => ({
+        id: item.id,
+        modelId: bigIntModelId,
+        path: item.path.replace(`/uploads/${dto.model}/${dto.attachHash}`, newPathBase),
+      })),
+      context,
+    );
 
     return { count: mediaItems.length };
   }
 
   async attachTempMediaMany(
     input: { model: string; attachHashes: string[]; modelId: string },
-    tx?: Prisma.TransactionClient,
+    context?: TransactionContext,
   ) {
     const attachHashes = [...new Set(input.attachHashes.filter(Boolean))];
     if (attachHashes.length === 0) return { count: 0 };
 
-    const prisma = tx || this.prisma;
-    const mediaItems = await prisma.media.findMany({
-      where: {
-        model: input.model,
-        attachHash: { in: attachHashes },
-        modelId: null,
-      },
-    });
+    const mediaItems = await this.media.findTemporary(input.model, attachHashes, context);
 
     if (mediaItems.length === 0) return { count: 0 };
 
@@ -155,63 +134,35 @@ export class MediaService {
     }
 
     const bigIntModelId = BigInt(input.modelId);
+    const updates = [];
     for (const item of mediaItems) {
       if (!item.attachHash) continue;
       const newPathBase = pathByHash.get(item.attachHash);
       if (!newPathBase) continue;
       const newPath = item.path.replace(`/uploads/${input.model}/${item.attachHash}`, newPathBase);
 
-      await prisma.media.update({
-        where: { id: item.id },
-        data: {
-          modelId: bigIntModelId,
-          attachHash: null,
-          path: newPath,
-        },
-      });
+      updates.push({ id: item.id, modelId: bigIntModelId, path: newPath });
     }
+    await this.media.attach(updates, context);
 
     return { count: mediaItems.length };
   }
 
   async findByUuid(uuid: string) {
-    const media = await this.prisma.media.findUnique({ where: { uuid } });
+    const media = await this.media.findByUuid(uuid);
     if (!media) throw new NotFoundException('Media not found');
     return { ...media, id: media.id.toString() };
   }
 
   async findByEntity(model: string, modelId: number | string | bigint, collection?: string): Promise<MediaRecord[]> {
-    const where: Prisma.MediaWhereInput = {
-      model: model.toLowerCase(),
-      modelId: typeof modelId === 'bigint' ? modelId : BigInt(modelId),
-    };
-
-    if (collection) where.collection = collection;
-
-    const items = await this.prisma.media.findMany({
-      where,
-      select: MEDIA_SELECT,
-      orderBy: { createdAt: 'asc' },
-    });
-
-    return items;
+    return this.media.findByEntity(model, typeof modelId === 'bigint' ? modelId : BigInt(modelId), collection);
   }
 
   /**
    * Bulk fetch media for multiple entities
    */
   async findByEntities(model: string, modelIds: bigint[]): Promise<Map<string, MediaRecord[]>> {
-    const items = await this.prisma.media.findMany({
-      where: {
-        model: model.toLowerCase(),
-        modelId: { in: modelIds },
-      },
-      select: {
-        ...MEDIA_SELECT,
-        modelId: true,
-      },
-      orderBy: { createdAt: 'asc' },
-    });
+    const items = await this.media.findByEntities(model, modelIds);
 
     const result = new Map<string, MediaRecord[]>();
     for (const item of items) {
@@ -230,34 +181,7 @@ export class MediaService {
 
     const productIds = [...new Set(items.map((item) => item.productId))];
     const variantIds = [...new Set(items.map((item) => item.variantId).filter((id): id is bigint => id != null))];
-    const media = await this.prisma.media.findMany({
-      where: {
-        OR: [
-          {
-            model: 'product',
-            modelId: { in: productIds },
-            collection: { in: ['image', 'gallery'] },
-          },
-          ...(variantIds.length > 0
-            ? [
-                {
-                  model: 'productvariant',
-                  modelId: { in: variantIds },
-                  collection: 'gallery',
-                },
-              ]
-            : []),
-        ],
-      },
-      select: {
-        model: true,
-        modelId: true,
-        collection: true,
-        isMain: true,
-        path: true,
-      },
-      orderBy: [{ isMain: 'desc' }, { createdAt: 'asc' }],
-    });
+    const media = await this.media.findProductImages(productIds, variantIds);
 
     const byEntity = new Map<string, typeof media>();
     for (const item of media) {
@@ -287,35 +211,27 @@ export class MediaService {
     model: string,
     modelId: number | string | bigint,
     collection?: string,
-    tx?: Prisma.TransactionClient,
+    context?: TransactionContext,
   ) {
-    const prisma = tx || this.prisma;
-
-    const where: Prisma.MediaWhereInput = {
-      model: model.toLowerCase(),
-      modelId: typeof modelId === 'bigint' ? modelId : BigInt(modelId),
-    };
-
-    if (collection) where.collection = collection;
-
-    const items = await prisma.media.findMany({ where });
+    const normalizedId = typeof modelId === 'bigint' ? modelId : BigInt(modelId);
+    const items = await this.media.findEntityRecords(model, normalizedId, collection, context);
 
     for (const item of items) {
       await this.storage.deleteFile(item.path);
     }
 
-    await prisma.media.deleteMany({ where });
+    await this.media.deleteEntityRecords(model, normalizedId, collection, context);
   }
 
   async deleteByUuid(uuid: string) {
-    const media = await this.prisma.media.findUnique({ where: { uuid } });
+    const media = await this.media.findByUuid(uuid);
     if (!media) throw new NotFoundException('Media not found');
 
     // Remove file physically
     await this.storage.deleteFile(media.path);
 
     // Hard delete from DB as per requirement
-    await this.prisma.media.delete({ where: { id: media.id } });
+    await this.media.deleteById(media.id);
 
     return true;
   }

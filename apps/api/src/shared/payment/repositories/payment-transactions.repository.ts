@@ -1,52 +1,68 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, PaymentTransaction } from '@prisma/client';
-import { PrismaService } from '@/prisma';
-import { IPaymentTransactionsRepository } from '@/common/interfaces/payment-transactions.interface';
+import { Prisma } from '@prisma/client';
+import { PrismaService, resolvePrismaClient } from '@/prisma';
+import {
+  IPaymentTransactionsRepository,
+  PaymentPersistenceContext,
+  PaymentTransactionCommand,
+  PaymentTransactionFilter,
+  PaymentTransactionRecord,
+} from '@/common/interfaces/payment-transactions.interface';
 
 @Injectable()
 export class PaymentTransactionsRepository implements IPaymentTransactionsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findFirst(
-    where: Prisma.PaymentTransactionWhereInput,
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<PaymentTransaction | null> {
-    return tx.paymentTransaction.findFirst({ where });
+    where: PaymentTransactionFilter,
+    context?: PaymentPersistenceContext,
+  ): Promise<PaymentTransactionRecord | null> {
+    return this.db(context).paymentTransaction.findFirst({ where: where as Prisma.PaymentTransactionWhereInput });
   }
 
   async create(
-    data: Prisma.PaymentTransactionUncheckedCreateInput | Prisma.PaymentTransactionCreateInput,
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<PaymentTransaction> {
-    return tx.paymentTransaction.create({ data });
+    data: PaymentTransactionCommand,
+    context?: PaymentPersistenceContext,
+  ): Promise<PaymentTransactionRecord> {
+    return this.db(context).paymentTransaction.create({ data: data as Prisma.PaymentTransactionUncheckedCreateInput });
   }
 
   async updateMany(
     args: {
-      where: Prisma.PaymentTransactionWhereInput;
-      data: Prisma.PaymentTransactionUpdateManyMutationInput;
+      where: PaymentTransactionFilter;
+      data: PaymentTransactionCommand;
     },
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<Prisma.BatchPayload> {
-    return tx.paymentTransaction.updateMany(args);
+    context?: PaymentPersistenceContext,
+  ): Promise<{ count: number }> {
+    return this.db(context).paymentTransaction.updateMany({
+      where: args.where as Prisma.PaymentTransactionWhereInput,
+      data: args.data as Prisma.PaymentTransactionUpdateManyMutationInput,
+    });
   }
 
-  async findById(id: bigint, tx: Prisma.TransactionClient = this.prisma): Promise<PaymentTransaction | null> {
-    return tx.paymentTransaction.findUnique({ where: { id } });
+  async findById(id: bigint, context?: PaymentPersistenceContext): Promise<PaymentTransactionRecord | null> {
+    return this.db(context).paymentTransaction.findUnique({ where: { id } });
   }
 
   async update(
     id: bigint,
-    data: Prisma.PaymentTransactionUpdateInput,
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<PaymentTransaction> {
-    return tx.paymentTransaction.update({ where: { id }, data });
+    data: PaymentTransactionCommand,
+    context?: PaymentPersistenceContext,
+  ): Promise<PaymentTransactionRecord> {
+    return this.db(context).paymentTransaction.update({
+      where: { id },
+      data: data as Prisma.PaymentTransactionUpdateInput,
+    });
   }
 
   async findMany(
-    where: Prisma.PaymentTransactionWhereInput,
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<PaymentTransaction[]> {
-    return tx.paymentTransaction.findMany({ where });
+    where: PaymentTransactionFilter,
+    context?: PaymentPersistenceContext,
+  ): Promise<PaymentTransactionRecord[]> {
+    return this.db(context).paymentTransaction.findMany({ where: where as Prisma.PaymentTransactionWhereInput });
+  }
+
+  private db(context?: PaymentPersistenceContext) {
+    return resolvePrismaClient(context, this.prisma);
   }
 }

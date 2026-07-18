@@ -6,7 +6,6 @@ import { UpdateSupervisorDto } from './dto/update-supervisor.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import * as bcrypt from 'bcrypt';
-import { Prisma } from '@/prisma';
 import { omitUndefined } from '@/common/utils/omit-undefined.util';
 import { I18nService } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
@@ -42,7 +41,7 @@ export class SupervisorsService {
     // Hash password
     const hashedPassword = await bcrypt.hash(createDto.password, 10);
 
-    const data: Prisma.UserCreateInput = {
+    const data: Parameters<UsersRepository['createUser']>[0] = {
       name: createDto.name,
       email: createDto.email,
       password: hashedPassword,
@@ -74,7 +73,7 @@ export class SupervisorsService {
     }
 
     const { password, passwordConfirm: _pc, roleId, ...rest } = updateDto;
-    const data = omitUndefined(rest as Record<string, unknown>) as Prisma.UserUpdateInput;
+    const data = omitUndefined(rest as Record<string, unknown>) as Parameters<UsersRepository['updateUser']>[1];
 
     if (password) {
       data.password = await bcrypt.hash(password, 10);

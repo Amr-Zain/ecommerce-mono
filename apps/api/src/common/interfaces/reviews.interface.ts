@@ -73,6 +73,7 @@ export interface IReviewsRepository {
     limit: number,
   ): Promise<PaginatedResult<ClientReview>>;
   findUserReview(userId: bigint, productId: bigint): Promise<ClientReview | null>;
+  hasVerifiedDeliveredPurchase(userId: bigint, productId: bigint): Promise<boolean>;
   createForUser(data: {
     userId: bigint;
     productId: bigint;

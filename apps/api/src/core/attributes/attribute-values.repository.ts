@@ -36,7 +36,7 @@ export class AttributeValuesRepository
   };
 
   constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
-    super(prisma, mediaService, queryBuilder);
+    super(prisma, queryBuilder);
   }
 
   getModel() {

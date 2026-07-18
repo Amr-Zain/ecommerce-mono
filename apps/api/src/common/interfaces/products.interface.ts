@@ -1,7 +1,6 @@
-import { Prisma } from '@prisma/client';
+import { TransactionContext } from '@/common/persistence';
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
-import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface ProductTranslation {
   id: bigint;
@@ -39,9 +38,20 @@ export interface ProductVariant {
   gallery?: unknown;
 }
 
-export type ProductVariantWithProduct = Prisma.ProductVariantGetPayload<{
-  include: { product: true };
-}>;
+export interface ProductVariantWithProduct extends ProductVariant {
+  product: {
+    id: bigint;
+    collectionId: bigint | null;
+    hasVariants: boolean;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    discountType: string | null;
+    discountValue: number | null;
+  };
+}
+
+export type ProductPersistenceContext = TransactionContext;
 
 export interface Product {
   id: bigint;
@@ -105,11 +115,7 @@ export interface CatalogQuery {
 export const PRODUCTS_REPOSITORY = Symbol('IProductsRepository');
 
 export interface IProductsRepository {
-  findAll(
-    query: AdvancedQueryDto,
-    langId?: string,
-    options?: QueryOptions,
-  ): Promise<PaginatedResult<Product> | Product[]>;
+  findAll(query: AdvancedQueryDto, langId?: string): Promise<PaginatedResult<Product> | Product[]>;
   createProductWithVariants(dto: unknown): Promise<Product | null>;
   findProductById(id: number | bigint): Promise<Product | null>;
   findStorefrontDetail(id: number | bigint, langId?: string): Promise<Record<string, unknown> | null>;
@@ -130,14 +136,22 @@ export interface IVariantsRepository {
     variantId: number | bigint,
     amount: number,
     reason: string,
-    tx?: Prisma.TransactionClient,
+    context?: ProductPersistenceContext,
   ): Promise<ProductVariant>;
-  findActiveVariantsWithProduct(ids: bigint[], tx?: Prisma.TransactionClient): Promise<ProductVariantWithProduct[]>;
+  findActiveVariantsWithProduct(
+    ids: bigint[],
+    context?: ProductPersistenceContext,
+  ): Promise<ProductVariantWithProduct[]>;
   findActiveVariantStocks(
     ids: bigint[],
-    tx?: Prisma.TransactionClient,
+    context?: ProductPersistenceContext,
   ): Promise<Array<{ id: bigint; stockQuantity: number }>>;
-  reserveStock(variantId: bigint, quantity: number, reason: string, tx: Prisma.TransactionClient): Promise<boolean>;
+  reserveStock(
+    variantId: bigint,
+    quantity: number,
+    reason: string,
+    context: ProductPersistenceContext,
+  ): Promise<boolean>;
   findAll(query: AdvancedQueryDto): Promise<PaginatedResult<ProductVariant> | ProductVariant[]>;
   create(data: Record<string, unknown>, options?: Record<string, unknown>): Promise<ProductVariant>;
   update(

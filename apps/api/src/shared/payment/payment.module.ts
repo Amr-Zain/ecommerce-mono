@@ -9,12 +9,14 @@ import { MoyasarStrategy } from './strategies/moyasar.strategy';
 import { TabbyStrategy } from './strategies/tabby.strategy';
 import { StripeWebhookController } from './stripe-webhook.controller';
 import { StripeWebhookService } from './stripe-webhook.service';
+import { StripeWebhookRepository } from './stripe-webhook.repository';
 import { PaymentWebhookController } from './payment-webhook.controller';
 import { PaymentReservationCleanupService } from './payment-reservation-cleanup.service';
 import { PAYMENT_TRANSACTIONS_REPOSITORY } from '@/common/interfaces';
 import { PaymentTransactionsRepository } from './repositories/payment-transactions.repository';
 import { LoyaltyModule } from '@/shared/loyalty/loyalty.module';
 import { PaymentGatewayService } from './payment-gateway.service';
+import { PaymentGatewayRepository } from './payment-gateway.repository';
 import { PaymentSecretService } from './payment-secret.service';
 
 @Module({
@@ -22,6 +24,7 @@ import { PaymentSecretService } from './payment-secret.service';
   controllers: [StripeWebhookController, PaymentWebhookController],
   providers: [
     PaymentGatewayService,
+    PaymentGatewayRepository,
     PaymentSecretService,
     PaymentService,
     CodStrategy,
@@ -32,6 +35,7 @@ import { PaymentSecretService } from './payment-secret.service';
     MoyasarStrategy,
     TabbyStrategy,
     StripeWebhookService,
+    StripeWebhookRepository,
     PaymentReservationCleanupService,
     {
       provide: PAYMENT_TRANSACTIONS_REPOSITORY,

@@ -8,7 +8,6 @@ import { UpdateStaticPageDto } from './dto/update-static-page.dto';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
-import { Prisma } from '@/prisma';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
@@ -35,16 +34,13 @@ export class StaticPagesController {
   @Post()
   @UseLanguageTransform({ recursive: true })
   async createStaticPage(@Body() staticPage: CreateStaticPageDto): Promise<StaticPageInterface> {
-    return this.staticPageService.createStaticPage(staticPage as unknown as Prisma.StaticPageCreateInput);
+    return this.staticPageService.createStaticPage(staticPage);
   }
 
   // Section Endpoints
   @Post(':pageId/sections')
   @UseLanguageTransform()
-  async createSection(
-    @Param('pageId', ParseIntPipe) pageId: number,
-    @Body() sectionData: Prisma.PageSectionCreateInput,
-  ) {
+  async createSection(@Param('pageId', ParseIntPipe) pageId: number, @Body() sectionData: Record<string, unknown>) {
     return this.staticPageService.createSection(pageId, sectionData);
   }
 
@@ -65,7 +61,7 @@ export class StaticPagesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateStaticPageDto: UpdateStaticPageDto,
   ): Promise<StaticPageInterface> {
-    return this.staticPageService.updateStaticPage(updateStaticPageDto as unknown as Prisma.StaticPageUpdateInput, id);
+    return this.staticPageService.updateStaticPage(updateStaticPageDto, id);
   }
 
   @Delete(':id')

@@ -1,7 +1,6 @@
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { IBaseRepository } from './base.repository.interface';
-import { QueryOptions } from '../../common/repositories/base.repository';
 import { Country } from './countries.interface';
 
 export interface CityTranslation {
@@ -21,10 +20,21 @@ export interface City {
   country?: Country;
 }
 
+export interface ClientCityView {
+  id: bigint;
+  translations: Array<Pick<CityTranslation, 'name' | 'langId'>>;
+  country: {
+    id: bigint;
+    phoneCode: string;
+    translations: Array<Pick<Country['translations'][number], 'name' | 'langId'>>;
+  };
+}
+
 export const CITIES_REPOSITORY = Symbol('ICitiesRepository');
 
 export interface ICitiesRepository extends IBaseRepository<City> {
-  findAll(query: AdvancedQueryDto, langId?: string, options?: QueryOptions): Promise<PaginatedResult<City> | City[]>;
+  findAll(query: AdvancedQueryDto, langId?: string): Promise<PaginatedResult<City> | City[]>;
+  findClientList(query: AdvancedQueryDto, langId: string): Promise<ClientCityView[]>;
   findByIdWithRelations(id: number | bigint, langId?: string): Promise<City | null>;
   createCity(city: unknown): Promise<City>;
   updateCity(id: number | bigint, city: unknown): Promise<City>;

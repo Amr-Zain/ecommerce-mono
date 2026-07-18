@@ -1,7 +1,6 @@
 import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { IBaseRepository } from './base.repository.interface';
-import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface StaticPageTranslation {
   id: bigint;
@@ -41,14 +40,23 @@ export interface StaticPage {
   image?: unknown;
 }
 
+export interface ClientStaticPageView {
+  id: bigint;
+  slug: string;
+  translations: Array<Pick<StaticPageTranslation, 'title' | 'content' | 'langId'>>;
+  sections: Array<{
+    id: bigint;
+    sortOrder: number;
+    translations: Array<Pick<PageSectionTranslation, 'title' | 'content' | 'langId'>>;
+  }>;
+}
+
 export const STATIC_PAGES_REPOSITORY = Symbol('IStaticPagesRepository');
 
 export interface IStaticPagesRepository extends IBaseRepository<StaticPage> {
   getAllStaticPages(query: AdvancedQueryDto): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
-  getAllStticPagesWithAllSections(
-    query?: AdvancedQueryDto,
-    options?: QueryOptions,
-  ): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
+  getAllStticPagesWithAllSections(query?: AdvancedQueryDto): Promise<PaginatedResult<StaticPage> | StaticPage[]>;
+  findClientList(query: AdvancedQueryDto, langId: string): Promise<ClientStaticPageView[]>;
   getStaticPageByIdWithAllSections(id: number): Promise<StaticPage | null>;
   findActiveBySlugWithSections(slug: string, langId?: string): Promise<StaticPage | null>;
   createStaticPage(data: unknown): Promise<StaticPage>;

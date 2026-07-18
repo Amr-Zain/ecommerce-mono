@@ -31,4 +31,7 @@ export interface IRolesRepository {
   findByIdWithRelations(id: bigint): Promise<Role | null>;
   createRole(data: Record<string, unknown>): Promise<Role>;
   updateRole(id: bigint, data: Record<string, unknown>): Promise<Role>;
+  delete(id: bigint): Promise<Role>;
+  listDistinctPermissions(): Promise<Permission[]>;
+  syncDiscoveredPermissions(permissions: Array<{ resource: string; action: string }>): Promise<number>;
 }

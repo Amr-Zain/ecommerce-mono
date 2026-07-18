@@ -1,39 +1,17 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '@/prisma';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { TransactionContext, UNIT_OF_WORK, UnitOfWork } from '@/common/persistence';
 import { MediaService } from '@/media/media.service';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { NotificationService } from '@/shared/notifications/notification.service';
 import { CreateTicketDto, ReplyTicketDto, TICKET_STATUSES, TicketStatus, UpdateTicketDto } from './dto/ticket.dto';
-import { TicketsRepository } from './tickets.repository';
-
-type TicketSummary = Prisma.TicketGetPayload<{
-  include: {
-    user: true;
-    _count: {
-      select: { messages: true };
-    };
-  };
-}>;
-
-type TicketListItem = Prisma.TicketGetPayload<{
-  include: {
-    user: true;
-    messages: {
-      orderBy: { createdAt: 'desc' };
-      take: 1;
-    };
-    _count: {
-      select: { messages: true };
-    };
-  };
-}>;
-
-type TicketMessageWithUser = Prisma.TicketMessageGetPayload<{
-  include: {
-    user: true;
-  };
-}>;
+import {
+  TicketListItem,
+  TicketMessageWithUser,
+  TicketOrderBy,
+  TicketsRepository,
+  TicketSummary,
+  TicketWhere,
+} from './tickets.repository';
 
 const TICKET_STATUS_ORDER: Record<TicketStatus, number> = {
   open: 0,
@@ -45,7 +23,7 @@ const TICKET_STATUS_ORDER: Record<TicketStatus, number> = {
 @Injectable()
 export class TicketsService {
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(UNIT_OF_WORK) private readonly unitOfWork: UnitOfWork,
     private readonly mediaService: MediaService,
     private readonly ticketsRepository: TicketsRepository,
     private readonly notificationService: NotificationService,
@@ -70,7 +48,7 @@ export class TicketsService {
   }
 
   async createClientTicket(userId: bigint, dto: CreateTicketDto) {
-    const ticket = await this.prisma.$transaction(async (tx) => {
+    const ticket = await this.unitOfWork.execute(async (context) => {
       const created = await this.ticketsRepository.create(
         {
           data: {
@@ -90,10 +68,10 @@ export class TicketsService {
             messages: { include: { user: true }, orderBy: { createdAt: 'asc' } },
           },
         },
-        tx,
+        context,
       );
 
-      await this.attachMessageMedia(created.messages[0].id, dto.attachments, tx);
+      await this.attachMessageMedia(created.messages[0].id, dto.attachments, context);
       return created;
     });
 
@@ -180,15 +158,15 @@ export class TicketsService {
   }
 
   private async createMessage(ticketId: bigint, userId: bigint, senderType: 'admin' | 'client', dto: ReplyTicketDto) {
-    const message = await this.prisma.$transaction(async (tx) => {
+    const message = await this.unitOfWork.execute(async (context) => {
       const created = await this.ticketsRepository.createMessage(
         {
           data: { ticketId, userId, senderType, body: dto.body },
         },
-        tx,
+        context,
       );
-      await this.attachMessageMedia(created.id, dto.attachments, tx);
-      await this.ticketsRepository.update({ where: { id: ticketId }, data: { updatedAt: new Date() } }, tx);
+      await this.attachMessageMedia(created.id, dto.attachments, context);
+      await this.ticketsRepository.update({ where: { id: ticketId }, data: { updatedAt: new Date() } }, context);
       return created;
     });
     return message;
@@ -203,7 +181,7 @@ export class TicketsService {
   private async attachMessageMedia(
     messageId: bigint,
     attachments: Array<{ attachHash: string }> | undefined,
-    tx: Prisma.TransactionClient,
+    context: TransactionContext,
   ) {
     const attachHashes = (attachments ?? []).map((item) => item.attachHash).filter(Boolean);
     if (attachHashes.length === 0) return;
@@ -214,11 +192,11 @@ export class TicketsService {
         modelId: messageId.toString(),
         attachHashes,
       },
-      tx,
+      context,
     );
   }
 
-  private async findTicketSummaryOrThrow(where: Prisma.TicketWhereInput) {
+  private async findTicketSummaryOrThrow(where: TicketWhere) {
     const ticket = await this.ticketsRepository.findFirst({
       where,
       include: {
@@ -255,7 +233,7 @@ export class TicketsService {
     };
   }
 
-  private buildWhere(query: AdvancedQueryDto): Prisma.TicketWhereInput {
+  private buildWhere(query: AdvancedQueryDto): TicketWhere {
     const filters = query.filters ?? {};
     const status = typeof filters.status === 'string' ? filters.status : undefined;
     return {
@@ -273,7 +251,7 @@ export class TicketsService {
     };
   }
 
-  private buildOrderBy(query: AdvancedQueryDto): Prisma.TicketOrderByWithRelationInput {
+  private buildOrderBy(query: AdvancedQueryDto): TicketOrderBy {
     const [field, direction] = Object.entries(query.sort ?? {})[0] ?? ['updatedAt', 'desc'];
     const allowed = ['createdAt', 'updatedAt', 'status', 'title'];
     return { [allowed.includes(field) ? field : 'updatedAt']: direction === 'asc' ? 'asc' : 'desc' };

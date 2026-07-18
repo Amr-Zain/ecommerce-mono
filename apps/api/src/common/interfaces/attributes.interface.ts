@@ -1,5 +1,4 @@
 import { PaginatedResult } from '../dto/pagination.dto';
-import { QueryOptions } from '../../common/repositories/base.repository';
 
 export interface AttributeTranslation {
   id: bigint;
@@ -30,10 +29,21 @@ export interface Attribute {
   values: AttributeValue[];
 }
 
+export interface ClientAttributeView {
+  id: bigint;
+  translations: Array<Pick<AttributeTranslation, 'name' | 'langId'>>;
+  values: Array<{
+    id: bigint;
+    isActive: boolean;
+    translations: Array<Pick<AttributeValueTranslation, 'name' | 'langId'>>;
+  }>;
+}
+
 export const ATTRIBUTES_REPOSITORY = Symbol('IAttributesRepository');
 
 export interface IAttributesRepository {
-  findAll(query: unknown, langId?: string, options?: QueryOptions): Promise<PaginatedResult<Attribute> | Attribute[]>;
+  findAll(query: unknown, langId?: string): Promise<PaginatedResult<Attribute> | Attribute[]>;
+  findClientList(query: unknown, langId: string): Promise<ClientAttributeView[]>;
   findByIdWithValues(id: number | bigint): Promise<Attribute | null>;
   createAttribute(data: unknown): Promise<Attribute>;
   updateAttribute(id: number, data: unknown): Promise<Attribute>;

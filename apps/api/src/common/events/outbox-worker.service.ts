@@ -1,8 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { OutboxEvent } from '@prisma/client';
-import { OutboxEventsRepository } from './outbox-events.repository';
+import { OutboxEventRecord, OutboxEventsRepository } from './outbox-events.repository';
 
 @Injectable()
 export class OutboxWorker {
@@ -26,7 +25,7 @@ export class OutboxWorker {
     await this.repository.deleteProcessed(new Date(Date.now() - 30 * 24 * 60 * 60_000));
   }
 
-  private async dispatch(event: OutboxEvent) {
+  private async dispatch(event: OutboxEventRecord) {
     try {
       await this.eventEmitter.emitAsync(event.eventName, {
         eventId: event.eventId,

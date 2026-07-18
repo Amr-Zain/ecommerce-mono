@@ -1,39 +1,62 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma';
-import { IReturnRequestsRepository } from '@/common/interfaces';
 
 @Injectable()
-export class ReturnRequestsRepository implements IReturnRequestsRepository {
+export class ReturnRequestsRepository {
   constructor(private readonly prisma: PrismaService) {}
-  findMany(args: Prisma.ReturnRequestFindManyArgs, tx: Prisma.TransactionClient = this.prisma) {
+  findMany<T extends Prisma.ReturnRequestFindManyArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ReturnRequestFindManyArgs>,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Array<Prisma.ReturnRequestGetPayload<T>>> {
     return tx.returnRequest.findMany(args);
   }
   count(where: Prisma.ReturnRequestWhereInput, tx: Prisma.TransactionClient = this.prisma) {
     return tx.returnRequest.count({ where });
   }
-  findUnique(args: Prisma.ReturnRequestFindUniqueArgs, tx: Prisma.TransactionClient = this.prisma) {
+  findUnique<T extends Prisma.ReturnRequestFindUniqueArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ReturnRequestFindUniqueArgs>,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Prisma.ReturnRequestGetPayload<T> | null> {
     return tx.returnRequest.findUnique(args);
   }
-  findFirst(args: Prisma.ReturnRequestFindFirstArgs, tx: Prisma.TransactionClient = this.prisma) {
+  findFirst<T extends Prisma.ReturnRequestFindFirstArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ReturnRequestFindFirstArgs>,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Prisma.ReturnRequestGetPayload<T> | null> {
     return tx.returnRequest.findFirst(args);
   }
-  findUniqueOrThrow(args: Prisma.ReturnRequestFindUniqueOrThrowArgs, tx: Prisma.TransactionClient = this.prisma) {
+  findUniqueOrThrow<T extends Prisma.ReturnRequestFindUniqueOrThrowArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ReturnRequestFindUniqueOrThrowArgs>,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Prisma.ReturnRequestGetPayload<T>> {
     return tx.returnRequest.findUniqueOrThrow(args);
   }
-  create(args: Prisma.ReturnRequestCreateArgs, tx: Prisma.TransactionClient = this.prisma) {
+  create<T extends Prisma.ReturnRequestCreateArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ReturnRequestCreateArgs>,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Prisma.ReturnRequestGetPayload<T>> {
     return tx.returnRequest.create(args);
   }
-  update(args: Prisma.ReturnRequestUpdateArgs, tx: Prisma.TransactionClient = this.prisma) {
+  update<T extends Prisma.ReturnRequestUpdateArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ReturnRequestUpdateArgs>,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Prisma.ReturnRequestGetPayload<T>> {
     return tx.returnRequest.update(args);
   }
   aggregate(args: Prisma.ReturnRequestAggregateArgs, tx: Prisma.TransactionClient = this.prisma) {
     return tx.returnRequest.aggregate(args);
   }
-  updateItem(args: Prisma.ReturnRequestItemUpdateArgs, tx: Prisma.TransactionClient = this.prisma) {
+  updateItem<T extends Prisma.ReturnRequestItemUpdateArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ReturnRequestItemUpdateArgs>,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Prisma.ReturnRequestItemGetPayload<T>> {
     return tx.returnRequestItem.update(args);
   }
-  findItems(args: Prisma.ReturnRequestItemFindManyArgs, tx: Prisma.TransactionClient = this.prisma) {
+  findItems<T extends Prisma.ReturnRequestItemFindManyArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ReturnRequestItemFindManyArgs>,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Array<Prisma.ReturnRequestItemGetPayload<T>>> {
     return tx.returnRequestItem.findMany(args);
   }
   aggregateItems(args: Prisma.ReturnRequestItemAggregateArgs, tx: Prisma.TransactionClient = this.prisma) {

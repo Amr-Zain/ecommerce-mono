@@ -12,16 +12,6 @@ export class ClientFaqsService {
       filters: { isActive: true },
       sort: { sortOrder: 'asc' },
     };
-    return this.faqsRepo.findAll(query, langId, {
-      select: {
-        id: true,
-        sortOrder: true,
-        translations: {
-          where: { langId },
-          select: { question: true, answer: true, langId: true },
-          take: 1,
-        },
-      },
-    });
+    return this.faqsRepo.findClientList(query, langId);
   }
 }

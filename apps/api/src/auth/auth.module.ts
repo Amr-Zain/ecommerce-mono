@@ -10,22 +10,24 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { OptionalJwtAuthGuard } from './guards/optional-jwt-auth.guard';
 import { PermissionDiscoveryService } from './services/permission-discovery.service';
-import { PrismaModule } from '../prisma/prisma.module';
 import { RefreshTokensRepository } from './repositories/refresh-tokens.repository';
 import { MediaModule } from '../media/media.module';
 import { UsersModule as CoreUsersModule } from '@/core/users/users.module';
 import { AnonymousSessionService } from './services/anonymous-session.service';
 import { AnonymousSessionsRepository } from './repositories/anonymous-sessions.repository';
 import { EmailOtpChallengeService } from './services/email-otp-challenge.service';
+import { EmailOtpChallengesRepository } from './repositories/email-otp-challenges.repository';
+import { EMAIL_OTP_CHALLENGES_REPOSITORY } from './repositories/email-otp-challenges.repository.port';
 import { LoyaltyModule } from '@/shared/loyalty/loyalty.module';
+import { RolesModule as CoreRolesModule } from '@/core/roles/roles.module';
 
 @Module({
   imports: [
-    PrismaModule,
     PassportModule,
     DiscoveryModule,
     MediaModule,
     CoreUsersModule,
+    CoreRolesModule,
     LoyaltyModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -48,6 +50,7 @@ import { LoyaltyModule } from '@/shared/loyalty/loyalty.module';
     AnonymousSessionService,
     AnonymousSessionsRepository,
     EmailOtpChallengeService,
+    { provide: EMAIL_OTP_CHALLENGES_REPOSITORY, useClass: EmailOtpChallengesRepository },
   ],
   exports: [AuthService, RefreshTokensRepository, OptionalJwtAuthGuard, AnonymousSessionService],
 })

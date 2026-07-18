@@ -3,22 +3,23 @@ import { DashboardPreferencesService } from './dashboard-preferences.service';
 import { createDefaultDashboardPreferences } from './dashboard-preferences.types';
 
 describe('DashboardPreferencesService', () => {
-  const prisma = {
-    user: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
+  const users = {
+    findSettingsOwner: jest.fn(),
+    updateSettings: jest.fn(),
   };
   const i18n = { t: jest.fn((key: string) => key) };
   let service: DashboardPreferencesService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new DashboardPreferencesService(prisma as never, i18n as never);
+    service = new DashboardPreferencesService(users as never, i18n as never);
   });
 
   it('returns the canonical dashboard defaults when preferences are absent', async () => {
-    prisma.user.findUnique.mockResolvedValue({ userType: 'admin', settings: { language: 'ar', allow_notifications: true } });
+    users.findSettingsOwner.mockResolvedValue({
+      userType: 'admin',
+      settings: { language: 'ar', allow_notifications: true },
+    });
 
     const result = await service.get(1n);
 
@@ -41,25 +42,23 @@ describe('DashboardPreferencesService', () => {
   it('merges preferences without replacing sibling user settings', async () => {
     const preferences = createDefaultDashboardPreferences('en');
     preferences.mode = 'light';
-    prisma.user.findUnique.mockResolvedValue({
+    users.findSettingsOwner.mockResolvedValue({
       userType: 'admin',
       settings: { language: 'en', allow_notifications: true, market: 'sa' },
     });
-    prisma.user.update.mockResolvedValue({});
+    users.updateSettings.mockResolvedValue({});
 
     await service.update(7n, preferences);
 
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: { id: 7n },
-      data: {
-        settings: expect.objectContaining({
-          language: 'en',
-          allow_notifications: true,
-          market: 'sa',
-          dashboard_preferences: expect.objectContaining({ mode: 'light' }),
-        }),
-      },
-    });
+    expect(users.updateSettings).toHaveBeenCalledWith(
+      7n,
+      expect.objectContaining({
+        language: 'en',
+        allow_notifications: true,
+        market: 'sa',
+        dashboard_preferences: expect.objectContaining({ mode: 'light' }),
+      }),
+    );
   });
 
   it('rejects unsupported and unsafe theme variables', async () => {
@@ -80,20 +79,20 @@ describe('DashboardPreferencesService', () => {
   });
 
   it('keeps preferences isolated by the authenticated user id', async () => {
-    prisma.user.findUnique.mockResolvedValue({ userType: 'admin', settings: {} });
-    prisma.user.update.mockResolvedValue({});
+    users.findSettingsOwner.mockResolvedValue({ userType: 'admin', settings: {} });
+    users.updateSettings.mockResolvedValue({});
     const first = createDefaultDashboardPreferences('en');
     const second = createDefaultDashboardPreferences('ar');
 
     await service.update(11n, first);
     await service.update(22n, second);
 
-    expect(prisma.user.update.mock.calls[0][0].where.id).toBe(11n);
-    expect(prisma.user.update.mock.calls[1][0].where.id).toBe(22n);
+    expect(users.updateSettings.mock.calls[0][0]).toBe(11n);
+    expect(users.updateSettings.mock.calls[1][0]).toBe(22n);
   });
 
   it('rejects non-admin accounts', async () => {
-    prisma.user.findUnique.mockResolvedValue({ userType: 'client', settings: {} });
+    users.findSettingsOwner.mockResolvedValue({ userType: 'client', settings: {} });
 
     await expect(service.get(1n)).rejects.toBeInstanceOf(ForbiddenException);
   });

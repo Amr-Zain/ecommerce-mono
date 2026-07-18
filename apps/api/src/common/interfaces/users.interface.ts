@@ -2,6 +2,7 @@ import { AdvancedQueryDto } from '../dto/advanced-query.dto';
 import { PaginatedResult } from '../dto/pagination.dto';
 import { IBaseRepository } from './base.repository.interface';
 import { Role } from './roles.interface';
+import { TransactionContext } from '@/common/persistence';
 
 export interface Address {
   id: bigint;
@@ -36,6 +37,12 @@ export interface User {
   avatar?: unknown;
 }
 
+export interface UserSettingsOwner {
+  id: bigint;
+  settings: unknown | null;
+  userType: string | null;
+}
+
 export const USERS_REPOSITORY = Symbol('IUsersRepository');
 
 export interface IUsersRepository extends IBaseRepository<User> {
@@ -50,4 +57,8 @@ export interface IUsersRepository extends IBaseRepository<User> {
   updateUser(id: bigint, data: unknown): Promise<User>;
   deleteUser(id: bigint): Promise<User>;
   emailExists(email: string, excludeId?: bigint): Promise<boolean>;
+  findSettingsOwner(id: bigint): Promise<UserSettingsOwner | null>;
+  updateSettings(id: bigint, settings: Record<string, unknown>): Promise<void>;
+  markEmailVerified(id: bigint, context: TransactionContext): Promise<void>;
+  updatePassword(id: bigint, password: string, context: TransactionContext): Promise<void>;
 }

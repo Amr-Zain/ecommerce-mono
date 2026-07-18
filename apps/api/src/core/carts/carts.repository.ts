@@ -8,7 +8,7 @@ import { CommerceIdentity } from '@/auth/interfaces/commerce-identity.interface'
 @Injectable()
 export class CartsRepository extends BaseRepository<Cart> implements ICartsRepository {
   constructor(prisma: PrismaService, mediaService: MediaService) {
-    super(prisma, mediaService, undefined);
+    super(prisma, undefined);
   }
 
   protected getModel() {

@@ -1,8 +1,18 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { I18nContext, I18nValidationException, I18nValidationError } from 'nestjs-i18n';
-import { Prisma } from '@prisma/client';
-import { PRISMA_ERROR_CODES } from '../constants/prisma.constants';
+import { PERSISTENCE_ERROR_CODES } from '../constants/persistence-error.constants';
+
+type KnownPersistenceError = Error & {
+  code: string;
+  meta?: Record<string, unknown>;
+};
+
+function isKnownPersistenceError(error: unknown): error is KnownPersistenceError {
+  if (!(error instanceof Error)) return false;
+  const candidate = error as Error & { code?: unknown };
+  return typeof candidate.code === 'string' && /^P\d{4}$/.test(candidate.code);
+}
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -27,8 +37,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let translationKey = 'errors.INTERNAL_SERVER_ERROR';
     let args: Record<string, unknown> = {};
 
-    // ─── Prisma errors (DB constraint violations) ───────────────────────
-    if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+    // Persistence errors are recognized structurally so the HTTP layer remains ORM agnostic.
+    if (isKnownPersistenceError(exception)) {
       const prismaResult = this.handlePrismaError(exception);
       status = prismaResult.status;
       message = prismaResult.message;
@@ -173,17 +183,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
    * Maps Prisma error codes to HTTP status + user-friendly message.
    * Extracts field/model info from Prisma's meta for specific error messages.
    */
-  private handlePrismaError(exception: Prisma.PrismaClientKnownRequestError): {
+  private handlePrismaError(exception: KnownPersistenceError): {
     status: number;
     message: string;
     translationKey: string;
     args: Record<string, unknown>;
   } {
-    const meta = exception.meta as Record<string, unknown> | undefined;
+    const meta = exception.meta;
 
     switch (exception.code) {
       // Foreign key constraint violation
-      case PRISMA_ERROR_CODES.foreignKeyViolation: {
+      case PERSISTENCE_ERROR_CODES.foreignKeyViolation: {
         // meta.field_name can be "cities_country_id_fkey" or undefined
         // Also try parsing from exception.message which contains the constraint name
         const rawField = (meta?.field_name as string) || '';
@@ -208,7 +218,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
 
       // Record not found (update/delete on non-existent row)
-      case PRISMA_ERROR_CODES.recordNotFound: {
+      case PERSISTENCE_ERROR_CODES.recordNotFound: {
         const model = (meta?.modelName as string) || '';
         const cause = (meta?.cause as string) || 'Record not found';
         return {
@@ -220,7 +230,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
 
       // Unique constraint violation
-      case PRISMA_ERROR_CODES.uniqueConstraint: {
+      case PERSISTENCE_ERROR_CODES.uniqueConstraint: {
         const target = (meta?.target as string[]) || [];
         const model = (meta?.modelName as string) || '';
         const fields = target.length > 0 ? target.join(', ') : 'field';
@@ -233,7 +243,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
 
       // Required relation not found (connect failed)
-      case PRISMA_ERROR_CODES.relationNotFound: {
+      case PERSISTENCE_ERROR_CODES.relationNotFound: {
         const relation = (meta?.relation_name as string) || '';
         const model = (meta?.modelName as string) || '';
         return {

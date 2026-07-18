@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { COLLECTIONS_REPOSITORY } from '@/common/interfaces';
 import { CollectionsService } from './collections.service';
+import { PublicCacheInvalidationPublisher } from '@/shared/cache/public-cache-invalidation.service';
 
 describe('CollectionsService', () => {
   let service: CollectionsService;
@@ -13,6 +14,7 @@ describe('CollectionsService', () => {
           provide: COLLECTIONS_REPOSITORY,
           useValue: {},
         },
+        { provide: PublicCacheInvalidationPublisher, useValue: { publish: jest.fn() } },
       ],
     }).compile();
 

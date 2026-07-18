@@ -5,7 +5,6 @@ import { AttributeValueQueryDto } from '@/common/dto/attribute-value-query.dto';
 import { CreateAttributeValueDto } from './dto/attribute-value.dto';
 import { UpdateAttributeValueDto } from './dto/update-dtos';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { Prisma } from '@/prisma';
 import {
   PUBLIC_CACHE_EVENTS,
   PublicCacheInvalidationPublisher,
@@ -34,7 +33,7 @@ export class AttributeValuesService {
     const created = await this.repo.createValue({
       ...rest,
       attribute: { connect: { id: BigInt(attributeId) } },
-    } as unknown as Prisma.AttributeValueCreateInput);
+    } as unknown as Parameters<AttributeValuesRepository['createValue']>[0]);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
     return created;
   }
@@ -42,8 +41,8 @@ export class AttributeValuesService {
   async update(id: number, data: UpdateAttributeValueDto): Promise<AttributeValue> {
     const { attributeId, ...rest } = data;
 
-    const updateData: Prisma.AttributeValueUpdateInput = {
-      ...(rest as unknown as Prisma.AttributeValueUpdateInput),
+    const updateData: Parameters<AttributeValuesRepository['updateValue']>[1] = {
+      ...(rest as unknown as Parameters<AttributeValuesRepository['updateValue']>[1]),
     };
 
     if (attributeId) {

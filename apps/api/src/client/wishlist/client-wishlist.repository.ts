@@ -41,6 +41,13 @@ export class ClientWishlistRepository {
     });
   }
 
+  findProductState(productId: bigint) {
+    return this.prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true, isActive: true },
+    });
+  }
+
   create(identity: PersistedCommerceIdentity, productId: bigint) {
     return this.prisma.wishlistItem.create({
       data: { ...this.whereForIdentity(identity), productId },

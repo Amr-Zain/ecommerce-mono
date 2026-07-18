@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
-import { BaseRepository, TranslationFields } from '@/common/repositories/base.repository';
+import { TranslationFields } from '@/common/repositories/base.repository';
+import { MediaAwareRepository } from '@/common/repositories/media-aware.repository';
 import { MediaService } from '@/media/media.service';
 import { MediaType } from '@/media/enums/media-type.enum';
 import { ICountriesRepository } from '@/common/interfaces';
+import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
+import type { ClientCountryView } from '@/common/interfaces/countries.interface';
 
 type CountryType = Prisma.CountryGetPayload<{ include: { translations: true } }>;
 
 @Injectable()
-export class CountriesRepository extends BaseRepository<CountryType> implements ICountriesRepository {
+export class CountriesRepository extends MediaAwareRepository<CountryType> implements ICountriesRepository {
+  protected readonly mediaModel = 'country';
   protected readonly mediaConfig = {
     flag: { collection: 'flag', single: true, allowedTypes: [MediaType.IMAGE] },
   };
@@ -39,6 +43,18 @@ export class CountriesRepository extends BaseRepository<CountryType> implements 
 
   getModel() {
     return this.prisma.country;
+  }
+
+  findClientList(query: AdvancedQueryDto, langId: string): Promise<ClientCountryView[]> {
+    return this.findAll(query, langId, {
+      select: {
+        id: true,
+        phoneCode: true,
+        phoneLength: true,
+        phoneStartWith: true,
+        translations: { where: { langId }, select: { name: true, langId: true }, take: 1 },
+      },
+    }) as unknown as Promise<ClientCountryView[]>;
   }
 
   async createCountry(country: Prisma.CountryCreateInput): Promise<CountryType> {

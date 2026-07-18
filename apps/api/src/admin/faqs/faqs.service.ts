@@ -1,5 +1,4 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Prisma } from '@/prisma';
 import { FAQS_REPOSITORY, Faq } from '@/common/interfaces';
 import { FaqsRepository } from '@/core/faqs/faqs.repository';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
@@ -23,7 +22,7 @@ export class FaqsService {
   }
 
   async updateFaq(id: number, faq: UpdateFaqDto): Promise<Faq> {
-    const updated = await this.repo.update(id, faq as unknown as Prisma.FaqUpdateInput);
+    const updated = await this.repo.update(id, faq as unknown as Parameters<FaqsRepository['update']>[1]);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.faqsChanged);
     return updated;
   }
@@ -35,7 +34,7 @@ export class FaqsService {
   }
 
   async createFaq(faq: CreateFaqDto): Promise<Faq> {
-    const created = await this.repo.create(faq as unknown as Prisma.FaqCreateInput);
+    const created = await this.repo.create(faq as unknown as Parameters<FaqsRepository['create']>[0]);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.faqsChanged);
     return created;
   }

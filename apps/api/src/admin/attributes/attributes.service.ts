@@ -5,7 +5,6 @@ import { AttributeQueryDto } from '@/common/dto/attribute-query.dto';
 import { CreateAttributeDto } from './dto/attribute.dto';
 import { UpdateAttributeDto } from './dto/update-dtos';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { Prisma } from '@/prisma';
 import {
   PUBLIC_CACHE_EVENTS,
   PublicCacheInvalidationPublisher,
@@ -29,13 +28,18 @@ export class AttributesService {
   }
 
   async create(data: CreateAttributeDto): Promise<Attribute> {
-    const created = await this.repo.createAttribute(data as unknown as Prisma.AttributeCreateInput);
+    const created = await this.repo.createAttribute(
+      data as unknown as Parameters<AttributesRepository['createAttribute']>[0],
+    );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
     return created;
   }
 
   async update(id: number, data: UpdateAttributeDto): Promise<Attribute> {
-    const updated = await this.repo.updateAttribute(id, data as unknown as Prisma.AttributeUpdateInput);
+    const updated = await this.repo.updateAttribute(
+      id,
+      data as unknown as Parameters<AttributesRepository['updateAttribute']>[1],
+    );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
     return updated;
   }

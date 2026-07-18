@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, Notification } from '@prisma/client';
 import { PrismaService } from '@/prisma';
 
+export type NotificationRecord = Notification;
+
 @Injectable()
 export class NotificationRepository {
   constructor(private readonly prisma: PrismaService) {}

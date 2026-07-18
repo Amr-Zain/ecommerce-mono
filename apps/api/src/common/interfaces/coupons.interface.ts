@@ -1,9 +1,22 @@
 import { IBaseRepository } from './base.repository.interface';
-import { Coupon as PrismaCoupon } from '@prisma/client';
+export interface Coupon {
+  id: bigint;
+  code: string;
+  discountType: string;
+  discountValue: { toString(): string } | number | string;
+  minOrderAmount: { toString(): string } | number | string | null;
+  maxDiscount: { toString(): string } | number | string | null;
+  usageLimit: number | null;
+  usageCount: number;
+  perUserLimit: number;
+  startsAt: Date | null;
+  expiresAt: Date | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-export type Coupon = PrismaCoupon;
-
-export const COUPONS_REPOSITORY = 'COUPONS_REPOSITORY';
+export const COUPONS_REPOSITORY = Symbol('ICouponsRepository');
 
 export interface ICouponsRepository extends IBaseRepository<Coupon> {
   findByCode(code: string): Promise<Coupon | null>;

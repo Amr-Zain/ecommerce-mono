@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '@/prisma';
 import { UpdateSettingsDto } from './dto/settings.dto';
+import { AppSettingsRepository } from './settings.repository';
 
 export type AppSettingDefault = {
   value: boolean | number | string;
@@ -11,15 +10,13 @@ export type AppSettingDefault = {
   keyLabel: string;
 };
 
-const toJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
-
 @Injectable()
 export class AppSettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly settings: AppSettingsRepository) {}
 
   async listSettings(defaults?: Record<string, AppSettingDefault>) {
     if (defaults) await this.ensureDefaults(defaults);
-    const settings = await this.prisma.appSetting.findMany({ orderBy: [{ group: 'asc' }, { id: 'asc' }] });
+    const settings = await this.settings.listOrdered();
     return settings.map((setting) => ({
       id: setting.id.toString(),
       key: setting.key,
@@ -36,46 +33,30 @@ export class AppSettingsService {
   async updateSettings(dto: UpdateSettingsDto, defaults?: Record<string, AppSettingDefault>) {
     if (defaults) await this.ensureDefaults(defaults);
     for (const setting of dto.settings || []) {
-      const existing = await this.prisma.appSetting.findUnique({ where: { key: setting.key } });
+      const existing = await this.settings.findByKey(setting.key);
       if (!existing) continue;
-      await this.prisma.appSetting.update({
-        where: { key: setting.key },
-        data: { value: toJson({ value: this.castValue(setting.value, existing.type) }) },
-      });
+      await this.settings.updateValue(setting.key, this.castValue(setting.value, existing.type));
     }
     return this.listSettings(defaults);
   }
 
   async getSettingsMap(defaults?: Record<string, AppSettingDefault>) {
     if (defaults) await this.ensureDefaults(defaults);
-    const settings = await this.prisma.appSetting.findMany();
+    const settings = await this.settings.list();
     return Object.fromEntries(settings.map((setting) => [setting.key, this.unwrapValue(setting.value)]));
   }
 
   async getValue<T = unknown>(key: string, fallback?: T, defaults?: Record<string, AppSettingDefault>) {
     if (defaults) await this.ensureDefaults(defaults);
-    const setting = await this.prisma.appSetting.findUnique({ where: { key } });
+    const setting = await this.settings.findByKey(key);
     return setting ? (this.unwrapValue(setting.value) as T) : fallback;
   }
 
   async ensureDefaults(defaults: Record<string, AppSettingDefault>) {
-    for (const [key, setting] of Object.entries(defaults)) {
-      await this.prisma.appSetting.upsert({
-        where: { key },
-        update: {},
-        create: {
-          key,
-          value: toJson({ value: setting.value }),
-          group: setting.group,
-          groupLabel: setting.groupLabel,
-          type: setting.type,
-          keyLabel: setting.keyLabel,
-        },
-      });
-    }
+    await this.settings.ensureDefaults(defaults);
   }
 
-  unwrapValue(value: Prisma.JsonValue) {
+  unwrapValue(value: unknown) {
     if (value && typeof value === 'object' && !Array.isArray(value) && 'value' in value) {
       return (value as { value: unknown }).value;
     }

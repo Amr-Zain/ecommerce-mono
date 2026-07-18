@@ -1,11 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Prisma } from '../../prisma';
 import { CITIES_REPOSITORY } from '@/common/interfaces';
 import { CitiesRepository } from '@/core/cities/cities.repository';
 import { CityQueryDto } from './dto/city-query';
 import { createCityDto } from './dto/create-city.dto';
-import { PaginatedResult } from 'src/common/dto/pagination.dto';
-import { City as CityModel } from '@prisma/client';
 import { UpdateCityDto } from './dto/update-city.dto';
 import {
   PUBLIC_CACHE_EVENTS,
@@ -20,22 +17,25 @@ export class CitiesService {
   ) {}
 
   async createCity(city: createCityDto) {
-    const created = await this.CitiesRepo.createCity(city as unknown as Prisma.CityCreateInput);
+    const created = await this.CitiesRepo.createCity(city as unknown as Parameters<CitiesRepository['createCity']>[0]);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.locationsChanged);
     return created;
   }
 
   async updateCity(id: number | bigint, city: UpdateCityDto) {
-    const updated = await this.CitiesRepo.updateCity(id, city as unknown as Prisma.CityUpdateInput);
+    const updated = await this.CitiesRepo.updateCity(
+      id,
+      city as unknown as Parameters<CitiesRepository['updateCity']>[1],
+    );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.locationsChanged);
     return updated;
   }
 
-  async findAll(query: CityQueryDto): Promise<PaginatedResult<CityModel> | CityModel[]> {
+  async findAll(query: CityQueryDto) {
     return this.CitiesRepo.findAll(query);
   }
 
-  async findOne(id: number | bigint, langId?: string): Promise<CityModel> {
+  async findOne(id: number | bigint, langId?: string) {
     return this.CitiesRepo.findByIdWithRelationsOrThrow(id, langId);
   }
 

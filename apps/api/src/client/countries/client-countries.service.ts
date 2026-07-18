@@ -12,19 +12,7 @@ export class ClientCountriesService {
       filters: { isActive: true },
       sort: { createdAt: 'asc' },
     };
-    return this.countriesRepo.findAll(query, langId, {
-      select: {
-        id: true,
-        phoneCode: true,
-        phoneLength: true,
-        phoneStartWith: true,
-        translations: {
-          where: { langId },
-          select: { name: true, langId: true },
-          take: 1,
-        },
-      },
-    });
+    return this.countriesRepo.findClientList(query, langId);
   }
 
   async findOne(id: bigint, langId: string = 'en') {

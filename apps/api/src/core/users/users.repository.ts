@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService, Prisma } from '@/prisma';
-import { BaseRepository, ScalarFields } from '@/common/repositories/base.repository';
+import { ScalarFields } from '@/common/repositories/base.repository';
+import { MediaAwareRepository } from '@/common/repositories/media-aware.repository';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
+import { TransactionContext } from '@/common/persistence';
+import { resolvePrismaClient } from '@/prisma';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { MediaService } from '@/media/media.service';
@@ -13,7 +16,8 @@ type User = Prisma.UserGetPayload<{
 }>;
 
 @Injectable()
-export class UsersRepository extends BaseRepository<User> implements IUsersRepository {
+export class UsersRepository extends MediaAwareRepository<User> implements IUsersRepository {
+  protected readonly mediaModel = 'user';
   protected readonly mediaConfig = {
     avatar: { collection: 'avatar', single: true, allowedTypes: [MediaType.IMAGE] },
   };
@@ -153,6 +157,31 @@ export class UsersRepository extends BaseRepository<User> implements IUsersRepos
     }
 
     return this.exists(where);
+  }
+
+  findSettingsOwner(id: bigint) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, settings: true, userType: true },
+    });
+  }
+
+  async updateSettings(id: bigint, settings: Record<string, unknown>): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { settings: settings as Prisma.InputJsonValue },
+    });
+  }
+
+  async markEmailVerified(id: bigint, context: TransactionContext): Promise<void> {
+    await resolvePrismaClient(context, this.prisma).user.update({
+      where: { id },
+      data: { isEmailVerified: true },
+    });
+  }
+
+  async updatePassword(id: bigint, password: string, context: TransactionContext): Promise<void> {
+    await resolvePrismaClient(context, this.prisma).user.update({ where: { id }, data: { password } });
   }
 
   public excludePassword(user: User): User {

@@ -16,16 +16,19 @@ const collection = (id: bigint, parentId: bigint | null) => ({
 describe('CollectionsRepository catalog helpers', () => {
   it('returns active descendant ids from the repository-local recursive query', async () => {
     const prisma = {
-      $queryRaw: jest.fn().mockResolvedValue([{ id: 1n }, { id: 2n }, { id: 3n }]),
+      collection: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 1n,
+          children: [{ id: 2n, children: [{ id: 3n }] }],
+        }),
+      },
     };
-    const repository = new CollectionsRepository(
-      prisma as never,
-      new QueryBuilderService(),
-      { findByEntities: jest.fn() } as never,
-    );
+    const repository = new CollectionsRepository(prisma as never, new QueryBuilderService(), {
+      findByEntities: jest.fn(),
+    } as never);
 
     await expect(repository.findActiveDescendantIds(1n)).resolves.toEqual([1n, 2n, 3n]);
-    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.collection.findFirst).toHaveBeenCalledTimes(1);
   });
 
   it('assembles the active hierarchy after one bulk media hydration', async () => {
@@ -34,15 +37,14 @@ describe('CollectionsRepository catalog helpers', () => {
       collection: {
         findMany: jest.fn().mockResolvedValue(rows),
       },
+      product: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
     };
     const media = {
       findByEntities: jest.fn().mockResolvedValue(new Map()),
     };
-    const repository = new CollectionsRepository(
-      prisma as never,
-      new QueryBuilderService(),
-      media as never,
-    );
+    const repository = new CollectionsRepository(prisma as never, new QueryBuilderService(), media as never);
 
     const tree = await repository.findActiveTree();
 

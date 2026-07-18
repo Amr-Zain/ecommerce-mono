@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/prisma';
+import { MessageRepository } from '@/shared/messages/message.repository';
 import { EmailLocale, EmailTemplate, EmailTemplateVariables } from './email.types';
 
 type LocalizedContent = {
@@ -21,7 +21,7 @@ export class EmailTemplateService {
     welcome: 'welcome',
   };
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly messages: MessageRepository) {}
 
   async render<T extends EmailTemplate>(
     template: T,
@@ -29,7 +29,7 @@ export class EmailTemplateService {
     variables: EmailTemplateVariables[T],
   ): Promise<{ subject: string; html: string; text: string }> {
     const key = this.templateKeyMap[template];
-    const record = await this.prisma.messageTemplate.findUnique({ where: { key } });
+    const record = await this.messages.findTemplateByKey(key);
 
     if (!record) {
       throw new NotFoundException(`Email template "${key}" not found`);

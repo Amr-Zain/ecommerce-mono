@@ -1,9 +1,12 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { STATIC_PAGES_REPOSITORY, StaticPage as StaticPageInterface } from '@/common/interfaces';
-import { StaticPagesRepository } from '@/core/static-pages/static-pages.repository';
+import {
+  IStaticPagesRepository,
+  PageSection,
+  STATIC_PAGES_REPOSITORY,
+  StaticPage as StaticPageInterface,
+} from '@/common/interfaces';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
-import { Prisma } from '@/prisma';
 import {
   PUBLIC_CACHE_EVENTS,
   PublicCacheInvalidationPublisher,
@@ -12,7 +15,7 @@ import {
 @Injectable()
 export class StaticPageService {
   constructor(
-    @Inject(STATIC_PAGES_REPOSITORY) private readonly staticPagesRepository: StaticPagesRepository,
+    @Inject(STATIC_PAGES_REPOSITORY) private readonly staticPagesRepository: IStaticPagesRepository,
     private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
   ) {}
   async getAllStticPagesWithAllSections(
@@ -25,12 +28,12 @@ export class StaticPageService {
     if (!page) throw new NotFoundException('Static page not found');
     return page;
   }
-  async createStaticPage(staticPage: Prisma.StaticPageCreateInput): Promise<StaticPageInterface> {
+  async createStaticPage(staticPage: unknown): Promise<StaticPageInterface> {
     const created = await this.staticPagesRepository.createStaticPage(staticPage);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.staticPagesChanged);
     return created;
   }
-  async updateStaticPage(staticPage: Prisma.StaticPageUpdateInput, id: number): Promise<StaticPageInterface> {
+  async updateStaticPage(staticPage: unknown, id: number): Promise<StaticPageInterface> {
     const updated = await this.staticPagesRepository.updateStaticPage(staticPage, id);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.staticPagesChanged);
     return updated;
@@ -40,23 +43,17 @@ export class StaticPageService {
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.staticPagesChanged);
     return deleted;
   }
-  async createSection(
-    pageId: number,
-    section: Prisma.PageSectionCreateInput,
-  ): Promise<Prisma.PageSectionGetPayload<{ include: { translations: true } }> | null> {
+  async createSection(pageId: number, section: Record<string, unknown>): Promise<PageSection | null> {
     const created = await this.staticPagesRepository.createSection(pageId, section);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.staticPagesChanged);
     return created;
   }
-  async updateSection(
-    section: Prisma.PageSectionUpdateInput,
-    id: number,
-  ): Promise<Prisma.PageSectionGetPayload<{ include: { translations: true } }>> {
+  async updateSection(section: Record<string, unknown>, id: number): Promise<PageSection> {
     const updated = await this.staticPagesRepository.updateSection(id, section);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.staticPagesChanged);
     return updated;
   }
-  async deleteSection(id: number): Promise<Prisma.PageSectionGetPayload<{ include: { translations: true } }>> {
+  async deleteSection(id: number): Promise<PageSection> {
     const deleted = await this.staticPagesRepository.deleteSection(id);
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.staticPagesChanged);
     return deleted;

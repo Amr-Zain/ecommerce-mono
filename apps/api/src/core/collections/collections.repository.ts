@@ -4,7 +4,8 @@ import { MediaType } from '@/media/enums/media-type.enum';
 import { MediaService } from '@/media/media.service';
 import { Prisma, PrismaService } from '@/prisma';
 import { Injectable } from '@nestjs/common';
-import { BaseRepository, QueryOptions, TranslationFields } from '@/common/repositories/base.repository';
+import { QueryOptions, TranslationFields } from '@/common/repositories/base.repository';
+import { MediaAwareRepository } from '@/common/repositories/media-aware.repository';
 import { CollectionQueryDto } from '@/common/dto/collection-query.dto';
 import { ICollectionsRepository } from '@/common/interfaces';
 
@@ -16,7 +17,8 @@ type Collection = Prisma.CollectionGetPayload<{
 }> & { hasChildren?: boolean; children?: Collection[] };
 
 @Injectable()
-export class CollectionsRepository extends BaseRepository<Collection> implements ICollectionsRepository {
+export class CollectionsRepository extends MediaAwareRepository<Collection> implements ICollectionsRepository {
+  protected readonly mediaModel = 'collection';
   protected mediaConfig = {
     image: { collection: 'collection', single: true, allowedTypes: [MediaType.IMAGE] },
   };
@@ -217,7 +219,7 @@ export class CollectionsRepository extends BaseRepository<Collection> implements
 
     if (childrenWithMedia.children && childrenWithMedia.children.length > 0) {
       const childIds = childrenWithMedia.children.map((c) => BigInt(c.id));
-      const mediaMap = await this.mediaService!.findByEntities(this.modelName, childIds);
+      const mediaMap = await this.mediaService.findByEntities(this.mediaModel, childIds);
 
       childrenWithMedia.children = childrenWithMedia.children.map((child) => {
         const childMedia = mediaMap.get(child.id.toString()) || [];
