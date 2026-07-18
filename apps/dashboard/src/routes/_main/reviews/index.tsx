@@ -48,8 +48,8 @@ export const Route = createFileRoute('/_main/reviews/')({
         // Prefetch dashboard stats for review cards
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: queryKeys.dashboard.statistics(),
-                endpoint: 'dashboard/home'
+                queryKey: queryKeys.dashboard.section('reviews'),
+                endpoint: 'dashboard/sections/reviews'
             })
         )
     },

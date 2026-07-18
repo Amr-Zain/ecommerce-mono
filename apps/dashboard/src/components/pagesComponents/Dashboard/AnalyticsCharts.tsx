@@ -68,6 +68,9 @@ const pieColors = [
   'var(--chart-5)',
 ]
 
+const compactNumber = (value: number) =>
+  Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(value)
+
 interface ChartBlockProps {
   title: string
   description?: string
@@ -119,10 +122,26 @@ export function SalesTrendChart({
                 axisLine={false}
                 tickMargin={8}
               />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+              <YAxis
+                yAxisId="money"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={compactNumber}
+              />
+              <YAxis
+                yAxisId="orders"
+                orientation="right"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                allowDecimals={false}
+                tickFormatter={compactNumber}
+              />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Area
                 dataKey="revenue"
+                yAxisId="money"
                 type="monotone"
                 fill="var(--color-revenue)"
                 fillOpacity={0.2}
@@ -131,11 +150,20 @@ export function SalesTrendChart({
               />
               <Area
                 dataKey="netRevenue"
+                yAxisId="money"
                 type="monotone"
                 fill="var(--color-netRevenue)"
                 fillOpacity={0.2}
                 stroke="var(--color-netRevenue)"
                 stackId="b"
+              />
+              <Line
+                dataKey="orders"
+                yAxisId="orders"
+                type="monotone"
+                stroke="var(--color-orders)"
+                strokeWidth={2}
+                dot={false}
               />
               <ChartLegend content={<ChartLegendContent />} />
             </AreaChart>
@@ -172,10 +200,26 @@ export function RevenueLineChart({
                 axisLine={false}
                 tickMargin={8}
               />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+              <YAxis
+                yAxisId="money"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={compactNumber}
+              />
+              <YAxis
+                yAxisId="orders"
+                orientation="right"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                allowDecimals={false}
+                tickFormatter={compactNumber}
+              />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Line
                 dataKey="revenue"
+                yAxisId="money"
                 type="monotone"
                 stroke="var(--color-revenue)"
                 strokeWidth={3}
@@ -183,6 +227,7 @@ export function RevenueLineChart({
               />
               <Line
                 dataKey="netRevenue"
+                yAxisId="money"
                 type="monotone"
                 stroke="var(--color-netRevenue)"
                 strokeWidth={3}
@@ -190,6 +235,7 @@ export function RevenueLineChart({
               />
               <Line
                 dataKey="orders"
+                yAxisId="orders"
                 type="monotone"
                 stroke="var(--color-orders)"
                 strokeWidth={2}

@@ -1,7 +1,10 @@
 import { Button } from '@ecommerce/ui/components/button'
 import { Input } from '@ecommerce/ui/components/input'
 import { useTranslation } from 'react-i18next'
+import { GitCompareArrows } from 'lucide-react'
+import { DashboardExportButton } from './DashboardExportButton'
 import type {
+  DashboardExportDataset,
   DashboardGranularity,
   DashboardPreset,
   DashboardQueryParams,
@@ -12,6 +15,7 @@ interface DashboardFiltersProps {
   value: DashboardQueryParams
   onChange: (next: DashboardQueryParams) => void
   showGranularity?: boolean
+  exportDataset?: DashboardExportDataset
 }
 
 const presets: Array<DashboardPreset> = [
@@ -35,6 +39,7 @@ export function DashboardFilters({
   value,
   onChange,
   showGranularity = true,
+  exportDataset,
 }: DashboardFiltersProps) {
   const { t } = useTranslation()
   const preset = value.preset ?? '30d'
@@ -64,6 +69,7 @@ export function DashboardFilters({
       from: undefined,
       to: undefined,
       granularity: 'auto',
+      compare: true,
       sections: value.sections,
     })
 
@@ -97,14 +103,26 @@ export function DashboardFilters({
                 aria-label={t('dashboard.from')}
                 type="date"
                 value={value.from ?? ''}
-                onChange={(event) => update({ from: event.target.value })}
+                onChange={(event) => {
+                  const from = event.target.value
+                  update({
+                    from,
+                    to: value.to && from > value.to ? from : value.to,
+                  })
+                }}
                 className="h-8 w-36"
               />
               <Input
                 aria-label={t('dashboard.to')}
                 type="date"
                 value={value.to ?? ''}
-                onChange={(event) => update({ to: event.target.value })}
+                onChange={(event) => {
+                  const to = event.target.value
+                  update({
+                    to,
+                    from: value.from && to < value.from ? to : value.from,
+                  })
+                }}
                 className="h-8 w-36"
               />
             </>
@@ -131,6 +149,20 @@ export function DashboardFilters({
                 </Button>
               ))}
             </div>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant={value.compare ?? true ? 'secondary' : 'ghost'}
+            className="h-8 gap-1.5"
+            aria-pressed={value.compare ?? true}
+            onClick={() => update({ compare: !(value.compare ?? true) })}
+          >
+            <GitCompareArrows className="size-3.5" />
+            {t('dashboard.comparePrevious')}
+          </Button>
+          {exportDataset && (
+            <DashboardExportButton dataset={exportDataset} filters={value} />
           )}
           <Button
             type="button"

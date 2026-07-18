@@ -459,6 +459,49 @@
     "formatInvalid": "{{field}} has an invalid format"
   },
   "productShow": {
+    "telemetry": {
+      "title": "Telemetry coverage",
+      "description": "Page views, conversion rate, and actor-level product edits are not recorded yet. Sales use paid, non-cancelled orders; cart and wishlist figures show the current state."
+    },
+    "charts": {
+      "revenue": "Revenue trend",
+      "last30Days": "Paid product revenue during the last 30 days",
+      "units": "Units sold",
+      "unitsDescription": "Daily paid quantity during the last 30 days"
+    },
+    "breakdowns": {
+      "orderStatus": "Sales by order status",
+      "paymentMethod": "Sales by payment method"
+    },
+    "variantPerformance": {
+      "title": "Variant performance",
+      "description": "All-time paid sales compared with live stock and reservations"
+    },
+    "audit": {
+      "title": "Inventory & price audit",
+      "description": "Recent system-recorded stock movements and price changes",
+      "inventory": "Inventory movements",
+      "prices": "Price changes",
+      "price": "Price"
+    },
+    "returns": {
+      "title": "Returns",
+      "description": "Requests that include this product",
+      "requests": "Requests",
+      "requestedQty": "Requested quantity",
+      "acceptedQty": "Accepted quantity"
+    },
+    "revenue": {
+      "title": "Revenue checkpoints",
+      "description": "Paid, non-cancelled product revenue",
+      "today": "Today",
+      "week": "Last 7 days",
+      "month": "This month",
+      "year": "This year"
+    },
+    "customers": { "title": "Top customers" },
+    "interest": { "title": "Recent customer interest" },
+    "reviewsDistribution": "Rating distribution",
     "tabs": {
       "details": "Product Details",
       "statistics": "Statistics"
@@ -500,6 +543,17 @@
     "totalReviews": "reviews",
     "noReviews": "This product has no reviews yet.",
     "stats": {
+      "orders": "Orders",
+      "customers": "Customers",
+      "units": "Units",
+      "avgOrderValue": "Avg order",
+      "avgSellingPrice": "Avg unit",
+      "outOfStockVariants": "Out of stock",
+      "liveInterest": "Live interest",
+      "activeCarts": "Active carts",
+      "cartUnits": "Cart units",
+      "currentStock": "On-hand stock",
+      "retailValue": "Retail value",
       "sales": "Sales Statistics",
       "engagement": "Engagement Stats",
       "inventory": "Inventory Overview",
@@ -1160,6 +1214,12 @@
     "from": "From",
     "to": "To",
     "granularity": "Granularity",
+    "comparePrevious": "Compare previous period",
+    "exportCurrentView": "Export current view",
+    "exportingData": "Exporting...",
+    "exportReady": "Filtered export is ready.",
+    "exportFailed": "Could not export this dataset.",
+    "refundedInPeriod": "Refunded in selected period",
     "salesTrend": "Sales Trend",
     "salesTrendDesc": "Revenue, net revenue, and order activity over time.",
     "revenueLine": "Revenue Line Chart",

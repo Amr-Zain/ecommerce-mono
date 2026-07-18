@@ -3,6 +3,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { DashboardHomeQueryDto, DASHBOARD_SECTIONS, DashboardSection } from './dto/dashboard-home-query.dto';
 import { CacheService } from '@/shared/cache/cache.service';
 import { publicCacheTags } from '@/shared/cache/cache-tags';
+import { DashboardExportDataset, DashboardExportQueryDto } from './dto/dashboard-export-query.dto';
 
 type Granularity = 'day' | 'week' | 'month';
 type DateRange = { from: Date; to: Date; granularity: Granularity };
@@ -19,6 +20,22 @@ type DashboardHomeSections = {
   recent_activity?: unknown;
   analytics?: unknown;
 };
+type DashboardExportRow = {
+  dataset: string;
+  series: string;
+  period?: string;
+  label?: string;
+  value: string | number;
+};
+const DASHBOARD_EXPORT_DATASET_ORDER: Exclude<DashboardExportDataset, 'all'>[] = [
+  'overview',
+  'sales',
+  'customers',
+  'inventory',
+  'reviews',
+  'loyalty',
+  'geo',
+];
 
 @Injectable()
 export class DashboardService {
@@ -39,6 +56,48 @@ export class DashboardService {
     );
   }
 
+  async getSection(section: DashboardSection, query: DashboardHomeQueryDto = {}, langId = 'en') {
+    const sectionQueries: Record<DashboardSection, string> = {
+      overview: 'overview,geo,recent,charts',
+      sales: 'sales,charts',
+      customers: 'customers,charts',
+      inventory: 'inventory,charts',
+      reviews: 'reviews,charts',
+      loyalty: 'loyalty,customers,charts',
+      geo: 'geo',
+      recent: 'recent',
+      charts: 'charts',
+    };
+    return this.getHome({ ...query, sections: sectionQueries[section] }, langId);
+  }
+
+  async export(query: DashboardExportQueryDto = {}, langId = 'en') {
+    const dataset = query.dataset ?? 'overview';
+    const sections = this.exportSections(dataset);
+    const home = (await this.getHome({ ...query, sections }, langId)) as Record<string, unknown>;
+    const filters = this.record(home.filters);
+    const rows = this.exportRows(home, dataset);
+    const columns = ['dataset', 'series', 'period', 'label', 'value', 'from', 'to', 'granularity'];
+    const csvRows = rows.map((row) => [
+      row.dataset,
+      row.series,
+      row.period ?? '',
+      row.label ?? '',
+      row.value,
+      filters.from ?? '',
+      filters.to ?? '',
+      filters.granularity ?? '',
+    ]);
+    const content = `\uFEFF${[columns, ...csvRows]
+      .map((row) => row.map((cell) => this.csvCell(cell)).join(','))
+      .join('\r\n')}`;
+    return {
+      filename: `dashboard-${dataset}-${new Date().toISOString().slice(0, 10)}.csv`,
+      content,
+      rowCount: rows.length,
+    };
+  }
+
   private async buildHome(
     query: DashboardHomeQueryDto,
     langId: string,
@@ -46,8 +105,8 @@ export class DashboardService {
     sections: Set<DashboardSection>,
   ) {
     const [users, orders, products, reviews, loyalty, financial, geo, recentActivity, analytics] = await Promise.all([
-      this.when(sections, ['overview', 'customers'], () => this.getUserStats(range, langId)),
-      this.when(sections, ['overview', 'sales'], () => this.getOrderStats(range, langId)),
+      this.when(sections, ['overview', 'customers'], () => this.getUserStats(range, langId, query.compare ?? true)),
+      this.when(sections, ['overview', 'sales'], () => this.getOrderStats(range, langId, query.compare ?? true)),
       this.when(sections, ['overview', 'inventory'], () => this.getProductStats(range, langId)),
       this.when(sections, ['overview', 'reviews'], () => this.getReviewStats(range, langId)),
       this.when(sections, ['overview', 'loyalty'], () => this.getLoyaltyStats(range, langId)),
@@ -63,7 +122,10 @@ export class DashboardService {
         from: range.from.toISOString(),
         to: range.to.toISOString(),
         granularity: range.granularity,
+        compare: query.compare ?? true,
         sections: Array.from(sections),
+        generated_at: new Date().toISOString(),
+        cache_ttl_seconds: this.dashboardCacheTtl,
       },
       users,
       orders,
@@ -91,7 +153,7 @@ export class DashboardService {
     return parts.join('|');
   }
 
-  private async getUserStats(range: DateRange, langId: string) {
+  private async getUserStats(range: DateRange, langId: string, compare: boolean) {
     const [
       total,
       active,
@@ -113,7 +175,9 @@ export class DashboardService {
       this.prisma.user.groupBy({ by: ['userType'], _count: { _all: true } }),
       this.prisma.loyaltyAccount.groupBy({ by: ['currentTierId'], _count: { _all: true } }),
       this.prisma.user.count({ where: { userType: 'client', createdAt: { gte: range.from, lte: range.to } } }),
-      this.prisma.user.count({ where: { userType: 'client', createdAt: this.previousRangeWhere(range) } }),
+      compare
+        ? this.prisma.user.count({ where: { userType: 'client', createdAt: this.previousRangeWhere(range) } })
+        : Promise.resolve(0),
     ]);
 
     const tiers = await this.prisma.loyaltyTier.findMany({
@@ -128,7 +192,7 @@ export class DashboardService {
       new_today: newToday,
       new_this_week: newThisWeek,
       new_this_month: newThisMonth,
-      growth_trend: this.percentageChange(periodUsers, previousUsers),
+      growth_trend: compare ? this.percentageChange(periodUsers, previousUsers) : 0,
       by_type: Object.fromEntries(byTypeRaw.map((item) => [item.userType ?? 'unknown', item._count._all])),
       by_tier: byTierRaw.map((item) => {
         const tier = tiers.find((candidate) => candidate.id === item.currentTierId);
@@ -141,12 +205,20 @@ export class DashboardService {
     };
   }
 
-  private async getOrderStats(range: DateRange, langId: string) {
-    const [total, byStatusRaw, periodOrders, previousOrders, revenue, topProductsRaw] = await Promise.all([
+  private async getOrderStats(range: DateRange, langId: string, compare: boolean) {
+    const [total, byStatusRaw, periodRevenue, previousRevenue, revenue, topProductsRaw] = await Promise.all([
       this.prisma.order.count(),
       this.prisma.order.groupBy({ by: ['status'], _count: { _all: true } }),
-      this.prisma.order.count({ where: { createdAt: { gte: range.from, lte: range.to } } }),
-      this.prisma.order.count({ where: { createdAt: this.previousRangeWhere(range) } }),
+      this.prisma.paymentTransaction.aggregate({
+        where: { paymentStatus: 'completed', createdAt: { gte: range.from, lte: range.to } },
+        _sum: { amount: true },
+      }),
+      compare
+        ? this.prisma.paymentTransaction.aggregate({
+            where: { paymentStatus: 'completed', createdAt: this.previousRangeWhere(range) },
+            _sum: { amount: true },
+          })
+        : Promise.resolve({ _sum: { amount: null } }),
       this.getRevenueBuckets(),
       this.prisma.orderItem.groupBy({
         by: ['productId'],
@@ -168,7 +240,12 @@ export class DashboardService {
       by_status: Object.fromEntries(byStatusRaw.map((item) => [item.status, item._count._all])),
       revenue: {
         ...revenue,
-        trend: this.percentageChange(periodOrders, previousOrders),
+        trend: compare
+          ? this.percentageChange(
+              this.decimalToNumber(periodRevenue._sum.amount),
+              this.decimalToNumber(previousRevenue._sum.amount),
+            )
+          : 0,
       },
       average_order_value: total > 0 ? this.round(revenue.total / total) : 0,
       orders_today: await this.prisma.order.count({ where: { createdAt: { gte: this.startOfDay(new Date()) } } }),
@@ -325,32 +402,43 @@ export class DashboardService {
   }
 
   private async getFinancialStats(range: DateRange) {
-    const [totalRevenue, periodRevenue, todayRevenue, pendingPayments, refundedThisMonth] = await Promise.all([
-      this.prisma.paymentTransaction.aggregate({ where: { paymentStatus: 'completed' }, _sum: { amount: true } }),
-      this.prisma.paymentTransaction.aggregate({
-        where: { paymentStatus: 'completed', createdAt: { gte: range.from, lte: range.to } },
-        _sum: { amount: true },
-      }),
-      this.prisma.paymentTransaction.aggregate({
-        where: { paymentStatus: 'completed', createdAt: { gte: this.startOfDay(new Date()) } },
-        _sum: { amount: true },
-      }),
-      this.prisma.paymentTransaction.aggregate({ where: { paymentStatus: 'pending' }, _sum: { amount: true } }),
-      this.prisma.paymentTransaction.aggregate({
-        where: { paymentStatus: 'refunded', createdAt: { gte: this.startOfMonth(new Date()) } },
-        _sum: { amount: true },
-      }),
-    ]);
+    const [totalRevenue, totalRefunds, periodRevenue, periodRefunds, todayRevenue, pendingPayments, refundedThisMonth] =
+      await Promise.all([
+        this.prisma.paymentTransaction.aggregate({ where: { paymentStatus: 'completed' }, _sum: { amount: true } }),
+        this.prisma.paymentTransaction.aggregate({ where: { paymentStatus: 'refunded' }, _sum: { amount: true } }),
+        this.prisma.paymentTransaction.aggregate({
+          where: { paymentStatus: 'completed', createdAt: { gte: range.from, lte: range.to } },
+          _sum: { amount: true },
+        }),
+        this.prisma.paymentTransaction.aggregate({
+          where: { paymentStatus: 'refunded', createdAt: { gte: range.from, lte: range.to } },
+          _sum: { amount: true },
+        }),
+        this.prisma.paymentTransaction.aggregate({
+          where: { paymentStatus: 'completed', createdAt: { gte: this.startOfDay(new Date()) } },
+          _sum: { amount: true },
+        }),
+        this.prisma.paymentTransaction.aggregate({ where: { paymentStatus: 'pending' }, _sum: { amount: true } }),
+        this.prisma.paymentTransaction.aggregate({
+          where: { paymentStatus: 'refunded', createdAt: { gte: this.startOfMonth(new Date()) } },
+          _sum: { amount: true },
+        }),
+      ]);
 
     const total = this.decimalToNumber(totalRevenue._sum.amount ?? 0);
-    const refunded = this.decimalToNumber(refundedThisMonth._sum.amount ?? 0);
+    const allTimeRefunded = this.decimalToNumber(totalRefunds._sum.amount ?? 0);
+    const rangeRevenue = this.decimalToNumber(periodRevenue._sum.amount ?? 0);
+    const rangeRefunded = this.decimalToNumber(periodRefunds._sum.amount ?? 0);
     return {
       total_revenue: total,
-      revenue_this_month: this.decimalToNumber(periodRevenue._sum.amount ?? 0),
+      revenue_this_month: rangeRevenue,
       revenue_today: this.decimalToNumber(todayRevenue._sum.amount ?? 0),
       pending_payments: this.decimalToNumber(pendingPayments._sum.amount ?? 0),
-      refunded_this_month: refunded,
-      net_revenue: this.round(total - refunded),
+      refunded_this_month: this.decimalToNumber(refundedThisMonth._sum.amount ?? 0),
+      net_revenue: this.round(total - allTimeRefunded),
+      range_revenue: rangeRevenue,
+      range_refunds: rangeRefunded,
+      range_net_revenue: this.round(rangeRevenue - rangeRefunded),
     };
   }
 
@@ -458,8 +546,15 @@ export class DashboardService {
           select: { createdAt: true, isActive: true },
         }),
         this.prisma.productVariant.findMany({ where: { isActive: true }, select: { stockQuantity: true } }),
-        this.prisma.review.groupBy({ by: ['rating'], _count: { _all: true } }),
-        this.prisma.review.findMany({ select: { isVerified: true } }),
+        this.prisma.review.groupBy({
+          by: ['rating'],
+          where: { createdAt: { gte: range.from, lte: range.to } },
+          _count: { _all: true },
+        }),
+        this.prisma.review.findMany({
+          where: { createdAt: { gte: range.from, lte: range.to } },
+          select: { isVerified: true },
+        }),
         this.prisma.loyaltyPointTransaction.findMany({
           where: { createdAt: { gte: range.from, lte: range.to } },
           select: { createdAt: true, direction: true, points: true },
@@ -484,13 +579,18 @@ export class DashboardService {
       orders.length > 0
         ? this.countBy(orders, (order) => order.paymentStatus || 'unknown')
         : this.countBy(payments, (payment) => payment.paymentStatus || 'unknown');
-    const orderCountByUser = orders.reduce((acc, order) => {
-      const key = order.userId.toString();
-      acc.set(key, (acc.get(key) ?? 0) + 1);
-      return acc;
-    }, new Map<string, number>());
-    const firstTimeCustomers = [...orderCountByUser.values()].filter((count) => count === 1).length;
-    const repeatCustomers = [...orderCountByUser.values()].filter((count) => count > 1).length;
+    const customerIds = [...new Set(orders.map((order) => order.userId))];
+    const priorCustomers =
+      customerIds.length > 0
+        ? await this.prisma.order.findMany({
+            where: { userId: { in: customerIds }, createdAt: { lt: range.from } },
+            distinct: ['userId'],
+            select: { userId: true },
+          })
+        : [];
+    const priorCustomerIds = new Set(priorCustomers.map((order) => order.userId.toString()));
+    const firstTimeCustomers = customerIds.filter((userId) => !priorCustomerIds.has(userId.toString())).length;
+    const repeatCustomers = customerIds.length - firstTimeCustomers;
     const lowStockVariants = variants.filter(
       (variant) => variant.stockQuantity > 0 && variant.stockQuantity <= 5,
     ).length;
@@ -581,7 +681,7 @@ export class DashboardService {
         orders: orders.length,
         averageOrderValue: this.round(orders.length > 0 ? grossRevenue / orders.length : 0),
         refundRate: this.round(grossRevenue > 0 ? (refunds / grossRevenue) * 100 : 0),
-        repeatCustomerRate: this.round(orderCountByUser.size > 0 ? (repeatCustomers / orderCountByUser.size) * 100 : 0),
+        repeatCustomerRate: this.round(customerIds.length > 0 ? (repeatCustomers / customerIds.length) * 100 : 0),
         reviewApprovalRate: this.round(allReviews.length > 0 ? (approvedReviews / allReviews.length) * 100 : 0),
         inventoryAtRisk: lowStockVariants + outOfStockVariants,
         pendingOperations,
@@ -707,6 +807,135 @@ export class DashboardService {
       .map((section) => section.trim())
       .filter((section): section is DashboardSection => DASHBOARD_SECTIONS.includes(section as DashboardSection));
     return new Set(requested.length > 0 ? requested : DASHBOARD_SECTIONS);
+  }
+
+  private exportSections(dataset: DashboardExportDataset) {
+    const sectionMap: Record<DashboardExportDataset, string | undefined> = {
+      all: undefined,
+      overview: 'overview,charts',
+      sales: 'sales,charts',
+      customers: 'customers,charts',
+      inventory: 'inventory,charts',
+      reviews: 'reviews,charts',
+      loyalty: 'loyalty,charts',
+      geo: 'geo',
+    };
+    return sectionMap[dataset];
+  }
+
+  private exportRows(home: Record<string, unknown>, dataset: DashboardExportDataset): DashboardExportRow[] {
+    const analytics = this.record(home.analytics);
+    const datasets = dataset === 'all' ? DASHBOARD_EXPORT_DATASET_ORDER : [dataset];
+    return datasets.flatMap((item) => {
+      if (item === 'overview') {
+        return Object.entries(this.record(analytics.businessMetrics)).map(([label, value]) => ({
+          dataset: item,
+          series: 'business_metric',
+          label,
+          value: this.exportValue(value),
+        }));
+      }
+      if (item === 'sales') {
+        return [
+          ...this.trendRows(item, analytics.salesTrend, ['revenue', 'netRevenue', 'orders', 'refunds']),
+          ...this.breakdownRows(item, 'order_status', analytics.ordersByStatus),
+          ...this.breakdownRows(item, 'payment_method', analytics.ordersByPaymentMethod),
+          ...this.breakdownRows(item, 'payment_health', analytics.paymentHealth),
+        ];
+      }
+      if (item === 'customers') {
+        return [
+          ...this.trendRows(item, analytics.customerGrowth, ['newUsers', 'activeUsers']),
+          ...this.breakdownRows(item, 'customer_segment', analytics.customerSegments),
+        ];
+      }
+      if (item === 'inventory') {
+        return this.array(analytics.inventoryStockStates).map((point) => {
+          const value = this.record(point);
+          return {
+            dataset: item,
+            series: 'stock_state',
+            label: this.textValue(value.state),
+            value: this.exportValue(value.count),
+          };
+        });
+      }
+      if (item === 'reviews') {
+        return this.array(analytics.reviewRatings).map((point) => {
+          const value = this.record(point);
+          return {
+            dataset: item,
+            series: 'rating',
+            label: this.textValue(value.rating),
+            value: this.exportValue(value.count),
+          };
+        });
+      }
+      if (item === 'loyalty') {
+        return this.trendRows(item, analytics.loyaltyPointsTrend, ['earned', 'redeemed']);
+      }
+      if (item === 'geo') {
+        return this.array(this.record(home.geo).countries).flatMap((entry) => {
+          const countryRow = this.record(entry);
+          const country = this.record(countryRow.country);
+          const orders = this.record(countryRow.orders_summary);
+          const users = this.record(countryRow.users_summary);
+          const label = this.textValue(country.name ?? country.code);
+          return [
+            { dataset: item, series: 'orders', label, value: this.exportValue(orders.total) },
+            { dataset: item, series: 'paid_orders', label, value: this.exportValue(orders.paid) },
+            { dataset: item, series: 'revenue', label, value: this.exportValue(orders.revenue) },
+            { dataset: item, series: 'users', label, value: this.exportValue(users.total) },
+          ];
+        });
+      }
+      return [];
+    });
+  }
+
+  private trendRows(dataset: string, points: unknown, seriesNames: string[]): DashboardExportRow[] {
+    return this.array(points).flatMap((point) => {
+      const value = this.record(point);
+      return seriesNames.map((series) => ({
+        dataset,
+        series,
+        period: this.textValue(value.period),
+        value: this.exportValue(value[series]),
+      }));
+    });
+  }
+
+  private breakdownRows(dataset: string, series: string, points: unknown): DashboardExportRow[] {
+    return this.array(points).map((point) => {
+      const value = this.record(point);
+      return {
+        dataset,
+        series,
+        label: this.textValue(value.name),
+        value: this.exportValue(value.value),
+      };
+    });
+  }
+
+  private record(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  }
+
+  private array(value: unknown): unknown[] {
+    return Array.isArray(value) ? value : [];
+  }
+
+  private exportValue(value: unknown): string | number {
+    return typeof value === 'number' || typeof value === 'string' ? value : '';
+  }
+
+  private textValue(value: unknown): string {
+    return typeof value === 'string' || typeof value === 'number' ? `${value}` : '';
+  }
+
+  private csvCell(value: unknown) {
+    const text = `${this.exportValue(value)}`;
+    return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
   }
 
   private async when<T>(

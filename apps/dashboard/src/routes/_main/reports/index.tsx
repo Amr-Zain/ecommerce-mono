@@ -20,11 +20,12 @@ import { useDashboardProfile } from '@/hooks/useDashboardProfile'
 import { DashboardQueryParams, DashboardStatistics } from '@/types/api/dashboard'
 import { ApiResponseBase } from '@/types/api/http'
 import { queryKeys } from '@/util/queryKeysFactory'
+import { normalizeDashboardStatistics } from '@/lib/normalize-dashboard-statistics'
 import { Card, CardContent, CardHeader, CardTitle } from '@ecommerce/ui/components/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@ecommerce/ui/components/tabs'
 import { createFileRoute, Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { CreditCard, Gift, Package, ShoppingCart, Star, TrendingUp, Users } from 'lucide-react'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod/v4'
 
@@ -33,6 +34,7 @@ const reportsSearchSchema = z.object({
   from: z.string().optional().catch(undefined),
   to: z.string().optional().catch(undefined),
   granularity: z.enum(['auto', 'day', 'week', 'month']).optional().catch('auto'),
+  compare: z.boolean().optional().catch(true),
 })
 
 const reportSections = 'overview,sales,customers,inventory,reviews,loyalty,charts'
@@ -47,6 +49,9 @@ function ReportsPage() {
   const navigate = useNavigate()
   const search = useSearch({ from: '/_main/reports/' })
   const { data: user } = useDashboardProfile()
+  const [activeReportTab, setActiveReportTab] = useState<
+    'sales' | 'customers' | 'inventory' | 'reviews' | 'loyalty'
+  >('sales')
   const hasHomePermission = (
     user?.permissions['dashboard-home'] || []
   ).includes('index')
@@ -55,6 +60,7 @@ function ReportsPage() {
     from: search.from,
     to: search.to,
     granularity: search.granularity,
+    compare: search.compare,
     sections: reportSections,
   }
 
@@ -65,7 +71,7 @@ function ReportsPage() {
     enabled: hasHomePermission,
   })
 
-  const stats = data?.data
+  const stats = normalizeDashboardStatistics(data?.data)
   const handleFiltersChange = useCallback((next: DashboardQueryParams) => {
     navigate({
       to: '.',
@@ -92,7 +98,11 @@ function ReportsPage() {
         <h1 className="text-3xl font-bold tracking-tight">{t('dashboard.reportsTitle')}</h1>
         <p className="text-muted-foreground">{t('dashboard.reportsDescription')}</p>
       </div>
-      <DashboardFilters value={params} onChange={handleFiltersChange} />
+      <DashboardFilters
+        value={params}
+        onChange={handleFiltersChange}
+        exportDataset={activeReportTab}
+      />
       <BusinessMetricsGrid metrics={stats?.analytics?.businessMetrics} />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -102,7 +112,15 @@ function ReportsPage() {
         <StatsCard title={t('dashboard.inventoryValue')} value={<span className="inline-flex items-center gap-1">{stats?.products?.inventory_value ?? 0} <SARIcon className="size-4" /></span>} icon={Package} iconColor="text-orange-500 bg-orange-500/10" />
       </div>
 
-      <Tabs defaultValue="sales" className="space-y-4">
+      <Tabs
+        value={activeReportTab}
+        onValueChange={(value) =>
+          setActiveReportTab(
+            value as 'sales' | 'customers' | 'inventory' | 'reviews' | 'loyalty',
+          )
+        }
+        className="space-y-4"
+      >
         <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="sales">{t('dashboard.tabs.sales')}</TabsTrigger>
           <TabsTrigger value="customers">{t('dashboard.tabs.customers')}</TabsTrigger>

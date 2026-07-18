@@ -20,6 +20,7 @@ import {
 import { StatsCard } from '@/components/common/charts/StatsCard'
 import { useTranslation } from 'react-i18next'
 import {
+  DashboardExportDataset,
   DashboardQueryParams,
   DashboardStatistics,
 } from '@/types/api/dashboard'
@@ -36,15 +37,19 @@ import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
 import { AnalyticsBarChart } from '@/components/common/charts/BarChart'
 import { AnalyticsPieChart } from '@/components/common/charts/PieChart'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
-import { Variants, motion, AnimatePresence } from 'motion/react'
+import { Variants, motion } from 'motion/react'
 import { lazy, Suspense, useMemo, useCallback, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { DashboardFilters } from './DashboardFilters'
 import {
   BusinessMetricsGrid,
+  CustomerGrowthChart,
+  InventoryStockChart,
+  LoyaltyTrendChart,
   OperationalAlertsCard,
   RadialBreakdownChart,
   RevenueLineChart,
+  SalesTrendChart,
 } from './AnalyticsCharts'
 
 const GlobeTab = lazy(() =>
@@ -65,6 +70,14 @@ export function Dashboard({
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { tab: activeTab = 'overview' } = useSearch({ from: '/_main/' })
+  const exportDataset: DashboardExportDataset =
+    activeTab === 'globe'
+      ? 'geo'
+      : (['overview', 'sales', 'customers', 'inventory', 'reviews', 'loyalty'].includes(
+            activeTab,
+          )
+          ? activeTab
+          : 'overview') as DashboardExportDataset
   // Latch: once true, keep Globe mounted (avoid WebGL teardown/rebuild on tab switch)
   const globeEverVisited = useRef(activeTab === 'globe')
   if (activeTab === 'globe') globeEverVisited.current = true
@@ -262,17 +275,6 @@ export function Dashboard({
     [data?.analytics, t],
   )
 
-  const hasPositiveBreakdown = useCallback(
-    (items?: Array<{ value: number }>) => {
-      return (items ?? []).some((item) => item.value > 0)
-    },
-    [],
-  )
-
-  const hasOrdersByStatus = hasPositiveBreakdown(analytics.ordersByStatus)
-  const hasPaymentHealth = hasPositiveBreakdown(analytics.paymentHealth)
-  const hasCustomerSegments = hasPositiveBreakdown(analytics.customerSegments)
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -301,6 +303,7 @@ export function Dashboard({
           <DashboardFilters
             value={filters ?? { preset: '30d', granularity: 'auto' }}
             onChange={handleFiltersChange}
+            exportDataset={exportDataset}
           />
           <AnimatedTabs
             key={i18n.language}
@@ -318,7 +321,7 @@ export function Dashboard({
                 <div className="flex items-center justify-between mb-4">
                   <TabsList
                     className={cn(
-                      'bg-muted/50 border overflow-x-auto max-w-full relative h-11 p-1 transition-opacity',
+                      'bg-muted/50 border overflow-x-auto max-w-full relative !h-14 p-1 gap-1 transition-opacity',
                     )}
                   >
                     {itemsList.map((tab) => {
@@ -330,11 +333,14 @@ export function Dashboard({
                         <TabsTrigger
                           key={tab.value}
                           value={tab.value}
-                          className="relative gap-2 px-4 h-full data-[state=active]:bg-transparent data-[state=active]:shadow-none group"
+                          className="h-10 min-w-32 gap-1.5 px-4 font-bold"
                         >
                           {Icon && (
                             <Icon
-                              className={cn('h-4 w-4 transition-colors', color)}
+                              className={cn(
+                                'h-4 w-4 transition-colors',
+                                color,
+                              )}
                             />
                           )}
                           <span>{tab.label}</span>
@@ -344,18 +350,16 @@ export function Dashboard({
                   </TabsList>
                 </div>
 
-                <AnimatePresence mode="wait">
+                <>
                   {activeTab === 'overview' && (
                     <motion.div
                       key="overview"
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={false}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
                     >
                       <motion.div
                         variants={containerVariants}
-                        initial="hidden"
+                        initial={false}
                         animate="show"
                         className="space-y-6"
                       >
@@ -366,7 +370,11 @@ export function Dashboard({
                           <StatsCard
                             title={t('dashboard.totalRevenue')}
                             value={data?.financial?.total_revenue}
-                            change={`${data?.orders?.revenue?.trend}%`}
+                            change={
+                              filters?.compare === false
+                                ? undefined
+                                : `${data?.orders?.revenue?.trend}%`
+                            }
                             changeType={
                               (data?.orders?.revenue?.trend || 0) >= 0
                                 ? 'increase'
@@ -386,7 +394,11 @@ export function Dashboard({
                           <StatsCard
                             title={t('dashboard.totalUsers')}
                             value={data?.users?.total}
-                            change={`${data?.users?.growth_trend}%`}
+                            change={
+                              filters?.compare === false
+                                ? undefined
+                                : `${data?.users?.growth_trend}%`
+                            }
                             changeType={
                               (data?.users?.growth_trend || 0) >= 0
                                 ? 'increase'
@@ -415,23 +427,15 @@ export function Dashboard({
                         >
                           <RevenueLineChart
                             data={analytics.salesTrend}
-                            className={
-                              hasOrdersByStatus
-                                ? 'xl:col-span-4'
-                                : 'xl:col-span-7'
-                            }
+                            className="xl:col-span-4"
                           />
-                          {hasOrdersByStatus && (
-                            <div className="xl:col-span-3">
-                              <RadialBreakdownChart
-                                title={t('dashboard.ordersByStatus')}
-                                description={t(
-                                  'dashboard.distributionByStatus',
-                                )}
-                                data={analytics.ordersByStatus}
-                              />
-                            </div>
-                          )}
+                          <div className="xl:col-span-3">
+                            <RadialBreakdownChart
+                              title={t('dashboard.ordersByStatus')}
+                              description={t('dashboard.distributionByStatus')}
+                              data={analytics.ordersByStatus}
+                            />
+                          </div>
                         </motion.div>
                         <motion.div
                           variants={itemVariants}
@@ -442,26 +446,20 @@ export function Dashboard({
                               alerts={analytics.operationalAlerts}
                             />
                           </div>
-                          {hasPaymentHealth && (
-                            <div>
-                              <RadialBreakdownChart
-                                title={t('dashboard.paymentHealth')}
-                                description={t('dashboard.paymentHealthDesc')}
-                                data={analytics.paymentHealth}
-                              />
-                            </div>
-                          )}
-                          {hasCustomerSegments && (
-                            <div>
-                              <RadialBreakdownChart
-                                title={t('dashboard.customerSegments')}
-                                description={t(
-                                  'dashboard.customerSegmentsDesc',
-                                )}
-                                data={analytics.customerSegments}
-                              />
-                            </div>
-                          )}
+                          <div>
+                            <RadialBreakdownChart
+                              title={t('dashboard.paymentHealth')}
+                              description={t('dashboard.paymentHealthDesc')}
+                              data={analytics.paymentHealth}
+                            />
+                          </div>
+                          <div>
+                            <RadialBreakdownChart
+                              title={t('dashboard.customerSegments')}
+                              description={t('dashboard.customerSegmentsDesc')}
+                              data={analytics.customerSegments}
+                            />
+                          </div>
                         </motion.div>
                         <motion.div
                           variants={itemVariants}
@@ -752,14 +750,12 @@ export function Dashboard({
                   {activeTab === 'sales' && (
                     <motion.div
                       key="sales"
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={false}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
                     >
                       <motion.div
                         variants={containerVariants}
-                        initial="hidden"
+                        initial={false}
                         animate="show"
                         className="space-y-6"
                       >
@@ -771,7 +767,7 @@ export function Dashboard({
                             title={t('dashboard.netRevenue')}
                             value={
                               <div className="flex items-center gap-1">
-                                {data?.financial?.net_revenue}{' '}
+                                {data?.financial?.range_net_revenue}{' '}
                                 <SARIcon className="h-5 w-5 text-primary/60" />
                               </div>
                             }
@@ -790,10 +786,10 @@ export function Dashboard({
                             iconColor="text-amber-500 bg-amber-500/10"
                           />
                           <StatsCard
-                            title={t('dashboard.refundedThisMonth')}
+                            title={t('dashboard.refundedInPeriod')}
                             value={
                               <div className="flex items-center gap-1">
-                                {data?.financial?.refunded_this_month}{' '}
+                                {data?.financial?.range_refunds}{' '}
                                 <SARIcon className="h-5 w-5 text-destructive/60" />
                               </div>
                             }
@@ -804,13 +800,16 @@ export function Dashboard({
                             title={t('dashboard.averageOrderValue')}
                             value={
                               <div className="flex items-center gap-1">
-                                {data?.orders?.average_order_value}{' '}
+                                {analytics.businessMetrics?.averageOrderValue}{' '}
                                 <SARIcon className="h-5 w-5 text-success/60" />
                               </div>
                             }
                             icon={TrendingUp}
                             iconColor="text-teal-500 bg-teal-500/10"
                           />
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
+                          <SalesTrendChart data={analytics.salesTrend} />
                         </motion.div>
                         <motion.div variants={itemVariants}>
                           <Card className="shadow-sm border-muted/60 py-4">
@@ -922,14 +921,12 @@ export function Dashboard({
                   {activeTab === 'customers' && (
                     <motion.div
                       key="customers"
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={false}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
                     >
                       <motion.div
                         variants={containerVariants}
-                        initial="hidden"
+                        initial={false}
                         animate="show"
                         className="space-y-6"
                       >
@@ -968,6 +965,9 @@ export function Dashboard({
                             icon={TrendingUp}
                             iconColor="text-orange-500 bg-orange-500/10"
                           />
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
+                          <CustomerGrowthChart data={analytics.customerGrowth} />
                         </motion.div>
                         <motion.div
                           variants={itemVariants}
@@ -1021,14 +1021,12 @@ export function Dashboard({
                   {activeTab === 'inventory' && (
                     <motion.div
                       key="inventory"
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={false}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
                     >
                       <motion.div
                         variants={containerVariants}
-                        initial="hidden"
+                        initial={false}
                         animate="show"
                         className="space-y-6"
                       >
@@ -1066,6 +1064,11 @@ export function Dashboard({
                             }
                             icon={CreditCard}
                             iconColor="text-emerald-600 bg-emerald-500/10"
+                          />
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
+                          <InventoryStockChart
+                            data={analytics.inventoryStockStates}
                           />
                         </motion.div>
                         <motion.div variants={itemVariants}>
@@ -1195,14 +1198,12 @@ export function Dashboard({
                   {activeTab === 'reviews' && (
                     <motion.div
                       key="reviews"
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={false}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
                     >
                       <motion.div
                         variants={containerVariants}
-                        initial="hidden"
+                        initial={false}
                         animate="show"
                         className="space-y-6"
                       >
@@ -1248,7 +1249,7 @@ export function Dashboard({
                             xAxisKey="rating"
                             barConfig={{
                               dataKey: 'count',
-                              fill: 'oklch(68.1% 0.162 75.834)',
+                              fill: 'var(--chart-4)',
                               radius: [4, 4, 0, 0],
                             }}
                           />
@@ -1293,14 +1294,12 @@ export function Dashboard({
                   {activeTab === 'loyalty' && (
                     <motion.div
                       key="loyalty"
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={false}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
                     >
                       <motion.div
                         variants={containerVariants}
-                        initial="hidden"
+                        initial={false}
                         animate="show"
                         className="space-y-6"
                       >
@@ -1328,6 +1327,11 @@ export function Dashboard({
                             value={data?.loyalty?.points_this_month}
                             icon={Clock}
                             iconColor="text-blue-600 bg-blue-500/10"
+                          />
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
+                          <LoyaltyTrendChart
+                            data={analytics.loyaltyPointsTrend}
                           />
                         </motion.div>
                         <motion.div
@@ -1402,7 +1406,7 @@ export function Dashboard({
                       </motion.div>
                     </motion.div>
                   )}
-                </AnimatePresence>
+                </>
 
                 {/* GLOBE TAB – only mount WebGL after user first visits the tab */}
                 {globeEverVisited.current && (

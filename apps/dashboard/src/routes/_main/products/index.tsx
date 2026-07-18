@@ -45,8 +45,8 @@ export const Route = createFileRoute('/_main/products/')({
     // Prefetch dashboard stats for product cards
     queryClient.ensureQueryData(
       prefetchOptions({
-        queryKey: queryKeys.dashboard.statistics(),
-        endpoint: 'dashboard/home'
+        queryKey: queryKeys.dashboard.section('inventory'),
+        endpoint: 'dashboard/sections/inventory'
       })
     )
   },

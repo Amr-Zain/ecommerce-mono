@@ -54,8 +54,8 @@ export const Route = createFileRoute('/_main/payment-gateways/')({
         // Prefetch dashboard stats for cards
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: queryKeys.dashboard.statistics(),
-                endpoint: 'dashboard/home'
+                queryKey: queryKeys.dashboard.section('sales'),
+                endpoint: 'dashboard/sections/sales'
             })
         )
     },

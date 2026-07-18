@@ -42,33 +42,35 @@ export class PublicCacheInvalidationPublisher {
 }
 
 function resolvePublicCacheTags(event: PublicCacheEvent, payload: PublicCacheEventPayload): string[] {
+  const dashboardTag = publicCacheTags.dashboardHome;
   switch (event) {
     case PUBLIC_CACHE_EVENTS.productsChanged:
       return withOptionalProductTag(
-        [publicCacheTags.products, publicCacheTags.home, publicCacheTags.collections],
+        [publicCacheTags.products, publicCacheTags.home, publicCacheTags.collections, dashboardTag],
         payload.productId,
       );
     case PUBLIC_CACHE_EVENTS.collectionsChanged:
-      return [publicCacheTags.collections, publicCacheTags.products, publicCacheTags.home];
+      return [publicCacheTags.collections, publicCacheTags.products, publicCacheTags.home, dashboardTag];
     case PUBLIC_CACHE_EVENTS.slidersChanged:
       return [publicCacheTags.sliders, publicCacheTags.home];
     case PUBLIC_CACHE_EVENTS.faqsChanged:
       return [publicCacheTags.faqs];
     case PUBLIC_CACHE_EVENTS.locationsChanged:
-      return [publicCacheTags.countries, publicCacheTags.cities];
+      return [publicCacheTags.countries, publicCacheTags.cities, dashboardTag];
     case PUBLIC_CACHE_EVENTS.attributesChanged:
-      return [publicCacheTags.attributes, publicCacheTags.products];
+      return [publicCacheTags.attributes, publicCacheTags.products, dashboardTag];
     case PUBLIC_CACHE_EVENTS.staticPagesChanged:
       return [publicCacheTags.staticPages];
     case PUBLIC_CACHE_EVENTS.showRoomsChanged:
       return [publicCacheTags.showRooms, publicCacheTags.home];
     case PUBLIC_CACHE_EVENTS.reviewsChanged:
       return payload.productId === undefined
-        ? [publicCacheTags.products]
+        ? [publicCacheTags.products, dashboardTag]
         : [
             publicCacheTags.products,
             publicCacheTags.product(payload.productId),
             publicCacheTags.reviews(payload.productId),
+            dashboardTag,
           ];
     case PUBLIC_CACHE_EVENTS.settingsChanged:
       return [publicCacheTags.settings, publicCacheTags.home];
@@ -89,5 +91,30 @@ export class PublicCacheInvalidationListener {
   async handle(payload: PublicCacheInvalidationPayload) {
     await this.cache.invalidateTags(payload.tags);
     this.logger.debug(`Invalidated public cache for ${payload.event}`);
+  }
+
+  @OnEvent('order.*', { async: true, suppressErrors: true })
+  async handleOrderChange() {
+    await this.invalidateDashboard('order');
+  }
+
+  @OnEvent('payment.*', { async: true, suppressErrors: true })
+  async handlePaymentChange() {
+    await this.invalidateDashboard('payment');
+  }
+
+  @OnEvent('return.*', { async: true, suppressErrors: true })
+  async handleReturnChange() {
+    await this.invalidateDashboard('return');
+  }
+
+  @OnEvent('exchange.*', { async: true, suppressErrors: true })
+  async handleExchangeChange() {
+    await this.invalidateDashboard('exchange');
+  }
+
+  private async invalidateDashboard(source: string) {
+    await this.cache.invalidateTags([publicCacheTags.dashboardHome]);
+    this.logger.debug(`Invalidated dashboard cache for ${source} event`);
   }
 }

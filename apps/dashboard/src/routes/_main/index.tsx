@@ -1,6 +1,5 @@
 import { createFileRoute, useSearch } from '@tanstack/react-router'
 import { z } from 'zod/v4'
-import type { RouterContext } from '@/main'
 import type {
   DashboardAnalytics,
   DashboardQueryParams,
@@ -17,7 +16,10 @@ import { prefetchOptions } from '@/util/preFetcher'
 import { queryKeys } from '@/util/queryKeysFactory'
 
 const dashboardSearchSchema = z.object({
-  tab: z.string().optional().catch('overview'),
+  tab: z
+    .enum(['overview', 'sales', 'customers', 'inventory', 'reviews', 'loyalty', 'globe'])
+    .optional()
+    .catch('overview'),
   preset: z
     .enum(['today', '7d', '30d', '90d', 'year', 'custom'])
     .optional()
@@ -28,6 +30,7 @@ const dashboardSearchSchema = z.object({
     .enum(['auto', 'day', 'week', 'month'])
     .optional()
     .catch('auto'),
+  compare: z.boolean().optional().catch(true),
 })
 
 export const Route = createFileRoute('/_main/')({
@@ -35,7 +38,7 @@ export const Route = createFileRoute('/_main/')({
   component: Index,
   pendingComponent: DashboardSkeleton,
   loader: async ({ context }) => {
-    const { queryClient } = context as RouterContext
+    const { queryClient } = context
     const hasHomePermission = hasPermission('dashboard-home', 'index')
     if (!hasHomePermission) {
       return
@@ -45,12 +48,14 @@ export const Route = createFileRoute('/_main/')({
         queryKey: queryKeys.dashboard.statistics({
           preset: '30d',
           granularity: 'auto',
+          compare: true,
           sections: 'overview,geo,recent,charts',
         }),
         endpoint: 'dashboard/home',
         params: {
           preset: '30d',
           granularity: 'auto',
+          compare: true,
           sections: 'overview,geo,recent,charts',
         },
       }),
@@ -69,6 +74,7 @@ function Index() {
     from: search.from,
     to: search.to,
     granularity: search.granularity,
+    compare: search.compare,
     sections: 'overview,geo,recent,charts',
   }
   const { data } = useFetch<ApiResponseBase<DashboardStatistics>>({

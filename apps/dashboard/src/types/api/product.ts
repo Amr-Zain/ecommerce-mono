@@ -1,4 +1,4 @@
-import type { Image } from "./general"
+import type { Image } from './general'
 
 export type ProductVariationAttribute = {
   attribute_id: number
@@ -73,9 +73,18 @@ export type ProductDiscount = {
   amount: number
 } | null
 export type ProductStatistics = {
+  period: {
+    from: string
+    to: string
+    comparison_from: string
+    comparison_to: string
+    days: number
+  }
   sales: {
     total_sold: number
     total_revenue: number
+    orders_count: number
+    customers_count: number
     revenue_breakdown: {
       today: number
       this_week: number
@@ -84,12 +93,16 @@ export type ProductStatistics = {
     }
     sales_trend: number
     average_order_qty: number
+    average_order_value: number
+    average_selling_price: number
   }
   engagement: {
-    views_count: number
+    views_count: number | null
+    view_tracking_available: boolean
     wishlist_count: number
     cart_additions: number
-    conversion_rate: number
+    carts_count: number
+    conversion_rate: number | null
   }
   reviews: {
     total_count: number
@@ -108,14 +121,75 @@ export type ProductStatistics = {
     reserved_stock: number
     available_stock: number
     stock_value: number
+    retail_value: number
     stock_status: 'in_stock' | 'out_of_stock' | 'low_stock'
     reorder_alert: boolean
+    out_of_stock_variants: number
   }
   variations: {
     total_count: number
-    best_selling: any | null
+    active_count: number
+    best_selling: {
+      id: number
+      sku: string | null
+      sold_quantity: number
+      revenue: number
+    } | null
     out_of_stock_count: number
   }
+  returns: {
+    requests_count: number
+    requested_quantity: number
+    accepted_quantity: number
+    by_status: Array<{ status: string; count: number }>
+  }
+  sales_time_series: Array<{
+    date: string
+    quantity: number
+    revenue: number
+    orders: number
+  }>
+  order_status_breakdown: Array<ProductPerformanceBreakdown>
+  payment_method_breakdown: Array<ProductPerformanceBreakdown>
+  variant_performance: Array<ProductVariantPerformance>
+  top_customers: Array<ProductTopCustomer>
+  data_coverage: {
+    sales: string
+    views: string
+    cart: string
+    wishlist: string
+    product_edit_actors: string
+  }
+  recent_activity: ProductRecentActivity
+}
+
+export type ProductPerformanceBreakdown = {
+  name: string
+  orders: number
+  quantity: number
+  revenue: number
+}
+
+export type ProductVariantPerformance = {
+  id: number
+  sku: string | null
+  is_default: boolean
+  is_active: boolean
+  attributes: Array<{ attribute: string; value: string }>
+  sold_quantity: number
+  revenue: number
+  order_lines: number
+  current_stock: number
+  reserved_stock: number
+  available_stock: number
+}
+
+export type ProductTopCustomer = {
+  user_id: number
+  name: string
+  orders: number
+  quantity: number
+  revenue: number
 }
 
 export type ProductRecentOrder = {
@@ -124,6 +198,9 @@ export type ProductRecentOrder = {
   created_at: string
   total: number
   status: string
+  payment_status?: string
+  user_id?: number
+  user_name?: string
 }
 
 export type ProductRecentReview = {
@@ -139,12 +216,35 @@ export type ProductRecentWishlist = {
   id: number
   user_id?: number
   user_name: string
+  created_at?: string
+}
+
+export type ProductInventoryLog = {
+  id: number
+  change_amount: number
+  previous_stock: number
+  new_stock: number
+  reason: string
+  created_at: string
+  variant: { id: number; sku: string | null }
+}
+
+export type ProductPriceHistory = {
+  id: number
+  old_price: number
+  new_price: number
+  old_compare_at_price: number | null
+  new_compare_at_price: number | null
+  created_at: string
+  variant: { id: number; sku: string | null }
 }
 
 export type ProductRecentActivity = {
   orders: Array<ProductRecentOrder>
   reviews: Array<ProductRecentReview>
   wishlists: Array<ProductRecentWishlist>
+  inventory_logs: Array<ProductInventoryLog>
+  price_history: Array<ProductPriceHistory>
 }
 
 export type Product = {

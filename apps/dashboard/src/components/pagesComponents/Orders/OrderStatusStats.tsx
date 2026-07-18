@@ -54,8 +54,8 @@ export function OrderStatusStats() {
   const { data: statsResponse } = useFetch<
     ApiResponseBase<DashboardStatistics>
   >({
-    queryKey: queryKeys.dashboard.statistics(),
-    endpoint: 'dashboard/home',
+    queryKey: queryKeys.dashboard.section('sales'),
+    endpoint: 'dashboard/sections/sales',
     suspense: true,
   })
 

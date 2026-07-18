@@ -2,7 +2,6 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from 
 import { ProductsService } from './products.service';
 import { CreateProductDto } from '@/common/dto/product.dto';
 import { UpdateProductDto } from './dto/update-dtos';
-import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
@@ -30,6 +29,12 @@ export class ProductsController {
   @ApiAdvancedQuery()
   findAll(@ParsedQuery(ProductQueryDto) query: ProductQueryDto) {
     return this.productsService.findAll(query);
+  }
+
+  @Get(':id/statistics')
+  @RequirePermissions({ resource: 'products', action: 'read' })
+  statistics(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.statistics(id);
   }
 
   @Get(':id')

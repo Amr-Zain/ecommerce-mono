@@ -47,8 +47,8 @@ export const Route = createFileRoute('/_main/tiers/')({
     hasPermission('dashboard-home', 'index') &&
       queryClient.ensureQueryData(
         prefetchOptions({
-          queryKey: queryKeys.dashboard.statistics(),
-          endpoint: 'dashboard/home'
+          queryKey: queryKeys.dashboard.section('loyalty'),
+          endpoint: 'dashboard/sections/loyalty'
         })
       )
   },

@@ -45,8 +45,8 @@ export const Route = createFileRoute('/_main/rewards/')({
         // Prefetch dashboard stats for cards
         queryClient.ensureQueryData(
             prefetchOptions({
-                queryKey: queryKeys.dashboard.statistics(),
-                endpoint: 'dashboard/home'
+                queryKey: queryKeys.dashboard.section('loyalty'),
+                endpoint: 'dashboard/sections/loyalty'
             })
         )
     },

@@ -48,6 +48,7 @@ async function bootstrap() {
     },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    exposedHeaders: ['Content-Disposition'],
     allowedHeaders:
       'Content-Type, Accept, Accept-Language, Authorization, X-Requested-With, X-Platform, x-user-type, Cache-Control, Last-Event-ID, X-Anonymous-Session-Token',
   });

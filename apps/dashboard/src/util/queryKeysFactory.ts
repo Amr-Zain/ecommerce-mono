@@ -152,6 +152,8 @@ export const queryKeys = {
       [...queryKeys.products.paginate(), params] as const,
     getProduct: (id: string) =>
       [...queryKeys.products.all(), 'one', id] as const,
+    statistics: (id: string | number) =>
+      [...queryKeys.products.all(), 'one', String(id), 'statistics'] as const,
   },
 
   sliders: {
@@ -296,6 +298,8 @@ export const queryKeys = {
     all: () => ['dashboard'] as const,
     statistics: (params?: unknown) =>
       [...queryKeys.dashboard.all(), 'statistics', params] as const,
+    section: (section: string, params?: unknown) =>
+      [...queryKeys.dashboard.all(), 'section', section, params] as const,
   },
 
   settings: {

@@ -36,6 +36,7 @@ import type { Product, ProductStatistics, ProductVariation } from '@/types/api/p
 import { formatDate } from '@/util/helpers'
 
 import { ProductReviewsCard } from './ProductReviewsCard'
+import { ProductStatisticsTab } from './ProductStatisticsTab'
 import { SARIcon } from '@/components/common/Icons'
 
 import { StatsCard } from '@/components/common/charts/StatsCard'
@@ -311,6 +312,7 @@ export function ProductShow({ product }: Props) {
             ),
             content: (
               <div className="space-y-8">
+                <ProductStatisticsTab productId={product.id} />
                 {product.statistics && (
                   <div className="space-y-6">
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -18,8 +18,8 @@ const itemVariants: Variants = {
 export function ReviewStats() {
     const { t } = useTranslation();
     const { data: statsResponse } = useFetch<ApiResponseBase<DashboardStatistics>>({
-        queryKey: queryKeys.dashboard.statistics(),
-        endpoint: 'dashboard/home',
+        queryKey: queryKeys.dashboard.section('reviews'),
+        endpoint: 'dashboard/sections/reviews',
         suspense: true,
     });
 

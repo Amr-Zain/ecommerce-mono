@@ -97,6 +97,9 @@ export interface DashboardStatistics {
         pending_payments: number;
         refunded_this_month: number;
         net_revenue: number;
+        range_revenue: number;
+        range_refunds: number;
+        range_net_revenue: number;
     };
     geo: {
         generated_at: string;
@@ -156,13 +159,18 @@ export interface DashboardStatistics {
 
 export type DashboardPreset = 'today' | '7d' | '30d' | '90d' | 'year' | 'custom';
 export type DashboardGranularity = 'auto' | 'day' | 'week' | 'month';
+export type DashboardExportDataset = 'all' | 'overview' | 'sales' | 'customers' | 'inventory' | 'reviews' | 'loyalty' | 'geo';
+export type DashboardSection = 'overview' | 'sales' | 'customers' | 'inventory' | 'reviews' | 'loyalty' | 'geo';
 
 export interface DashboardFilters {
     preset: DashboardPreset;
     from: string;
     to: string;
     granularity: Exclude<DashboardGranularity, 'auto'>;
+    compare: boolean;
     sections: Array<string>;
+    generated_at?: string;
+    cache_ttl_seconds?: number;
 }
 
 export interface DashboardQueryParams {

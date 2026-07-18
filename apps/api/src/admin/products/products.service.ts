@@ -9,6 +9,7 @@ import {
   PUBLIC_CACHE_EVENTS,
   PublicCacheInvalidationPublisher,
 } from '@/shared/cache/public-cache-invalidation.service';
+import { ProductStatisticsService } from './product-statistics.service';
 
 @Injectable()
 export class ProductsService {
@@ -16,6 +17,7 @@ export class ProductsService {
     @Inject(PRODUCTS_REPOSITORY) private readonly repo: ProductsRepository,
     private readonly pricingService: PricingService,
     private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
+    private readonly productStatistics: ProductStatisticsService,
   ) {}
 
   async create(createProductDto: CreateProductDto) {
@@ -81,6 +83,12 @@ export class ProductsService {
     const product = await this.repo.findProductById(id);
     if (!product) throw new NotFoundException('Product not found');
     return product;
+  }
+
+  async statistics(id: number) {
+    const exists = await this.repo.findProductWithVariantCount(id);
+    if (!exists) throw new NotFoundException('Product not found');
+    return this.productStatistics.get(id);
   }
 
   async update(id: number, dto: UpdateProductDto) {
