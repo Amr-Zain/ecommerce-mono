@@ -148,23 +148,23 @@ export class ClientReturnsRepository {
             calculatedVatRefundAmount,
             adjustedRefundAmount: calculatedRefundAmount,
             adjustedVatRefundAmount: calculatedVatRefundAmount,
-            maxShippingRefundAmount: order.shippingFee,
+            maxShippingRefundAmount: Number(order.shippingFee),
             suggestedShippingRefundAmount,
-            shippingRefundAmount: suggestedShippingRefundAmount,
+            shippingRefundAmount: Number(suggestedShippingRefundAmount),
             finalRefundAmount: this.round(
               calculatedRefundAmount + calculatedVatRefundAmount + suggestedShippingRefundAmount,
             ),
             items: {
               create: items.map(({ orderItem, item, calculatedRefundAmount, calculatedVatRefundAmount }) => ({
-                orderItemId: orderItem.id,
+                orderItem: { connect: { id: orderItem.id } },
                 oldVariantId: orderItem.variantId,
                 quantity: item.quantity,
                 acceptedQuantity: 0,
                 returnReason: item.reason,
                 clientNote: item.note,
                 itemDisposition: this.defaultDispositionForReason(item.reason),
-                oldUnitPriceSnapshot: orderItem.unitPriceSnapshot,
-                oldNetUnitPrice: orderItem.netUnitPrice,
+                oldUnitPriceSnapshot: Number(orderItem.unitPriceSnapshot),
+                oldNetUnitPrice: Number(orderItem.netUnitPrice),
                 calculatedRefundAmount,
                 calculatedVatRefundAmount,
                 adjustedRefundAmount: calculatedRefundAmount,
@@ -203,7 +203,7 @@ export class ClientReturnsRepository {
       return created;
     });
 
-    return this.formatReturnRequest(request);
+    return this.formatReturnRequest(request as unknown as ReturnRequestWithItems);
   }
 
   async createExchange(userId: bigint, dto: CreateExchangeRequestDto) {
@@ -295,16 +295,16 @@ export class ClientReturnsRepository {
             items: {
               create: items.map(
                 ({ orderItem, replacementVariant, item, replacementPrice, oldValue, newValue, priceDifference }) => ({
-                  orderItemId: orderItem.id,
+                  orderItem: { connect: { id: orderItem.id } },
                   oldVariantId: orderItem.variantId,
-                  newVariantId: replacementVariant.id,
+                  newVariant: { connect: { id: replacementVariant.id } },
                   quantity: item.quantity,
                   acceptedQuantity: 0,
                   exchangeReason: item.reason,
                   clientNote: item.note,
                   itemDisposition: this.defaultDispositionForReason(item.reason),
-                  oldUnitPriceSnapshot: orderItem.unitPriceSnapshot,
-                  oldNetUnitPrice: orderItem.netUnitPrice,
+                  oldUnitPriceSnapshot: Number(orderItem.unitPriceSnapshot),
+                  oldNetUnitPrice: Number(orderItem.netUnitPrice),
                   newUnitPriceSnapshot: replacementPrice,
                   oldValue,
                   newValue,
@@ -344,7 +344,7 @@ export class ClientReturnsRepository {
       return created;
     });
 
-    return this.formatExchangeRequest(request);
+    return this.formatExchangeRequest(request as unknown as ExchangeRequestWithItems);
   }
 
   async cancelReturn(userId: bigint, id: bigint) {

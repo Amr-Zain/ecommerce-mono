@@ -634,8 +634,58 @@ export abstract class BaseRepository<T extends { id: number | bigint }> {
     return { data };
   }
 
+  /**
+   * Async post-read hook: first default `enrich()` (override for media, etc.),
+   * then the synchronous {@link formatRecord} hook converts Prisma scalars to
+   * plain JS values. Subclasses override either hook; both run on every read.
+   */
   protected async enrich<R extends T | T[]>(data: R): Promise<R> {
-    return data;
+    return this.applyFormat(data);
+  }
+
+  private applyFormat<R extends T | T[]>(data: R): R {
+    if (Array.isArray(data)) return data.map((item: T) => this.formatRecord(item)) as unknown as R;
+    if (data === null || data === undefined) return data;
+    return this.formatRecord(data as unknown as T) as unknown as R;
+  }
+
+  /**
+   * Synchronous format hook applied to a single record AFTER {@link enrich}.
+   *
+   * Override in subclasses to convert Prisma-specific scalar values (e.g.
+   * `Decimal` monetary fields) into plain JS values expected by repository
+   * port interfaces. The default implementation is a no-op so existing
+   * repositories are unaffected until they opt in.
+   *
+   * The method is intentionally generic over the output type `Out` so a
+   * subclass can declare a narrower view type as the return annotation:
+
+   * ```ts
+   * protected formatRecord(record: CountryType): Country {
+   *   return { ...record, shippingPrice: decimalToNumber(record.shippingPrice) };
+   * }
+   * ```
+   *
+   * Architectural rule: this is the ONLY place where `Decimal` -> `number`
+   * conversion should happen for read paths. Services, controllers and the
+   * global {@link TransformInterceptor} should never see `Decimal` values.
+   */
+  protected formatRecord<Out = T>(record: T): Out {
+    return record as unknown as Out;
+  }
+
+  /**
+   * Convenience wrapper that applies {@link formatRecord} to a single record
+   * or to every item of an array/paginated result. Lifted from
+   * `WalletWorkflowRepository` so the pattern is shared in one place.
+   */
+  protected mapResult<R extends T, U = R>(result: R | R[] | PaginatedResult<R>, mapper: (item: R) => U): U | U[] | PaginatedResult<U> {
+    if (Array.isArray(result)) return result.map(mapper);
+    if (result && typeof result === 'object' && 'meta' in result && 'data' in (result as PaginatedResult<R>)) {
+      const paginated = result as PaginatedResult<R>;
+      return { ...paginated, data: paginated.data.map(mapper) } as unknown as PaginatedResult<U>;
+    }
+    return mapper(result as R);
   }
 
   protected async beforeDelete(_id: number | bigint): Promise<void> {}

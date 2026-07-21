@@ -51,8 +51,12 @@ export abstract class MediaAwareRepository<T extends { id: number | bigint }> ex
   protected override async enrich<R extends T | T[]>(data: R): Promise<R> {
     if (!data) return data;
 
-    const records = (Array.isArray(data) ? data : [data]) as T[];
-    if (records.length === 0) return data;
+    // Apply formatRecord first via super.enrich (runs applyFormat)
+    const formatted = await super.enrich(data);
+
+    // Then attach media on the formatted result
+    const records = (Array.isArray(formatted) ? formatted : [formatted]) as T[];
+    if (records.length === 0) return formatted;
 
     const mediaMap = await this.mediaService.findByEntities(
       this.mediaModel,
@@ -69,7 +73,7 @@ export abstract class MediaAwareRepository<T extends { id: number | bigint }> ex
       }
     }
 
-    return data;
+    return formatted;
   }
 
   protected mergeMedia<R extends T | T[]>(data: R): Promise<R> {

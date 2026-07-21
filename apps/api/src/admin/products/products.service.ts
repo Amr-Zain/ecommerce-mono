@@ -162,7 +162,7 @@ export class ProductsService {
           dto.price !== undefined || dto.discountType !== undefined || dto.discountValue !== undefined;
 
         let newPrice = Number(firstVariant.price);
-        let newCompareAtPrice: number | null = firstVariant.compareAtPrice;
+        let newCompareAtPrice: number | null = firstVariant.compareAtPrice !== null ? Number(firstVariant.compareAtPrice) : null;
 
         if (priceOrDiscountChanged) {
           const basePrice = dto.price !== undefined ? dto.price : Number(firstVariant.price);
@@ -188,9 +188,9 @@ export class ProductsService {
           stockQuantity: dto.stock !== undefined ? dto.stock : Number(firstVariant.stockQuantity),
           sku: dto.sku !== undefined ? dto.sku : firstVariant.sku,
           barcode: dto.barcode !== undefined ? dto.barcode : firstVariant.barcode,
-          costPrice: dto.costPrice !== undefined ? dto.costPrice : firstVariant.costPrice,
+          costPrice: dto.costPrice !== undefined ? dto.costPrice : firstVariant.costPrice !== null ? Number(firstVariant.costPrice) : null,
           discountType: dto.discountType !== undefined ? dto.discountType : firstVariant.discountType,
-          discountValue: dto.discountValue !== undefined ? (dto.discountValue ?? null) : firstVariant.discountValue,
+          discountValue: dto.discountValue !== undefined ? (dto.discountValue ?? null) : firstVariant.discountValue !== null ? Number(firstVariant.discountValue) : null,
           oldPrice: Number(firstVariant.price),
           oldStock: Number(firstVariant.stockQuantity),
         };
@@ -223,7 +223,7 @@ export class ProductsService {
             newPrice: computed.price,
             newCompareAtPrice: computed.compareAtPrice ?? null,
             oldPrice: Number(variant.price),
-            oldCompareAtPrice: variant.compareAtPrice,
+            oldCompareAtPrice: variant.compareAtPrice !== null ? Number(variant.compareAtPrice) : null,
           });
         }
       }

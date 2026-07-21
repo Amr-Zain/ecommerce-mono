@@ -5,8 +5,9 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { resolvePrismaClient } from '@/prisma';
 import { MediaService } from '@/media/media.service';
 import { Prisma } from '@prisma/client';
-import { IVariantsRepository, ProductPersistenceContext } from '@/common/interfaces';
+import { ProductPersistenceContext, ProductVariantWithProduct } from '@/common/interfaces';
 import { PaginationUtil } from '@/common/utils/pagination.util';
+import { decimalToNumber, decimalToNumberOrZero } from '@/common/utils/decimal.util';
 
 type VariantType = Prisma.ProductVariantGetPayload<{
   include: { attributes: true };
@@ -29,7 +30,7 @@ type VariantUpdatePayload = Prisma.ProductVariantUpdateInput & {
 };
 
 @Injectable()
-export class VariantsRepository extends MediaAwareRepository<VariantType> implements IVariantsRepository {
+export class VariantsRepository extends MediaAwareRepository<VariantType> {
   protected readonly mediaModel = 'productvariant';
   protected readonly mediaConfig = {
     gallery: { collection: 'gallery', single: false },
@@ -37,6 +38,16 @@ export class VariantsRepository extends MediaAwareRepository<VariantType> implem
 
   constructor(prisma: PrismaService, mediaService: MediaService) {
     super(prisma, mediaService, undefined);
+  }
+
+  protected formatRecord<Out = VariantType>(record: VariantType): Out {
+    return {
+      ...record,
+      price: decimalToNumberOrZero(record.price),
+      compareAtPrice: decimalToNumber(record.compareAtPrice),
+      costPrice: decimalToNumber(record.costPrice),
+      discountValue: decimalToNumber(record.discountValue),
+    } as unknown as Out;
   }
 
   protected getModel() {
@@ -349,7 +360,7 @@ export class VariantsRepository extends MediaAwareRepository<VariantType> implem
         throw new BadRequestException('Stock cannot go below zero');
       }
 
-      const updated = await prisma.productVariant.update({
+      await prisma.productVariant.update({
         where: { id: variant.id },
         data: { stockQuantity: newStock },
       });
@@ -364,7 +375,11 @@ export class VariantsRepository extends MediaAwareRepository<VariantType> implem
         },
       });
 
-      return updated;
+      const enriched = await this.findVariantById(variant.id);
+      if (!enriched) {
+        throw new BadRequestException('Variant not found after stock adjustment');
+      }
+      return enriched;
     };
 
     if (context) {
@@ -373,11 +388,22 @@ export class VariantsRepository extends MediaAwareRepository<VariantType> implem
     return this.prisma.$transaction(execute);
   }
 
-  findActiveVariantsWithProduct(ids: bigint[], context?: ProductPersistenceContext) {
-    return this.db(context).productVariant.findMany({
+  async findActiveVariantsWithProduct(ids: bigint[], context?: ProductPersistenceContext) {
+    const result = await this.db(context).productVariant.findMany({
       where: { id: { in: ids }, isActive: true },
       include: { product: true },
     });
+    return result.map((v) => ({
+      ...v,
+      price: decimalToNumberOrZero(v.price),
+      compareAtPrice: decimalToNumber(v.compareAtPrice),
+      costPrice: decimalToNumber(v.costPrice),
+      discountValue: decimalToNumber(v.discountValue),
+      product: {
+        ...v.product,
+        discountValue: decimalToNumber(v.product.discountValue),
+      },
+    })) as unknown as ProductVariantWithProduct[];
   }
 
   findActiveVariantStocks(ids: bigint[], context?: ProductPersistenceContext) {
@@ -411,9 +437,6 @@ export class VariantsRepository extends MediaAwareRepository<VariantType> implem
     return resolvePrismaClient(context, this.prisma);
   }
 
-  async findAll(query: AdvancedQueryDto) {
-    return this.paginate(query);
-  }
   async getPriceLogs(variantId: number | bigint, query: AdvancedQueryDto) {
     const where = { variantId: BigInt(variantId) };
     const orderBy = { createdAt: 'desc' as const };

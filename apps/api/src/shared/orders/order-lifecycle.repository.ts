@@ -2,6 +2,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { Prisma } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { PrismaService, PrismaTransactionContext } from '@/prisma';
+import { DecimalLike } from '@/common/utils/decimal.util';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import { INVENTORY_REASONS } from '@/common/constants/commerce.constants';
 import {
@@ -59,7 +60,7 @@ export class OrderLifecycleRepository {
     private readonly loyaltyService: LoyaltyService,
   ) {}
 
-  paymentSummary(payments: { amount: Prisma.Decimal; paymentStatus: string; refundSource?: string | null }[]) {
+  paymentSummary(payments: { amount: DecimalLike; paymentStatus: string; refundSource?: string | null }[]) {
     const paid = this.round(
       payments
         .filter((payment) => payment.paymentStatus === PAYMENT_STATUSES.completed)

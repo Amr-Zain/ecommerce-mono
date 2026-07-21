@@ -1,5 +1,5 @@
 import { createCipheriv, createHash, randomBytes } from 'crypto';
-import { Prisma, PrismaClient } from '../../node_modules/.prisma/client/index.js';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 type GatewaySeed = {
   identifier: string;

@@ -18,7 +18,7 @@ export class CountriesService {
   ) {}
 
   async getAllCountries(query: AdvancedQueryDto): Promise<PaginatedResult<Country> | Country[]> {
-    return this.repo.findAll(query);
+    return this.repo.findAll(query) as unknown as PaginatedResult<Country> | Country[];
   }
 
   async updateCountry(id: number, country: UpdateCountryDto): Promise<Country> {
@@ -45,10 +45,10 @@ export class CountriesService {
   }
 
   async getCountryById(id: number | bigint): Promise<Country> {
-    return this.repo.findByIdWithRelationsOrThrow(id);
+    return this.repo.findByIdWithRelationsOrThrow(id) as unknown as Country;
   }
 
   async getCountryByIdWithAllTranslations(id: number | bigint): Promise<Country> {
-    return this.repo.findByIdOrThrow(id, { include: { translations: true } });
+    return this.repo.findByIdOrThrow(id, { include: { translations: true } }) as unknown as Country;
   }
 }

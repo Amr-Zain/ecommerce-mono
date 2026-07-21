@@ -11,7 +11,6 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@prisma/client": ["node_modules/.prisma/client/index.d.ts"],
       "@/*": ["src/*"]
     }
   },

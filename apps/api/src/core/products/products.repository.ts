@@ -7,7 +7,6 @@ import { Prisma } from '@prisma/client';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { CreateProductDto } from '@/common/dto/product.dto';
 import {
-  IProductsRepository,
   ProductUpdatePlan,
   VariantPriceUpdate,
   SimpleVariantSyncData,
@@ -15,7 +14,9 @@ import {
 } from '@/common/interfaces';
 import { PricingService } from './pricing.service';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
+import { PaginatedResult } from '@/common/dto/pagination.dto';
 import { PaginationUtil } from '@/common/utils/pagination.util';
+import { decimalToNumber, decimalToNumberOrZero } from '@/common/utils/decimal.util';
 
 const baseInclude = {
   translations: true,
@@ -62,7 +63,7 @@ type CatalogProductEntry = {
 type CatalogMatch = { product: CatalogProductEntry };
 
 @Injectable()
-export class ProductsRepository extends MediaAwareRepository<ProductType> implements IProductsRepository {
+export class ProductsRepository extends MediaAwareRepository<ProductType> {
   protected readonly mediaModel = 'product';
   protected readonly mediaConfig = {
     image: { collection: 'image', single: true },
@@ -137,6 +138,18 @@ export class ProductsRepository extends MediaAwareRepository<ProductType> implem
     (product as Record<string, unknown>).priceRange = activePrices.length
       ? { min: Math.min(...activePrices), max: Math.max(...activePrices) }
       : null;
+
+    product.variants = product.variants.map((v) => ({
+      ...v,
+      price: decimalToNumberOrZero(v.price),
+      compareAtPrice: decimalToNumber(v.compareAtPrice),
+      costPrice: decimalToNumber(v.costPrice),
+      discountValue: decimalToNumber(v.discountValue),
+    })    ) as unknown as typeof product.variants;
+
+    (product as Record<string, unknown>).discountValue = decimalToNumber(
+      (product as Record<string, unknown>).discountValue as never,
+    );
 
     return product;
   }
@@ -434,7 +447,7 @@ export class ProductsRepository extends MediaAwareRepository<ProductType> implem
     return [...related.values()];
   }
 
-  async findAll(query: AdvancedQueryDto, _langId?: string, options?: QueryOptions) {
+  async findAll(query: AdvancedQueryDto, _langId?: string, options?: QueryOptions): Promise<PaginatedResult<ProductType> | ProductType[]> {
     if (options?.select) {
       const result = await this.paginate(query, undefined, { select: options.select });
       return result;

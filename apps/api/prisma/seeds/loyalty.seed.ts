@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../node_modules/.prisma/client/index.js';
+import { PrismaClient } from '@prisma/client';
 
 const loyaltySettings = [
   ['loyalty_points_expiry_enabled', false, 'boolean', 'Enable points expiry'],
