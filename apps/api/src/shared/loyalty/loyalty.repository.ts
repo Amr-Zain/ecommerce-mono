@@ -55,7 +55,7 @@ export class LoyaltyRepository {
       orderBy,
     });
     const formatted = await Promise.all(tiers.map((tier) => this.formatTier(tier)));
-    return query.paginate === false ? formatted : this.paginateArray(formatted, query, 'tiers');
+    return query.paginate === false ? formatted : this.paginateArray(formatted, query);
   }
 
   async getTier(id: bigint) {
@@ -125,7 +125,7 @@ export class LoyaltyRepository {
       orderBy: this.orderBy(query, { createdAt: 'desc' }),
     });
     const formatted = await Promise.all(rules.map((rule) => this.formatEarningRule(rule)));
-    return query.paginate === false ? formatted : this.paginateArray(formatted, query, 'earningRules');
+    return query.paginate === false ? formatted : this.paginateArray(formatted, query);
   }
 
   async getEarningRule(id: bigint) {
@@ -198,7 +198,7 @@ export class LoyaltyRepository {
       orderBy: this.orderBy(query, { createdAt: 'desc' }),
     });
     const formatted = await Promise.all(rewards.map((reward) => this.formatReward(reward)));
-    return query.paginate === false ? formatted : this.paginateArray(formatted, query, 'rewards');
+    return query.paginate === false ? formatted : this.paginateArray(formatted, query);
   }
 
   async getReward(id: bigint) {
@@ -1084,13 +1084,12 @@ export class LoyaltyRepository {
     };
   }
 
-  private paginateArray<T>(items: T[], query: AdvancedQueryDto, collectionKey: string) {
+  private paginateArray<T>(items: T[], query: AdvancedQueryDto) {
     const page = Number(query.page || 1);
     const limit = Number(query.limit || 10);
     const start = (page - 1) * limit;
     return {
-      items: items.slice(start, start + limit),
-      [collectionKey]: items.slice(start, start + limit),
+      data: items.slice(start, start + limit),
       meta: this.meta(page, limit, items.length),
     };
   }

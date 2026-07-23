@@ -9,6 +9,17 @@ import { useForm } from 'react-hook-form'
 import { zodFormResolver } from '@/lib/schema/resolver'
 import { makeEarningRuleSchema } from '@/lib/schema'
 
+const normalizeImageValue = (image?: EarningRule['image']) => {
+    if (!image) return undefined
+    if (typeof image === 'object') return image
+
+    return {
+        id: image,
+        hash: image,
+        mime_type: 'image/jpeg',
+        url: image,
+    }
+}
 
 
 export default function EarningRuleForm({
@@ -24,12 +35,7 @@ export default function EarningRuleForm({
         resolver: zodFormResolver(schema),
         defaultValues: {
             ...generateInitialValues(earningRule),
-            image: !(earningRule?.image as any).url? {
-                id: earningRule?.image,
-                hash: earningRule?.image,
-                mime_type: "image/jpeg",
-                url: earningRule?.image
-            } : earningRule?.image, 
+            image: normalizeImageValue(earningRule?.image),
             points_type: earningRule?.points_type ?? 'fixed',
             points_value: earningRule?.points_value ?? ('' as any),
             min_order_amount: earningRule?.min_order_amount ?? '',
@@ -58,7 +64,7 @@ export default function EarningRuleForm({
 
     const handleSubmit = (values: EarningRuleFormData) => {
         const finalOut = generateFinalOut(earningRule, values)
-        if(finalOut.image?.startsWith('http')){
+        if(typeof finalOut.image === 'string' && finalOut.image.startsWith('http')){
             delete finalOut.image
         }
         // image is handled the same way as product.image via generateFinalOut :contentReference[oaicite:3]{index=3}

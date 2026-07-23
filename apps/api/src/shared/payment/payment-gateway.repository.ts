@@ -95,7 +95,12 @@ export class PaymentGatewayRepository implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.ensureDefaultGateways({ throwOnMissing: false });
+    try {
+      await this.ensureDefaultGateways({ throwOnMissing: false });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn('Failed to ensure default gateways:', message);
+    }
   }
 
   async ensureDefaultGateways(options: { throwOnMissing?: boolean } = { throwOnMissing: true }) {

@@ -19,7 +19,7 @@ import { EarningRule } from '@/types/api/earningRules'
 export default function EarningRulesList({
     data,
 }: {
-    data: ApiResponse<EarningRule[], 'earning_rules'>
+    data: ApiResponse<EarningRule>
 }) {
     const { t } = useTranslation()
     const alert = useAlertModal()
@@ -77,7 +77,7 @@ export default function EarningRulesList({
 
     return (
         <DataTable
-            data={data.data.earning_rules ?? []}
+            apiResponse={data}
             columns={earningRuleColumns(open)}
             searchKey="search"
             filters={getEarningRuleFilters(t)}

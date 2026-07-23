@@ -25,6 +25,7 @@ export const Route = createFileRoute('/_main/admin-notifications/')({
   loaderDeps: ({ search }) => ({
     search: cleanObject({
       ...searchParamsValidate(search),
+      paginate: '1',
     })
   }),
   loader: ({ context, deps: { search } }) => {
@@ -32,7 +33,7 @@ export const Route = createFileRoute('/_main/admin-notifications/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.adminNotifications.filterd(search),
-        endpoint: `admin-notifications?paginate=1`,
+        endpoint: `admin-notifications`,
         params: search,
       }),
     )
@@ -41,9 +42,9 @@ export const Route = createFileRoute('/_main/admin-notifications/')({
 
 function Index() {
   const search = Route.useLoaderDeps().search
-  const { data } = useFetch<ApiResponse<AdminNotificationEntity[], 'admin-notifications'>>({
+  const { data } = useFetch<ApiResponse<AdminNotificationEntity>>({
     queryKey: queryKeys.adminNotifications.filterd(search),
-    endpoint: `admin-notifications?paginate=1`,
+    endpoint: `admin-notifications`,
     suspense: true,
     params: { ...search },
   })

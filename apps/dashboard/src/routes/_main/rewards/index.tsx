@@ -28,6 +28,7 @@ export const Route = createFileRoute('/_main/rewards/')({
         search: {
             ...searchParamsValidate(search),
             "filters[reward_type]": toStr(search['filters[reward_type]']),
+            paginate: '1',
         },
     }),
     loader: ({ context, deps: { search } }) => {
@@ -37,7 +38,7 @@ export const Route = createFileRoute('/_main/rewards/')({
         queryClient.ensureQueryData(
             prefetchOptions({
                 queryKey: queryKeys.rewards.filtered(search),
-                endpoint: 'rewards?paginate=1',
+                endpoint: 'rewards',
                 params: search,
             }),
         )
@@ -54,9 +55,9 @@ export const Route = createFileRoute('/_main/rewards/')({
 
 function RewardsContent() {
     const search = Route.useLoaderDeps().search
-    const { data } = useFetch<ApiResponse<Reward[], 'rewards'>>({
+    const { data } = useFetch<ApiResponse<Reward>>({
         queryKey: queryKeys.rewards.filtered(search),
-        endpoint: 'rewards?paginate=1',
+        endpoint: 'rewards',
         suspense: true,
         params: search,
     })

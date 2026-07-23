@@ -27,6 +27,10 @@ export class UpdateProductDto {
   hasVariants?: boolean;
 
   @IsOptional()
+  @IsBoolean({ message: i18nValidationMessage<I18nTranslations>('validation.IS_BOOLEAN') })
+  isActive?: boolean;
+
+  @IsOptional()
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
   discountType?: 'FIXED' | 'PERCENTAGE';
 

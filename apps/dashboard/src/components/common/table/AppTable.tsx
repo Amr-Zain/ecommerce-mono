@@ -37,6 +37,24 @@ const serializeColumnVisibility = (
     .filter(([_, v]) => v)
     .map(([c]) => c)
 
+const getApiResponseItems = <TData,>(apiResponse: unknown): Array<TData> => {
+  const response = apiResponse as any
+  const payload =
+    response?.data && typeof response.data === 'object'
+      ? response.data
+      : response
+
+  if (!payload || typeof payload !== 'object') return []
+  if (Array.isArray(payload.items)) return payload.items
+  if (Array.isArray(payload.data)) return payload.data
+
+  const legacyCollection = Object.entries(payload).find(
+    ([key, value]) => key !== 'meta' && key !== 'links' && Array.isArray(value),
+  )
+
+  return legacyCollection ? (legacyCollection[1] as Array<TData>) : []
+}
+
 export function DataTable<TData, TValue>({
   apiResponse,
   data: dataProp,
@@ -58,10 +76,12 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   // Derive data and meta: apiResponse takes precedence over legacy data/meta props
   const data: Array<TData> = apiResponse
-    ? ((apiResponse as any)?.data?.items ?? [])
+    ? getApiResponseItems<TData>(apiResponse)
     : (dataProp ?? [])
   const meta: Meta | undefined = apiResponse
-    ? ((apiResponse as any)?.data?.meta ?? undefined)
+    ? (((apiResponse as any)?.data?.meta ?? (apiResponse as any)?.meta) as
+        | Meta
+        | undefined)
     : metaProp
 
   // Derive initial pagination from meta so callers never have to pass it

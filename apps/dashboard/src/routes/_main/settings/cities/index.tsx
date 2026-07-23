@@ -27,6 +27,7 @@ export const Route = createFileRoute('/_main/settings/cities/')({
   loaderDeps: ({ search }) => ({
     search: cleanObject({
       ...searchParamsValidate(search),
+      paginate: '1',
       'filters[country_id]': toStr(search['filters[country_id]']),
     })
   }),
@@ -35,7 +36,7 @@ export const Route = createFileRoute('/_main/settings/cities/')({
     queryClient.ensureQueryData(
       prefetchOptions({
         queryKey: queryKeys.cities.filterd(search),
-        endpoint: 'cities?paginate=1',
+        endpoint: 'cities',
         params: search,
       }),
     )
@@ -45,9 +46,9 @@ export const Route = createFileRoute('/_main/settings/cities/')({
 
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
-  const { data } = useFetch<ApiResponse<City[], 'cities'>>({
+  const { data } = useFetch<ApiResponse<City>>({
     queryKey: queryKeys.cities.filterd(search),
-    endpoint: 'cities?paginate=1',
+    endpoint: 'cities',
     suspense: true,
     params: search,
   })

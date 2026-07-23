@@ -1,8 +1,10 @@
+import type { Image } from './general'
+
 export type EarningRule = {
   id: number
   name: string
   description: string | null
-  image: string | null
+  image: Image | string | null
   event_key: string | null
   points_type: 'fixed' | 'percentage'
   points_value: number
@@ -12,18 +14,11 @@ export type EarningRule = {
   is_active: boolean | number
   created_at: string
 }
-export type RewardImage = {
-  id: number
-  hash: string
-  mime_type: string
-  url: string
-}
-
 export type Reward = {
   id: number
   name: string
   description: string | null
-  image: RewardImage | string | null
+  image: Image | string | null
   points_required: number
   reward_type: 'fixed' | 'percentage' | string
   reward_value: string | number

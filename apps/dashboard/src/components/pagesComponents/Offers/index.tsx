@@ -15,7 +15,7 @@ export type { OfferEntity } from './Form'
 const Offers = ({
     data,
 }: {
-    data: ApiResponse<Offer[], 'offers'>
+    data: ApiResponse<Offer>
 }) => {
     const { t } = useTranslation()
     const alert = useAlertModal()
@@ -80,7 +80,7 @@ const Offers = ({
 
     return (
         <DataTable
-            data={data.data.offers ?? []}
+            apiResponse={data}
             columns={offerColumns(openAlert, t)}
             searchKey="search"
             filters={getOfferFilters(t)}

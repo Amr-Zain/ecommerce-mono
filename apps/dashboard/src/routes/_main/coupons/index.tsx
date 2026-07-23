@@ -28,6 +28,7 @@ export const Route = createFileRoute('/_main/coupons/')({
   loaderDeps: ({ search }) => ({
     search: cleanObject({
       ...searchParamsValidate(search),
+      paginate: '1',
       'filters[is_active]': toStr(search['filters[is_active]']),
       'sort[created_at]': toStr(search['sort[created_at]']),
     }),
@@ -46,7 +47,7 @@ export const Route = createFileRoute('/_main/coupons/')({
 
 function RouteComponent() {
   const search = Route.useLoaderDeps().search
-  const { data } = useFetch<ApiResponse<Coupon[], 'coupons'>>({
+  const { data } = useFetch<ApiResponse<Coupon>>({
     queryKey: queryKeys.coupons.filterd(search),
     endpoint: 'coupons',
     suspense: true,

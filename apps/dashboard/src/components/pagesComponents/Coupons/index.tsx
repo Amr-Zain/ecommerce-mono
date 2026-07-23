@@ -12,7 +12,7 @@ import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { Coupon } from '@/types/api/coupon'
 
-const Coupons = ({ data }: { data: ApiResponse<Coupon[], 'coupons'> }) => {
+const Coupons = ({ data }: { data: ApiResponse<Coupon> }) => {
   const { t } = useTranslation()
   const alert = useAlertModal()
   const search = useSearch({ from: '/_main/coupons/' })
@@ -76,7 +76,7 @@ const Coupons = ({ data }: { data: ApiResponse<Coupon[], 'coupons'> }) => {
 
   return (
     <DataTable
-      data={data.data.coupons ?? []}
+      apiResponse={data}
       columns={couponColumns(openAlert, t)}
       searchKey="search"
       filters={getCouponFilters(t)}

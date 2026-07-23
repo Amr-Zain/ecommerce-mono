@@ -15,8 +15,9 @@ export interface ApiResponse<T = unknown, TCollectionKey extends string = never>
     items: ApiResponseItems<T>
     meta?: Meta
   } & ApiResponseCollection<T, TCollectionKey>
-  message: string 
-  status: 'success' | 'fail' | 'error' 
+  message?: string 
+  status?: 'success' | 'fail' | 'error' 
+  success?: boolean
 }
 export interface ApiResponseBase<T = unknown> {
   data: T

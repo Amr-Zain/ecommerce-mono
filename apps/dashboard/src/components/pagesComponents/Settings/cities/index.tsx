@@ -13,7 +13,7 @@ import { useAlertModal } from '@/stores/useAlertModal'
 import { getModalTitle } from '@/util/helpers'
 import { HasPermission } from '@/components/common/HasPermission'
 
-const Cities = ({ data }: { data: ApiResponse<City[], 'cities'> }) => {
+const Cities = ({ data }: { data: ApiResponse<City> }) => {
   const { t } = useTranslation()
   const alert = useAlertModal()
   const search = useSearch({ from: '/_main/settings/cities/' })
@@ -83,7 +83,7 @@ const Cities = ({ data }: { data: ApiResponse<City[], 'cities'> }) => {
 
   return (
     <DataTable
-      data={data.data.cities ?? []}
+      apiResponse={data}
       columns={cityColumns(openAlert)}
       searchKey="search"
       filters={getCityFilters(t)}

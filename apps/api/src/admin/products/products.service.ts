@@ -115,6 +115,9 @@ export class ProductsService {
     if (dto.hasVariants !== undefined) {
       productData.hasVariants = dto.hasVariants;
     }
+    if (dto.isActive !== undefined) {
+      productData.isActive = dto.isActive;
+    }
     if (dto.discountType !== undefined) {
       productData.discountType = dto.discountType;
     }
@@ -162,7 +165,8 @@ export class ProductsService {
           dto.price !== undefined || dto.discountType !== undefined || dto.discountValue !== undefined;
 
         let newPrice = Number(firstVariant.price);
-        let newCompareAtPrice: number | null = firstVariant.compareAtPrice !== null ? Number(firstVariant.compareAtPrice) : null;
+        let newCompareAtPrice: number | null =
+          firstVariant.compareAtPrice !== null ? Number(firstVariant.compareAtPrice) : null;
 
         if (priceOrDiscountChanged) {
           const basePrice = dto.price !== undefined ? dto.price : Number(firstVariant.price);
@@ -188,9 +192,19 @@ export class ProductsService {
           stockQuantity: dto.stock !== undefined ? dto.stock : Number(firstVariant.stockQuantity),
           sku: dto.sku !== undefined ? dto.sku : firstVariant.sku,
           barcode: dto.barcode !== undefined ? dto.barcode : firstVariant.barcode,
-          costPrice: dto.costPrice !== undefined ? dto.costPrice : firstVariant.costPrice !== null ? Number(firstVariant.costPrice) : null,
+          costPrice:
+            dto.costPrice !== undefined
+              ? dto.costPrice
+              : firstVariant.costPrice !== null
+                ? Number(firstVariant.costPrice)
+                : null,
           discountType: dto.discountType !== undefined ? dto.discountType : firstVariant.discountType,
-          discountValue: dto.discountValue !== undefined ? (dto.discountValue ?? null) : firstVariant.discountValue !== null ? Number(firstVariant.discountValue) : null,
+          discountValue:
+            dto.discountValue !== undefined
+              ? (dto.discountValue ?? null)
+              : firstVariant.discountValue !== null
+                ? Number(firstVariant.discountValue)
+                : null,
           oldPrice: Number(firstVariant.price),
           oldStock: Number(firstVariant.stockQuantity),
         };

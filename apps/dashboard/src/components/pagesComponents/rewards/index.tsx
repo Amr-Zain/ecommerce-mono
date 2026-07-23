@@ -20,7 +20,7 @@ import { HasPermission } from '@/components/common/HasPermission'
 export default function Rewards({
     data,
 }: {
-    data: ApiResponse<Reward[], 'rewards'>
+    data: ApiResponse<Reward>
 }) {
     const { t } = useTranslation()
     const alert = useAlertModal()
@@ -85,7 +85,7 @@ export default function Rewards({
 
     return (
         <DataTable
-            data={data.data.rewards ?? []}
+            apiResponse={data}
             columns={rewardColumns(open, t)}
             searchKey="search"
             filters={getRewardFilters(t)}

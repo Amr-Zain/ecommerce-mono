@@ -16,14 +16,12 @@ import { Plus } from 'lucide-react'
 const AdminNotifications = ({
     data,
 }: {
-    data: ApiResponse<AdminNotificationEntity[], 'admin-notifications'>
+    data: ApiResponse<AdminNotificationEntity>
 }) => {
     const { t, i18n } = useTranslation()
     const search = useSearch({ from: '/_main/admin-notifications/' })
     const alert = useAlertModal()
 
-    const rows = (data as any).data?.data || []
-    const meta = (data as any).data?.meta
     const [isFormOpen, setIsFormOpen] = useState(false)
     const isRTL = i18n.dir(i18n.language) === 'rtl'
 
@@ -67,11 +65,10 @@ const AdminNotifications = ({
     return (
         <>
             <DataTable
-                data={rows}
+                apiResponse={data}
                 columns={adminNotificationColumns(t, isRTL)}
                 filters={getAdminNotificationFilters(t)}
                 pagination
-                meta={meta}
                 resizable
                 actions={RowActions<AdminNotificationEntity>({
                     actions: [

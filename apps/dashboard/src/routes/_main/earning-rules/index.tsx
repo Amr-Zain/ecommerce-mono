@@ -24,6 +24,7 @@ export const Route = createFileRoute('/_main/earning-rules/')({
     loaderDeps: ({ search }) => ({
         search: {
             ...searchParamsValidate(search),
+            paginate: '1',
         },
     }),
     pendingComponent: () => <TableLoader breadcrumbs={{ entityKey: 'menu.earning_rules' }} />,
@@ -33,7 +34,7 @@ export const Route = createFileRoute('/_main/earning-rules/')({
         queryClient.ensureQueryData(
             prefetchOptions({
                 queryKey: queryKeys.earningRules.filterd(search),
-                endpoint: 'earning-rules?paginate=1',
+                endpoint: 'earning-rules',
                 params: search,
             }),
         )
@@ -42,9 +43,9 @@ export const Route = createFileRoute('/_main/earning-rules/')({
 
 function RouteComponent() {
     const search = Route.useLoaderDeps().search
-    const { data } = useFetch<ApiResponse<EarningRule[], 'earning_rules'>>({
+    const { data } = useFetch<ApiResponse<EarningRule>>({
         queryKey: queryKeys.earningRules.filterd(search),
-        endpoint: 'earning-rules?paginate=1',
+        endpoint: 'earning-rules',
         suspense: true,
         params: search,
     })
