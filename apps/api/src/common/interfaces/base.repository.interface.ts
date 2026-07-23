@@ -5,6 +5,11 @@ export interface IBaseRepository<T> {
   findById(id: number | bigint, options?: Record<string, unknown>): Promise<T | null>;
   findOne(where: Record<string, unknown>, options?: Record<string, unknown>): Promise<T | null>;
   findMany(where?: Record<string, unknown>, options?: Record<string, unknown>): Promise<T[]>;
+  findAll(
+    query: AdvancedQueryDto,
+    langId?: string,
+    options?: Record<string, unknown>,
+  ): Promise<PaginatedResult<T> | T[]>;
   create(data: Record<string, unknown>, options?: Record<string, unknown>): Promise<T>;
   update(id: number | bigint, data: Record<string, unknown>, options?: Record<string, unknown>): Promise<T>;
   delete(id: number | bigint): Promise<T>;

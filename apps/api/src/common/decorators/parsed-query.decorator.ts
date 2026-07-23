@@ -5,6 +5,8 @@ import { validate } from 'class-validator';
 import { ClassConstructor } from 'class-transformer/types/interfaces';
 import { CaseTransformer } from '../utils/case-transformer.util';
 
+const firstQueryValue = (value: unknown): unknown => (Array.isArray(value) ? value[0] : value);
+
 /**
  * Custom decorator to parse nested query parameters
  * Handles formats like: ?sort[createdAt]=desc&filters[isActive]=1
@@ -25,9 +27,9 @@ export const ParsedQuery = createParamDecorator(async (dtoClass: ClassConstructo
         parsed[parentKey] = {};
       }
 
-      (parsed[parentKey] as Record<string, unknown>)[CaseTransformer.toCamelCase(childKey)] = query[key];
+      (parsed[parentKey] as Record<string, unknown>)[CaseTransformer.toCamelCase(childKey)] = firstQueryValue(query[key]);
     } else {
-      parsed[CaseTransformer.toCamelCase(key)] = query[key];
+      parsed[CaseTransformer.toCamelCase(key)] = firstQueryValue(query[key]);
     }
   }
 

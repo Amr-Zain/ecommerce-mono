@@ -4,6 +4,8 @@ import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '../../generated/i18n.generated';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
+const firstQueryValue = (value: unknown): unknown => (Array.isArray(value) ? value[0] : value);
+
 /**
  * Advanced Query DTO supporting nested filters and sort
  * Example: ?paginate=1&filters[is_active]=1&sort[created_at]=asc&page=1&limit=10
@@ -11,6 +13,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 export class AdvancedQueryDto {
   // Pagination
   @IsOptional()
+  @Transform(({ value }) => firstQueryValue(value))
   @Type(() => Number)
   @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.IS_INT') })
   @Min(1, { message: i18nValidationMessage<I18nTranslations>('validation.MIN') })
@@ -18,6 +21,7 @@ export class AdvancedQueryDto {
   page?: number = 1;
 
   @IsOptional()
+  @Transform(({ value }) => firstQueryValue(value))
   @Type(() => Number)
   @IsInt({ message: i18nValidationMessage<I18nTranslations>('validation.IS_INT') })
   @Min(1, { message: i18nValidationMessage<I18nTranslations>('validation.MIN') })
@@ -27,7 +31,10 @@ export class AdvancedQueryDto {
 
   // Paginate flag
   @IsOptional()
-  @Transform(({ value }) => value === '1' || value === 'true' || value === true)
+  @Transform(({ value }) => {
+    const normalized = firstQueryValue(value);
+    return normalized === '1' || normalized === 'true' || normalized === true;
+  })
   @ApiPropertyOptional({ example: true, description: 'paginate' })
   paginate?: boolean = true;
 
@@ -45,6 +52,7 @@ export class AdvancedQueryDto {
 
   // Search query
   @IsOptional()
+  @Transform(({ value }) => firstQueryValue(value))
   @IsString()
   @ApiPropertyOptional({ example: 'iphone', description: 'search' })
   search?: string;

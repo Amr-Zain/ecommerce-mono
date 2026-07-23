@@ -1,13 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { BaseRepository } from '@/common/repositories/base.repository';
+import { BaseRepository, FilterConfig, ScalarFields } from '@/common/repositories/base.repository';
 import { Coupon, ICouponsRepository } from '@/common/interfaces/coupons.interface';
 import { MediaService } from '@/media/media.service';
+import { QueryBuilderService } from '@/common/services/query-builder.service';
 
 @Injectable()
 export class CouponsRepository extends BaseRepository<Coupon> implements ICouponsRepository {
-  constructor(prisma: PrismaService, mediaService: MediaService) {
-    super(prisma, undefined);
+  protected readonly searchConfig = {
+    directFields: ['code'] satisfies ScalarFields<Coupon>[],
+  };
+
+  protected readonly filterConfig: FilterConfig = {
+    isActive: 'boolean',
+  };
+
+  constructor(prisma: PrismaService, queryBuilder: QueryBuilderService, mediaService: MediaService) {
+    super(prisma, queryBuilder);
   }
 
   protected getModel() {

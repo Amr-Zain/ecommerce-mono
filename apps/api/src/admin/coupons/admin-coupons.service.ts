@@ -1,15 +1,23 @@
 import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
 import { COUPONS_REPOSITORY, Coupon, ICouponsRepository } from '@/common/interfaces/coupons.interface';
 import { CreateCouponDto, UpdateCouponDto } from './dto/coupon.dto';
+import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 
 @Injectable()
 export class AdminCouponsService {
   constructor(@Inject(COUPONS_REPOSITORY) private readonly couponsRepo: ICouponsRepository) {}
 
-  async findAll() {
-    const coupons = await this.couponsRepo.findMany();
-    // Sort in memory or rely on default, or we can use advanced query.
-    return coupons.map((coupon) => this.formatCoupon(coupon));
+  async findAll(query: AdvancedQueryDto) {
+    const result = await this.couponsRepo.findAll(query);
+
+    if (Array.isArray(result)) {
+      return result.map((coupon) => this.formatCoupon(coupon));
+    }
+
+    return {
+      data: result.data.map((coupon) => this.formatCoupon(coupon)),
+      meta: result.meta,
+    };
   }
 
   async findOne(id: bigint) {

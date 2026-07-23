@@ -2,9 +2,12 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe } from 
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 import { AdminCouponsService } from './admin-coupons.service';
 import { CreateCouponDto, UpdateCouponDto } from './dto/coupon.dto';
+import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
+import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiAdvancedQuery } from '@/common/swagger/api-advanced-query.decorator';
 
 @ApiContext('admin')
 @ApiTags('Admin - Coupons')
@@ -15,8 +18,9 @@ export class AdminCouponsController {
 
   @Get()
   @RequirePermissions({ resource: 'coupons', action: 'list' })
-  findAll() {
-    return this.couponsService.findAll();
+  @ApiAdvancedQuery()
+  findAll(@ParsedQuery(AdvancedQueryDto) query: AdvancedQueryDto) {
+    return this.couponsService.findAll(query);
   }
 
   @Get(':id')
