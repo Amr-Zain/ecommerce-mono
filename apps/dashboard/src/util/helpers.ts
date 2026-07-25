@@ -173,6 +173,12 @@ export function generateFinalOut(initialValues: any, values: any) {
         ? (finalOut.icon?.hash ?? finalOut.icon?.uid)
         : finalOut.icon
   }
+  if (finalOut.slide) {
+    finalOut.slide =
+      typeof finalOut.slide === 'object'
+        ? (finalOut.slide?.hash ?? finalOut.slide?.uid)
+        : finalOut.slide
+  }
   return finalOut
 }
 export const getSearchParamsObject = (searchParamsUrl: any) => {

@@ -7,6 +7,7 @@ import {
 import { AppForm as SharedAppForm } from '@ecommerce/forms'
 import { useTranslation } from 'react-i18next'
 import Field from './Field'
+import { FormErrorContext } from './FormErrorContext'
 import type {
   DefaultValues,
   FieldValues,
@@ -14,6 +15,7 @@ import type {
   UseFormReturn} from 'react-hook-form';
 import type { z } from 'zod/v4'
 import type { FieldProp } from '@/types/components/form'
+import type { FormErrors } from './FormErrorContext'
 import { zodFormResolver } from '@/lib/schema/resolver'
 
 interface GeneralFormConfig<T extends FieldValues> {
@@ -78,37 +80,61 @@ function AppForm<T extends FieldValues>({
   })
   const form = providedForm || internalForm
 
+  const setFormErrors = React.useCallback(
+    (errors: FormErrors) => {
+      for (const [field, message] of Object.entries(errors)) {
+        if (message && typeof message === 'string') {
+          ;(form as UseFormReturn<T>).setError(field as any, {
+            message,
+          })
+        }
+      }
+    },
+    [form],
+  )
+
+  const ctxValue = React.useMemo(() => ({ setFormErrors }), [setFormErrors])
+
+  const wrappedOnSubmit: SubmitHandler<T> = React.useCallback(
+    async (data) => {
+      await onSubmit(data)
+    },
+    [onSubmit],
+  )
+
   return (
-    <SharedAppForm<T, FieldProp<T>>
-      form={form}
-      fields={fields}
-      onSubmit={onSubmit}
-      onError={onError}
-      submitButtonText={submitButtonText}
-      loadingButtonText={loadingButtonText}
-      resetButtonText={resetButtonText}
-      showResetButton={showResetButton}
-      showSubmitButton={showSubmitButton}
-      isLoading={isLoading}
-      submitDisabled={submitDisabled}
-      className={className}
-      formClassName={formClassName}
-      gridColumns={gridColumns}
-      spacing={spacing}
-      platform="dashboard"
-      resetValues={defaultValues}
-      dir={i18n.dir()}
-      {...layoutConfig}
-      renderField={({ field, form: currentForm, label }) => (
-        <Field
-          {...field}
-          label={label}
-          control={
-            field.type === 'custom' ? field.control : currentForm.control
-          }
-        />
-      )}
-    />
+    <FormErrorContext.Provider value={ctxValue}>
+      <SharedAppForm<T, FieldProp<T>>
+        form={form}
+        fields={fields}
+        onSubmit={wrappedOnSubmit}
+        onError={onError}
+        submitButtonText={submitButtonText}
+        loadingButtonText={loadingButtonText}
+        resetButtonText={resetButtonText}
+        showResetButton={showResetButton}
+        showSubmitButton={showSubmitButton}
+        isLoading={isLoading}
+        submitDisabled={submitDisabled}
+        className={className}
+        formClassName={formClassName}
+        gridColumns={gridColumns}
+        spacing={spacing}
+        platform="dashboard"
+        resetValues={defaultValues}
+        dir={i18n.dir()}
+        {...layoutConfig}
+        renderField={({ field, form: currentForm, label }) => (
+          <Field
+            {...field}
+            label={label}
+            control={
+              field.type === 'custom' ? field.control : currentForm.control
+            }
+          />
+        )}
+      />
+    </FormErrorContext.Provider>
   )
 }
 

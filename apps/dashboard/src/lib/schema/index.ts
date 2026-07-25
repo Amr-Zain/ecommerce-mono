@@ -621,9 +621,9 @@ export const makeProductSchema = (t: TFn) => {
 
   return z
     .object({
-      image: stringOrUidHashObject(t),
+      image: z.any(),
       gallery: z.array(z.any()).nonempty(),
-      collection_id: z.union([z.string().optional(), z.number().optional()]),
+      collection_id: z.union([z.string(), z.number()]),
 
       ...multiLangValidation.name(t, 3, 1, 60),
       ...multiLangValidation.description(t, 5),
@@ -663,6 +663,26 @@ export const makeProductSchema = (t: TFn) => {
             field: t('Form.labels.descriptionEn'),
             min: MIN_VISIBLE_CHARS,
           }),
+        })
+      }
+
+      if (data.cost_price != null && data.price != null && Number(data.cost_price) >= Number(data.price)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['cost_price'],
+          message: t('Validation.costPriceLessThanPrice'),
+        })
+      }
+
+      if (
+        data.discount_type === 'PERCENTAGE' &&
+        data.discount_value != null &&
+        Number(data.discount_value) > 100
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['discount_value'],
+          message: t('Validation.percentage100'),
         })
       }
     })

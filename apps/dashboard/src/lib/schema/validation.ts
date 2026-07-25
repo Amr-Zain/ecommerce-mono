@@ -90,10 +90,10 @@ export const formatValidationIssueMessage = (issue: ValidationIssueLike): string
       if (!issue.message || issue.message === 'Validation.required') {
         return requiredMessage(field)
       }
-      if (!issue.message.includes('.')) {
-        return requiredMessage(field)
+      if (issue.message.includes('.')) {
+        return i18n.t(issue.message, { field })
       }
-      return i18n.t(issue.message, { field })
+      return issue.message
 
     case 'invalid_format':
       if (issue.format === 'email') {
