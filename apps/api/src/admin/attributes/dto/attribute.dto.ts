@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsArray, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsString, IsArray, ValidateNested, IsBoolean, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
@@ -30,4 +30,9 @@ export class CreateAttributeDto {
     description: 'translations',
   })
   translations!: AttributeTranslationDto[];
+
+  @IsBoolean({ message: i18nValidationMessage<I18nTranslations>('validation.IS_BOOLEAN') })
+  @IsOptional()
+  @ApiPropertyOptional({ example: true, description: 'isActive' })
+  isActive?: boolean;
 }

@@ -211,16 +211,19 @@ export class MediaService {
     model: string,
     modelId: number | string | bigint,
     collection?: string,
+    excludeIds?: bigint[],
     context?: TransactionContext,
   ) {
     const normalizedId = typeof modelId === 'bigint' ? modelId : BigInt(modelId);
     const items = await this.media.findEntityRecords(model, normalizedId, collection, context);
+    const excludeSet = excludeIds ? new Set(excludeIds.map((id) => id.toString())) : new Set<string>();
 
     for (const item of items) {
+      if (excludeSet.has(item.id.toString())) continue;
       await this.storage.deleteFile(item.path);
     }
 
-    await this.media.deleteEntityRecords(model, normalizedId, collection, context);
+    await this.media.deleteEntityRecords(model, normalizedId, collection, excludeIds, context);
   }
 
   async deleteByUuid(uuid: string) {

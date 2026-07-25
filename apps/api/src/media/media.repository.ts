@@ -91,12 +91,13 @@ export class MediaRepository implements MediaRepositoryPort {
     await db.media.delete({ where: { id } });
   }
 
-  async deleteEntityRecords(model: string, modelId: bigint, collection?: string, context?: TransactionContext) {
+  async deleteEntityRecords(model: string, modelId: bigint, collection?: string, excludeIds?: bigint[], context?: TransactionContext) {
     const db = resolvePrismaClient(context, this.prisma);
     const where: Prisma.MediaWhereInput = {
       model: model.toLowerCase(),
       modelId,
       ...(collection ? { collection } : {}),
+      ...(excludeIds?.length ? { id: { notIn: excludeIds } } : {}),
     };
     await db.media.deleteMany({ where });
   }

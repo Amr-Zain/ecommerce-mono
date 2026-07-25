@@ -30,6 +30,17 @@ export class MaxPercentageConstraint implements ValidatorConstraintInterface {
   }
 }
 
+@ValidatorConstraint({ name: 'costPriceLessThanPrice', async: false })
+export class CostPriceLessThanPriceConstraint implements ValidatorConstraintInterface {
+  validate(_value: unknown, args: ValidationArguments) {
+    const object = args.object as { costPrice?: number | null; price?: number };
+    if (object.costPrice != null && object.price != null) {
+      return Number(object.costPrice) < Number(object.price);
+    }
+    return true;
+  }
+}
+
 export class ProductTranslationDto {
   @IsNotEmpty({ message: i18nValidationMessage<I18nTranslations>('validation.IS_NOT_EMPTY') })
   @IsString({ message: i18nValidationMessage<I18nTranslations>('validation.IS_STRING') })
@@ -140,6 +151,9 @@ export class CreateVariantDto {
   @IsOptional()
   @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
   @Min(0, { message: i18nValidationMessage<I18nTranslations>('validation.MIN', { min: 0 }) })
+  @Validate(CostPriceLessThanPriceConstraint, {
+    message: i18nValidationMessage<I18nTranslations>('validation.LESS_THAN', { field: 'costPrice', other: 'price' }),
+  })
   @ApiPropertyOptional({ example: 1, description: 'costPrice' })
   costPrice?: number;
 

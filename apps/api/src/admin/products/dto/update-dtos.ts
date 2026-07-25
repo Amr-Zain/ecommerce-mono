@@ -12,7 +12,7 @@ import {
 } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { I18nTranslations } from '@/generated/i18n.generated';
-import { ProductTranslationDto, VariantAttributeDto, MaxPercentageConstraint } from '@/common/dto/product.dto';
+import { ProductTranslationDto, VariantAttributeDto, MaxPercentageConstraint, CostPriceLessThanPriceConstraint } from '@/common/dto/product.dto';
 
 /* ── Update Product ─────────────────────────────────────────── */
 
@@ -84,6 +84,9 @@ export class UpdateProductDto {
   @IsOptional()
   @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
   @Min(0, { message: i18nValidationMessage<I18nTranslations>('validation.MIN', { min: 0 }) })
+  @Validate(CostPriceLessThanPriceConstraint, {
+    message: i18nValidationMessage<I18nTranslations>('validation.LESS_THAN', { field: 'costPrice', other: 'price' }),
+  })
   costPrice?: number;
 }
 
@@ -103,6 +106,9 @@ export class UpdateVariantDto {
   @IsOptional()
   @IsNumber({}, { message: i18nValidationMessage<I18nTranslations>('validation.IS_NUMBER') })
   @Min(0, { message: i18nValidationMessage<I18nTranslations>('validation.MIN', { min: 0 }) })
+  @Validate(CostPriceLessThanPriceConstraint, {
+    message: i18nValidationMessage<I18nTranslations>('validation.LESS_THAN', { field: 'costPrice', other: 'price' }),
+  })
   costPrice?: number;
 
   @IsOptional()

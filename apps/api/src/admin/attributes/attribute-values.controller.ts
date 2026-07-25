@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { AttributeValuesService } from './attribute-values.service';
 import { AttributeValueQueryDto } from '@/common/dto/attribute-value-query.dto';
 import { CreateAttributeValueDto } from './dto/attribute-value.dto';
@@ -7,7 +7,7 @@ import { I18nLang } from 'nestjs-i18n';
 import { RequirePermissions } from '@/auth/decorators/permissions.decorator';
 import { UseLanguageTransform } from '@/common/decorators/transform-language-keys.decorator';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-
+import { ParsedQuery } from '@/common/decorators/parsed-query.decorator';
 import { ApiContext } from '@/common/decorators/api-context.decorator';
 
 @ApiContext('admin')
@@ -19,7 +19,7 @@ export class AttributeValuesController {
 
   @Get()
   @RequirePermissions({ resource: 'attribute-values', action: 'list' })
-  findAll(@Query() query: AttributeValueQueryDto, @I18nLang() lang: string) {
+  findAll(@ParsedQuery(AttributeValueQueryDto) query: AttributeValueQueryDto, @I18nLang() lang: string) {
     return this.service.findAll(query, lang);
   }
 

@@ -13,8 +13,5 @@ export interface TransactionOptions {
 }
 
 export interface UnitOfWork {
-  execute<T>(
-    work: (context: TransactionContext) => Promise<T>,
-    options?: TransactionOptions,
-  ): Promise<T>;
+  execute<T>(work: (context: TransactionContext) => Promise<T>, options?: TransactionOptions): Promise<T>;
 }

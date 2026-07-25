@@ -68,5 +68,11 @@ export interface MediaRepositoryPort {
   ): Promise<MediaPersistenceRecord[]>;
   findUnattachedBefore(before: Date): Promise<MediaPersistenceRecord[]>;
   deleteById(id: bigint, context?: TransactionContext): Promise<void>;
-  deleteEntityRecords(model: string, modelId: bigint, collection?: string, context?: TransactionContext): Promise<void>;
+  deleteEntityRecords(
+    model: string,
+    modelId: bigint,
+    collection?: string,
+    excludeIds?: bigint[],
+    context?: TransactionContext,
+  ): Promise<void>;
 }

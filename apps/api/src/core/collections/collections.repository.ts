@@ -14,7 +14,7 @@ type Collection = Prisma.CollectionGetPayload<{
     translations: true;
     _count: { select: { children: true } };
   };
-}> & { hasChildren?: boolean; children?: Collection[] };
+}> & { hasChildren?: boolean; children?: Collection[]; parent?: Collection | null; image?: unknown };
 
 @Injectable()
 export class CollectionsRepository extends MediaAwareRepository<Collection> implements ICollectionsRepository {
@@ -72,12 +72,32 @@ export class CollectionsRepository extends MediaAwareRepository<Collection> impl
       },
     });
 
+    const enriched = await this.enrichParentMedia(Array.isArray(result) ? result : result.data);
+
     if (Array.isArray(result)) {
-      return result.map((item) => this.mapHasChildren(item));
+      return enriched.map((item) => this.mapHasChildren(item));
     }
 
-    result.data = result.data.map((item) => this.mapHasChildren(item));
+    result.data = enriched.map((item) => this.mapHasChildren(item));
     return result;
+  }
+
+  private async enrichParentMedia(records: Collection[]): Promise<Collection[]> {
+    const parentIds: bigint[] = records
+      .map((r) => r.parentId)
+      .filter((id): id is bigint => id !== null);
+
+    if (parentIds.length === 0) return records;
+
+    const parentMediaMap = await this.mediaService.findByEntities(this.mediaModel, parentIds);
+
+    return records.map((record) => {
+      if (!record.parent) return record;
+      const parentId = BigInt(record.parent.id);
+      const mediaItems = parentMediaMap.get(parentId.toString()) ?? [];
+      const image = mediaItems.find((m) => m.collection === 'collection') || null;
+      return { ...record, parent: { ...record.parent, image } };
+    });
   }
 
   private mapHasChildren(item: Collection & { _count?: { children: number } }): Collection {
@@ -108,7 +128,10 @@ export class CollectionsRepository extends MediaAwareRepository<Collection> impl
         parent: { include: { translations: { where: { langId }, take: 1 } } },
       },
     });
-    return collection ? this.mergeMedia(collection as unknown as Collection) : null;
+    if (!collection) return null;
+    const merged = await this.mergeMedia(collection as unknown as Collection);
+    const enriched = (await this.enrichParentMedia([merged]))[0];
+    return enriched;
   }
 
   async findActiveDescendantIds(id: bigint): Promise<bigint[]> {
@@ -211,7 +234,8 @@ export class CollectionsRepository extends MediaAwareRepository<Collection> impl
 
     if (!record) return null;
 
-    const enriched = await this.mergeMedia(record as unknown as Collection);
+    const merged = await this.mergeMedia(record as unknown as Collection);
+    const enriched = (await this.enrichParentMedia([merged]))[0];
 
     const childrenWithMedia = enriched as unknown as Collection & {
       children: (Collection & { image: unknown })[];

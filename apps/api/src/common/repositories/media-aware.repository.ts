@@ -100,14 +100,7 @@ export abstract class MediaAwareRepository<T extends { id: number | bigint }> ex
       const hashes = Array.isArray(payload) ? payload : [payload];
       if (hashes.length === 0) continue;
 
-      if (config.single) {
-        await this.mediaService.deleteByEntity(
-          model,
-          id,
-          config.collection,
-          tx ? new PrismaTransactionContext(tx) : undefined,
-        );
-      }
+      const newMediaIds: bigint[] = [];
 
       for (const [index, hash] of hashes.entries()) {
         if (typeof hash !== 'string') continue;
@@ -129,6 +122,8 @@ export abstract class MediaAwareRepository<T extends { id: number | bigint }> ex
         }
 
         for (const item of mediaItems) {
+          newMediaIds.push(item.id);
+
           if (config.allowedTypes?.length && !config.allowedTypes.includes(item.type as MediaType)) {
             throw new BadRequestException(
               `Media type mismatch. Expected ${config.allowedTypes.join(', ')}, got ${item.type}`,
@@ -147,6 +142,16 @@ export abstract class MediaAwareRepository<T extends { id: number | bigint }> ex
             data: { collection: config.collection, isMain: index === 0 },
           });
         }
+      }
+
+      if (config.single && newMediaIds.length > 0) {
+        await this.mediaService.deleteByEntity(
+          model,
+          id,
+          config.collection,
+          newMediaIds,
+          tx ? new PrismaTransactionContext(tx) : undefined,
+        );
       }
     }
   }

@@ -5,6 +5,7 @@ import { CreateVariantDto, AdjustStockDto } from '@/common/dto/product.dto';
 import { UpdateVariantDto } from './dto/update-dtos';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { PricingService } from '@/core/products/pricing.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import {
   PUBLIC_CACHE_EVENTS,
   PublicCacheInvalidationPublisher,
@@ -27,7 +28,27 @@ export class VariantsService {
     @Inject(VARIANTS_REPOSITORY) private readonly repo: VariantsRepository,
     private readonly pricingService: PricingService,
     private readonly publicCacheInvalidation: PublicCacheInvalidationPublisher,
+    private readonly prisma: PrismaService,
   ) {}
+
+  private async validateAttributeValuePairs(
+    attributes: { attributeId: number; valueId: number }[],
+  ): Promise<void> {
+    for (const attr of attributes) {
+      const value = await this.prisma.attributeValue.findUnique({
+        where: { id: attr.valueId },
+        select: { attributeId: true },
+      })
+      if (!value) {
+        throw new BadRequestException(`Attribute value ${attr.valueId} not found`)
+      }
+      if (Number(value.attributeId) !== Number(attr.attributeId)) {
+        throw new BadRequestException(
+          `Value ${attr.valueId} does not belong to attribute ${attr.attributeId}`,
+        )
+      }
+    }
+  }
 
   async create(productId: number, createVariantDto: CreateVariantDto) {
     /* 1. Uniqueness guards */
@@ -61,6 +82,8 @@ export class VariantsService {
           }
         }
       }
+
+      await this.validateAttributeValuePairs(attributes);
     }
 
     /* 2. Compute pricing */
@@ -147,6 +170,8 @@ export class VariantsService {
           }
         }
       }
+
+      await this.validateAttributeValuePairs(dto.attributes);
     }
 
     /* 2. Compute pricing */

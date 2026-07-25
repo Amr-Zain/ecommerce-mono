@@ -68,6 +68,7 @@ model ProductTranslation {
 model Attribute {
   id           BigInt                 @id @default(autoincrement())
   createdAt    DateTime               @default(now()) @map("created_at")
+  isActive     Boolean                @default(true) @map("is_active")
   translations AttributeTranslation[]
   values       AttributeValue[]
   variants     VariantAttribute[]

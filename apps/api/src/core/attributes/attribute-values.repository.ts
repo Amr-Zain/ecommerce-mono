@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaService } from '@/prisma';
-import { BaseRepository, TranslationFields } from '@/common/repositories/base.repository';
+import { BaseRepository, PreparedWrite, TranslationFields } from '@/common/repositories/base.repository';
 import { MediaService } from '@/media/media.service';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { AttributeValueQueryDto } from '@/common/dto/attribute-value-query.dto';
@@ -41,6 +41,16 @@ export class AttributeValuesRepository
 
   getModel() {
     return this.prisma.attributeValue;
+  }
+
+  protected prepareWrite(data: Record<string, unknown>): PreparedWrite {
+    const raw = { ...data } as Record<string, unknown>;
+    const attribute = raw.attribute as { connect?: { id: bigint } } | undefined;
+    if (attribute?.connect?.id) {
+      raw.attributeId = attribute.connect.id;
+      delete raw.attribute;
+    }
+    return { data: raw };
   }
 
   async findAll(
