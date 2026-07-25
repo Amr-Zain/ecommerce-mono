@@ -188,7 +188,7 @@ export function NestedCategorySelect({ onSelect, placeholder = "Select a categor
 
     return (
         <Select value={selectedValue} onValueChange={handleValueChange}>
-            <SelectTrigger className="no-spinner !h-12 file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-background border-input w-full min-w-0 rounded-md border bg-background px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm">
+            <SelectTrigger className="w-full h-10! mt-2">
                 <SelectValue placeholder={placeholder}>
                     {
                         selectedCategory?.name ? <div className="flex items-center gap-2">

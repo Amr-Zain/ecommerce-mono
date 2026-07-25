@@ -96,7 +96,7 @@ const TabsBadgeCategories = () => {
 
   return (
     <div className="w-full max-w-md mb-2">
-      <AnimatedTabs items={items} value={currentFilter} onValueChange={handleTabChange} />
+      <AnimatedTabs className='h-8' items={items} value={currentFilter} onValueChange={handleTabChange} />
     </div>
   )
 }

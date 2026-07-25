@@ -14,6 +14,7 @@ import { makeProductSchema } from '@/lib/schema'
 
 import Field from '@/components/common/form/Field'
 import { zodFormResolver } from '@/lib/schema/resolver'
+import SkuCodeGenerator from './SkuCodeGenerator'
 
 type ProductPayload = Record<string, unknown>
 
@@ -70,7 +71,6 @@ const buildProductPayload = (product: Product | undefined, values: ProductFormDa
     payload.discount_type = finalOut.discount_type ?? null
     payload.discount_value = finalOut.discount_value ?? null
     delete payload.gallery
-    delete payload.image
   }
 
   return removeEmptyPayloadValues(payload)
@@ -226,7 +226,14 @@ export default function ProductForm({ product }: { product?: Product }) {
       },
       ...(product?.has_variants
         ? []
-        : baseFields.filter((field) => ['price', 'cost_price', 'stock', 'sku', 'barcode'].includes(String(field.name)))),
+        : [
+            ...baseFields.filter((field) => ['price', 'cost_price', 'stock'].includes(String(field.name))),
+            {
+              type: 'custom' as const,
+              span: 2,
+              customItem: <SkuCodeGenerator mode="product" t={t} />,
+            },
+          ]),
     ],
     [baseFields, product, t]
   )

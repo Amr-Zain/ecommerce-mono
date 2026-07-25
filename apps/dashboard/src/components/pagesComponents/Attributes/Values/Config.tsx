@@ -45,7 +45,7 @@ export const valueColumns = (
     /*   numberColumn<ValueItem>('display_order', 'values.columns.display_order', {
       render: ({ row }) => row.original.display_order ?? '-',
     }), */
-    booleanControlColumn<ValueItem>('is_active', 'table.status', open, 'active', false, 'can-not-change-status'),
+    booleanControlColumn<ValueItem>('is_active', 'table.status', open, 'active', false, 'attribute-values'),
     DateColumn<ValueItem>('created_at', 'table.createdAt'),
   ]
 

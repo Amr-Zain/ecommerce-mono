@@ -48,55 +48,55 @@ export const attributeColumns = (
     textColumn<Attribute>('name', 'table.columns.name', {
       render: ({ row }) => row.original.name,
     }),
-    booleanControlColumn<Attribute>('is_active', 'table.status', open, 'active', false, 'can-not-change-status'),
+    booleanControlColumn<Attribute>('is_active', 'table.status', open, 'active', false, 'attributes'),
     DateColumn<Attribute>('created_at', 'table.createdAt'),
-    textColumn<Attribute>('id', 'table.columns.show', {
-      render: ({ row }) => (
-        <HasPermission entity="attributes" action="show">
-        <Link to="/attributes/show/$id" params={{ id: String(row.original.id) }}>
-          <Eye className="me-2 h-4 w-4" />
-          {/* {t('actions.show')} */}
-        </Link>
-        </HasPermission>
-      ),
-    },)
+    // textColumn<Attribute>('id', 'table.columns.show', {
+    //   render: ({ row }) => (
+    //     <HasPermission entity="attributes" action="show">
+    //     <Link to="/attributes/show/$id" params={{ id: String(row.original.id) }}>
+    //       <Eye className="me-2 h-4 w-4" />
+    //       {/* {t('actions.show')} */}
+    //     </Link>
+    //     </HasPermission>
+    //   ),
+    // },)
   ]
 
-// export const attributeActions = (
-//   t: (key: string) => string,
-//   open: (type: PickedAction, row: Attribute) => void,
-// ) => [
-//   {
-//     label: t('actions.show'),
-//     to: '/attributes/show/$id',
-//     params: (row: Attribute) => ({ id: String(row.id) }),
-//     permission: 'attributes',
-//     action: 'show',
-//     queryKey: (id: string) => queryKeys.attributes.getAttribute(id),
-//   },
-//   {
-//     label: t('actions.editAttribute'),
-//     to: '/attributes/edit/$id',
-//     params: (row: Attribute) => ({ id: String(row.id) }),
-//     permission: 'attributes',
-//     action: 'update',
-//     queryKey: (id: string) => queryKeys.attributes.getAttribute(id),
-//   },
-//   {
-//     label: t('actions.delete'),
-//     danger: true,
-//     onClick: (row: Attribute) => open('delete', row),
-//     permission: 'attributes',
-//     action: 'destroy',
-//   },
-//   {
-//     label: (row: Attribute) =>
-//       t(`actions.${row.is_active ? 'deactivate' : 'activate'}`),
-//     onClick: (row: Attribute) => open('active', row),
-//     permission: 'attributes',
-//     action: 'update',
-//   },
-// ] as RowAction<Attribute>[]
+export const attributeActions = (
+  t: (key: string) => string,
+  open: (type: PickedAction, row: Attribute) => void,
+) => [
+  {
+    label: t('actions.show'),
+    to: '/attributes/show/$id',
+    params: (row: Attribute) => ({ id: String(row.id) }),
+    permission: 'attributes',
+    action: 'show',
+    queryKey: (id: string) => queryKeys.attributes.getAttribute(id),
+  },
+  {
+    label: t('actions.editAttribute'),
+    to: '/attributes/edit/$id',
+    params: (row: Attribute) => ({ id: String(row.id) }),
+    permission: 'attributes',
+    action: 'update',
+    queryKey: (id: string) => queryKeys.attributes.getAttribute(id),
+  },
+  {
+    label: t('actions.delete'),
+    danger: true,
+    onClick: (row: Attribute) => open('delete', row),
+    permission: 'attributes',
+    action: 'destroy',
+  },
+  {
+    label: (row: Attribute) =>
+      t(`actions.${row.is_active ? 'deactivate' : 'activate'}`),
+    onClick: (row: Attribute) => open('active', row),
+    permission: 'attributes',
+    action: 'update',
+  },
+] as RowAction<Attribute>[]
 
 // Filters
 export const getAttributeFilters = (t: (key: string) => string) => [
@@ -131,13 +131,9 @@ export const buildAttributeFields = (
       span: 2,
     },
     {
-      type: 'checkbox',
+      type: 'switch',
       name: 'is_active',
       label: t('Form.labels.status'),
-      inputProps: {
-        trueText: t('status.active'),
-        falseText: t('status.inactive'),
-      },
       span: 1,
     },
   ]

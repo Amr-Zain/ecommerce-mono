@@ -7,16 +7,6 @@ import { CategoryFormData, makeCategorySchema } from '@/lib/schema'
 import { buildCategoryFields } from './Config'
 import { useForm } from 'react-hook-form'
 import { zodFormResolver } from '@/lib/schema/resolver'
-import ShopifyMappingsRepeater from './ShopifyMappingsRepeater'
-
-export type ShopifyMapping = {
-  shopify_collection_gid?: string
-  shopify_collection_name?: string
-  odoo_metaobject_gid?: string
-  odoo_category_name?: string
-  is_active?: boolean
-}
-
 export type CategoryEntity = {
   id: number
   slug: string
@@ -30,7 +20,6 @@ export type CategoryEntity = {
     en?: { name?: string; description?: string }
     ar?: { name?: string; description?: string }
   }
-  shopify_mappings?: ShopifyMapping[]
 }
 
 export default function CategoryForm({
@@ -48,24 +37,11 @@ export default function CategoryForm({
       slug: category?.slug || '',
       parent_id: category?.parent?.id || '',
       sort_order: category?.sort_order?.toString(),
-      shopify_mappings:
-        category?.shopify_mappings?.map((m) => ({
-          shopify_collection_gid: m.shopify_collection_gid || '',
-          shopify_collection_name: m.shopify_collection_name || '',
-          odoo_metaobject_gid: m.odoo_metaobject_gid || '',
-          odoo_category_name: m.odoo_category_name || '',
-          is_active: m.is_active ?? true,
-        })) ?? [],
     },
     mode: 'onChange',
   })
   const fields = [
     ...buildCategoryFields(t, form as any),
-    {
-      type: 'custom' as const,
-      span: 2,
-      customItem: <ShopifyMappingsRepeater t={t} />,
-    },
   ]
 
   const { mutate, isPending } = useMutate({
@@ -85,7 +61,6 @@ export default function CategoryForm({
     }
     mutate({
       ...generateFinalOut(category, values),
-      shopify_mappings: values.shopify_mappings ?? [],
     })
   }
 

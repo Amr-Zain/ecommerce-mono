@@ -1,4 +1,4 @@
-import { ColumnDef } from '@tanstack/react-table'
+import { ColumnDef, CellContext } from '@tanstack/react-table'
 import {
   booleanControlColumn,
   DateColumn,
@@ -6,6 +6,7 @@ import {
   imageNameColumn,
   textColumn,
 } from '@/components/features/sharedColumns'
+import { Link } from '@tanstack/react-router'
 import { PickedAction } from '@/hooks/useStatusMutations'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { Filter, RowAction } from '@/types/components/table'
@@ -32,7 +33,22 @@ export const categoryColumns = (
     (row) =>
       row.parent ? { image: row.parent.image, name: row.parent.name } : null,
     'table.columns.parentCategory',
-    { placeholder: '-' }, // optional
+    {
+      placeholder: '-',
+      renderName: (ctx: CellContext<Category, unknown>, name: string | null | undefined) =>
+        name ? (
+          <Link
+            to="/categories/show/$id"
+            params={{ id: String((ctx.row.original as { parent?: { id: number } }).parent?.id ?? '') }}
+            onClick={(e) => e.stopPropagation()}
+            className="font-medium truncate max-w-[200px] hover:underline"
+          >
+            {name}
+          </Link>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        ),
+    },
   ),
   booleanControlColumn<Category>(
     'is_active',
@@ -128,13 +144,6 @@ export function buildCategoryFields(
   const currentParentId = form.watch('parent_id')
   return [
     {
-      type: 'text',
-      name: 'slug',
-      label: 'Slug',
-      placeholder: 'watches',
-      span: 2,
-    },
-    {
       type: 'imgUploader',
       name: 'image',
       label: t('Form.labels.image'),
@@ -145,6 +154,13 @@ export function buildCategoryFields(
         model: 'collection',
         collection: 'image',
       },
+    },
+    {
+      type: 'text',
+      name: 'slug',
+      label: 'Slug',
+      placeholder: 'watches',
+      span: 2,
     },
     {
       type: 'number',

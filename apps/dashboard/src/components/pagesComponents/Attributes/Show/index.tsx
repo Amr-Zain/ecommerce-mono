@@ -2,11 +2,12 @@
 import * as React from 'react'
 import { Card, CardContent, CardFooter } from '@ecommerce/ui/components/card'
 import { Badge } from '@ecommerce/ui/components/badge'
+import { Switch } from '@ecommerce/ui/components/switch'
 import { Separator } from '@ecommerce/ui/components/separator'
 import { useTranslation } from 'react-i18next'
 import { AttributeShow as AttributeShowType, AttributeValue } from '../Config'
 import { Button } from '@ecommerce/ui/components/button'
-import { Edit, MoreHorizontal } from 'lucide-react'
+import { Edit } from 'lucide-react'
 import { formatDate, getModalTitle } from '@/util/helpers'
 import { LocalizedTabs } from '@/components/ui/LocalizedTab'
 import { RowActions } from '@/components/common/table/RowActions'
@@ -128,14 +129,27 @@ export function AttributeShow({ attribute }: { attribute: AttributeShowType }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge variant={is_active ? 'default' : 'secondary'}>
-              {is_active ? t('status.active') : t('status.inactive')}
-            </Badge>
+            <div
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation()
+                onHeaderAction('active')
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onHeaderAction('active')
+                }
+              }}
+            >
+              <Switch checked={is_active} className="scale-110 cursor-pointer" />
+              <Badge variant={is_active ? 'default' : 'destructive'}>
+                {is_active ? t('status.enabled') : t('status.disabled')}
+              </Badge>
+            </div>
 
-            {/* Header actions (edit, toggle status, delete) */}
-            {/*  {RowActions({
-              actions: attributeActions(t, onHeaderAction),
-            })({ original: attribute as any })} */}
             <HasPermission entity="attributes" action="update">
               <Button onClick={() => setAttrEditOpen(true)}>
                 <Edit className="me-2 h-4 w-4" />
@@ -174,9 +188,24 @@ export function AttributeShow({ attribute }: { attribute: AttributeShowType }) {
                   <div className="w-56 text-muted-foreground">
                     {t('table.columns.status')}
                   </div>
-                  <div>
-                    <Badge variant={is_active ? 'default' : 'secondary'}>
-                      {is_active ? t('status.active') : t('status.inactive')}
+                  <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onHeaderAction('active')
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        onHeaderAction('active')
+                      }
+                    }}
+                  >
+                    <Switch checked={is_active} className="scale-110 cursor-pointer" />
+                    <Badge variant={is_active ? 'default' : 'destructive'}>
+                      {is_active ? t('status.enabled') : t('status.disabled')}
                     </Badge>
                   </div>
                 </div>

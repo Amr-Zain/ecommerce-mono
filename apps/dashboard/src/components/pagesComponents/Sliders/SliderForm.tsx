@@ -37,17 +37,15 @@ export default function SliderForm({ slider }: { slider?: SliderEntity }) {
   })
 
   const handleSubmit = (values: SliderFormData) => {
-    const finalOut = generateFinalOut(slider, values)  
-    if (slider) {
-      if (typeof values.slide === 'object') {
-        delete finalOut.slide
-      }
-    }
+    const finalOut = generateFinalOut(slider, values)
+    const slideValue = finalOut.slide
+    delete finalOut.slide
     mutate({
       ...finalOut,
       start_date: formDateToYYYYMMDD(values.start_date),
       end_date: formDateToYYYYMMDD(values.end_date),
       is_active: finalOut.is_active,
+      ...(slideValue ? { slide: slideValue } : {}),
     })
   }
 

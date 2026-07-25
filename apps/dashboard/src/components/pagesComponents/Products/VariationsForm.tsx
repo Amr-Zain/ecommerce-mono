@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { useTranslation } from 'react-i18next'
-import { Dialog, DialogContent } from '@ecommerce/ui/components/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@ecommerce/ui/components/dialog'
 import * as React from 'react'
 import { useFieldArray, useFormContext, useWatch } from 'react-hook-form'
 import { z } from 'zod/v4'
@@ -13,6 +13,7 @@ import Field from '@/components/common/form/Field'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { generateFinalOut } from '@/util/helpers'
 import { useMutate } from '@/hooks/UseMutate'
+import SkuCodeGenerator from './SkuCodeGenerator'
 
 type VariationGalleryItem = {
   attach_hash?: string
@@ -231,51 +232,82 @@ export default function ProductVariationFormDialog({
   isOpen,
   onClose,
   variation,
+  productName,
 }: {
   productId: number | string
   isOpen: boolean
   onClose: () => void
   variation?: ProductVariationWithGallery
+  productName?: string | null
 }) {
   const { t } = useTranslation()
 
   const schema = React.useMemo(
     () =>
-      z.object({
-        product_id: z.union([z.string(), z.number()]),
-        price: z.coerce.number({ message: t('Validation.requiredSimple') }).positive({ message: t('Validation.positive') }),
-        cost_price: z.coerce.number().nullable().optional(),
-        discount_type: z.enum(['FIXED', 'PERCENTAGE']).nullable().optional(),
-        discount_value: z.coerce.number().nullable().optional(),
-        stock: z.coerce.number({ message: t('Validation.requiredSimple') }).int({ message: t('Validation.int') })
-          .positive({ message: t('Validation.positive') }),
-        is_active: z.boolean().optional().default(true),
-        is_default: z.boolean().optional().default(false),
-        sku: z.string().max(100).or(z.literal('')),
-        barcode: z.string().max(100).or(z.literal('')),
-        gallery: z.any().optional(),
-        variation_attributes: z
-          .array(
-            z.object({
-              attribute_id: z.string(),
-              value_id: z.string(),
-            }),
-          )
-          .default([]),
-      }),
+      z
+        .object({
+          product_id: z.union([z.string(), z.number()]),
+          price: z.coerce.number({ message: t('Validation.requiredSimple') }).positive({ message: t('Validation.positive') }),
+          cost_price: z.coerce.number().nullable().optional(),
+          discount_type: z.enum(['FIXED', 'PERCENTAGE']).nullable().optional(),
+          discount_value: z.coerce.number().nullable().optional(),
+          stock: z.coerce.number({ message: t('Validation.requiredSimple') }).int({ message: t('Validation.int') })
+            .positive({ message: t('Validation.positive') }),
+          is_active: z.coerce.boolean().optional().default(true),
+          is_default: z.coerce.boolean().optional().default(false),
+          sku: z.string().max(100).or(z.literal('')),
+          barcode: z.string().max(100).or(z.literal('')),
+          gallery: z.any().optional(),
+          variation_attributes: z
+            .array(
+              z.object({
+                attribute_id: z.string(),
+                value_id: z.string(),
+              }),
+            )
+            .default([]),
+        })
+        .superRefine((data, ctx) => {
+          if (data.cost_price != null && data.price != null && Number(data.cost_price) >= Number(data.price)) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['cost_price'],
+              message: t('Validation.costPriceLessThanPrice'),
+            })
+          }
+
+          if (
+            data.discount_type === 'PERCENTAGE' &&
+            data.discount_value != null &&
+            Number(data.discount_value) > 100
+          ) {
+            ctx.addIssue({
+              code: 'custom',
+              path: ['discount_value'],
+              message: t('Validation.percentage100'),
+            })
+          }
+        }),
     [t],
   )
 
   const fields = React.useMemo(
     () => [
-      ...buildVariationFields(t, variation?.id ? String(variation.id) : undefined),
+      ...buildVariationFields(t, variation?.id ? String(variation.id) : undefined).filter(
+        (field) => !['sku', 'barcode'].includes(String(field.name)),
+      ),
+      {
+        type: 'custom' as const,
+        span: 2,
+        customItem: <SkuCodeGenerator mode="variant" productId={productId} productName={productName} t={t} />,
+      },
       {
         type: 'custom' as const,
         span: 2,
         customItem: <VariationAttributesRepeater t={t} />,
       },
     ],
-    [t, variation?.id],
+    [productId, productName, t, variation?.id],
   )
 
   const endpoint = variation?.id
@@ -300,7 +332,12 @@ export default function ProductVariationFormDialog({
       onOpenChange={(open) => (!open ? onClose() : undefined)}
     >
       <DialogContent className="bg-card border border-border rounded-lg shadow-sm  sm:max-w-3xl p-0">
-        <div className="my-4">
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <DialogTitle className="text-base">
+            {variation ? t('actions.update', { entity: t('common.variation') }) : t('actions.create', { entity: t('common.variation') })}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="pb-2 px-6">
           <AppForm<ProductVariationFormData>
             schema={schema}
             fields={fields}

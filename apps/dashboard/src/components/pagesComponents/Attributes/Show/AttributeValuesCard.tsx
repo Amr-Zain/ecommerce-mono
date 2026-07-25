@@ -8,6 +8,7 @@ import {
   CardContent,
 } from '@ecommerce/ui/components/card'
 import { Badge } from '@ecommerce/ui/components/badge'
+import { Switch } from '@ecommerce/ui/components/switch'
 import { Button } from '@ecommerce/ui/components/button'
 import { Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -123,9 +124,24 @@ export function AttributeValuesCard({
               {/*  <div className="sm:col-span-2 text-muted-foreground">
                 {t('table.columns.code')} #{v.id}
               </div> */}
-              <div className="col-span-1">
-                <Badge variant={v.is_active ? 'default' : 'secondary'}>
-                  {v.is_active ? t('status.active') : t('status.inactive')}
+              <div
+                className="col-span-1 flex items-center gap-2 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openAlert('active', v)
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    openAlert('active', v)
+                  }
+                }}
+              >
+                <Switch checked={v.is_active} className="scale-110 cursor-pointer" />
+                <Badge variant={v.is_active ? 'default' : 'destructive'}>
+                  {v.is_active ? t('status.enabled') : t('status.disabled')}
                 </Badge>
               </div>
               <div className="col-span-4 text-muted-foreground">

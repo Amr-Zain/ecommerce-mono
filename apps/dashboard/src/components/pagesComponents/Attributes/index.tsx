@@ -7,7 +7,7 @@ import { Link, useSearch } from '@tanstack/react-router'
 import { PickedAction, useStatusMutation } from '@/hooks/useStatusMutations'
 import { useState, useEffect } from 'react'
 import {
-  // attributeActions,
+  attributeActions,
   attributeColumns,
   getAttributeFilters,
   type Attribute,
@@ -91,10 +91,10 @@ const Attributes = ({
       rowUrl={(row) => `/attributes/show/${row.id}`}
       filters={getAttributeFilters(t)}
       pagination
-      // actions={RowActions({
-      //   actions: attributeActions(t, openAlert),
-      //   menuLabel: t('actions.entity'),
-      // })}
+      actions={RowActions({
+        actions: attributeActions(t, openAlert),
+        menuLabel: t('actions.entity'),
+      })}
       toolbar={toolbar}
       resizable
     />

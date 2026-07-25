@@ -62,7 +62,7 @@ export default function ValueForm({
     const finalOut = generateFinalOut(valueItem, values)
     // ensure attribute_id comes from prop when provided
     finalOut.attribute_id = hasAttrIdProp ? attrIdString : finalOut.attribute_id
-    mutate(finalOut )
+    mutate(finalOut)
   }
 
   return (
