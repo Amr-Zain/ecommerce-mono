@@ -44,7 +44,7 @@ export function StatsCard({
   const [textColor, bgColor] = iconColor.includes(" ") ? iconColor.split(" ") : [iconColor, ""];
 
   return (
-    <Card className={cn("py-4 px-0 group hover:shadow-lg hover:scale-[1.02] hover:border-primary/30 transition-all duration-300 ease-in-out", className)}>
+    <Card className={cn("py-4 px-0 h-full group hover:shadow-lg hover:scale-[1.02] hover:border-primary/30 transition-all duration-300 ease-in-out", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <div className={cn("p-2 rounded-lg transition-all duration-300", bgColor || "bg-primary/10")}>

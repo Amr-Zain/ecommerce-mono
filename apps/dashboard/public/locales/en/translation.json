@@ -112,7 +112,9 @@
     "send_message": "Send Message",
     "message_campaigns": "Message Campaigns",
     "coupons": "Coupons",
-    "tickets": "Tickets"
+    "tickets": "Tickets",
+    "exchange": "Exchange",
+    "returns": "Returns"
   },
   "workspace": {
     "switch": "Switch Workspace",
@@ -131,6 +133,12 @@
       "Account_and_support": "Account & support"
     }
   },
+  "wallets": {
+    "pending_balance": "Pending Balance",
+    "available_balance": "Available Balance",
+    "amount": "Amount",
+    "method": "Method"
+  },
   "rewards": {
     "entity": "Reward",
     "reward_type": "Reward Type",
@@ -138,11 +146,16 @@
     "points_required": "Points Required",
     "discount": "Discount",
     "fixed": "Fixed",
-    "percentage": "Percentage"
+    "percentage": "Percentage",
+    "max_discount_amount": "Max Discount Amount",
+    "min_order_amount": "Min Order Amount",
+    "usage_limit": "Usage Limit",
+    "per_user_limit": "Per User Limit"
   },
   "common": {
     "city": "City",
     "page": "Page",
+    "reset": "Reset",
     "supervisor": "Supervisor",
     "country": "Country",
     "smsProviders": "SMS Providers",
@@ -345,7 +358,11 @@
     "show": "Show Details",
     "editSlider": "Edit slider",
     "viewAll": "View All",
-    "adjustStock": "Adjust Stock"
+    "adjustStock": "Adjust Stock",
+    "title": "Actions",
+    "yes": "Yes",
+    "no": "No",
+    "generate": "Generate"
   },
   "modals": {
     "active": {
@@ -408,7 +425,10 @@
     "completed": "Completed",
     "processing": "Processing",
     "expired": "Expired",
-    "canceled": "Canceled"
+    "canceled": "Canceled",
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "refunded": "Refunded"
   },
   "earningRules": {
     "entity": "Earning Rule",
@@ -453,7 +473,8 @@
     "requiredPair": "Please provide both discount type and value, or leave both empty",
     "startBeforeEnd": "Start date must be before end date",
     "percentageUnder100": "Percentage discount must be less than 100",
-    "percentage100": "Percentage discount must be less than or equal to 100"
+    "percentage100": "Percentage discount must be less than or equal to 100",
+    "costPriceLessThanPrice": "Cost price must be less than selling price"
   },
   "serverValidation": {
     "formatInvalid": "{{field}} has an invalid format"
@@ -574,6 +595,13 @@
       "orders": "Recent Orders",
       "wishlists": "Recent Wishlists",
       "reviews": "Recent Reviews"
+    },
+    "history": {
+      "change": "Change",
+      "previous": "Previous",
+      "new": "New",
+      "oldPrice": "Old Price",
+      "newPrice": "New Price"
     }
   },
   "country": {
@@ -671,6 +699,8 @@
       "discountType": "Discount Type",
       "discount_type": "Discount Type",
       "discountValue": "Discount Value",
+      "costPrice": "Cost Price",
+      "defaultVariant": "Default variant",
       "discount_value": "Discount Value",
       "stock": "Stock",
       "sku": "SKU",
@@ -715,7 +745,8 @@
       "protected_customer_data_approved": "Protected Customer Data Approved",
       "message": "Message",
       "loyalty_bridge_token": "Loyalty Bridge Token",
-      "generate_loyalty_bridge_token": "Generate Loyalty Bridge Token"
+      "generate_loyalty_bridge_token": "Generate Loyalty Bridge Token",
+      "reason": "Reason"
     },
     "placeholders": {
       "country": "Select a country",
@@ -776,6 +807,8 @@
       "category": "Select category",
       "discountType": "Choose discount type",
       "discountValue": "Enter discount value",
+      "costPrice": "Enter cost price",
+      "defaultVariant": "Is this the default variant?",
       "user_id": "Enter User ID",
       "product_id": "Enter Product ID",
       "scope": "e.g. read_products",
@@ -1073,7 +1106,8 @@
     "profile": "Profile",
     "collection": "main Categories",
     "sub_collection": "Sub-Categories",
-    "sub_sub_collection": "Sub-sub-Categories"
+    "sub_sub_collection": "Sub-sub-Categories",
+    "limit": "Limit"
   },
   "server_error_page": {
     "title": "Something went wrong",
@@ -1276,7 +1310,12 @@
       "overview": "Overview",
       "sales": "Sales",
       "customers": "Customers",
-      "inventory": "Inventory",
+    "stockStates": {
+      "in_stock": "In Stock",
+      "low_stock": "Low Stock",
+      "out_of_stock": "Out of Stock"
+    },
+    "inventory": "Inventory",
       "reviews": "Reviews",
       "loyalty": "Loyalty",
       "globe": "Globe"

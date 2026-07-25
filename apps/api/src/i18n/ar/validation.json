@@ -23,5 +23,6 @@
   "IS_ENUM": "{property} يجب أن يكون قيمة صالحة من القائمة",
   "INVALID_DATE": "{property} يجب أن يكون تاريخاً صالحاً",
   "INVALID_THEME_RADIUS": "يجب أن تكون قيمة {property} صالحة بين 0 و 2rem",
-  "DATE_NOT_PAST": "{property} يجب أن يكون اليوم أو تاريخاً مستقبلياً"
+  "DATE_NOT_PAST": "{property} must be today or a future date",
+  "LESS_THAN": "يجب أن يكون {field} أقل من {other}"
 }

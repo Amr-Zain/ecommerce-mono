@@ -79,12 +79,12 @@ interface ChartBlockProps {
 
 function ChartBlock({ title, description, children }: ChartBlockProps) {
   return (
-    <Card className="shadow-sm border-muted/60">
+    <Card className="shadow-sm border-muted/60 h-full flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg">{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="flex-1">{children}</CardContent>
     </Card>
   )
 }
@@ -113,7 +113,7 @@ export function SalesTrendChart({
         description={t('dashboard.salesTrendDesc')}
       >
         {data.length ? (
-          <ChartContainer config={salesConfig} className="min-h-72 w-full">
+          <ChartContainer config={salesConfig} className="h-full w-full aspect-auto min-h-72">
             <AreaChart data={data}>
               <CartesianGrid vertical={false} />
               <XAxis
@@ -127,6 +127,7 @@ export function SalesTrendChart({
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
+                domain={[0, 'auto']}
                 tickFormatter={compactNumber}
               />
               <YAxis
@@ -136,6 +137,7 @@ export function SalesTrendChart({
                 axisLine={false}
                 tickMargin={8}
                 allowDecimals={false}
+                domain={[0, 'auto']}
                 tickFormatter={compactNumber}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
@@ -191,7 +193,7 @@ export function RevenueLineChart({
         description={t('dashboard.revenueLineDesc')}
       >
         {data.length ? (
-          <ChartContainer config={salesConfig} className="min-h-72 w-full">
+          <ChartContainer config={salesConfig} className="h-full w-full aspect-auto min-h-72">
             <LineChart data={data}>
               <CartesianGrid vertical={false} />
               <XAxis
@@ -205,6 +207,7 @@ export function RevenueLineChart({
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
+                domain={[0, 'auto']}
                 tickFormatter={compactNumber}
               />
               <YAxis
@@ -214,6 +217,7 @@ export function RevenueLineChart({
                 axisLine={false}
                 tickMargin={8}
                 allowDecimals={false}
+                domain={[0, 'auto']}
                 tickFormatter={compactNumber}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
@@ -265,10 +269,10 @@ export function OrdersDonutChart({
   return (
     <ChartBlock title={title} description={description}>
       {data.length ? (
-        <div className="space-y-4">
+        <div className="h-full flex flex-col gap-4">
           <ChartContainer
             config={{ value: { label: title } }}
-            className="min-h-64 w-full"
+            className="flex-1 w-full aspect-auto min-h-72"
           >
             <PieChart>
               <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
@@ -311,7 +315,7 @@ export function InventoryStockChart({
       description={t('dashboard.inventoryStockStatesDesc')}
     >
       {data.length ? (
-        <ChartContainer config={stockConfig} className="min-h-72 w-full">
+        <ChartContainer config={stockConfig} className="h-full w-full aspect-auto min-h-72">
           <BarChart data={data}>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -351,10 +355,10 @@ export function RadialBreakdownChart({
   return (
     <ChartBlock title={title} description={description}>
       {radialData.length ? (
-        <div className="space-y-4">
+        <div className="h-full flex flex-col gap-4">
           <ChartContainer
             config={{ value: { label: title } }}
-            className="min-h-64 w-full"
+            className="flex-1 w-full aspect-auto min-h-72"
           >
             <RadialBarChart
               data={radialData}
@@ -442,34 +446,34 @@ export function CustomerLineChart({
       description={t('dashboard.customerGrowthDesc')}
     >
       {data.length ? (
-        <ChartContainer config={customerConfig} className="min-h-72 w-full">
-          <LineChart data={data}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="period"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Line
-              dataKey="newUsers"
-              type="monotone"
-              stroke="var(--color-newUsers)"
-              strokeWidth={3}
-              dot={false}
-            />
-            <Line
-              dataKey="activeUsers"
-              type="monotone"
-              stroke="var(--color-activeUsers)"
-              strokeWidth={3}
-              dot={false}
-            />
-            <ChartLegend content={<ChartLegendContent />} />
-          </LineChart>
-        </ChartContainer>
+        <ChartContainer config={customerConfig} className="h-full w-full aspect-auto min-h-72">
+            <LineChart data={data}>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="period"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+              />
+              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line
+                dataKey="newUsers"
+                type="monotone"
+                stroke="var(--color-newUsers)"
+                strokeWidth={3}
+                dot={false}
+              />
+              <Line
+                dataKey="activeUsers"
+                type="monotone"
+                stroke="var(--color-activeUsers)"
+                strokeWidth={3}
+                dot={false}
+              />
+              <ChartLegend content={<ChartLegendContent />} />
+            </LineChart>
+          </ChartContainer>
       ) : (
         <EmptyChart />
       )}
@@ -489,7 +493,7 @@ export function ReviewRatingsChart({
       description={t('dashboard.reviewsByRating')}
     >
       {data.length ? (
-        <ChartContainer config={reviewConfig} className="min-h-72 w-full">
+        <ChartContainer config={reviewConfig} className="h-full w-full aspect-auto min-h-72">
           <BarChart data={data}>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -522,8 +526,8 @@ export function CustomerGrowthChart({
       description={t('dashboard.customerGrowthDesc')}
     >
       {data.length ? (
-        <ChartContainer config={customerConfig} className="min-h-72 w-full">
-          <AreaChart data={data}>
+        <ChartContainer config={customerConfig} className="h-full w-full aspect-auto min-h-72">
+            <AreaChart data={data}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="period"
@@ -569,8 +573,8 @@ export function LoyaltyTrendChart({
       description={t('dashboard.loyaltyPointsTrendDesc')}
     >
       {data.length ? (
-        <ChartContainer config={loyaltyConfig} className="min-h-72 w-full">
-          <AreaChart data={data}>
+        <ChartContainer config={loyaltyConfig} className="h-full w-full aspect-auto min-h-72">
+            <AreaChart data={data}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="period"

@@ -124,7 +124,7 @@ export function ProductShow({ product }: Props) {
         ]}
         preHeader={
           <HasPermission entity="products" action="update">
-            <div className="flex justify-end">
+            <div className="flex justify-end mb-2">
               <Link to={'/products/edit/$id'} params={{ id: String(product.id) }}>
                 <Button size="sm" className="gap-1.5">
                   <Edit className="h-3.5 w-3.5" />
@@ -432,6 +432,7 @@ export function ProductShow({ product }: Props) {
       {/* Variations Dialog */}
       <ProductVariationFormDialog
         productId={product.id}
+        productName={product.en?.name ?? product.name}
         isOpen={variationFormOpen}
         onClose={() => setVariationFormOpen(false)}
         variation={selectedVariation ?? undefined}

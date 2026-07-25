@@ -25,16 +25,6 @@ export function ProductHeaderCard({ product }: Props) {
   const arTitle = product.ar?.name ?? '—'
 
   return (<>
-    <HasPermission entity="products" action="update">
-      <div className="flex justify-end">
-        <Link to={'/products/edit/$id'} params={{ id: String(product.id) }}>
-          <Button size="sm" className="gap-1.5">
-            <Edit className="h-3.5 w-3.5" />
-            {t('actions.update', { entity: t('common.product') })}
-          </Button>
-        </Link>
-      </div>
-    </HasPermission>
     <Card className='mt-4'>
 
       <CardHeader className="flex flex-row items-start justify-between gap-4">
@@ -94,6 +84,16 @@ export function ProductHeaderCard({ product }: Props) {
             <ButtonCopy content={product.shopify_id || ''} className='h-6 w-6' />
           </div>}
         </div>
+    <HasPermission entity="products" action="update">
+      <div className="flex justify-end">
+        <Link to={'/products/edit/$id'} params={{ id: String(product.id) }}>
+          <Button size="sm" className="gap-1.5">
+            <Edit className="h-3.5 w-3.5" />
+            {t('actions.update', { entity: t('common.product') })}
+          </Button>
+        </Link>
+      </div>
+    </HasPermission>
       </CardHeader>
     </Card>
   </>

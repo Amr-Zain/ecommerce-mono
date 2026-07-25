@@ -58,9 +58,11 @@ export function ShowStatusCard({
         .join(' ')}
     >
       <CardHeader className="border-b border-muted/40 pb-2!">
-        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-          {title ?? t('table.columns.status', { defaultValue: 'Status' })}
-        </CardTitle>
+        <div className="pt-4">
+          <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+            {title ?? t('table.columns.status', { defaultValue: 'Status' })}
+          </CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="pt-4">
         <div className="flex items-center justify-between">

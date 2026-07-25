@@ -1,4 +1,5 @@
 import { createFileRoute, useSearch } from '@tanstack/react-router'
+import { keepPreviousData } from '@tanstack/react-query'
 import { z } from 'zod/v4'
 import type {
   DashboardAnalytics,
@@ -81,6 +82,7 @@ function Index() {
     queryKey: queryKeys.dashboard.statistics(dashboardParams),
     endpoint: 'dashboard/home',
     params: dashboardParams,
+    placeholderData: keepPreviousData,
     // suspense: true,
     enabled: hasHomePermission,
   })

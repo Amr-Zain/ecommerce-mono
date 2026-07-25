@@ -6,15 +6,15 @@ import { FieldProp } from '@/types/components/form'
 import { queryKeys } from '@/util/queryKeysFactory'
 import { zodFormResolver } from '@/lib/schema/resolver'
 import { createFileRoute } from '@tanstack/react-router'
+import { keepPreviousData } from '@tanstack/react-query'
 import { Settings, Trophy, Bell, ClipboardList, type LucideIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod/v4'
-import { TabsList, TabsTrigger, TabsContent } from '@ecommerce/ui/components/tabs'
+import { TabsList, TabsTrigger } from '@ecommerce/ui/components/tabs'
 import { AnimatedTabs } from '@/components/ui/AnimatedTabs'
-import type { TabItem } from '@/components/ui/AnimatedTabs'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
 import { SettingsGeneralSkeleton } from '@/components/pagesComponents/Settings/General/Skeleton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@ecommerce/ui/components/card'
 import type { ApiResponse } from '@/types/api/http'
@@ -75,6 +75,7 @@ function RouteComponent() {
   const { data } = useFetch<ApiResponse<Setting[], 'settings'>>({
     endpoint: 'settings',
     queryKey: queryKeys.settings.list('general'),
+    placeholderData: keepPreviousData,
     suspense: true,
   })
 
@@ -151,14 +152,15 @@ function RouteComponent() {
   }, [groupedSettings, t])
 
   const groups = Object.keys(fieldsByGroup)
-  const [activeTab, setActiveTab] = useState<string | undefined>(undefined)
+  const [activeTab, setActiveTab] = useState<string | undefined>(() => groups[0])
+  const resolvedActiveTab = activeTab && fieldsByGroup[activeTab] ? activeTab : groups[0]
 
-  // Set initial tab
+  // Keep the selected tab valid when settings groups change after a refetch.
   useEffect(() => {
-    if (groups.length > 0 && !activeTab) {
+    if (groups.length > 0 && (!activeTab || !fieldsByGroup[activeTab])) {
       setActiveTab(groups[0])
     }
-  }, [groups, activeTab])
+  }, [groups, activeTab, fieldsByGroup])
 
   // Navigate to first group with errors on submission
   useEffect(() => {
@@ -166,11 +168,11 @@ function RouteComponent() {
       const firstErrorGroup = groups.find((group) =>
         fieldsByGroup[group]?.some((field) => field.name && errors[field.name as string])
       )
-      if (firstErrorGroup && firstErrorGroup !== activeTab) {
+      if (firstErrorGroup && firstErrorGroup !== resolvedActiveTab) {
         setActiveTab(firstErrorGroup)
       }
     }
-  }, [submitCount, errors, groups, fieldsByGroup, activeTab])
+  }, [submitCount, errors, groups, fieldsByGroup, resolvedActiveTab])
 
   const { mutate, isPending } = useMutate({
     endpoint: 'settings',
@@ -195,7 +197,7 @@ function RouteComponent() {
 
       {groups.length > 0 ? (
         <AnimatedTabs
-          value={activeTab}
+          value={resolvedActiveTab}
           onValueChange={setActiveTab}
           items={groups.map((group) => ({ value: group, label: groupedSettings[group].label }))}
           renderTabsList={(itemsList, activeValue) => (
@@ -226,50 +228,43 @@ function RouteComponent() {
               </aside>
 
               <div className="flex-1">
-                <AnimatePresence mode="wait">
-                  {groups.map((group) =>
-                    group === activeValue ? (
-                      <motion.div
-                        key={group}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <TabsContent key={group} value={group} className="m-0 focus-visible:outline-none">
-                          <Card className="shadow-sm border-muted/60 overflow-hidden">
-                            <CardHeader className="bg-muted/10 border-b border-muted/40 pb-2!">
-                              <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                                  {(() => {
-                                    const Icon = groupIcons[group] ?? DefaultGroupIcon
-                                    return <Icon className="h-5 w-5" />
-                                  })()}
-                                </div>
-                                <CardTitle className="text-xl capitalize">
-                                  {groupedSettings[group].label}
-                                </CardTitle>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="p-8">
-                              <AppForm
-                                schema={schema}
-                                fields={fieldsByGroup[group]}
-                                providedForm={form}
-                                onSubmit={onSubmit}
-                                isLoading={isPending}
-                                gridColumns={2}
-                                submitButtonText={t('buttons.save')}
-                                showSubmitButton={true}
-                                spacing="lg"
-                              />
-                            </CardContent>
-                          </Card>
-                        </TabsContent>
-                      </motion.div>
-                    ) : null
-                  )}
-                </AnimatePresence>
+                {activeValue && fieldsByGroup[activeValue] && (
+                  <motion.div
+                    key={activeValue}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.16, ease: 'easeOut' }}
+                  >
+                    <Card className="shadow-sm border-muted/60 overflow-hidden transition-shadow duration-200">
+                      <CardHeader className="bg-muted/10 border-b border-muted/40 pb-2!">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="p-2 rounded-lg bg-primary/10 text-primary transition-colors duration-200">
+                            {(() => {
+                              const Icon = groupIcons[activeValue] ?? DefaultGroupIcon
+                              return <Icon className="h-5 w-5" />
+                            })()}
+                          </div>
+                          <CardTitle className="text-xl capitalize">
+                            {groupedSettings[activeValue].label}
+                          </CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-8">
+                        <AppForm
+                          schema={schema}
+                          fields={fieldsByGroup[activeValue]}
+                          providedForm={form}
+                          onSubmit={onSubmit}
+                          isLoading={isPending}
+                          gridColumns={2}
+                          submitButtonText={t('buttons.save')}
+                          showSubmitButton={true}
+                          spacing="lg"
+                        />
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
               </div>
             </div>
           )}

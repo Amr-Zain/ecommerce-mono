@@ -109,7 +109,9 @@
     "send_message": "إرسال رسالة",
     "message_campaigns": "حملات الرسائل",
     "coupons": "الكوبونات",
-    "tickets": "التذاكر"
+    "tickets": "التذاكر",
+    "exchange": "التبديل",
+    "returns": "المرتجعات"
   },
   "workspace": {
     "switch": "تبديل مساحة العمل",
@@ -144,6 +146,7 @@
     "category": "الفئة",
     "slider": "سلايدر",
     "attribute": "السمة",
+    "reset": "إعادة تعيين",
     "shopifyStore": "متجر شوبيفاي",
     "yes": "نعم",
     "no": "لا",
@@ -328,10 +331,17 @@
     "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
     "percentageUnder100": "يجب أن يكون الخصم بالنسبة المئوية أقل من 100",
     "percentage100": "يجب أن يكون الخصم بالنسبة المئوية أقل من أو يساوي 100",
-    "startBeforeEnd": "يجب أن يكون تاريخ البدء قبل تاريخ الانتهاء"
+    "startBeforeEnd": "يجب أن يكون تاريخ البدء قبل تاريخ الانتهاء",
+    "costPriceLessThanPrice": "يجب أن يكون سعر التكلفة أقل من سعر البيع"
   },
   "serverValidation": {
     "formatInvalid": "تنسيق {{field}} غير صالح"
+  },
+  "wallets": {
+    "pending_balance": "الرصيد المعلق",
+    "available_balance": "الرصيد المتاح",
+    "amount": "المبلغ",
+    "method": "الطريقة"
   },
   "rewards": {
     "entity": "مكافأه",
@@ -340,7 +350,11 @@
     "points_required": "النقاط المطلوبة",
     "discount": "الخصم",
     "fixed": "قيمة ثابتة",
-    "percentage": "نسبة مئوية"
+    "percentage": "نسبة مئوية",
+    "max_discount_amount": "الحد الأقصى للخصم",
+    "min_order_amount": "الحد الأدنى للطلب",
+    "usage_limit": "حد الاستخدام",
+    "per_user_limit": "الحد لكل مستخدم"
   },
   "actions": {
     "entity": "الإجراءات",
@@ -366,7 +380,9 @@
     "editShowRoom": "تعديل صالة العرض",
     "editCategory": "تعديل الفئة",
     "editAttribute": "تعديل السمة",
-    "adjustStock": "تعديل المخزون"
+    "adjustStock": "تعديل المخزون",
+    "title": "الإجراءات",
+    "generate": "توليد"
   },
   "modals": {
     "active": {
@@ -429,7 +445,10 @@
     "cancelled": "ملغى",
     "processing": "قيد المعالجة",
     "expired": "منتهي الصلاحية",
-    "canceled": "ملغي"
+    "canceled": "ملغي",
+    "shipped": "تم الشحن",
+    "delivered": "تم التسليم",
+    "refunded": "تم الاسترداد"
   },
   "sort": {
     "title": "الترتيب",
@@ -569,7 +588,8 @@
       "generate_loyalty_bridge_token": "توليد رمز ولاء بريدج",
       "bodyEn": "المحتوى (إنجليزي)",
       "bodyAr": "المحتوى (عربي)",
-      "body": "المحتوى"
+      "body": "المحتوى",
+      "reason": "السبب"
     },
     "placeholders": {
       "country": "اختر دولة",
@@ -920,7 +940,8 @@
     "profile": "الملف الشخصي",
     "collection": "الفئات الرئيسية",
     "sub_collection": "الفئات فرعية",
-    "sub_sub_collection": "الفئات فرعية فرعية"
+    "sub_sub_collection": "الفئات فرعية فرعية",
+    "limit": "الحد"
   },
   "time": {
     "daysAgo_zero": "اليوم",
@@ -1140,7 +1161,12 @@
       "overview": "نظرة عامة",
       "sales": "المبيعات",
       "customers": "العملاء",
-      "inventory": "المخزون",
+    "stockStates": {
+      "in_stock": "متوفر",
+      "low_stock": "مخزون منخفض",
+      "out_of_stock": "نفذ من المخزون"
+    },
+    "inventory": "المخزون",
       "reviews": "المراجعات",
       "loyalty": "الولاء",
       "globe": "الخريطة"
@@ -1618,6 +1644,13 @@
       "orders": "الطلبات الأخيرة",
       "wishlists": "المفضلة",
       "reviews": "التقييمات الأخيرة"
+    },
+    "history": {
+      "change": "التغيير",
+      "previous": "السابق",
+      "new": "الجديد",
+      "oldPrice": "السعر القديم",
+      "newPrice": "السعر الجديد"
     }
   },
   "shopifyStoreShow": {

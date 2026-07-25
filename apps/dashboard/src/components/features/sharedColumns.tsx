@@ -207,7 +207,7 @@ export function imageNameColumn<T>(
             opts.renderImage(ctx, image as any, name)
           ) : image ? (
             <ImageWithPreview
-              src={(image as any)?.url}
+              src={(image as any)?.path ?? (image as any)?.url}
               alt={String(name ?? '')}
               className="size-12 rounded-full border border-border object-cover"
             />

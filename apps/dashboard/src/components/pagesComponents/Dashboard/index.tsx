@@ -318,10 +318,10 @@ export function Dashboard({
             }))}
             renderTabsList={(itemsList) => (
               <>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex mb-4">
                   <TabsList
                     className={cn(
-                      'bg-muted/50 border overflow-x-auto max-w-full relative !h-14 p-1 gap-1 transition-opacity',
+                      'bg-muted/50 border overflow-x-auto max-w-full relative h-10 gap-0 transition-opacity scroll-smooth snap-x snap-mandatory',
                     )}
                   >
                     {itemsList.map((tab) => {
@@ -333,7 +333,7 @@ export function Dashboard({
                         <TabsTrigger
                           key={tab.value}
                           value={tab.value}
-                          className="h-10 min-w-32 gap-1.5 px-4 font-bold"
+                          className="min-w-fit gap-1.5 px-3 font-bold snap-start"
                         >
                           {Icon && (
                             <Icon
@@ -429,7 +429,7 @@ export function Dashboard({
                             data={analytics.salesTrend}
                             className="xl:col-span-4"
                           />
-                          <div className="xl:col-span-3">
+                          <div className="xl:col-span-3 h-full">
                             <RadialBreakdownChart
                               title={t('dashboard.ordersByStatus')}
                               description={t('dashboard.distributionByStatus')}
@@ -439,21 +439,14 @@ export function Dashboard({
                         </motion.div>
                         <motion.div
                           variants={itemVariants}
-                          className="grid gap-4 lg:grid-cols-3"
+                          className="grid gap-4 lg:grid-cols-2"
                         >
-                          <div className="lg:col-span-1">
+                          <div className="h-full">
                             <OperationalAlertsCard
                               alerts={analytics.operationalAlerts}
                             />
                           </div>
-                          <div>
-                            <RadialBreakdownChart
-                              title={t('dashboard.paymentHealth')}
-                              description={t('dashboard.paymentHealthDesc')}
-                              data={analytics.paymentHealth}
-                            />
-                          </div>
-                          <div>
+                          <div className="h-full">
                             <RadialBreakdownChart
                               title={t('dashboard.customerSegments')}
                               description={t('dashboard.customerSegmentsDesc')}
@@ -461,11 +454,18 @@ export function Dashboard({
                             />
                           </div>
                         </motion.div>
+                        <motion.div variants={itemVariants}>
+                          <RadialBreakdownChart
+                            title={t('dashboard.paymentHealth')}
+                            description={t('dashboard.paymentHealthDesc')}
+                            data={analytics.paymentHealth}
+                          />
+                        </motion.div>
                         <motion.div
                           variants={itemVariants}
                           className="grid gap-4 grid-cols-1 md:grid-cols-2"
                         >
-                          <Card className="shadow-sm border-muted/60">
+                          <Card className="shadow-sm border-muted/60 h-full">
                             <CardHeader className="flex flex-row items-center justify-between">
                               <div>
                                 <CardTitle className="text-lg">
@@ -529,7 +529,7 @@ export function Dashboard({
                               </div>
                             </CardContent>
                           </Card>
-                          <div className="space-y-4">
+                          <div className="space-y-4 h-full">
                             <Card className="shadow-sm border-muted/60">
                               <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">

@@ -250,6 +250,7 @@ export type I18nTranslations = {
         "INVALID_DATE": string;
         "INVALID_THEME_RADIUS": string;
         "DATE_NOT_PAST": string;
+        "LESS_THAN": string;
     };
 };
 /* prettier-ignore */

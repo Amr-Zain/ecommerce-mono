@@ -23,5 +23,6 @@
   "IS_ENUM": "{property} must be a valid value",
   "INVALID_DATE": "{property} must be a valid date",
   "INVALID_THEME_RADIUS": "{property} must be a valid radius between 0 and 2rem",
-  "DATE_NOT_PAST": "{property} must be today or a future date"
+  "DATE_NOT_PAST": "{property} must be today or a future date",
+  "LESS_THAN": "{field} must be less than {other}"
 }
