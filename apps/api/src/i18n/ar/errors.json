@@ -143,5 +143,6 @@
   "productvariant not found": "متغير المنتج غير موجود",
   "dashboard_theme_variables_limit": "يحتوي {path} على عدد كبير جداً من متغيرات المظهر",
   "dashboard_theme_variable_unsupported": "متغير مظهر غير مدعوم: {variable}",
-  "dashboard_theme_variable_invalid": "قيمة غير صالحة لمتغير المظهر: {variable}"
+  "dashboard_theme_variable_invalid": "قيمة غير صالحة لمتغير المظهر: {variable}",
+  "coupon_code_exists": "رمز الكوبون موجود بالفعل"
 }

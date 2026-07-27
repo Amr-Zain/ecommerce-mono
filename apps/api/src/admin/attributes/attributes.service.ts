@@ -29,7 +29,7 @@ export class AttributesService {
 
   async create(data: CreateAttributeDto): Promise<Attribute> {
     const created = await this.repo.createAttribute(
-      data as unknown as Parameters<AttributesRepository['createAttribute']>[0],
+      data as Parameters<AttributesRepository['createAttribute']>[0],
     );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
     return created;
@@ -38,7 +38,7 @@ export class AttributesService {
   async update(id: number, data: UpdateAttributeDto): Promise<Attribute> {
     const updated = await this.repo.updateAttribute(
       id,
-      data as unknown as Parameters<AttributesRepository['updateAttribute']>[1],
+      data as Parameters<AttributesRepository['updateAttribute']>[1],
     );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.attributesChanged);
     return updated;

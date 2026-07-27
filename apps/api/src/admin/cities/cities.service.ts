@@ -25,7 +25,7 @@ export class CitiesService {
   async updateCity(id: number | bigint, city: UpdateCityDto) {
     const updated = await this.CitiesRepo.updateCity(
       id,
-      city as unknown as Parameters<CitiesRepository['updateCity']>[1],
+      city as Parameters<CitiesRepository['updateCity']>[1],
     );
     this.publicCacheInvalidation.publish(PUBLIC_CACHE_EVENTS.locationsChanged);
     return updated;

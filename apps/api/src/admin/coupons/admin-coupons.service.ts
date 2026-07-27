@@ -1,11 +1,16 @@
 import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
+import { I18nService } from 'nestjs-i18n';
 import { COUPONS_REPOSITORY, Coupon, ICouponsRepository } from '@/common/interfaces/coupons.interface';
+import { I18nTranslations } from '@/generated/i18n.generated';
 import { CreateCouponDto, UpdateCouponDto } from './dto/coupon.dto';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 
 @Injectable()
 export class AdminCouponsService {
-  constructor(@Inject(COUPONS_REPOSITORY) private readonly couponsRepo: ICouponsRepository) {}
+  constructor(
+    @Inject(COUPONS_REPOSITORY) private readonly couponsRepo: ICouponsRepository,
+    private readonly i18n: I18nService<I18nTranslations>,
+  ) {}
 
   async findAll(query: AdvancedQueryDto) {
     const result = await this.couponsRepo.findAll(query);
@@ -23,7 +28,7 @@ export class AdminCouponsService {
   async findOne(id: bigint) {
     const coupon = await this.couponsRepo.findById(id);
     if (!coupon) {
-      throw new NotFoundException('Coupon not found');
+      throw new NotFoundException(this.i18n.t('errors.coupon_not_found_or_inactive'));
     }
     return this.formatCoupon(coupon);
   }
@@ -31,7 +36,7 @@ export class AdminCouponsService {
   async create(dto: CreateCouponDto) {
     const existing = await this.couponsRepo.findByCode(dto.code);
     if (existing) {
-      throw new ConflictException('Coupon code already exists');
+      throw new ConflictException(this.i18n.t('errors.coupon_code_exists'));
     }
 
     const data = {
@@ -57,7 +62,7 @@ export class AdminCouponsService {
     if (dto.code) {
       const existing = await this.couponsRepo.findByCodeExceptId(dto.code, id);
       if (existing) {
-        throw new ConflictException('Coupon code already exists');
+        throw new ConflictException(this.i18n.t('errors.coupon_code_exists'));
       }
     }
 
@@ -72,7 +77,7 @@ export class AdminCouponsService {
   async remove(id: bigint) {
     await this.findOne(id);
     await this.couponsRepo.delete(id);
-    return { message: 'Coupon deleted successfully' };
+    return { message: this.i18n.t('common.deleted_successfully') };
   }
 
   private formatCoupon(coupon: Coupon) {

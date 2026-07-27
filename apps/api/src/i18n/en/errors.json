@@ -143,5 +143,6 @@
   "productvariant not found": "Product variant not found",
   "dashboard_theme_variables_limit": "{path} contains too many theme variables",
   "dashboard_theme_variable_unsupported": "Unsupported theme variable: {variable}",
-  "dashboard_theme_variable_invalid": "Invalid value for theme variable: {variable}"
+  "dashboard_theme_variable_invalid": "Invalid value for theme variable: {variable}",
+  "coupon_code_exists": "Coupon code already exists"
 }

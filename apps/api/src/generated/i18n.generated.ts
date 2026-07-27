@@ -223,6 +223,7 @@ export type I18nTranslations = {
         "dashboard_theme_variables_limit": string;
         "dashboard_theme_variable_unsupported": string;
         "dashboard_theme_variable_invalid": string;
+        "coupon_code_exists": string;
     };
     "validation": {
         "NOT_EMPTY": string;
