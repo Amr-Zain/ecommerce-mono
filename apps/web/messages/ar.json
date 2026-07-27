@@ -71,7 +71,13 @@
   "Collections": {
     "viewAll": "عرض الكل",
     "productCount": "{count} منتجات",
-    "viewCollection": "عرض {name}"
+    "viewCollection": "عرض {name}",
+    "eyebrow": "تسوق حسب الفئة",
+    "search": "بحث في المجموعات",
+    "searchPlaceholder": "ابحث باسم المجموعة أو الفئة",
+    "showing": "{count} مجموعات",
+    "emptyTitle": "لم يتم العثور على مجموعات",
+    "emptyDescription": "جرّب بحثاً مختلفاً أو تصفح جميع المجموعات."
   },
   "Wishlist": {
     "title": "قائمة الرغبات",

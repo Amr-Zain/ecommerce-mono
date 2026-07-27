@@ -69,7 +69,13 @@
   "Collections": {
     "viewAll": "View all",
     "productCount": "{count} products",
-    "viewCollection": "View {name}"
+    "viewCollection": "View {name}",
+    "eyebrow": "Shop by category",
+    "search": "Search collections",
+    "searchPlaceholder": "Search by collection or category",
+    "showing": "{count} collections",
+    "emptyTitle": "No collections found",
+    "emptyDescription": "Try a different search or browse all collections."
   },
   "Wishlist": {
     "title": "My Wishlist",
