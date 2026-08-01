@@ -111,7 +111,7 @@ const buildVariationPayload = (
     stock_quantity: finalOut.stock,
     is_active: finalOut.is_active,
     is_default: finalOut.is_default,
-    gallery: finalOut.gallery?.map(toGalleryValue) || [],
+    gallery: (finalOut.gallery?.map(toGalleryValue) || []).filter((v) => v != null),
     sku: finalOut.sku,
     barcode: finalOut.barcode,
     attributes:
