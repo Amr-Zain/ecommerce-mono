@@ -12,6 +12,7 @@ import {
 } from "@ecommerce/ui/components/carousel"
 import { AutoSlider } from "@/components/shared/auto-slider"
 import { ROUTES } from "@/lib/routes"
+import { Stagger } from "@ecommerce/ui/components/motion"
 
 export type SliderItem = {
   id: string
@@ -37,12 +38,19 @@ export function PromoSection({ sliders }: { sliders: SliderItem[] }) {
                   priority
                 />
                 <div className="relative z-10 mx-auto w-full max-w-7xl px-6 sm:px-10">
-                  <div className="max-w-xl">
-                    <h2 className="text-3xl font-semibold leading-tight text-white drop-shadow-lg sm:text-4xl">
+                  <Stagger
+                    className="max-w-xl"
+                    revealOnScroll={false}
+                    stagger={0.12}
+                  >
+                    <h2
+                      data-motion-item
+                      className="text-3xl leading-tight font-semibold text-white drop-shadow-lg sm:text-4xl"
+                    >
                       {slider.title}
                     </h2>
                     <Button
-                      
+                      data-motion-item
                       size="sm"
                       className="mt-6 rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
                     >
@@ -54,7 +62,7 @@ export function PromoSection({ sliders }: { sliders: SliderItem[] }) {
                         />
                       </Link>
                     </Button>
-                  </div>
+                  </Stagger>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
               </div>

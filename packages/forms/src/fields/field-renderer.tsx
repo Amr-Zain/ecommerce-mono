@@ -1,41 +1,41 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form"
+import * as React from "react";
+import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@ecommerce/ui/components/form"
-import type { FormField as FormFieldConfig } from "../field-types"
-import { TextField, TextareaField } from "./text-field"
-import { PasswordField } from "./password-field"
-import { OTPField } from "./otp-field"
-import { SelectField } from "./select-field"
-import { FileField } from "./file-field"
-import { RadioField } from "./radio-field"
-import { CheckboxField, SwitchField } from "./checkbox-field"
-import { IdentifierField } from "./identifier-field"
+} from "@ecommerce/ui/components/form";
+import type { FormField as FormFieldConfig } from "../field-types";
+import { TextField, TextareaField } from "./text-field";
+import { PasswordField } from "./password-field";
+import { OTPField } from "./otp-field";
+import { SelectField } from "./select-field";
+import { FileField } from "./file-field";
+import { RadioField } from "./radio-field";
+import { CheckboxField, SwitchField } from "./checkbox-field";
+import { IdentifierField } from "./identifier-field";
 
-const digitsOnly = (value: string) => value.replace(/\D/g, "")
+const digitsOnly = (value: string) => value.replace(/\D/g, "");
 
 export interface FieldRendererProps<T extends FieldValues> {
-  field: FormFieldConfig<T>
-  form: UseFormReturn<T, unknown, T>
-  label: React.ReactNode
-  required: boolean
+  field: FormFieldConfig<T>;
+  form: UseFormReturn<T, unknown, T>;
+  label: React.ReactNode;
+  required: boolean;
   /** Override renderers for custom/platform-specific field types */
   customRenderers?: Record<
     string,
     (props: {
-      field: FormFieldConfig<T>
-      form: UseFormReturn<T, unknown, T>
-      label: React.ReactNode
-      required: boolean
+      field: FormFieldConfig<T>;
+      form: UseFormReturn<T, unknown, T>;
+      label: React.ReactNode;
+      required: boolean;
     }) => React.ReactNode
-  >
+  >;
 }
 
 function FieldRenderer<T extends FieldValues>({
@@ -48,17 +48,17 @@ function FieldRenderer<T extends FieldValues>({
   // Custom field — render via render function or customItem
   if (field.type === "custom") {
     if (field.render) {
-      return <>{field.render({ form, label, required })}</>
+      return <>{field.render({ form, label, required })}</>;
     }
     if (field.customItem) {
-      return <>{field.customItem}</>
+      return <>{field.customItem}</>;
     }
-    return null
+    return null;
   }
 
   // Check if there's a custom renderer registered for this field type
   if (customRenderers?.[field.type]) {
-    return <>{customRenderers[field.type]({ field, form, label, required })}</>
+    return <>{customRenderers[field.type]({ field, form, label, required })}</>;
   }
 
   // Identifier field (phone/email auto-detect) — special case, no FormField wrapper
@@ -70,6 +70,9 @@ function FieldRenderer<T extends FieldValues>({
         phoneCodeName={field.phoneCodeName}
         label={label}
         phoneCodeLabel={field.phoneCodeLabel}
+        countrySearchPlaceholder={field.countrySearchPlaceholder}
+        noCountryText={field.noCountryText}
+        phoneMustStartWithText={field.phoneMustStartWithText}
         required={required}
         disabled={field.disabled}
         detectedPhoneText={field.detectedPhoneText}
@@ -78,7 +81,7 @@ function FieldRenderer<T extends FieldValues>({
         inputProps={field.inputProps}
         phoneCodeInputProps={field.phoneCodeInputProps}
       />
-    )
+    );
   }
 
   // All other fields use FormField wrapper
@@ -112,11 +115,14 @@ function FieldRenderer<T extends FieldValues>({
         </FormItem>
       )}
     />
-  )
+  );
 }
 
 function renderFieldInput<T extends FieldValues>(
-  field: Exclude<FormFieldConfig<T>, { type: "custom" } | { type: "identifier" }>,
+  field: Exclude<
+    FormFieldConfig<T>,
+    { type: "custom" } | { type: "identifier" }
+  >,
   controllerField: any,
   form: UseFormReturn<T, unknown, T>,
 ): React.ReactElement {
@@ -135,7 +141,7 @@ function renderFieldInput<T extends FieldValues>(
           value={controllerField.value ?? ""}
           {...field.inputProps}
         />
-      )
+      );
 
     case "password":
       return (
@@ -146,7 +152,7 @@ function renderFieldInput<T extends FieldValues>(
           value={controllerField.value ?? ""}
           {...field.inputProps}
         />
-      )
+      );
 
     case "textarea":
       return (
@@ -158,7 +164,7 @@ function renderFieldInput<T extends FieldValues>(
           value={controllerField.value ?? ""}
           {...field.inputProps}
         />
-      )
+      );
 
     case "otp":
       return (
@@ -169,7 +175,7 @@ function renderFieldInput<T extends FieldValues>(
           disabled={field.disabled}
           type={field.otpType}
         />
-      )
+      );
 
     case "select":
       return (
@@ -181,7 +187,7 @@ function renderFieldInput<T extends FieldValues>(
           multiple={field.multiple}
           {...(field.inputProps as any)}
         />
-      )
+      );
 
     case "radio":
       return (
@@ -192,7 +198,7 @@ function renderFieldInput<T extends FieldValues>(
           disabled={field.disabled}
           orientation={field.orientation}
         />
-      )
+      );
 
     case "checkbox":
       return (
@@ -202,7 +208,7 @@ function renderFieldInput<T extends FieldValues>(
           disabled={field.disabled}
           label={field.label}
         />
-      )
+      );
 
     case "switch":
       return (
@@ -212,7 +218,7 @@ function renderFieldInput<T extends FieldValues>(
           disabled={field.disabled}
           label={field.label}
         />
-      )
+      );
 
     case "file":
       return (
@@ -223,7 +229,7 @@ function renderFieldInput<T extends FieldValues>(
           onChange={(files) => controllerField.onChange(files)}
           {...field.inputProps}
         />
-      )
+      );
 
     case "datePicker":
     case "phone":
@@ -234,7 +240,7 @@ function renderFieldInput<T extends FieldValues>(
         <div className="text-sm text-muted-foreground">
           [Register a customRenderer for &quot;{field.type}&quot;]
         </div>
-      )
+      );
 
     default:
       return (
@@ -244,8 +250,8 @@ function renderFieldInput<T extends FieldValues>(
           {...controllerField}
           value={controllerField.value ?? ""}
         />
-      )
+      );
   }
 }
 
-export { FieldRenderer }
+export { FieldRenderer };

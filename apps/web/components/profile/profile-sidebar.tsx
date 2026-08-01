@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { normalizeUploadUrl } from "@/lib/media-url"
 import Image from "next/image"
 import { Badge } from "@ecommerce/ui/components/badge"
+import { Button } from "@ecommerce/ui/components/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   UserCircleIcon,
@@ -18,12 +19,13 @@ import {
   ArrowLeftRightIcon,
   Ticket01Icon,
   Logout01Icon,
-  Camera01Icon,
+  Edit01Icon,
   FavouriteIcon,
   GiftIcon,
   SecurityCheckIcon,
 } from "@hugeicons/core-free-icons"
 import { toast } from "@ecommerce/ui/components/sonner"
+import { useTranslations } from "next-intl"
 import {
   uploadCurrentUserImage,
   useCurrentUser,
@@ -33,40 +35,40 @@ import {
 } from "@/hooks/api/use-current-user"
 
 const SIDEBAR_LINKS = [
-  { name: "My account", href: ROUTES.profile.root, icon: UserCircleIcon },
-  { name: "My Wishlist", href: ROUTES.profile.wishlist, icon: FavouriteIcon },
-  { name: "My Orders", href: ROUTES.profile.orders.root, icon: PackageIcon },
+  { key: "account", href: ROUTES.profile.root, icon: UserCircleIcon },
+  { key: "wishlist", href: ROUTES.profile.wishlist, icon: FavouriteIcon },
+  { key: "orders", href: ROUTES.profile.orders.root, icon: PackageIcon },
   // {
   //   name: "Order Details",
   //   href: "/profile/orders/details",
   //   icon: DocumentValidationIcon,
   // },
   {
-    name: "My Addresses",
+    key: "addresses",
     href: ROUTES.profile.addresses,
     icon: Location01Icon,
   },
-  { name: "My Wallet", href: ROUTES.profile.wallet, icon: Wallet01Icon },
+  { key: "wallet", href: ROUTES.profile.wallet, icon: Wallet01Icon },
   {
-    name: "Payment Activity",
+    key: "payments",
     href: ROUTES.profile.payments,
     icon: CreditCardIcon,
   },
-  { name: "My Loyalty", href: ROUTES.profile.loyalty, icon: GiftIcon },
+  { key: "loyalty", href: ROUTES.profile.loyalty, icon: GiftIcon },
   // { name: "Payment", href: "/profile/payment", icon: CreditCardIcon },
   // { name: "Gift Cards", href: "/profile/gift-cards", icon: GiftIcon },
   {
-    name: "Return & Refunds",
+    key: "returns",
     href: ROUTES.profile.returns,
     icon: ArrowLeftRightIcon,
   },
   // { name: "Email Newsletter", href: "/profile/newsletter", icon: Mail01Icon },
   {
-    name: "Support Tickets",
+    key: "support",
     href: ROUTES.profile.support.root,
     icon: Ticket01Icon,
   },
-  { name: "Security", href: ROUTES.profile.security, icon: SecurityCheckIcon },
+  { key: "security", href: ROUTES.profile.security, icon: SecurityCheckIcon },
 ]
 
 function getMediaUrl(media?: ProfileMedia | string | null) {
@@ -87,6 +89,7 @@ function getProfileImage(
 }
 
 export function ProfileSidebar() {
+  const t = useTranslations("ProfileNav")
   const pathname = usePathname()
   const { data: session, update: updateSession } = useSession()
   const { data: currentUser } = useCurrentUser()
@@ -96,7 +99,7 @@ export function ProfileSidebar() {
   const profile = currentUser?.data
   const tier = profile?.tier ?? profile?.loyalty?.tier
   const image = getProfileImage(profile, session?.user.image)
-  const displayName = profile?.name || session?.user.name || "User"
+  const displayName = profile?.name || session?.user.name || t("user")
   const initials = displayName
     .split(" ")
     .map((part) => part[0])
@@ -111,7 +114,7 @@ export function ProfileSidebar() {
     if (!file) return
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please choose an image file.")
+      toast.error(t("imageOnly"))
       return
     }
 
@@ -131,13 +134,13 @@ export function ProfileSidebar() {
                 image: updatedImage,
               },
             })
-            toast.success("Profile photo updated")
+            toast.success(t("photoUpdated"))
           },
         }
       )
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Profile photo upload failed"
+        error instanceof Error ? error.message : t("photoUploadFailed")
       )
     } finally {
       setUploading(false)
@@ -145,64 +148,63 @@ export function ProfileSidebar() {
   }
 
   return (
-    <aside className="flex w-full shrink-0 flex-col gap-6 rounded-xl border bg-card p-6 sm:w-[280px]">
+    <aside className="flex w-full shrink-0 flex-col rounded-2xl border bg-card p-4 shadow-sm md:sticky md:top-[8rem] md:h-[calc(100dvh-8.75rem)] md:w-[280px]">
       {/* Profile Header */}
-      <div className="flex flex-col gap-4 border-b pb-6">
-        <div className="flex flex-col gap-2">
-          <div className="relative size-16 overflow-hidden rounded-xl border bg-muted/50">
-            {image ? (
-              <Image
-                src={image}
-                alt={displayName}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="flex size-full items-center justify-center text-lg font-bold text-muted-foreground">
-                {initials || "U"}
-              </div>
-            )}
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageChange}
-          />
-          <button
+      <div className="relative flex items-center gap-3 border-b pb-4">
+        <div className="relative size-12 shrink-0 overflow-visible rounded-xl border bg-muted/50">
+          {image ? (
+            <Image
+              src={image}
+              alt={displayName}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex size-full items-center justify-center text-sm font-bold text-muted-foreground">
+              {initials || "U"}
+            </div>
+          )}
+          <Button
             type="button"
-            className="flex items-center gap-1.5 text-left text-xs font-semibold text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            variant="default"
+            size="icon-sm"
+            className="absolute -end-1 -bottom-1 size-5 rounded-full p-0 shadow-sm"
             disabled={imagePending}
             onClick={() => fileInputRef.current?.click()}
+            aria-label={imagePending ? t("uploading") : t("editPhoto")}
+            title={imagePending ? t("uploading") : t("editPhoto")}
           >
-            <HugeiconsIcon icon={Camera01Icon} className="size-3.5" />
-            {imagePending ? "Uploading..." : "Edit Profile Photo"}
-          </button>
+            <HugeiconsIcon icon={Edit01Icon} className="size-3" />
+          </Button>
         </div>
-        <div>
-          <h2 className="text-lg font-bold">{displayName}</h2>
-          <p className="text-sm text-muted-foreground">
+        <div className="min-w-0 flex-1 pe-16">
+          <h2 className="truncate text-sm font-bold">{displayName}</h2>
+          <p className="truncate text-xs text-muted-foreground">
             {profile?.email || session?.user.email}
           </p>
-          {tier?.name && (
-            <Badge
-              variant="secondary"
-              className="mt-2 w-fit"
-              style={
-                tier.color
-                  ? { borderColor: tier.color, color: tier.color }
-                  : undefined
-              }
-            >
-              {tier.name} {tier.multiplier ? `${tier.multiplier}x` : ""}
-            </Badge>
-          )}
         </div>
+        {tier?.name && (
+          <Badge
+            variant="secondary"
+            className="absolute end-0 top-0 text-[10px]"
+            style={
+              tier.color
+                ? { borderColor: tier.color, color: tier.color }
+                : undefined
+            }
+          >
+            {tier.name} {tier.multiplier ? `${tier.multiplier}x` : ""}
+          </Badge>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageChange}
+        />
       </div>
-
-      {/* Navigation */}
-      <nav className="flex flex-1 flex-col gap-1">
+      <nav className="-me-2 mt-3 flex min-h-0 flex-1 [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] flex-col gap-1 overflow-y-auto pe-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
         {SIDEBAR_LINKS.map((link) => {
           const isActive = pathname === link.href
           return (
@@ -221,7 +223,7 @@ export function ProfileSidebar() {
                 className={cn("size-4.5", isActive && "text-foreground")}
                 strokeWidth={isActive ? 2.5 : 2}
               />
-              {link.name}
+              {t(link.key)}
             </Link>
           )
         })}
@@ -233,7 +235,7 @@ export function ProfileSidebar() {
               className="size-4.5"
               strokeWidth={2}
             />
-            Logout
+            {t("logout")}
           </button>
         </div>
       </nav>

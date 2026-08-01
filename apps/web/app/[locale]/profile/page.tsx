@@ -12,6 +12,7 @@ import {
   useCurrentUser,
   useUpdateCurrentUser,
 } from "@/hooks/api/use-current-user"
+import { ProfilePageSkeleton } from "@/components/profile/profile-page-skeleton"
 
 type ProfileFormValues = {
   name: string
@@ -50,6 +51,8 @@ export default function ProfilePage() {
   }, [form, profile])
 
   const pending = isLoading || updateProfile.isPending
+
+  if (isLoading) return <ProfilePageSkeleton variant="form" />
 
   const fields: FormField<ProfileFormValues>[] = [
     {

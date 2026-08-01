@@ -6,6 +6,9 @@ import { useRouter } from "@/i18n/navigation"
 
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
+import { Stagger } from "@ecommerce/ui/components/motion"
+import { useTranslations } from "next-intl"
+import { ProfilePageSkeleton } from "@/components/profile/profile-page-skeleton"
 import {
   notificationHref,
   useMarkAllNotificationsRead,
@@ -24,6 +27,7 @@ function notificationStatus(notification: Notification) {
 }
 
 function NotificationRow({ notification }: { notification: Notification }) {
+  const t = useTranslations("Notifications")
   const router = useRouter()
   const markRead = useMarkNotificationRead()
   const href = notificationHref(notification)
@@ -45,7 +49,10 @@ function NotificationRow({ notification }: { notification: Notification }) {
   }
 
   return (
-    <article className="flex gap-3 border-b p-4 last:border-b-0">
+    <article
+      data-motion-item
+      className={`m-2 flex gap-3 rounded-xl border p-4 transition-colors ${isUnread ? "border-primary/20 bg-primary/5" : "bg-card hover:bg-muted/40"}`}
+    >
       <span
         className={`mt-2 size-2 shrink-0 rounded-full ${
           isUnread ? "bg-primary" : "bg-muted"
@@ -55,9 +62,7 @@ function NotificationRow({ notification }: { notification: Notification }) {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 className="font-medium">{notification.title}</h2>
-            <p className="text-sm text-muted-foreground">
-              {notification.body}
-            </p>
+            <p className="text-sm text-muted-foreground">{notification.body}</p>
           </div>
           {status && (
             <Badge variant="secondary" className="capitalize">
@@ -84,7 +89,7 @@ function NotificationRow({ notification }: { notification: Notification }) {
                   })
                 }
               >
-                Mark as read
+                {t("markAsRead")}
               </Button>
             )}
             {href && (
@@ -94,7 +99,7 @@ function NotificationRow({ notification }: { notification: Notification }) {
                 disabled={markRead.isPending}
                 onClick={open}
               >
-                View details
+                {t("viewDetails")}
               </Button>
             )}
           </div>
@@ -105,6 +110,7 @@ function NotificationRow({ notification }: { notification: Notification }) {
 }
 
 export default function NotificationsPage() {
+  const t = useTranslations("Notifications")
   const notifications = useNotifications()
   const markAllRead = useMarkAllNotificationsRead()
 
@@ -115,10 +121,8 @@ export default function NotificationsPage() {
     <section className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Notifications</h1>
-          <p className="text-sm text-muted-foreground">
-            Updates about your orders, returns, exchanges, payments, and wallet.
-          </p>
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
         {hasUnread && (
           <Button
@@ -126,29 +130,30 @@ export default function NotificationsPage() {
             disabled={markAllRead.isPending}
             onClick={() => markAllRead.mutate({})}
           >
-            Mark all as read
+            {t("markAllAsRead")}
           </Button>
         )}
       </div>
 
       <div className="overflow-hidden rounded-xl border bg-card">
-        {notifications.isPending && (
-          <p className="p-6 text-sm text-muted-foreground">
-            Loading notifications...
-          </p>
-        )}
+        {notifications.isPending && <ProfilePageSkeleton variant="list" />}
         {!notifications.isPending && items.length === 0 && (
           <div className="grid place-items-center gap-2 p-12 text-center">
             <HugeiconsIcon
               icon={Notification01Icon}
               className="size-8 text-muted-foreground"
             />
-            <p className="font-medium">No notifications yet</p>
+            <p className="font-medium">{t("empty")}</p>
           </div>
         )}
-        {items.map((notification) => (
-          <NotificationRow key={notification.id} notification={notification} />
-        ))}
+        <Stagger className="p-1" stagger={0.06}>
+          {items.map((notification) => (
+            <NotificationRow
+              key={notification.id}
+              notification={notification}
+            />
+          ))}
+        </Stagger>
       </div>
     </section>
   )

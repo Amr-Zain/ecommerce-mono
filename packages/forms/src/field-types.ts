@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import type * as React from "react"
-import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form"
+import type * as React from "react";
+import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 
 // ---------------------------------------------------------------------------
 // Shared field option (select, radio, combobox)
 // ---------------------------------------------------------------------------
 
 export interface FieldOption {
-  value: string | number
-  label: React.ReactNode
-  disabled?: boolean
+  value: string | number;
+  label: React.ReactNode;
+  disabled?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -18,15 +18,15 @@ export interface FieldOption {
 // ---------------------------------------------------------------------------
 
 export interface BaseFormField<T extends FieldValues> {
-  name: FieldPath<T>
-  label?: React.ReactNode
-  required?: boolean
-  span?: number
-  placeholder?: string
-  description?: React.ReactNode
-  disabled?: boolean
-  hidden?: boolean
-  className?: string
+  name: FieldPath<T>;
+  label?: React.ReactNode;
+  required?: boolean;
+  span?: number;
+  placeholder?: string;
+  description?: React.ReactNode;
+  disabled?: boolean;
+  hidden?: boolean;
+  className?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -34,9 +34,9 @@ export interface BaseFormField<T extends FieldValues> {
 // ---------------------------------------------------------------------------
 
 export interface FieldRenderArgs<T extends FieldValues> {
-  form: UseFormReturn<T, unknown, T>
-  label: React.ReactNode
-  required: boolean
+  form: UseFormReturn<T, unknown, T>;
+  label: React.ReactNode;
+  required: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -47,144 +47,148 @@ export interface FieldRenderArgs<T extends FieldValues> {
 export type FormField<T extends FieldValues> =
   // Text-like inputs
   | (BaseFormField<T> & {
-      type: "text" | "email" | "number" | "password" | "tel" | "date"
+      type: "text" | "email" | "number" | "password" | "tel" | "date";
       inputProps?: Omit<
         React.InputHTMLAttributes<HTMLInputElement>,
         "name" | "value" | "defaultValue" | "type"
-      >
+      >;
     })
   // Textarea
   | (BaseFormField<T> & {
-      type: "textarea"
-      rows?: number
+      type: "textarea";
+      rows?: number;
       inputProps?: Omit<
         React.TextareaHTMLAttributes<HTMLTextAreaElement>,
         "name" | "value" | "defaultValue"
-      >
+      >;
     })
   // Select
   | (BaseFormField<T> & {
-      type: "select"
-      options: FieldOption[]
-      multiple?: boolean
+      type: "select";
+      options: FieldOption[];
+      multiple?: boolean;
       inputProps?: Omit<
         React.SelectHTMLAttributes<HTMLSelectElement>,
         "name" | "value" | "defaultValue"
-      > & Record<string, unknown>
+      > &
+        Record<string, unknown>;
     })
   // Radio
   | (BaseFormField<T> & {
-      type: "radio"
-      options: FieldOption[]
-      orientation?: "horizontal" | "vertical"
-      inputProps?: Record<string, unknown>
+      type: "radio";
+      options: FieldOption[];
+      orientation?: "horizontal" | "vertical";
+      inputProps?: Record<string, unknown>;
     })
   // Checkbox
   | (BaseFormField<T> & {
-      type: "checkbox"
-      inputProps?: Record<string, unknown>
+      type: "checkbox";
+      inputProps?: Record<string, unknown>;
     })
   // Switch
   | (BaseFormField<T> & {
-      type: "switch"
-      inputProps?: Record<string, unknown>
+      type: "switch";
+      inputProps?: Record<string, unknown>;
     })
   // OTP
   | (BaseFormField<T> & {
-      type: "otp"
-      length?: number
-      otpType?: "numeric" | "alphanumeric"
+      type: "otp";
+      length?: number;
+      otpType?: "numeric" | "alphanumeric";
       inputProps?: Omit<
         React.InputHTMLAttributes<HTMLInputElement>,
         "name" | "value" | "defaultValue" | "type" | "maxLength"
-      >
+      >;
     })
   // Phone / Email identifier (auto-detect)
   | (BaseFormField<T> & {
-      type: "identifier"
-      phoneCodeName: FieldPath<T>
-      phoneCodeLabel?: string
-      detectedPhoneText?: React.ReactNode
-      detectedEmailText?: React.ReactNode
-      phoneCodeClassName?: string
+      type: "identifier";
+      phoneCodeName: FieldPath<T>;
+      phoneCodeLabel?: string;
+      countrySearchPlaceholder?: string;
+      noCountryText?: string;
+      phoneMustStartWithText?: string;
+      detectedPhoneText?: React.ReactNode;
+      detectedEmailText?: React.ReactNode;
+      phoneCodeClassName?: string;
       inputProps?: Omit<
         React.InputHTMLAttributes<HTMLInputElement>,
         "name" | "value" | "defaultValue" | "type"
-      >
+      >;
       phoneCodeInputProps?: Omit<
         React.InputHTMLAttributes<HTMLInputElement>,
         "name" | "value" | "defaultValue" | "type"
-      >
+      >;
     })
   // Phone (with country code)
   | (BaseFormField<T> & {
-      type: "phone"
-      phoneCodeName?: string
-      phoneNumberName?: string
-      inputProps?: Record<string, unknown>
+      type: "phone";
+      phoneCodeName?: string;
+      phoneNumberName?: string;
+      inputProps?: Record<string, unknown>;
     })
   // Date picker (advanced)
   | (BaseFormField<T> & {
-      type: "datePicker"
-      mode?: "single" | "range" | "multiple"
-      disabledDates?: { from?: Date; to?: Date }
-      inputProps?: Record<string, unknown>
+      type: "datePicker";
+      mode?: "single" | "range" | "multiple";
+      disabledDates?: { from?: Date; to?: Date };
+      inputProps?: Record<string, unknown>;
     })
   // File upload (basic)
   | (BaseFormField<T> & {
-      type: "file"
-      multiple?: boolean
-      accept?: string
+      type: "file";
+      multiple?: boolean;
+      accept?: string;
       inputProps?: Omit<
         React.InputHTMLAttributes<HTMLInputElement>,
         "name" | "value" | "defaultValue" | "onChange" | "type"
-      >
+      >;
     })
   // Color picker
   | (BaseFormField<T> & {
-      type: "color"
-      inputProps?: Record<string, unknown>
+      type: "color";
+      inputProps?: Record<string, unknown>;
     })
   // Custom — escape hatch for platform-specific fields
   | {
-      type: "custom"
-      name?: FieldPath<T>
-      label?: React.ReactNode
-      required?: boolean
-      span?: number
-      hidden?: boolean
-      className?: string
-      render: (args: FieldRenderArgs<T>) => React.ReactNode
+      type: "custom";
+      name?: FieldPath<T>;
+      label?: React.ReactNode;
+      required?: boolean;
+      span?: number;
+      hidden?: boolean;
+      className?: string;
+      render: (args: FieldRenderArgs<T>) => React.ReactNode;
       /** For dashboard compatibility — raw ReactNode instead of render function */
-      customItem?: React.ReactNode
-      inputProps?: Record<string, unknown>
-    }
+      customItem?: React.ReactNode;
+      inputProps?: Record<string, unknown>;
+    };
 
 // ---------------------------------------------------------------------------
 // Layout configuration — control form shape from one interface
 // ---------------------------------------------------------------------------
 
-export type FormDirection = "ltr" | "rtl"
-export type FormSpacing = "sm" | "md" | "lg"
-export type FormColumns = 1 | 2 | 3 | 4
+export type FormDirection = "ltr" | "rtl";
+export type FormSpacing = "sm" | "md" | "lg";
+export type FormColumns = 1 | 2 | 3 | 4;
 
 export interface FormLayoutConfig {
   /** Number of grid columns */
-  columns?: FormColumns | number
+  columns?: FormColumns | number;
   /** Vertical spacing between rows */
-  spacing?: FormSpacing
+  spacing?: FormSpacing;
   /** Text direction */
-  dir?: FormDirection
+  dir?: FormDirection;
   /** Container class name */
-  className?: string
+  className?: string;
   /** Field grid class name */
-  fieldClassName?: string
+  fieldClassName?: string;
   /** Button container class name */
-  buttonClassName?: string
+  buttonClassName?: string;
 }
 
 // ---------------------------------------------------------------------------
 // Utility: check if a value looks like a phone number (digits only)
 // ---------------------------------------------------------------------------
 
-export const isPhoneIdentifier = (value: string) => /^\d+$/.test(value.trim())
+export const isPhoneIdentifier = (value: string) => /^\d+$/.test(value.trim());

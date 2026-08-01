@@ -286,15 +286,17 @@ export function ProductCard({
       {/* Details */}
       <div className={cn("flex flex-1 flex-col", compact ? "p-3" : "p-4")}>
         <div className="flex-1">
-          <span
-            className={cn(
-              "font-bold text-foreground",
-              compact ? "text-[11px]" : "text-xs"
-            )}
-          >
-            {product.brand}
-          </span>
-          <h3 className="mt-1 line-clamp-2 text-xs font-medium text-muted-foreground">
+          {product.brand ? (
+            <span
+              className={cn(
+                "text-muted-foreground",
+                compact ? "text-[11px]" : "text-xs"
+              )}
+            >
+              {product.brand}
+            </span>
+          ) : null}
+          <h3 className="mt-1 line-clamp-2 text-sm leading-snug font-semibold text-foreground">
             <Link href={`/products/${product.id}`}>{product.name}</Link>
           </h3>
         </div>

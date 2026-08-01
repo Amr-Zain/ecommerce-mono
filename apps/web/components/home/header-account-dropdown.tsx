@@ -12,6 +12,7 @@ import { ROUTES } from "@/lib/routes"
 import { normalizeUploadUrl } from "@/lib/media-url"
 import * as React from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 
 import { logoutAction } from "@/actions/auth"
 import { useCommerceSessionSync } from "@/hooks/api/use-commerce-session-sync"
@@ -49,6 +50,7 @@ function HeaderAccountDropdown({
   image?: string | null
   name: string
 }) {
+  const t = useTranslations("ProfileNav")
   const router = useRouter()
   const { data: session } = useSession()
   const { data: currentUser } = useCurrentUser()
@@ -60,7 +62,7 @@ function HeaderAccountDropdown({
     profile?.avatar?.url ??
     (typeof profile?.image === "string"
       ? profile.image
-      : profile?.image?.path ?? profile?.image?.url) ??
+      : (profile?.image?.path ?? profile?.image?.url)) ??
     session?.user.image ??
     image
   const resolvedImage = normalizeUploadUrl(avatar)
@@ -81,13 +83,15 @@ function HeaderAccountDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Account menu"
+        aria-label={t("accountMenu")}
         render={
           <button className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring" />
         }
       >
         <Avatar className="size-9 rounded-sm">
-          {resolvedImage && <AvatarImage src={resolvedImage} alt={resolvedName} />}
+          {resolvedImage && (
+            <AvatarImage src={resolvedImage} alt={resolvedName} />
+          )}
           <AvatarFallback className="rounded-full font-semibold">
             {initials(resolvedName)}
           </AvatarFallback>
@@ -95,21 +99,23 @@ function HeaderAccountDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="truncate">{resolvedName}</DropdownMenuLabel>
+          <DropdownMenuLabel className="truncate">
+            {resolvedName}
+          </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem render={<Link href={ROUTES.profile.root} />}>
             <HugeiconsIcon icon={UserCircleIcon} />
-            Profile
+            {t("account")}
           </DropdownMenuItem>
           <DropdownMenuItem render={<Link href={ROUTES.profile.orders.root} />}>
             <HugeiconsIcon icon={PackageIcon} />
-            My Orders
+            {t("orders")}
           </DropdownMenuItem>
           <DropdownMenuItem render={<Link href={ROUTES.profile.addresses} />}>
             <HugeiconsIcon icon={Location01Icon} />
-            My Addresses
+            {t("addresses")}
           </DropdownMenuItem>
           <DropdownMenuItem
             variant="destructive"
@@ -117,7 +123,7 @@ function HeaderAccountDropdown({
             onClick={logout}
           >
             <HugeiconsIcon icon={Logout01Icon} />
-            {loggingOut ? "Logging out..." : "Logout"}
+            {loggingOut ? t("loggingOut") : t("logout")}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

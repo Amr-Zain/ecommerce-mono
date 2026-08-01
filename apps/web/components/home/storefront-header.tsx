@@ -36,7 +36,7 @@ export async function StorefrontHeader() {
   const headerPages = pickCmsPages(cmsPages, ["returns", "payment", "warranty"])
 
   return (
-    <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b bg-background/95 shadow-sm backdrop-blur">
       {storefront.announcement.enabled && storefront.announcement.text ? (
         <div className="bg-secondary-foreground text-secondary">
           <div className="storefront-marquee mx-auto h-8 overflow-hidden text-[11px] font-semibold">

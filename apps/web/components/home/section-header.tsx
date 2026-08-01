@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 
 import { Button } from "@ecommerce/ui/components/button"
+import { useTranslations } from "next-intl"
 
 export function SectionHeader({
   title,
@@ -15,6 +16,7 @@ export function SectionHeader({
   viewAllHref?: string
   actions?: ReactNode
 }) {
+  const t = useTranslations("Storefront")
   return (
     <div className="mb-5 flex items-center justify-between gap-4">
       <h2 className="text-xl font-semibold tracking-normal text-foreground">
@@ -24,7 +26,7 @@ export function SectionHeader({
         {viewAll ? (
           <Link href={viewAllHref ?? ROUTES.collections.root}>
             <Button variant="ghost" size="sm" className="text-xs">
-              View All
+              {t("viewAll")}
             </Button>
           </Link>
         ) : null}

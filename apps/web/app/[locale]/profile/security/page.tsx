@@ -32,6 +32,7 @@ import {
   useRevokeAccountSession,
 } from "@/hooks/api/use-account-activity"
 import type { AccountSession } from "@/hooks/api/use-account-activity"
+import { useTranslations } from "next-intl"
 
 function formatDate(value?: string | null) {
   return value
@@ -122,6 +123,7 @@ function SessionCard({
 }
 
 export default function SecurityPage() {
+  const t = useTranslations("Security")
   const sessions = useAccountSessions()
   const revoke = useRevokeAccountSession()
 
@@ -138,10 +140,8 @@ export default function SecurityPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Security</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Review active login sessions and revoke sessions you do not recognize.
-        </p>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
       </div>
       {sessions.isPending ? (
         <p className="text-sm text-muted-foreground">
@@ -150,13 +150,14 @@ export default function SecurityPage() {
       ) : (sessions.data?.length ?? 0) === 0 ? (
         <Empty className="py-24">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
+            <EmptyMedia
+              variant="icon"
+              className="mb-4 size-16 rounded-2xl bg-muted/50 text-muted-foreground"
+            >
               <HugeiconsIcon icon={SecurityCheckIcon} className="size-8" />
             </EmptyMedia>
-            <EmptyTitle>No active sessions</EmptyTitle>
-            <EmptyDescription>
-              When you sign in on a device, the session will appear here.
-            </EmptyDescription>
+            <EmptyTitle className="text-xl">{t("empty")}</EmptyTitle>
+            <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (

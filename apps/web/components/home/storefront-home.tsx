@@ -6,6 +6,7 @@ import { PhoneBanner } from "./phone-banner"
 import { ProductSection } from "./product-section"
 import { PromoSection, type SliderItem } from "./promo-section"
 import { getTranslations } from "next-intl/server"
+import { Motion } from "@ecommerce/ui/components/motion"
 
 type HomeProduct = {
   id: string
@@ -102,9 +103,10 @@ async function getHomeData() {
 }
 
 export async function StorefrontHome() {
-  const [homeResponse, t] = await Promise.all([
+  const [homeResponse, t, storefront] = await Promise.all([
     getHomeData(),
     getTranslations("Campaign"),
+    getTranslations("Storefront"),
   ])
   const home = homeResponse?.data
   const campaign = home?.active_offer
@@ -128,36 +130,52 @@ export async function StorefrontHome() {
 
   return (
     <>
-      <PromoSection sliders={sliders} />
-      <CategoryStrip categories={mapCollections(home?.collections ?? [])} />
-      <ProductSection
-        title="Best Selling"
-        products={mapProducts(home?.best_selling ?? [])}
-        savings
-        campaign={campaign}
-      />
-      <ProductSection
-        title="New Arrivals"
-        products={mapProducts(home?.new_arrivals ?? [])}
-        auto
-      />
-      <CategoryStrip
-        title="What Are You Looking For?"
-        categories={mapCollections(home?.looking_for ?? [])}
-      />
-      <PhoneBanner
-        title={home?.show_rooms.title}
-        body={home?.show_rooms.body}
-        image={home?.show_rooms.image}
-        count={home?.show_rooms.count}
-      />
-      {(home?.recently_viewed.length ?? 0) > 0 && (
+      <Motion preset="section" duration={0.7}>
+        <PromoSection sliders={sliders} />
+      </Motion>
+      <Motion preset="section" revealOnScroll>
+        <CategoryStrip categories={mapCollections(home?.collections ?? [])} />
+      </Motion>
+      <Motion preset="section" revealOnScroll>
         <ProductSection
-          title="Recently Viewed"
-          products={mapProducts(home?.recently_viewed ?? [])}
+          title={storefront("bestSelling")}
+          products={mapProducts(home?.best_selling ?? [])}
+          savings
+          campaign={campaign}
         />
+      </Motion>
+      <Motion preset="section" revealOnScroll>
+        <ProductSection
+          title={storefront("newArrivals")}
+          products={mapProducts(home?.new_arrivals ?? [])}
+          auto
+        />
+      </Motion>
+      <Motion preset="section" revealOnScroll>
+        <CategoryStrip
+          title={storefront("lookingFor")}
+          categories={mapCollections(home?.looking_for ?? [])}
+        />
+      </Motion>
+      <Motion preset="section" revealOnScroll>
+        <PhoneBanner
+          title={home?.show_rooms.title}
+          body={home?.show_rooms.body}
+          image={home?.show_rooms.image}
+          count={home?.show_rooms.count}
+        />
+      </Motion>
+      {(home?.recently_viewed.length ?? 0) > 0 && (
+        <Motion preset="section" revealOnScroll>
+          <ProductSection
+            title={storefront("recentlyViewed")}
+            products={mapProducts(home?.recently_viewed ?? [])}
+          />
+        </Motion>
       )}
-      <Benefits />
+      <Motion preset="section" revealOnScroll>
+        <Benefits />
+      </Motion>
     </>
   )
 }

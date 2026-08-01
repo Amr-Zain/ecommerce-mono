@@ -18,7 +18,10 @@ import { ListingPagination } from "@/components/shared/pagination"
 
 type CatalogSearchParams = Record<string, string | string[] | undefined>
 
-function mapProduct(item: CatalogProduct, t: (key: string, values?: Record<string, string | number>) => string): Product {
+function mapProduct(
+  item: CatalogProduct,
+  t: (key: string, values?: Record<string, string | number>) => string
+): Product {
   const image = item.image || "/product-placeholder.svg"
   return {
     id: item.id,
@@ -104,6 +107,7 @@ async function CatalogListing({
       <CatalogControls
         breadcrumbs={breadcrumbs}
         collectionLocked={Boolean(collectionSlug)}
+        collectionTree={collectionTree}
         facets={data.facets}
         searchParams={searchParams}
       />
@@ -124,6 +128,7 @@ async function CatalogListing({
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <CatalogSidebar
           key={`${data.facets.price.min}:${data.facets.price.max}:${searchParams.min_price ?? ""}:${searchParams.max_price ?? ""}`}
+          className="hidden lg:block"
           collectionLocked={Boolean(collectionSlug)}
           facets={data.facets}
           collectionTree={collectionTree}

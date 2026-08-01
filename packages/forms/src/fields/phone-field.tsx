@@ -1,63 +1,71 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useFormContext,
   useWatch,
   type Control,
   type FieldPath,
   type FieldValues,
-} from "react-hook-form"
+} from "react-hook-form";
 
 import {
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from "@ecommerce/ui/components/form"
+} from "@ecommerce/ui/components/form";
+import { Input } from "@ecommerce/ui/components/input";
+import { Button } from "@ecommerce/ui/components/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@ecommerce/ui/components/select"
-import { Input } from "@ecommerce/ui/components/input"
-import { useFetch } from "@ecommerce/http"
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxSeparator,
+  ComboboxTrigger,
+} from "@ecommerce/ui/components/combobox";
+import { ScrollArea } from "@ecommerce/ui/components/scroll-area";
+import { cn } from "@ecommerce/ui/lib/utils";
+import { useFetch } from "@ecommerce/http";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface PhoneCountryData {
-  id: number
-  name: string
-  phone_code: string
-  flag?: string | { url: string } | null
-  phone_limit: number
-  phone_starting_number?: number
+  id: number;
+  name: string;
+  phone_code: string;
+  flag?: string | { url: string } | null;
+  phone_limit: number;
+  phone_starting_number?: number;
 }
 
 export interface PhoneFieldProps<T extends FieldValues> {
-  control: Control<T>
-  phoneCodeName: FieldPath<T>
-  phoneNumberName: FieldPath<T>
+  control: Control<T>;
+  phoneCodeName: FieldPath<T>;
+  phoneNumberName: FieldPath<T>;
   /** Pre-loaded countries (skips fetching if provided) */
-  countries?: PhoneCountryData[]
+  countries?: PhoneCountryData[];
   /** Endpoint to fetch countries from. Uses the HttpAdapter, so it routes correctly per platform. */
-  countriesEndpoint?: string
+  countriesEndpoint?: string;
   /** Transform the API response into PhoneCountryData[]. Default expects { data: [...] } */
-  countriesSelect?: (data: any) => PhoneCountryData[]
-  currentPhoneLimit?: number | null
-  disabled?: boolean
-  disableCode?: boolean
-  countryId?: string | number
-  codeClass?: string
-  phoneClass?: string
-  phonePlaceholder?: string
-  codePlaceholder?: string
-  setCurrentPhoneLimit?: (value: number | null) => void
-  setPhoneStartingNumber?: (value: number | null) => void
+  countriesSelect?: (data: any) => PhoneCountryData[];
+  currentPhoneLimit?: number | null;
+  disabled?: boolean;
+  disableCode?: boolean;
+  countryId?: string | number;
+  codeClass?: string;
+  phoneClass?: string;
+  phonePlaceholder?: string;
+  codePlaceholder?: string;
+  setCurrentPhoneLimit?: (value: number | null) => void;
+  setPhoneStartingNumber?: (value: number | null) => void;
+  variant?: "sm" | "default" | "lg";
+  popupClassName?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -65,16 +73,45 @@ export interface PhoneFieldProps<T extends FieldValues> {
 // ---------------------------------------------------------------------------
 
 const defaultCountriesSelect = (res: any): PhoneCountryData[] => {
-  const items = res?.data ?? res ?? []
-  if (!Array.isArray(items)) return []
+  const items =
+    res?.data?.countries ??
+    res?.data?.data ??
+    res?.countries ??
+    res?.data ??
+    res ??
+    [];
+  if (!Array.isArray(items)) return [];
   return items.map((item: any) => ({
     id: item.id,
-    name: item.short_name ?? item.name,
-    flag: item.flag?.path ?? item.flag?.url ?? item.flag,
+    name: item.short_name ?? item.en?.name ?? item.ar?.name ?? item.name,
+    flag: item.flag?.path ?? item.flag?.url ?? item.flag ?? item.country_flag,
     phone_code: item.phone_code ?? item.phoneCode,
     phone_limit: item.phone_length ?? item.phone_limit ?? 15,
     phone_starting_number: item.phone_start_with ?? item.phone_starting_number,
-  }))
+  }));
+};
+
+function normalizeCountry(country: PhoneCountryData): PhoneCountryData {
+  const phoneLimit = Number(country.phone_limit);
+  const startingNumber =
+    country.phone_starting_number == null
+      ? undefined
+      : Number(country.phone_starting_number);
+  return {
+    ...country,
+    phone_code: String(country.phone_code),
+    phone_limit:
+      Number.isFinite(phoneLimit) && phoneLimit > 0 ? phoneLimit : 15,
+    phone_starting_number:
+      startingNumber !== undefined && Number.isFinite(startingNumber)
+        ? startingNumber
+        : undefined,
+  };
+}
+
+function getFlagUrl(flag: PhoneCountryData["flag"]): string | null {
+  if (!flag) return null;
+  return typeof flag === "string" ? flag : flag.url;
 }
 
 // ---------------------------------------------------------------------------
@@ -98,8 +135,11 @@ function PhoneField<T extends FieldValues>({
   codePlaceholder = "+",
   setCurrentPhoneLimit,
   setPhoneStartingNumber,
+  variant = "default",
+  popupClassName,
 }: PhoneFieldProps<T>) {
-  const { setValue, clearErrors, getValues } = useFormContext<T>()
+  const { setValue, clearErrors, getValues, formState } = useFormContext<T>();
+  const [search, setSearch] = useState("");
 
   // Fetch countries if not provided
   const { data: fetchedCountries } = useFetch<any, PhoneCountryData[]>({
@@ -108,48 +148,59 @@ function PhoneField<T extends FieldValues>({
     select: countriesSelect,
     staleTime: 180_000,
     enabled: !countriesProp,
-  })
+  });
 
   const countries: PhoneCountryData[] = useMemo(
-    () => countriesProp ?? fetchedCountries ?? [],
+    () => (countriesProp ?? fetchedCountries ?? []).map(normalizeCountry),
     [countriesProp, fetchedCountries],
-  )
+  );
+  const filteredCountries = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    if (!query) return countries;
+    return countries.filter(
+      (country) =>
+        country.name.toLocaleLowerCase().includes(query) ||
+        country.phone_code.includes(query),
+    );
+  }, [countries, search]);
 
   // Watch the selected phone code
-  const phoneCodeWatcher = useWatch({ control, name: phoneCodeName })
+  const phoneCodeWatcher = useWatch({ control, name: phoneCodeName });
 
   useEffect(() => {
     if (countryId && countries.length) {
-      const selected = countries.find((c) => String(c.id) === String(countryId))
+      const selected = countries.find(
+        (c) => String(c.id) === String(countryId),
+      );
       if (selected) {
-        setValue(phoneCodeName, String(selected.phone_code) as any)
+        setValue(phoneCodeName, String(selected.phone_code) as any);
       }
     }
-  }, [countryId, countries, phoneCodeName, setValue])
+  }, [countryId, countries, phoneCodeName, setValue]);
 
-  const isInitialPhoneCheckDone = useRef(false)
+  const isInitialPhoneCheckDone = useRef(false);
 
   useEffect(() => {
-    if (!countries.length) return
+    if (!countries.length) return;
 
     if (phoneCodeWatcher) {
       const selected = countries.find(
         (c) => String(c.phone_code) === String(phoneCodeWatcher),
-      )
+      );
 
       if (selected) {
-        setCurrentPhoneLimit?.(selected.phone_limit)
-        setPhoneStartingNumber?.(selected.phone_starting_number ?? null)
+        setCurrentPhoneLimit?.(selected.phone_limit);
+        setPhoneStartingNumber?.(selected.phone_starting_number ?? null);
 
-        const currentPhone = (getValues(phoneNumberName) as string) || ""
+        const currentPhone = (getValues(phoneNumberName) as string) || "";
         const nextPhone =
           selected.phone_starting_number != null
             ? selected.phone_starting_number.toString()
-            : ""
+            : "";
 
         if (!isInitialPhoneCheckDone.current) {
-          isInitialPhoneCheckDone.current = true
-          if (currentPhone && currentPhone !== "") return
+          isInitialPhoneCheckDone.current = true;
+          if (currentPhone && currentPhone !== "") return;
         }
 
         if (nextPhone && !currentPhone.startsWith(nextPhone)) {
@@ -158,16 +209,16 @@ function PhoneField<T extends FieldValues>({
               shouldDirty: true,
               shouldTouch: true,
               shouldValidate: true,
-            })
-            clearErrors(phoneNumberName)
+            });
+            clearErrors(phoneNumberName);
           }
         }
-        return
+        return;
       }
     }
 
-    setCurrentPhoneLimit?.(null)
-    isInitialPhoneCheckDone.current = true
+    setCurrentPhoneLimit?.(null);
+    isInitialPhoneCheckDone.current = true;
   }, [
     phoneCodeWatcher,
     countries,
@@ -177,50 +228,124 @@ function PhoneField<T extends FieldValues>({
     phoneNumberName,
     clearErrors,
     getValues,
-  ])
+  ]);
 
-  const getFlagUrl = (flag: PhoneCountryData["flag"]): string | null => {
-    if (!flag) return null
-    if (typeof flag === "string") return flag
-    return flag.url
-  }
+  const selectedCountry = useMemo(
+    () =>
+      countries.find(
+        (country) => String(country.phone_code) === String(phoneCodeWatcher),
+      ),
+    [countries, phoneCodeWatcher],
+  );
+  const hasPhoneError = Boolean(
+    formState.errors[phoneNumberName] || formState.errors[phoneCodeName],
+  );
 
   return (
-    <div className="flex gap-2" dir="ltr">
+    <div
+      className={cn(
+        "relative flex overflow-visible rounded-md border bg-background shadow-xs transition-colors focus-within:border-ring",
+        hasPhoneError && "mb-5",
+        hasPhoneError && "border-destructive focus-within:border-destructive",
+        variant === "sm" && "h-8",
+        variant === "default" && "h-10",
+        variant === "lg" && "h-12",
+      )}
+      dir="ltr"
+    >
       <FormField<T>
         control={control}
         name={phoneCodeName}
         render={({ field }) => (
-          <FormItem className="w-32">
-            <Select
-              onValueChange={field.onChange}
-              value={field.value as unknown as string}
-              disabled={disabled || disableCode}
-            >
-              <FormControl>
-                <SelectTrigger className={`p-1 sm:p-4 ${codeClass} bg-background! h-10!`}>
-                  <SelectValue placeholder={codePlaceholder} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent className="max-h-80">
-                {countries.map((country) => (
-                  <SelectItem key={country.id} value={`${country.phone_code}`}>
-                    <div className="flex items-center gap-2">
-                      {country.flag && (
-                        <img
-                          src={getFlagUrl(country.flag) ?? ""}
-                          alt=""
-                          width={20}
-                          height={20}
-                          className="size-5 object-cover"
-                        />
-                      )}
-                      <span className="ms-2">{`+${country.phone_code}`}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <FormItem className="relative shrink-0">
+            <FormControl>
+              <Combobox
+                value={(field.value as string) ?? ""}
+                onValueChange={(value) => {
+                  if (value) {
+                    field.onChange(value);
+                    setSearch("");
+                  }
+                }}
+                items={filteredCountries.map((country) => ({
+                  value: String(country.phone_code),
+                  label: `${country.name} +${country.phone_code}`,
+                }))}
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={disabled || disableCode}
+                  render={<ComboboxTrigger />}
+                  className={cn(
+                    "h-full min-w-24 gap-2 rounded-none border-0 border-e bg-transparent px-3 shadow-none hover:bg-muted/40 focus-visible:ring-0",
+                    variant === "sm" && "h-8",
+                    variant === "default" && "h-10",
+                    variant === "lg" && "h-12",
+                    codeClass,
+                  )}
+                >
+                  {selectedCountry?.flag ? (
+                    <img
+                      src={getFlagUrl(selectedCountry.flag) ?? ""}
+                      alt=""
+                      className="size-4 rounded-sm object-cover"
+                    />
+                  ) : (
+                    <span className="text-muted-foreground">◉</span>
+                  )}
+                  <span className="text-sm tabular-nums">
+                    {selectedCountry
+                      ? `+${selectedCountry.phone_code}`
+                      : codePlaceholder}
+                  </span>
+                </Button>
+                <ComboboxContent
+                  align="start"
+                  dir="auto"
+                  className={cn("w-72 p-0", popupClassName)}
+                >
+                  <ComboboxInput
+                    placeholder="Search country..."
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    showTrigger={false}
+                    className="rounded-none border-0 border-b px-3 py-2.5 shadow-none"
+                  />
+                  <ComboboxSeparator />
+                  <ComboboxEmpty className="px-4 py-3 text-sm">
+                    No country found.
+                  </ComboboxEmpty>
+                  <ComboboxList>
+                    <ScrollArea className="max-h-64">
+                      {filteredCountries.map((country) => (
+                        <ComboboxItem
+                          key={country.id}
+                          value={String(country.phone_code)}
+                          className="flex items-center gap-2.5 px-3 py-2"
+                        >
+                          <span className="flex size-4 shrink-0 overflow-hidden rounded-sm">
+                            {country.flag ? (
+                              <img
+                                src={getFlagUrl(country.flag) ?? ""}
+                                alt=""
+                                className="size-full object-cover"
+                              />
+                            ) : (
+                              "◉"
+                            )}
+                          </span>
+                          <span className="flex-1 text-sm">{country.name}</span>
+                          <span className="text-sm tabular-nums text-muted-foreground">
+                            +{country.phone_code}
+                          </span>
+                        </ComboboxItem>
+                      ))}
+                    </ScrollArea>
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            </FormControl>
           </FormItem>
         )}
       />
@@ -229,28 +354,40 @@ function PhoneField<T extends FieldValues>({
         control={control}
         name={phoneNumberName}
         render={({ field }) => (
-          <FormItem className="flex-1">
+          <FormItem className="relative flex-1">
             <FormControl>
               <Input
                 dir="ltr"
-                type="number"
+                type="text"
                 {...field}
-                className={phoneClass}
+                className={cn(
+                  "h-full rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0",
+                  variant === "sm" && "h-8",
+                  variant === "default" && "h-10",
+                  variant === "lg" && "h-12",
+                  phoneClass,
+                )}
                 onChange={(e) => field.onChange(e)}
                 value={(field.value as string) || ""}
                 disabled={disabled}
                 placeholder={
                   phonePlaceholder ??
-                  (currentPhoneLimit ? `${currentPhoneLimit} digits` : "Phone number")
+                  (currentPhoneLimit
+                    ? `${currentPhoneLimit} digits`
+                    : "Phone number")
                 }
                 inputMode="tel"
+                maxLength={
+                  currentPhoneLimit ?? selectedCountry?.phone_limit ?? undefined
+                }
               />
             </FormControl>
+            <FormMessage className="absolute top-full start-0 mt-1 whitespace-nowrap" />
           </FormItem>
         )}
       />
     </div>
-  )
+  );
 }
 
-export { PhoneField }
+export { PhoneField };

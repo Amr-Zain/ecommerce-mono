@@ -108,6 +108,9 @@ function OtpLoginForm({
       name: "identifier",
       phoneCodeName: "phoneCode",
       phoneCodeLabel: t("phoneCode"),
+      countrySearchPlaceholder: t("searchCountry"),
+      noCountryText: t("noCountryFound"),
+      phoneMustStartWithText: t("phoneMustStartWith"),
       label: t("emailOrPhone"),
       required: true,
       disabled: pending,
@@ -121,9 +124,7 @@ function OtpLoginForm({
 
   return (
     <>
-      {error && !otpOpen && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && !otpOpen && <p className="text-sm text-destructive">{error}</p>}
       <AppFormComplete
         form={form}
         fields={fields}

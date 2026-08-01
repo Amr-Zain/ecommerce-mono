@@ -91,9 +91,7 @@ function RegisterForm({
       setOtpCode("")
       setOtpOpen(true)
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t("requestError")
-      )
+      setError(err instanceof Error ? err.message : t("requestError"))
     } finally {
       setPending(false)
     }
@@ -111,9 +109,7 @@ function RegisterForm({
       router.replace(redirectTo)
       router.refresh()
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t("requestError")
-      )
+      setError(err instanceof Error ? err.message : t("requestError"))
     } finally {
       setVerifying(false)
     }
@@ -136,6 +132,9 @@ function RegisterForm({
       name: "identifier",
       phoneCodeName: "phoneCode",
       phoneCodeLabel: t("phoneCode"),
+      countrySearchPlaceholder: t("searchCountry"),
+      noCountryText: t("noCountryFound"),
+      phoneMustStartWithText: t("phoneMustStartWith"),
       label: t("emailOrPhone"),
       required: true,
       disabled: pending,
@@ -149,9 +148,7 @@ function RegisterForm({
 
   return (
     <>
-      {error && !otpOpen && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && !otpOpen && <p className="text-sm text-destructive">{error}</p>}
       <AppFormComplete
         form={form}
         fields={fields}

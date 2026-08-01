@@ -10,9 +10,7 @@ import {
   useTickets,
 } from "@/hooks/api/use-tickets"
 import { HugeiconsIcon } from "@hugeicons/react"
-import {
-  CustomerService01Icon,
-} from "@hugeicons/core-free-icons"
+import { CustomerService01Icon } from "@hugeicons/core-free-icons"
 import {
   Empty,
   EmptyHeader,
@@ -24,6 +22,7 @@ import {
 import { Button } from "@ecommerce/ui/components/button"
 import { Badge } from "@ecommerce/ui/components/badge"
 import { AppFormComplete, type FormField } from "@ecommerce/forms"
+import { useTranslations } from "next-intl"
 
 type CreateTicketFormValues = {
   title: string
@@ -32,6 +31,7 @@ type CreateTicketFormValues = {
 }
 
 export default function SupportTicketsPage() {
+  const t = useTranslations("Support")
   const { data: tickets = [], isLoading } = useTickets()
   const createTicket = useCreateTicket()
   const [isCreating, setIsCreating] = React.useState(false)
@@ -100,14 +100,14 @@ export default function SupportTicketsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Support Tickets
+          {t("title")}
         </h1>
         <Button
           className="gap-2 rounded-xl"
           onClick={() => setIsCreating((value) => !value)}
         >
           <span className="text-base leading-none">+</span>
-          New Ticket
+          {t("newTicket")}
         </Button>
       </div>
 
@@ -140,18 +140,15 @@ export default function SupportTicketsPage() {
                 strokeWidth={1.5}
               />
             </EmptyMedia>
-            <EmptyTitle className="text-xl">No support tickets</EmptyTitle>
-            <EmptyDescription>
-              You haven&apos;t opened any support tickets yet. Need help with an
-              order?
-            </EmptyDescription>
+            <EmptyTitle className="text-xl">{t("empty")}</EmptyTitle>
+            <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button
               className="mt-4 h-11 rounded-xl px-8"
               onClick={() => setIsCreating(true)}
             >
-              Contact Support
+              {t("contactSupport")}
             </Button>
           </EmptyContent>
         </Empty>
@@ -167,7 +164,9 @@ export default function SupportTicketsPage() {
                 <h3 className="text-base font-bold text-foreground group-hover:underline">
                   {ticket.title}
                 </h3>
-                <Badge variant={ticket.status === "closed" ? "secondary" : "outline"}>
+                <Badge
+                  variant={ticket.status === "closed" ? "secondary" : "outline"}
+                >
                   {ticket.status}
                 </Badge>
               </div>

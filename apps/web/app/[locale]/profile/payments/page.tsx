@@ -23,6 +23,7 @@ import { usePaymentSessions } from "@/hooks/api/use-account-activity"
 import type { PaymentSessionItem } from "@/hooks/api/use-account-activity"
 import { ROUTES } from "@/lib/routes"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 const TYPES = [
   { value: "all", label: "All" },
@@ -250,6 +251,7 @@ function PaymentCard({ session }: { session: PaymentSessionItem }) {
 }
 
 export default function PaymentActivityPage() {
+  const t = useTranslations("Payments")
   const searchParams = useSearchParams()
   const productId = searchParams.get("product_id")
   const [page, setPage] = React.useState(1)
@@ -284,11 +286,8 @@ export default function PaymentActivityPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Payment activity</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Track online payments, wallet deposits, refunds, exchanges, and manual
-          payment sessions.
-        </p>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
       </div>
       <div className="space-y-3 border-b pb-4">
         <div className="grid gap-3 sm:grid-cols-4">
@@ -361,14 +360,14 @@ export default function PaymentActivityPage() {
       ) : items.length === 0 ? (
         <Empty className="py-24">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
+            <EmptyMedia
+              variant="icon"
+              className="mb-4 size-16 rounded-2xl bg-muted/50 text-muted-foreground"
+            >
               <HugeiconsIcon icon={CreditCardIcon} className="size-8" />
             </EmptyMedia>
-            <EmptyTitle>No payment activity yet</EmptyTitle>
-            <EmptyDescription>
-              Completed checkouts, deposits, refunds, and payment attempts will
-              appear here.
-            </EmptyDescription>
+            <EmptyTitle className="text-xl">{t("empty")}</EmptyTitle>
+            <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (

@@ -9,6 +9,34 @@
     "english": "الإنجليزية",
     "arabic": "العربية"
   },
+  "Storefront": {
+    "bestSelling": "الأكثر مبيعًا",
+    "newArrivals": "وصل حديثًا",
+    "lookingFor": "عمّ تبحث؟",
+    "recentlyViewed": "شوهدت مؤخرًا",
+    "viewAll": "عرض الكل"
+  },
+  "ProfileNav": {
+    "user": "مستخدم",
+    "accountMenu": "قائمة الحساب",
+    "account": "حسابي",
+    "wishlist": "مفضلتي",
+    "orders": "طلباتي",
+    "addresses": "عناويني",
+    "wallet": "محفظتي",
+    "payments": "سجل المدفوعات",
+    "loyalty": "نقاط الولاء",
+    "returns": "الاسترجاع والاسترداد",
+    "support": "تذاكر الدعم",
+    "security": "الأمان",
+    "logout": "تسجيل الخروج",
+    "editPhoto": "تعديل صورة الحساب",
+    "uploading": "جارٍ الرفع...",
+    "imageOnly": "الرجاء اختيار ملف صورة.",
+    "photoUpdated": "تم تحديث صورة الحساب",
+    "photoUploadFailed": "تعذر رفع صورة الحساب",
+    "loggingOut": "جارٍ تسجيل الخروج..."
+  },
   "Auth": {
     "loginTitle": "تسجيل الدخول",
     "loginDescription": "سجل الدخول باستخدام رمز تحقق لمرة واحدة.",
@@ -19,6 +47,9 @@
     "phone": "رقم الهاتف",
     "emailOrPhone": "البريد الإلكتروني أو رقم الهاتف",
     "phoneCode": "رمز الدولة",
+    "searchCountry": "ابحث عن الدولة أو الرمز...",
+    "noCountryFound": "لم يتم العثور على دولة.",
+    "phoneMustStartWith": "يجب أن يبدأ بـ",
     "detectedEmail": "سيتم استخدام القيمة كبريد إلكتروني.",
     "detectedPhone": "سيتم استخدام القيمة كرقم هاتف.",
     "otpCode": "رمز التحقق",
@@ -134,7 +165,19 @@
     "startShopping": "ابدأ التسوق",
     "noImage": "لا توجد صورة",
     "quantity": "الكمية: {count}",
-    "orderNumber": "طلب #{number}"
+    "orderNumber": "طلب #{number}",
+    "filterOrders": "تصفية الطلبات",
+    "orderStatus": "الطلب",
+    "paymentStatus": "الدفع",
+    "statusPending": "قيد الانتظار",
+    "statusProcessing": "قيد المعالجة",
+    "statusShipped": "تم الشحن",
+    "statusDelivered": "تم التسليم",
+    "statusCancelled": "ملغي",
+    "statusRefunded": "تم الاسترداد",
+    "statusPaid": "مدفوع",
+    "statusAwaitingConfirmation": "بانتظار التأكيد",
+    "statusFailed": "فشل"
   },
   "OrderDetails": {
     "loading": "جاري تحميل الطلب...",
@@ -265,7 +308,19 @@
     "bankName": "اسم البنك",
     "accountHolderName": "اسم صاحب الحساب",
     "iban": "رقم IBAN / الحساب",
-    "optionalNote": "ملاحظة اختيارية"
+    "optionalNote": "ملاحظة اختيارية",
+    "statusRequested": "قيد الطلب",
+    "statusApproved": "تمت الموافقة",
+    "statusPaid": "تم الدفع",
+    "statusRejected": "مرفوض",
+    "statusFailed": "فشل",
+    "statusCancelledByClient": "أُلغي من العميل",
+    "statusPending": "قيد الانتظار",
+    "statusCompleted": "مكتمل",
+    "statusCancelled": "ملغي",
+    "statusExpired": "منتهي الصلاحية",
+    "statusReversed": "معكوس",
+    "statusRequiresReview": "يتطلب المراجعة"
   },
   "Returns": {
     "title": "الإرجاع والاستبدال",
@@ -297,6 +352,18 @@
     "order": "الطلب",
     "cancel": "إلغاء",
     "cancelling": "جاري الإلغاء..."
+  },
+  "Payments": {
+    "title": "سجل المدفوعات",
+    "description": "تابع المدفوعات عبر الإنترنت وإيداعات المحفظة والاستردادات وعمليات الاستبدال وجلسات الدفع اليدوية.",
+    "empty": "لا يوجد نشاط للمدفوعات بعد",
+    "emptyDescription": "ستظهر هنا عمليات الشراء والإيداعات والاستردادات ومحاولات الدفع."
+  },
+  "Security": {
+    "title": "الأمان",
+    "description": "راجع جلسات تسجيل الدخول النشطة وألغِ الجلسات التي لا تتعرف عليها.",
+    "empty": "لا توجد جلسات نشطة",
+    "emptyDescription": "عند تسجيل الدخول من جهاز، ستظهر الجلسة هنا."
   },
   "ReturnDetails": {
     "notFound": "الطلب غير موجود",

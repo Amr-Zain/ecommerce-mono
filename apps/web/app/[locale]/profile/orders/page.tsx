@@ -10,23 +10,76 @@ import * as React from "react"
 
 import { Badge } from "@ecommerce/ui/components/badge"
 import { Button } from "@ecommerce/ui/components/button"
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@ecommerce/ui/components/empty"
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ecommerce/ui/components/empty"
 import { CancelOrderDialog } from "@/components/orders/cancel-order-dialog"
-import { orderActions, orderStatusMessage, useOrders, type Order } from "@/hooks/api/use-profile-commerce"
+import {
+  orderActions,
+  orderStatusMessage,
+  useOrders,
+  type Order,
+} from "@/hooks/api/use-profile-commerce"
 import { cn } from "@/lib/utils"
+import { Stagger } from "@ecommerce/ui/components/motion"
+import { ProfilePageSkeleton } from "@/components/profile/profile-page-skeleton"
 
-const FILTERS = ["", "pending", "processing", "shipped", "delivered", "cancelled", "refunded"] as const
+const FILTERS = [
+  "",
+  "pending",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "refunded",
+] as const
+
+function statusLabel(
+  t: ReturnType<typeof useTranslations<"Orders">>,
+  status: string
+) {
+  const labels: Record<string, string> = {
+    pending: t("statusPending"),
+    processing: t("statusProcessing"),
+    shipped: t("statusShipped"),
+    delivered: t("statusDelivered"),
+    cancelled: t("statusCancelled"),
+    refunded: t("statusRefunded"),
+    paid: t("statusPaid"),
+    awaiting_confirmation: t("statusAwaitingConfirmation"),
+    failed: t("statusFailed"),
+  }
+  return labels[status] ?? status.replaceAll("_", " ")
+}
 
 function OrderActions({ order }: { order: Order }) {
   const actions = orderActions(order)
   const t = useTranslations("Orders")
   return (
     <div className="flex flex-wrap gap-2">
-      <Button size="sm" variant="outline" render={<Link href={ROUTES.profile.orders.detail(order.id)} />}>
+      <Button
+        size="sm"
+        variant="outline"
+        render={<Link href={ROUTES.profile.orders.detail(order.id)} />}
+      >
         {actions.includes("track") ? t("trackOrder") : t("viewDetails")}
       </Button>
-      {actions.includes("return_exchange") && <Button size="sm" render={<Link href={ROUTES.profile.orders.exchange(order.id)} />}>{t("returnOrExchange")}</Button>}
-      {actions.includes("cancel") && <CancelOrderDialog orderId={order.id} size="sm" />}
+      {actions.includes("return_exchange") && (
+        <Button
+          size="sm"
+          render={<Link href={ROUTES.profile.orders.exchange(order.id)} />}
+        >
+          {t("returnOrExchange")}
+        </Button>
+      )}
+      {actions.includes("cancel") && (
+        <CancelOrderDialog orderId={order.id} size="sm" />
+      )}
     </div>
   )
 }
@@ -39,58 +92,139 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{t("title")}</h1>
-      <div className="flex flex-wrap gap-2 border-b pb-4">
+      <div
+        className="flex flex-wrap gap-2 border-b pb-4"
+        role="toolbar"
+        aria-label={t("filterOrders")}
+      >
         {FILTERS.map((value) => (
-          <button key={value} onClick={() => setStatus(value)} className={cn("rounded-full border px-4 py-1.5 text-xs font-semibold capitalize", status === value ? "border-foreground bg-foreground text-background" : "text-muted-foreground")}>
-            {value || t("all")}
+          <button
+            key={value}
+            onClick={() => setStatus(value)}
+            className={cn(
+              "rounded-full border px-4 py-1.5 text-xs font-semibold capitalize",
+              status === value
+                ? "border-foreground bg-foreground text-background"
+                : "text-muted-foreground"
+            )}
+          >
+            {value ? statusLabel(t, value) : t("all")}
           </button>
         ))}
       </div>
 
       {orders.isPending ? (
-        <p className="text-sm text-muted-foreground">{t("loading")}</p>
+        <ProfilePageSkeleton />
       ) : (orders.data?.length ?? 0) === 0 ? (
         <Empty className="py-24">
           <EmptyHeader>
-            <EmptyMedia variant="icon"><HugeiconsIcon icon={PackageSearchIcon} className="size-8" /></EmptyMedia>
+            <EmptyMedia variant="icon">
+              <HugeiconsIcon icon={PackageSearchIcon} className="size-8" />
+            </EmptyMedia>
             <EmptyTitle>{t("empty")}</EmptyTitle>
             <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
           </EmptyHeader>
-          <EmptyContent><Button render={<Link href={ROUTES.collections.root} />}>{t("startShopping")}</Button></EmptyContent>
+          <EmptyContent>
+            <Button render={<Link href={ROUTES.collections.root} />}>
+              {t("startShopping")}
+            </Button>
+          </EmptyContent>
         </Empty>
       ) : (
-        <div className="space-y-4">
+        <Stagger className="space-y-4" stagger={0.08}>
           {orders.data?.map((order) => (
-            <article key={order.id} className="overflow-hidden rounded-xl border bg-card">
+            <article
+              data-motion-item
+              key={order.id}
+              className="overflow-hidden rounded-2xl border bg-card shadow-sm"
+            >
               <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/30 p-4">
                 <div>
-                  <Link href={ROUTES.profile.orders.detail(order.id)} className="font-semibold hover:underline">{t("orderNumber", { number: order.order_number || order.id })}</Link>
-                  <p className="text-xs text-muted-foreground">{new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(order.created_at))}</p>
+                  <Link
+                    href={ROUTES.profile.orders.detail(order.id)}
+                    className="font-semibold hover:underline"
+                  >
+                    {t("orderNumber", {
+                      number: order.order_number || order.id,
+                    })}
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    {new Intl.DateTimeFormat(undefined, {
+                      dateStyle: "medium",
+                    }).format(new Date(order.created_at))}
+                  </p>
                 </div>
-                <div className="flex gap-2"><Badge variant="secondary">{order.status}</Badge><Badge variant="outline">{order.payment_status}</Badge></div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>{t("orderStatus")}</span>
+                    <Badge variant="secondary" className="capitalize">
+                      {statusLabel(t, order.status)}
+                    </Badge>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>{t("paymentStatus")}</span>
+                    <Badge variant="outline" className="capitalize">
+                      {statusLabel(t, order.payment_status)}
+                    </Badge>
+                  </span>
+                </div>
               </div>
               <div className="space-y-3 p-4">
-                <p className="text-sm text-muted-foreground">{orderStatusMessage(order)}</p>
+                <p className="text-sm text-muted-foreground">
+                  {orderStatusMessage(order)}
+                </p>
                 {order.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 rounded-lg border p-3">
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 rounded-lg border p-3"
+                  >
                     <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted">
-                      {item.image_snapshot ? <Image src={item.image_snapshot} alt={item.product_name_snapshot} fill sizes="56px" className="object-cover" /> : <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">{t("noImage")}</div>}
+                      {item.image_snapshot ? (
+                        <Image
+                          src={item.image_snapshot}
+                          alt={item.product_name_snapshot}
+                          fill
+                          sizes="56px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">
+                          {t("noImage")}
+                        </div>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      {item.product_id ? <Link href={ROUTES.products.detail(item.product_id)} className="font-medium hover:underline">{item.product_name_snapshot}</Link> : <p className="font-medium">{item.product_name_snapshot}</p>}
-                      <p className="text-xs text-muted-foreground">{t("quantity", { count: item.quantity })}</p>
+                      {item.product_id ? (
+                        <Link
+                          href={ROUTES.products.detail(item.product_id)}
+                          className="font-medium hover:underline"
+                        >
+                          {item.product_name_snapshot}
+                        </Link>
+                      ) : (
+                        <p className="font-medium">
+                          {item.product_name_snapshot}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {t("quantity", { count: item.quantity })}
+                      </p>
                     </div>
-                    <span className="text-sm font-semibold">SAR {item.net_line_total.toFixed(2)}</span>
+                    <span className="text-sm font-semibold">
+                      SAR {item.net_line_total.toFixed(2)}
+                    </span>
                   </div>
                 ))}
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
-                  <span className="font-bold">SAR {order.total_price.toFixed(2)}</span>
+                  <span className="font-bold">
+                    SAR {order.total_price.toFixed(2)}
+                  </span>
                   <OrderActions order={order} />
                 </div>
               </div>
             </article>
           ))}
-        </div>
+        </Stagger>
       )}
     </div>
   )

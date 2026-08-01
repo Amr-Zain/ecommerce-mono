@@ -145,6 +145,29 @@ export default function WalletPage() {
   )
   const transactionStatus = searchParams.get("transactions_status")
   const t = useTranslations("Wallet")
+  const withdrawalStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      requested: t("statusRequested"),
+      approved: t("statusApproved"),
+      paid: t("statusPaid"),
+      rejected: t("statusRejected"),
+      failed: t("statusFailed"),
+      cancelled_by_client: t("statusCancelledByClient"),
+    }
+    return labels[status] ?? status.replaceAll("_", " ")
+  }
+  const transactionStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: t("statusPending"),
+      completed: t("statusCompleted"),
+      failed: t("statusFailed"),
+      cancelled: t("statusCancelled"),
+      expired: t("statusExpired"),
+      reversed: t("statusReversed"),
+      requires_review: t("statusRequiresReview"),
+    }
+    return labels[status] ?? status.replaceAll("_", " ")
+  }
   const wallet = useWallet()
   const transactions = useWalletTransactions(
     transactionPage,
@@ -375,19 +398,29 @@ export default function WalletPage() {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-primary/10 px-8 py-10">
-        <h1 className="text-4xl font-extrabold">
-          {money(availableBalance, data?.currency)}
-        </h1>
-        <p className="text-sm text-muted-foreground">{t("availableBalance")}</p>
-        <p className="mt-3 text-sm font-semibold">
-          {t("reservedOrPending", {
-            amount: money(pendingBalance, data?.currency),
-          })}
-        </p>
-        <Badge className="mt-3" variant="outline">
-          {data?.status ?? t("unknown")}
-        </Badge>
+      <div className="relative overflow-hidden rounded-3xl border border-primary/20 bg-primary/10 px-6 py-7 shadow-sm sm:px-8 sm:py-9">
+        <div
+          className="absolute -end-12 -top-12 size-48 rounded-full bg-primary/15 blur-2xl"
+          aria-hidden
+        />
+        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              {t("availableBalance")}
+            </p>
+            <h1 className="mt-2 text-4xl font-extrabold tracking-tight tabular-nums sm:text-5xl">
+              {money(availableBalance, data?.currency)}
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {t("reservedOrPending", {
+                amount: money(pendingBalance, data?.currency),
+              })}
+            </p>
+          </div>
+          <Badge className="w-fit bg-background/60" variant="outline">
+            {data?.status ?? t("unknown")}
+          </Badge>
+        </div>
       </div>
       {(verifyDeposit.isPending || cancelDeposit.isPending) && (
         <p className="rounded-xl border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
@@ -511,7 +544,7 @@ export default function WalletPage() {
                   variant={withdrawalStatus === status ? "default" : "outline"}
                   className="cursor-pointer capitalize"
                 >
-                  {status.replaceAll("_", " ")}
+                  {withdrawalStatusLabel(status)}
                 </Badge>
               </Link>
             ))}
@@ -538,7 +571,9 @@ export default function WalletPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline">{item.status}</Badge>
+                <Badge variant="outline">
+                  {withdrawalStatusLabel(item.status)}
+                </Badge>
                 {item.status === "requested" && (
                   <CancelWithdrawalDialog withdrawal={item} />
                 )}
@@ -589,7 +624,7 @@ export default function WalletPage() {
                   variant={transactionStatus === status ? "default" : "outline"}
                   className="cursor-pointer capitalize"
                 >
-                  {status.replaceAll("_", " ")}
+                  {transactionStatusLabel(status)}
                 </Badge>
               </Link>
             ))}
@@ -639,7 +674,9 @@ export default function WalletPage() {
                   {item.direction === "credit" ? "+" : "-"}
                   {money(item.amount, item.currency)}
                 </p>
-                <Badge variant="outline">{item.status}</Badge>
+                <Badge variant="outline">
+                  {transactionStatusLabel(item.status)}
+                </Badge>
               </div>
             </div>
           ))

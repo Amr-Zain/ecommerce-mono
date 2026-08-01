@@ -21,7 +21,10 @@ import {
 import { Button } from "@ecommerce/ui/components/button"
 import { Checkbox } from "@ecommerce/ui/components/checkbox"
 import { Input } from "@ecommerce/ui/components/input"
-import { RadioGroup, RadioGroupItem } from "@ecommerce/ui/components/radio-group"
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@ecommerce/ui/components/radio-group"
 import {
   Select,
   SelectContent,
@@ -30,6 +33,20 @@ import {
   SelectValue,
 } from "@ecommerce/ui/components/select"
 import { Slider } from "@ecommerce/ui/components/slider"
+import {
+  Cancel01Icon,
+  GridViewIcon,
+  Menu01Icon,
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { cn } from "@/lib/utils"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@ecommerce/ui/components/sheet"
 import type {
   CatalogResponse,
   CollectionTreeItem,
@@ -55,11 +72,14 @@ function sortOptions(t: ReturnType<typeof useTranslations<"Product">>) {
 
 function CatalogControls({
   breadcrumbs,
+  collectionLocked,
+  collectionTree,
   facets,
   searchParams,
 }: {
   breadcrumbs: Breadcrumb[]
   collectionLocked: boolean
+  collectionTree: CollectionTreeItem[]
   facets: Facets
   searchParams: SearchParams
 }) {
@@ -70,7 +90,9 @@ function CatalogControls({
   const currentSort = String(searchParams.catalog_sort ?? "newest")
   const sortItems = sortOptions(t)
   const currentSortLabel =
-    sortItems.find((option) => option.value === currentSort)?.label ?? t("sortBy")
+    sortItems.find((option) => option.value === currentSort)?.label ??
+    t("sortBy")
+  const [filtersOpen, setFiltersOpen] = React.useState(false)
   const update = (key: string, value: string) => {
     const params = toUrlSearchParams(searchParams)
     params.set(key, value)
@@ -83,23 +105,34 @@ function CatalogControls({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Breadcrumb>
           <BreadcrumbList>
-          {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={crumb.label}>
-              {index > 0 ? <BreadcrumbSeparator /> : null}
-              <BreadcrumbItem>
-              {crumb.href ? (
-                <BreadcrumbLink render={<Link href={crumb.href} />}>
-                  {crumb.label}
-                </BreadcrumbLink>
-              ) : (
-                <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-              )}
-              </BreadcrumbItem>
-            </React.Fragment>
-          ))}
+            {breadcrumbs.map((crumb, index) => (
+              <React.Fragment key={crumb.label}>
+                {index > 0 ? <BreadcrumbSeparator /> : null}
+                <BreadcrumbItem>
+                  {crumb.href ? (
+                    <BreadcrumbLink render={<Link href={crumb.href} />}>
+                      {crumb.label}
+                    </BreadcrumbLink>
+                  ) : (
+                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                  )}
+                </BreadcrumbItem>
+              </React.Fragment>
+            ))}
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="flex items-center gap-3 self-end sm:self-auto">
+        <div className="sticky top-2 z-30 flex items-center gap-2 self-end rounded-xl bg-background/95 py-2 supports-backdrop-filter:backdrop-blur sm:self-auto lg:static lg:bg-transparent lg:py-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="lg:hidden"
+            onClick={() => setFiltersOpen(true)}
+            aria-expanded={filtersOpen}
+          >
+            <span aria-hidden>☷</span>
+            {t("filter")}
+          </Button>
           <div className="flex items-center gap-1 rounded-lg border bg-background/50 p-1">
             {(["grid", "list"] as const).map((mode) => (
               <Button
@@ -108,9 +141,14 @@ function CatalogControls({
                 size="sm"
                 variant={view === mode ? "secondary" : "ghost"}
                 onClick={() => update("view", mode)}
-                className="h-7"
+                className="size-7 p-0"
+                aria-label={t(mode === "grid" ? "gridView" : "listView")}
+                title={t(mode === "grid" ? "gridView" : "listView")}
               >
-                {t(mode)}
+                <HugeiconsIcon
+                  icon={mode === "grid" ? GridViewIcon : Menu01Icon}
+                  className="size-4"
+                />
               </Button>
             ))}
           </div>
@@ -119,7 +157,9 @@ function CatalogControls({
             onValueChange={(value) => value && update("catalog_sort", value)}
           >
             <SelectTrigger size="sm" className="w-full min-w-40 sm:w-44">
-              <SelectValue placeholder={currentSortLabel}>{currentSortLabel}</SelectValue>
+              <SelectValue placeholder={currentSortLabel}>
+                {currentSortLabel}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent
               alignItemWithTrigger={false}
@@ -129,7 +169,7 @@ function CatalogControls({
                 <SelectItem
                   key={option.value}
                   value={option.value}
-                  className="items-start py-2 pe-9 ps-2 leading-relaxed *:[span]:last:whitespace-normal *:[span]:last:break-words"
+                  className="items-start py-2 ps-2 pe-9 leading-relaxed *:[span]:last:break-words *:[span]:last:whitespace-normal"
                 >
                   {option.label}
                 </SelectItem>
@@ -138,7 +178,25 @@ function CatalogControls({
           </Select>
         </div>
       </div>
-      <ActiveFilters facets={facets} searchParams={searchParams} />
+      <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <SheetContent
+          side="bottom"
+          className="max-h-[min(82dvh,44rem)] overflow-y-auto rounded-t-2xl px-4 pt-1 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6 lg:hidden"
+        >
+          <SheetHeader className="px-0 pt-4">
+            <SheetTitle>{t("filter")}</SheetTitle>
+            <SheetDescription className="sr-only">
+              {t("filter")}
+            </SheetDescription>
+          </SheetHeader>
+          <Sidebar
+            collectionLocked={collectionLocked}
+            collectionTree={collectionTree}
+            facets={facets}
+            searchParams={searchParams}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
@@ -148,11 +206,13 @@ function Sidebar({
   collectionTree,
   facets,
   searchParams,
+  className,
 }: {
   collectionLocked: boolean
   collectionTree: CollectionTreeItem[]
   facets: Facets
   searchParams: SearchParams
+  className?: string
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -179,7 +239,12 @@ function Sidebar({
     })
 
   return (
-    <aside className="w-full space-y-6 rounded-xl border bg-card/60 p-5 backdrop-blur-md lg:col-span-1">
+    <aside
+      className={cn(
+        "w-full space-y-6 rounded-xl border bg-card/60 p-5 backdrop-blur-md lg:col-span-1",
+        className
+      )}
+    >
       <div className="flex items-center justify-between border-b pb-4">
         <h2 className="text-lg font-semibold tracking-tight">{t("filter")}</h2>
         <Button
@@ -202,6 +267,7 @@ function Sidebar({
             )
         }}
       />
+      <ActiveFilters facets={facets} searchParams={searchParams} />
       {!collectionLocked && collectionTree.length ? (
         <FilterSection title={t("collectionsLabel")}>
           <Accordion>
@@ -211,7 +277,9 @@ function Sidebar({
                 collection={collection}
                 counts={collectionCounts}
                 selected={values(searchParams, "collection")}
-                onChange={(slug, checked) => toggle("collection", slug, checked)}
+                onChange={(slug, checked) =>
+                  toggle("collection", slug, checked)
+                }
               />
             ))}
           </Accordion>
@@ -265,15 +333,17 @@ function Sidebar({
             navigate((params) => params.set("min_discount", value))
           }
         >
-        {[10, 25, 50].map((discount) => (
-          <label
-            key={discount}
-            className="flex cursor-pointer items-center gap-2.5 text-sm"
-          >
-            <RadioGroupItem value={String(discount)} />
-            <span className="font-medium">{t("orMore", { value: discount })}</span>
-          </label>
-        ))}
+          {[10, 25, 50].map((discount) => (
+            <label
+              key={discount}
+              className="flex cursor-pointer items-center gap-2.5 text-sm"
+            >
+              <RadioGroupItem value={String(discount)} />
+              <span className="font-medium">
+                {t("orMore", { value: discount })}
+              </span>
+            </label>
+          ))}
         </RadioGroup>
       </FilterSection>
     </aside>
@@ -320,8 +390,7 @@ function CollectionFilterNode({
         <AccordionTrigger
           aria-label={t("show", { name: collection.name })}
           className="flex-none px-2"
-        >
-        </AccordionTrigger>
+        ></AccordionTrigger>
       </div>
       <AccordionContent className="space-y-2 ps-3">
         <Accordion>
@@ -417,7 +486,12 @@ function ActiveFilters({
             : filter.key === "min_discount"
               ? t("orMore", { value: filter.value })
               : (labels.get(filter.value) ?? filter.value)}
-          <span aria-hidden>×</span>
+          <HugeiconsIcon icon={Cancel01Icon} className="size-3" aria-hidden />
+          <span className="sr-only">
+            {t("removeFilter", {
+              label: labels.get(filter.value) ?? filter.value,
+            })}
+          </span>
         </button>
       ))}
     </div>

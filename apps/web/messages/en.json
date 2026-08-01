@@ -7,6 +7,34 @@
     "english": "English",
     "arabic": "Arabic"
   },
+  "Storefront": {
+    "bestSelling": "Best Selling",
+    "newArrivals": "New Arrivals",
+    "lookingFor": "What are you looking for?",
+    "recentlyViewed": "Recently Viewed",
+    "viewAll": "View all"
+  },
+  "ProfileNav": {
+    "user": "User",
+    "accountMenu": "Account menu",
+    "account": "My account",
+    "wishlist": "My Wishlist",
+    "orders": "My Orders",
+    "addresses": "My Addresses",
+    "wallet": "My Wallet",
+    "payments": "Payment activity",
+    "loyalty": "My Loyalty",
+    "returns": "Returns & refunds",
+    "support": "Support tickets",
+    "security": "Security",
+    "logout": "Log out",
+    "editPhoto": "Edit profile photo",
+    "uploading": "Uploading...",
+    "imageOnly": "Please choose an image file.",
+    "photoUpdated": "Profile photo updated",
+    "photoUploadFailed": "Profile photo upload failed",
+    "loggingOut": "Logging out..."
+  },
   "Auth": {
     "loginTitle": "Sign in",
     "loginDescription": "Sign in with a one-time verification code.",
@@ -17,6 +45,9 @@
     "phone": "Phone",
     "emailOrPhone": "Email or phone number",
     "phoneCode": "Country code",
+    "searchCountry": "Search country or code...",
+    "noCountryFound": "No country found.",
+    "phoneMustStartWith": "Must start with",
     "detectedEmail": "This will be used as an email address.",
     "detectedPhone": "This will be used as a phone number.",
     "otpCode": "Verification code",
@@ -132,7 +163,19 @@
     "startShopping": "Start Shopping",
     "noImage": "No image",
     "quantity": "Quantity: {count}",
-    "orderNumber": "Order #{number}"
+    "orderNumber": "Order #{number}",
+    "filterOrders": "Filter orders",
+    "orderStatus": "Order",
+    "paymentStatus": "Payment",
+    "statusPending": "Pending",
+    "statusProcessing": "Processing",
+    "statusShipped": "Shipped",
+    "statusDelivered": "Delivered",
+    "statusCancelled": "Cancelled",
+    "statusRefunded": "Refunded",
+    "statusPaid": "Paid",
+    "statusAwaitingConfirmation": "Awaiting confirmation",
+    "statusFailed": "Failed"
   },
   "OrderDetails": {
     "loading": "Loading order...",
@@ -263,7 +306,19 @@
     "bankName": "Bank name",
     "accountHolderName": "Account holder name",
     "iban": "IBAN / account number",
-    "optionalNote": "Optional note"
+    "optionalNote": "Optional note",
+    "statusRequested": "Requested",
+    "statusApproved": "Approved",
+    "statusPaid": "Paid",
+    "statusRejected": "Rejected",
+    "statusFailed": "Failed",
+    "statusCancelledByClient": "Cancelled by client",
+    "statusPending": "Pending",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "statusExpired": "Expired",
+    "statusReversed": "Reversed",
+    "statusRequiresReview": "Requires review"
   },
   "Returns": {
     "title": "Returns & Exchanges",
@@ -295,6 +350,18 @@
     "order": "Order",
     "cancel": "Cancel",
     "cancelling": "Cancelling..."
+  },
+  "Payments": {
+    "title": "Payment activity",
+    "description": "Track online payments, wallet deposits, refunds, exchanges, and manual payment sessions.",
+    "empty": "No payment activity yet",
+    "emptyDescription": "Completed checkouts, deposits, refunds, and payment attempts will appear here."
+  },
+  "Security": {
+    "title": "Security",
+    "description": "Review active login sessions and revoke sessions you do not recognize.",
+    "empty": "No active sessions",
+    "emptyDescription": "When you sign in on a device, the session will appear here."
   },
   "ReturnDetails": {
     "notFound": "Request not found",

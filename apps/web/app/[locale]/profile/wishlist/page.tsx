@@ -17,14 +17,18 @@ import {
 } from "@ecommerce/ui/components/empty"
 import { ProductCard, type Product } from "@/components/product/product-card"
 import { useWishlist } from "@/hooks/api/use-wishlist"
+import { ProfilePageSkeleton } from "@/components/profile/profile-page-skeleton"
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=500&q=80"
 
-function mapWishlistProduct(item: {
-  productId: string
-  product?: Record<string, unknown>
-}, t: (key: string) => string): Product {
+function mapWishlistProduct(
+  item: {
+    productId: string
+    product?: Record<string, unknown>
+  },
+  t: (key: string) => string
+): Product {
   const product = item.product ?? {}
   const variants = Array.isArray(product.variants)
     ? (product.variants as Array<Record<string, unknown>>)
@@ -41,7 +45,9 @@ function mapWishlistProduct(item: {
     name: String(product.name ?? translation.name ?? t("fallbackProductName")),
     brand: "Ecommerce",
     description: String(
-      product.description ?? translation.description ?? t("fallbackProductDescription")
+      product.description ??
+        translation.description ??
+        t("fallbackProductDescription")
     ),
     price: Number(variant?.price ?? product.price ?? 0),
     oldPrice:
@@ -65,21 +71,16 @@ function mapWishlistProduct(item: {
 export default function WishlistPage() {
   const t = useTranslations("Wishlist")
   const wishlist = useWishlist()
-  const items = wishlist.data?.data.map((item) => mapWishlistProduct(item, t)) ?? []
+  const items =
+    wishlist.data?.data.map((item) => mapWishlistProduct(item, t)) ?? []
 
   if (wishlist.isPending) {
-    return (
-      <div className="py-20 text-center text-muted-foreground">
-        {t("loading")}
-      </div>
-    )
+    return <ProfilePageSkeleton />
   }
 
   if (wishlist.isError) {
     return (
-      <div className="py-20 text-center text-destructive">
-        {t("loadError")}
-      </div>
+      <div className="py-20 text-center text-destructive">{t("loadError")}</div>
     )
   }
 
@@ -101,9 +102,7 @@ export default function WishlistPage() {
               />
             </EmptyMedia>
             <EmptyTitle className="text-xl">{t("empty")}</EmptyTitle>
-            <EmptyDescription>
-              {t("emptyDescription")}
-            </EmptyDescription>
+            <EmptyDescription>{t("emptyDescription")}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button
