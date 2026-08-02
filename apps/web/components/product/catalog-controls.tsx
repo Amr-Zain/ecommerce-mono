@@ -120,43 +120,45 @@ function CatalogControls({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <Breadcrumb>
-          <BreadcrumbList>
-            {breadcrumbs.map((crumb, index) => (
-              <React.Fragment key={crumb.label}>
-                {index > 0 ? <BreadcrumbSeparator /> : null}
-                <BreadcrumbItem>
-                  {crumb.slug ? (
-                    <>
-                      <BreadcrumbPage className="max-w-40 truncate">
+        {breadcrumbs.length > 1 ? (
+          <Breadcrumb>
+            <BreadcrumbList>
+              {breadcrumbs.map((crumb, index) => (
+                <React.Fragment key={crumb.label}>
+                  {index > 0 ? <BreadcrumbSeparator /> : null}
+                  <BreadcrumbItem>
+                    {crumb.slug ? (
+                      <>
+                        <BreadcrumbPage className="max-w-40 truncate">
+                          {crumb.label}
+                        </BreadcrumbPage>
+                        <NavigationCombobox
+                          label={t("selectCategory")}
+                          value={findCollectionContext(collectionTree, crumb.slug ?? "")?.node.id ?? ""}
+                          options={(findCollectionContext(collectionTree, crumb.slug ?? "")?.siblings ?? []).map((item) => ({
+                            id: item.id,
+                            name: item.name,
+                            slug: item.slug,
+                          }))}
+                          onValueChange={(id) => {
+                            const option = (findCollectionContext(collectionTree, crumb.slug ?? "")?.siblings ?? []).find((item) => item.id === id)
+                            if (option) router.push(ROUTES.collections.bySlug(option.slug))
+                          }}
+                        />
+                      </>
+                    ) : crumb.href ? (
+                      <BreadcrumbLink render={<Link href={crumb.href} />}>
                         {crumb.label}
-                      </BreadcrumbPage>
-                      <NavigationCombobox
-                        label={t("selectCategory")}
-                        value={findCollectionContext(collectionTree, crumb.slug ?? "")?.node.id ?? ""}
-                        options={(findCollectionContext(collectionTree, crumb.slug ?? "")?.siblings ?? []).map((item) => ({
-                          id: item.id,
-                          name: item.name,
-                          slug: item.slug,
-                        }))}
-                        onValueChange={(id) => {
-                          const option = (findCollectionContext(collectionTree, crumb.slug ?? "")?.siblings ?? []).find((item) => item.id === id)
-                          if (option) router.push(ROUTES.collections.bySlug(option.slug))
-                        }}
-                      />
-                    </>
-                  ) : crumb.href ? (
-                    <BreadcrumbLink render={<Link href={crumb.href} />}>
-                      {crumb.label}
-                    </BreadcrumbLink>
-                  ) : (
-                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                  )}
-                </BreadcrumbItem>
-              </React.Fragment>
-            ))}
-          </BreadcrumbList>
-        </Breadcrumb>
+                      </BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                </React.Fragment>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
+        ) : null}
         <div className="sticky top-2 z-30 flex items-center gap-2 self-end rounded-xl bg-background/95 py-2 supports-backdrop-filter:backdrop-blur sm:self-auto lg:static lg:bg-transparent lg:py-0">
           <Button
             type="button"
