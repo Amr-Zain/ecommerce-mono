@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@ecommerce/ui/components/button"
 import { CarouselContent, CarouselItem } from "@ecommerce/ui/components/carousel"
@@ -6,9 +7,11 @@ import { AutoSlider } from "@/components/shared/auto-slider"
 import { community } from "./data"
 
 export function CommunitySection() {
+  const t = useTranslations("Storefront")
+
   return (
     <section className="py-12 text-center">
-      <h2 className="text-base font-semibold">Inspired by Our Community</h2>
+      <h2 className="text-base font-semibold">{t("communityTitle")}</h2>
       <AutoSlider className="mt-6" delay={3500}>
         <CarouselContent className="-ms-3">
           {community.map((image) => (
@@ -25,7 +28,7 @@ export function CommunitySection() {
         </CarouselContent>
       </AutoSlider>
       <Button variant="outline" size="sm" className="mt-5 rounded-full text-xs">
-        Follow Us @Ecommerce
+        {t("followUs")}
       </Button>
     </section>
   )

@@ -50,6 +50,10 @@ function NavigationCombobox({
 }) {
   const [open, setOpen] = React.useState(false)
   const current = options.find((option) => option.id === value)
+  const hasAlternativeOptions = options.some((option) => option.id !== value)
+
+  if (!hasAlternativeOptions) return null
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger

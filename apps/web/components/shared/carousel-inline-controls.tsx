@@ -1,6 +1,6 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 
 import {
   CircleArrowLeft02Icon,
@@ -14,8 +14,10 @@ import {
 } from "@ecommerce/ui/components/carousel"
 
 export function CarouselInlineControls() {
+  const locale = useLocale()
   const t = useTranslations("Product")
   const { scrollNext, scrollPrev, canScrollNext, canScrollPrev } = useCarousel()
+  const isRtl = locale === "ar"
 
   return (
     <div className="flex items-center gap-2">
@@ -28,9 +30,8 @@ export function CarouselInlineControls() {
         onClick={scrollPrev}
       >
         <HugeiconsIcon
-          icon={CircleArrowLeft02Icon}
+          icon={isRtl ? CircleArrowRight02Icon : CircleArrowLeft02Icon}
           strokeWidth={2}
-          className="size-4 rtl:rotate-180"
         />
       </Button>
       <Button
@@ -42,9 +43,8 @@ export function CarouselInlineControls() {
         onClick={scrollNext}
       >
         <HugeiconsIcon
-          icon={CircleArrowRight02Icon}
+          icon={isRtl ? CircleArrowLeft02Icon : CircleArrowRight02Icon}
           strokeWidth={2}
-          className="size-4 rtl:rotate-180"
         />
       </Button>
     </div>

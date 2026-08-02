@@ -17,4 +17,10 @@ export class SearchController {
   suggestions(@Query() query: SearchSuggestionsDto, @I18nLang() lang: string) {
     return this.search.suggestions(query.q, query.limit, lang);
   }
+
+  @Public()
+  @Get('collections')
+  collections(@Query() query: SearchSuggestionsDto, @I18nLang() lang: string) {
+    return this.search.collectionSearch(query.q, query.limit, lang);
+  }
 }

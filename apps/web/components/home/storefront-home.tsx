@@ -59,12 +59,15 @@ type HomeResponse = {
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=440&q=85"
 
-function mapProducts(products: HomeProduct[]): Product[] {
+function mapProducts(
+  products: HomeProduct[],
+  fallbackDescription: string
+): Product[] {
   return products.map((product) => ({
     id: product.id,
     name: product.name,
     brand: product.category?.name || "Ecommerce",
-    description: product.description ?? undefined,
+    description: product.description ?? fallbackDescription,
     price: `$${product.pricing.discount.final_price.toFixed(2)}`,
     oldPrice:
       product.pricing.discount.percentage > 0
@@ -103,10 +106,11 @@ async function getHomeData() {
 }
 
 export async function StorefrontHome() {
-  const [homeResponse, t, storefront] = await Promise.all([
+  const [homeResponse, t, storefront, productT] = await Promise.all([
     getHomeData(),
     getTranslations("Campaign"),
     getTranslations("Storefront"),
+    getTranslations("Product"),
   ])
   const home = homeResponse?.data
   const campaign = home?.active_offer
@@ -124,7 +128,7 @@ export async function StorefrontHome() {
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((slider) => ({
         id: slider.id,
-        title: slider.title || "Discover our latest collection",
+        title: slider.title || storefront("discoverLatestCollection"),
         image: slider.image!,
       })) ?? []
 
@@ -139,7 +143,10 @@ export async function StorefrontHome() {
       <Motion preset="section" revealOnScroll>
         <ProductSection
           title={storefront("bestSelling")}
-          products={mapProducts(home?.best_selling ?? [])}
+          products={mapProducts(
+            home?.best_selling ?? [],
+            productT("fallbackProductDescription")
+          )}
           savings
           campaign={campaign}
         />
@@ -147,7 +154,10 @@ export async function StorefrontHome() {
       <Motion preset="section" revealOnScroll>
         <ProductSection
           title={storefront("newArrivals")}
-          products={mapProducts(home?.new_arrivals ?? [])}
+          products={mapProducts(
+            home?.new_arrivals ?? [],
+            productT("fallbackProductDescription")
+          )}
           auto
         />
       </Motion>
@@ -169,7 +179,10 @@ export async function StorefrontHome() {
         <Motion preset="section" revealOnScroll>
           <ProductSection
             title={storefront("recentlyViewed")}
-            products={mapProducts(home?.recently_viewed ?? [])}
+            products={mapProducts(
+              home?.recently_viewed ?? [],
+              productT("fallbackProductDescription")
+            )}
           />
         </Motion>
       )}

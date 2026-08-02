@@ -4,6 +4,7 @@ import { ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import Image from "next/image"
 import { Link } from "@/i18n/navigation"
+import { useTranslations } from "next-intl"
 
 import { Button } from "@ecommerce/ui/components/button"
 import {
@@ -21,6 +22,8 @@ export type SliderItem = {
 }
 
 export function PromoSection({ sliders }: { sliders: SliderItem[] }) {
+  const t = useTranslations("Storefront")
+
   if (sliders.length === 0) return null
 
   return (
@@ -50,17 +53,17 @@ export function PromoSection({ sliders }: { sliders: SliderItem[] }) {
                       {slider.title}
                     </h2>
                     <Button
+                      render={<Link href={ROUTES.collections.root} />}
                       data-motion-item
                       size="sm"
                       className="mt-6 rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
                     >
-                      <Link href={ROUTES.collections.root}>
-                        Shop Now
-                        <HugeiconsIcon
-                          icon={ArrowRight01Icon}
-                          className="size-3.5"
-                        />
-                      </Link>
+                      {t("shopNow")}
+                      <HugeiconsIcon
+                        icon={ArrowRight01Icon}
+                        data-icon="inline-end"
+                        className="rtl:rotate-180"
+                      />
                     </Button>
                   </Stagger>
                 </div>

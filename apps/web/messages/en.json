@@ -12,7 +12,21 @@
     "newArrivals": "New Arrivals",
     "lookingFor": "What are you looking for?",
     "recentlyViewed": "Recently Viewed",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "shopByCategory": "Shop by Category",
+    "shopNow": "Shop Now",
+    "showroomTitle": "Find a Showroom Near You",
+    "showroomDescription": "Explore our showrooms to experience our collections in person.",
+    "viewShowrooms": "View Showrooms",
+    "discoverLatestCollection": "Discover our latest collection",
+    "communityTitle": "Inspired by Our Community",
+    "followUs": "Follow Us @Ecommerce",
+    "freeDelivery": "Free delivery",
+    "freeDeliveryDescription": "Get your orders delivered to your doorstep for free.",
+    "onlinePayment": "Online payment",
+    "onlinePaymentDescription": "Enjoy secure and hassle-free online payments.",
+    "easyReturns": "Easy returns",
+    "easyReturnsDescription": "Enjoy easy returns within 30 days of purchase."
   },
   "ProfileNav": {
     "user": "User",
@@ -104,7 +118,10 @@
     "eyebrow": "Shop by category",
     "search": "Search collections",
     "searchPlaceholder": "Search by collection or category",
+    "searchHint": "Find a collection or any nested category instantly.",
     "showing": "{count} collections",
+    "searchResults": "Search results",
+    "searchLoading": "Searching collections...",
     "emptyTitle": "No collections found",
     "emptyDescription": "Try a different search or browse all collections."
   },
@@ -470,7 +487,12 @@
     "login": "Login",
     "collections": "Collections",
     "shopAll": "Shop all",
-    "bestSellers": "Best sellers"
+    "bestSellers": "Best sellers",
+    "menu": "Menu",
+    "shopCollections": "Shop collections",
+    "browseCollections": "Browse every collection and category.",
+    "viewAllCollections": "View all collections",
+    "viewAllCategory": "View all {name}"
   },
   "Footer": {
     "brandName": "Ecommerce",
@@ -619,6 +641,8 @@
     "nextPage": "Next page",
     "previousSlide": "Previous slide",
     "nextSlide": "Next slide",
+    "previousCategory": "Previous category",
+    "nextCategory": "Next category",
     "toggleTheme": "Toggle theme",
     "removeFromCart": "Remove {name} from cart",
     "goToImage": "Go to image {number}",

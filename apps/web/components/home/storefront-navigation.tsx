@@ -127,7 +127,7 @@ function StorefrontNavigation({
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Menu"
+            aria-label={t("menu")}
             className="lg:hidden"
           >
             <HugeiconsIcon icon={Menu02Icon} strokeWidth={2} />
@@ -135,10 +135,8 @@ function StorefrontNavigation({
         </DrawerTrigger>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Shop collections</DrawerTitle>
-            <DrawerDescription>
-              Browse every collection and category.
-            </DrawerDescription>
+            <DrawerTitle>{t("shopCollections")}</DrawerTitle>
+            <DrawerDescription>{t("browseCollections")}</DrawerDescription>
           </DrawerHeader>
           <div className="overflow-y-auto px-4 pb-6">
             <nav className="mb-5 grid grid-cols-2 gap-2 text-sm">
@@ -187,7 +185,7 @@ function StorefrontNavigation({
               variant="outline"
               className="mb-3 w-full"
             >
-              View all collections
+              {t("viewAllCollections")}
             </Button>
             <Accordion>
               {collections.map((root) => (
@@ -198,7 +196,7 @@ function StorefrontNavigation({
                       href={ROUTES.collections.bySlug(root.slug)}
                       className="font-semibold"
                     >
-                      View all {root.name}
+                      {t("viewAllCategory", { name: root.name })}
                     </Link>
                     {root.children?.map((child) => (
                       <div key={child.id} className="space-y-1">

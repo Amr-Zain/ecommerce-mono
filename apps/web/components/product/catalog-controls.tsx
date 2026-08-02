@@ -87,6 +87,49 @@ function sortOptions(t: ReturnType<typeof useTranslations<"Product">>) {
   ]
 }
 
+function CollectionBreadcrumbItem({
+  crumb,
+  collectionTree,
+  label,
+  onNavigate,
+}: {
+  crumb: Breadcrumb
+  collectionTree: CollectionTreeItem[]
+  label: string
+  onNavigate: (slug: string) => void
+}) {
+  const context = crumb.slug
+    ? findCollectionContext(collectionTree, crumb.slug)
+    : null
+  const siblingItems = context?.siblings ?? []
+  const hasAlternativeItems = context
+    ? siblingItems.some((item) => item.id !== context.node.id)
+    : false
+
+  return (
+    <>
+      <BreadcrumbPage className="max-w-40 truncate">
+        {crumb.label}
+      </BreadcrumbPage>
+      {hasAlternativeItems ? (
+        <NavigationCombobox
+          label={label}
+          value={context?.node.id ?? ""}
+          options={siblingItems.map((item) => ({
+            id: item.id,
+            name: item.name,
+            slug: item.slug,
+          }))}
+          onValueChange={(id) => {
+            const option = siblingItems.find((item) => item.id === id)
+            if (option) onNavigate(option.slug)
+          }}
+        />
+      ) : null}
+    </>
+  )
+}
+
 function CatalogControls({
   breadcrumbs,
   collectionLocked,
@@ -128,24 +171,14 @@ function CatalogControls({
                   {index > 0 ? <BreadcrumbSeparator /> : null}
                   <BreadcrumbItem>
                     {crumb.slug ? (
-                      <>
-                        <BreadcrumbPage className="max-w-40 truncate">
-                          {crumb.label}
-                        </BreadcrumbPage>
-                        <NavigationCombobox
-                          label={t("selectCategory")}
-                          value={findCollectionContext(collectionTree, crumb.slug ?? "")?.node.id ?? ""}
-                          options={(findCollectionContext(collectionTree, crumb.slug ?? "")?.siblings ?? []).map((item) => ({
-                            id: item.id,
-                            name: item.name,
-                            slug: item.slug,
-                          }))}
-                          onValueChange={(id) => {
-                            const option = (findCollectionContext(collectionTree, crumb.slug ?? "")?.siblings ?? []).find((item) => item.id === id)
-                            if (option) router.push(ROUTES.collections.bySlug(option.slug))
-                          }}
-                        />
-                      </>
+                      <CollectionBreadcrumbItem
+                        crumb={crumb}
+                        collectionTree={collectionTree}
+                        label={t("selectCategory")}
+                        onNavigate={(slug) =>
+                          router.push(ROUTES.collections.bySlug(slug))
+                        }
+                      />
                     ) : crumb.href ? (
                       <BreadcrumbLink render={<Link href={crumb.href} />}>
                         {crumb.label}

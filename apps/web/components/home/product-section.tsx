@@ -2,6 +2,7 @@
 
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
+import { useLocale, useTranslations } from "next-intl"
 
 import {
   CarouselContent,
@@ -19,29 +20,32 @@ import type { Campaign } from "./savings-card"
 import { SectionHeader } from "./section-header"
 
 function InlineControls() {
+  const locale = useLocale()
+  const t = useTranslations("Product")
   const { scrollNext, scrollPrev, canScrollNext, canScrollPrev } = useCarousel()
+  const isRtl = locale === "ar"
 
   return (
     <div className="flex gap-2">
       <button
         onClick={scrollPrev}
+        aria-label={t("previousSlide")}
         disabled={!canScrollPrev}
         className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-20"
       >
         <HugeiconsIcon
-          icon={ArrowLeft01Icon}
-          className="size-4"
+          icon={isRtl ? ArrowRight01Icon : ArrowLeft01Icon}
           strokeWidth={2.5}
         />
       </button>
       <button
         onClick={scrollNext}
+        aria-label={t("nextSlide")}
         disabled={!canScrollNext}
         className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-20"
       >
         <HugeiconsIcon
-          icon={ArrowRight01Icon}
-          className="size-4"
+          icon={isRtl ? ArrowLeft01Icon : ArrowRight01Icon}
           strokeWidth={2.5}
         />
       </button>
@@ -62,6 +66,7 @@ export function ProductSection({
   campaign?: Campaign | null
   auto?: boolean
 }) {
+  const t = useTranslations("Product")
   if (products.length === 0) return null
 
   return (
@@ -80,7 +85,8 @@ export function ProductSection({
                 id: product.id ?? `home-prod-${idx}`,
                 name: product.name,
                 brand: product.brand,
-                description: product.description ?? "Explore this product.",
+                description:
+                  product.description ?? t("fallbackProductDescription"),
                 price: parseFloat(
                   (product.price || "$0").replace(/[^0-9.]/g, "")
                 ),

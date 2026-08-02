@@ -29,8 +29,11 @@ export type Category = {
 
 export type Benefit = {
   icon: IconSvgElement
-  title: string
-  copy: string
+  titleKey: "freeDelivery" | "onlinePayment" | "easyReturns"
+  copyKey:
+    | "freeDeliveryDescription"
+    | "onlinePaymentDescription"
+    | "easyReturnsDescription"
 }
 
 export const heroPromos = [
@@ -302,17 +305,17 @@ export const community = [
 export const benefits: Benefit[] = [
   {
     icon: DeliveryTruck01Icon,
-    title: "Free delivery",
-    copy: "Get your orders delivered to your doorstep for free.",
+    titleKey: "freeDelivery",
+    copyKey: "freeDeliveryDescription",
   },
   {
     icon: CreditCardIcon,
-    title: "Online Payment",
-    copy: "Experience hassle-free online payments with secure.",
+    titleKey: "onlinePayment",
+    copyKey: "onlinePaymentDescription",
   },
   {
     icon: DeliveryReturn01Icon,
-    title: "Easy Return",
-    copy: "Enjoy easy returns within 30 days of purchase.",
+    titleKey: "easyReturns",
+    copyKey: "easyReturnsDescription",
   },
 ]

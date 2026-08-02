@@ -32,6 +32,15 @@ type SearchSuggestionsResponse = {
   }
 }
 
+type CollectionSearchResponse = {
+  success: boolean
+  data: {
+    query: string
+    degraded: boolean
+    collections: SearchCollectionSuggestion[]
+  }
+}
+
 function useSearchSuggestions(query: string) {
   return useFetch<SearchSuggestionsResponse>({
     queryKey: ["search", "suggestions", query],
@@ -44,8 +53,21 @@ function useSearchSuggestions(query: string) {
   })
 }
 
-export { useSearchSuggestions }
+function useCollectionSearch(query: string) {
+  return useFetch<CollectionSearchResponse>({
+    queryKey: ["search", "collections", query],
+    endpoint: "search/collections",
+    params: { q: query, limit: 50 },
+    enabled: query.length >= 2,
+    staleTime: 30_000,
+    retry: false,
+    disableErrorToast: true,
+  })
+}
+
+export { useCollectionSearch, useSearchSuggestions }
 export type {
+  CollectionSearchResponse,
   SearchCollectionSuggestion,
   SearchProductSuggestion,
   SearchSuggestionsResponse,

@@ -16,57 +16,55 @@ import { cn } from "@/lib/utils"
 import { AutoSlider } from "@/components/shared/auto-slider"
 import type { Category } from "./data"
 import { SectionHeader } from "./section-header"
+import { useLocale, useTranslations } from "next-intl"
 
-function CarouselSideControls() {
+function CarouselSideControl({
+  direction,
+}: {
+  direction: "previous" | "next"
+}) {
+  const locale = useLocale()
+  const t = useTranslations("Product")
   const { scrollNext, scrollPrev, canScrollNext, canScrollPrev } = useCarousel()
+  const isRtl = locale === "ar"
+  const isPrevious = direction === "previous"
+  const disabled = isPrevious ? !canScrollPrev : !canScrollNext
+  const icon = isPrevious
+    ? isRtl
+      ? ArrowRight01Icon
+      : ArrowLeft01Icon
+    : isRtl
+      ? ArrowLeft01Icon
+      : ArrowRight01Icon
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-between px-2">
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={scrollPrev}
-        disabled={!canScrollPrev}
-        className="pointer-events-auto size-10 rounded-full text-foreground/60 hover:text-foreground"
-        aria-label="Previous category"
-      >
-        <HugeiconsIcon
-          icon={ArrowLeft01Icon}
-          className="size-5 rtl:rotate-180"
-          strokeWidth={2.5}
-        />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={scrollNext}
-        disabled={!canScrollNext}
-        className="pointer-events-auto size-10 rounded-full text-foreground/60 hover:text-foreground"
-        aria-label="Next category"
-      >
-        <HugeiconsIcon
-          icon={ArrowRight01Icon}
-          className="size-5 rtl:rotate-180"
-          strokeWidth={2.5}
-        />
-      </Button>
-    </div>
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      onClick={isPrevious ? scrollPrev : scrollNext}
+      disabled={disabled}
+      className="size-10 rounded-full text-foreground/60 hover:text-foreground"
+      aria-label={t(isPrevious ? "previousCategory" : "nextCategory")}
+    >
+      <HugeiconsIcon icon={icon} strokeWidth={2.5} />
+    </Button>
   )
 }
 
 export function CategoryStrip({
   categories,
-  title = "Shop by Category",
+  title,
 }: {
   categories: Category[]
   title?: string
 }) {
+  const t = useTranslations("Storefront")
   if (categories.length === 0) return null
 
   return (
     <section className="py-10">
       <AutoSlider auto={false}>
-        <SectionHeader title={title} viewAll />
+        <SectionHeader title={title ?? t("shopByCategory")} viewAll />
         <div className="relative">
           <CarouselContent className="-ms-3">
             {categories.map((category) => (
@@ -97,7 +95,14 @@ export function CategoryStrip({
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselSideControls />
+          <div className="pointer-events-none absolute inset-y-0 start-0 end-0 z-10 flex items-center justify-between xl:-start-12 xl:-end-12">
+            <div className="pointer-events-auto">
+              <CarouselSideControl direction="previous" />
+            </div>
+            <div className="pointer-events-auto">
+              <CarouselSideControl direction="next" />
+            </div>
+          </div>
         </div>
       </AutoSlider>
     </section>

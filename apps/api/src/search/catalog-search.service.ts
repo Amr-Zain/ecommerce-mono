@@ -72,6 +72,45 @@ export class CatalogSearchService {
     }
   }
 
+  async collectionSearch(query: string, limit: number, langId: string) {
+    try {
+      const result = await this.elastic.requireClient().search<SearchCollectionDocument>(
+        {
+          index: this.elastic.collectionsReadAlias,
+          size: Math.min(50, limit),
+          query: this.collectionTextQuery(query, langId),
+          sort: [{ _score: { order: 'desc' } }, { productCount: 'desc' }, { sortOrder: 'asc' }],
+        },
+        this.elastic.queryRequestOptions,
+      );
+
+      return {
+        query,
+        degraded: false,
+        collections: result.hits.hits
+          .map((hit) => hit._source)
+          .filter((item): item is SearchCollectionDocument => Boolean(item))
+          .map((item) => this.collectionSuggestion(item, langId)),
+      };
+    } catch (error) {
+      this.logger.warn(`Elasticsearch collection search unavailable; using PostgreSQL fallback: ${this.errorMessage(error)}`);
+      const locale = langId.startsWith('ar') ? 'ar' : 'en';
+      const scoreNames = (names: { en: string; ar: string }) => {
+        const primary = fuzzyTextScore(names[locale], query);
+        const secondary = fuzzyTextScore(names[locale === 'ar' ? 'en' : 'ar'], query);
+        return Math.max(primary ?? -1, (secondary ?? -1) >= 0 ? (secondary ?? -1) * 0.75 : -1);
+      };
+      const collections = (await this.documents.collectionDocuments())
+        .map((item) => ({ item, score: item.isActive ? scoreNames(item.name) : -1 }))
+        .filter(({ score }) => score >= 0)
+        .sort((left, right) => right.score - left.score)
+        .slice(0, Math.min(50, limit))
+        .map(({ item }) => this.collectionSuggestion(item, langId));
+
+      return { query, degraded: true, collections };
+    }
+  }
+
   private productTextQuery(query: string, langId: string): estypes.QueryDslQueryContainer {
     const primary = langId.startsWith('ar') ? 'ar' : 'en';
     const secondary = primary === 'ar' ? 'en' : 'ar';

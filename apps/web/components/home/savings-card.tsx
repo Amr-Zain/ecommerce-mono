@@ -33,7 +33,11 @@ export function SavingsCard({ campaign }: { campaign: Campaign }) {
           className="mt-4 h-9 w-full rounded-full text-xs"
         >
           {campaign.ctaLabel}
-          <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            data-icon="inline-end"
+            className="rtl:rotate-180"
+          />
         </Button>
       </div>
     </article>

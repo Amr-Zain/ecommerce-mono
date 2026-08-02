@@ -60,7 +60,9 @@ export default async function CollectionsPage({
         labels={{
           search: tc("search"),
           searchPlaceholder: tc("searchPlaceholder"),
-          showing: tc("showing"),
+          searchHint: tc("searchHint"),
+          searchResults: tc("searchResults"),
+          searchLoading: tc("searchLoading"),
           productCount: tc.raw("productCount"),
           viewAll: tc("viewAll"),
           viewCollection: tc.raw("viewCollection"),
