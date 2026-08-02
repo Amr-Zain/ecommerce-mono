@@ -20,4 +20,9 @@ export class ClientProductsService {
     const normalizedLimit = Math.min(Math.max(limit, 1), 20);
     return this.productsRepo.findRelated(id, langId, normalizedLimit);
   }
+
+  async findNavigation(id: bigint, langId: string = 'en', search = '', limit = 20) {
+    const normalizedLimit = Math.min(Math.max(limit, 1), 20);
+    return this.productsRepo.findNavigation(id, langId, search.trim(), normalizedLimit);
+  }
 }

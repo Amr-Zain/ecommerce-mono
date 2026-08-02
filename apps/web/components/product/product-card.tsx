@@ -231,7 +231,7 @@ export function ProductCard({
                 price={product.price}
                 oldPrice={product.oldPrice}
                 available={product.available}
-                className="h-8 gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                className="h-10 gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
               />
             </div>
           )}
@@ -331,7 +331,7 @@ export function ProductCard({
               available={product.available}
               className={cn(
                 "w-full gap-2 rounded-lg bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90",
-                compact ? "mt-3 h-8" : "mt-4 h-9"
+                compact ? "mt-3 h-10" : "mt-4 h-10"
               )}
             />
           </>

@@ -9,6 +9,8 @@ export const publicCacheKeys = {
     stableCacheKey('client:products:catalog', { langId, query }),
   productDetail: (langId: string, id: string | number | bigint) =>
     stableCacheKey('client:products:detail', { langId, id }),
+  productNavigation: (langId: string, id: string | number | bigint, search: string, limit: number) =>
+    stableCacheKey('client:products:navigation', { langId, id, search, limit }),
   productRelated: (langId: string, id: string | number | bigint, limit: number) =>
     stableCacheKey('client:products:related', { langId, id, limit }),
   collectionsList: (langId: string, parentId?: string) =>

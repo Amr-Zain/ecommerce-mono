@@ -120,6 +120,12 @@ export interface IProductsRepository {
   findProductById(id: number | bigint): Promise<Product | null>;
   findStorefrontDetail(id: number | bigint, langId?: string): Promise<Record<string, unknown> | null>;
   findRelated(id: number | bigint, langId?: string, limit?: number): Promise<Record<string, unknown>[]>;
+  findNavigation(
+    id: number | bigint,
+    langId?: string,
+    search?: string,
+    limit?: number,
+  ): Promise<Record<string, unknown>>;
   findCatalog(query: CatalogQuery, langId?: string): Promise<Record<string, unknown>>;
   create(data: Record<string, unknown>, options?: Record<string, unknown>): Promise<Product>;
   executeUpdatePlan(id: number | bigint, plan: ProductUpdatePlan): Promise<Product>;

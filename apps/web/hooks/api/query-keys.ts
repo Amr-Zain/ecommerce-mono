@@ -32,6 +32,8 @@ const queryKeys = {
   notifications: () => ["notifications"] as const,
   notificationUnreadCount: () => ["notifications", "unread-count"] as const,
   product: (id: string) => ["products", id] as const,
+  productNavigation: (id: string, search = "") =>
+    ["products", id, "navigation", search] as const,
   productReviews: (id: string, page?: number) =>
     page === undefined
       ? (["products", id, "reviews"] as const)

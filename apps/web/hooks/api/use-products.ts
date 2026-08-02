@@ -120,6 +120,24 @@ type ProductDetail = {
   }
 }
 
+type ProductNavigation = {
+  categories: Array<{
+    id: string
+    slug: string
+    name: string
+    level: number
+    options: Array<{ id: string; slug: string; name: string }>
+  }>
+  products: Array<{
+    id: string
+    name: string
+    image?: string | null
+    price: number
+    available: boolean
+  }>
+  meta: { search: string; limit: number; total: number }
+}
+
 function useProducts(
   params?: Record<string, string | number | boolean | string[]>
 ) {
@@ -145,7 +163,16 @@ function useProduct(id: string | null | undefined) {
   })
 }
 
-export { useCollectionTree, useProduct, useProducts }
+function useProductNavigation(id: string, search = "") {
+  return useFetch<{ data: ProductNavigation }>({
+    queryKey: queryKeys.productNavigation(id, search),
+    endpoint: clientEndpoints.productNavigation(id),
+    params: { search, limit: 20 },
+    enabled: Boolean(id && search.trim()),
+  })
+}
+
+export { useCollectionTree, useProduct, useProductNavigation, useProducts }
 export type {
   CatalogAttributeFacet,
   CatalogCollectionFacet,
@@ -153,5 +180,6 @@ export type {
   CatalogResponse,
   CollectionTreeItem,
   ProductDetail,
+  ProductNavigation,
   ProductReview,
 }

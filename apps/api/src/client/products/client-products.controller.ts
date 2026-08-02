@@ -29,6 +29,19 @@ export class ClientProductsController {
   }
 
   @Public()
+  @Get(':id/navigation')
+  @ApiQuery({ name: 'search', required: false, example: 'silver' })
+  @ApiQuery({ name: 'limit', required: false, example: '20' })
+  findNavigation(
+    @Param('id') id: string,
+    @I18nLang() lang: string,
+    @Query('search') search?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.productsService.findNavigation(BigInt(id), lang, search ?? '', Number(limit) || 20);
+  }
+
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string, @I18nLang() lang: string) {
     return this.productsService.findOne(BigInt(id), lang);

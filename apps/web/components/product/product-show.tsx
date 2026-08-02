@@ -1,17 +1,7 @@
 import { getTranslations } from "next-intl/server"
-import { Link } from "@/i18n/navigation"
-import { ROUTES } from "@/lib/routes"
 import { cacheLife, cacheTag } from "next/cache"
 import { Suspense } from "react"
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@ecommerce/ui/components/breadcrumb"
 import { Skeleton } from "@ecommerce/ui/components/skeleton"
 import {
   Table,
@@ -23,15 +13,21 @@ import {
 } from "@ecommerce/ui/components/table"
 import { Benefits } from "@/components/home/benefits"
 import { ProductCard, type Product } from "@/components/product/product-card"
-import type { CatalogProduct, ProductDetail } from "@/hooks/api/use-products"
+import type {
+  CatalogProduct,
+  ProductDetail,
+  ProductNavigation,
+} from "@/hooks/api/use-products"
 import { publicBackendGet } from "@/lib/server/backend"
 import { cacheTags, productTag } from "@/lib/server/cache-tags"
 import { HttpError } from "@/lib/server/fetch"
 import { ProductDetails } from "./product-details"
+import { ProductBreadcrumbs } from "./product-breadcrumbs"
 import { ProductReviews } from "./product-reviews"
 
 type DetailResponse = { data: ProductDetail }
 type RelatedResponse = { data: CatalogProduct[] }
+type NavigationResponse = { data: ProductNavigation }
 
 async function getProductDetail(id: string, locale: string) {
   "use cache"
@@ -45,6 +41,29 @@ async function getProductDetail(id: string, locale: string) {
         tags: [cacheTags.products, productTag(id)],
         retries: 0,
       })
+    ).data
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) return null
+    throw error
+  }
+}
+
+async function getProductNavigation(id: string, locale: string) {
+  "use cache"
+  cacheLife("minutes")
+  cacheTag(productTag(id))
+  try {
+    return (
+      await publicBackendGet<NavigationResponse>(
+        `/client/products/${id}/navigation`,
+        {
+          headers: { "accept-language": locale },
+          query: { limit: 20 },
+          revalidate: 60,
+          tags: [cacheTags.products, cacheTags.categories, productTag(id)],
+          retries: 0,
+        }
+      )
     ).data
   } catch (error) {
     if (error instanceof HttpError && error.status === 404) return null
@@ -116,46 +135,33 @@ function RelatedSkeleton() {
 }
 
 async function ProductShow({ id, locale }: { id: string; locale: string }) {
-  const product = await getProductDetail(id, locale)
+  const [product, navigation] = await Promise.all([
+    getProductDetail(id, locale),
+    getProductNavigation(id, locale),
+  ])
   if (!product) return null
   const t = await getTranslations({ locale, namespace: "Product" })
-  const crumbs = [
-    ...(product.collection?.ancestors ?? []),
-    ...(product.collection ? [product.collection] : []),
-  ]
   return (
     <>
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href={ROUTES.home} />}>
-              {t("home")}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href={ROUTES.collections.root} />}>
-              {t("collections")}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          {crumbs.map((crumb) => (
-            <span className="contents" key={crumb.id}>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink
-                  render={<Link href={ROUTES.collections.bySlug(crumb.slug)} />}
-                >
-                  {crumb.name}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-            </span>
-          ))}
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{product.name}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <ProductBreadcrumbs
+        productId={product.id}
+        productName={product.name}
+        navigation={
+          navigation ?? {
+            categories: [],
+            products: [
+              {
+                id: product.id,
+                name: product.name,
+                image: product.images[0] ?? null,
+                price: 0,
+                available: true,
+              },
+            ],
+            meta: { search: "", limit: 20, total: 1 },
+          }
+        }
+      />
       <ProductDetails product={product} />
       <section className="py-10">
         <h2 className="mb-4 text-xl font-semibold">{t("variantHighlights")}</h2>
@@ -178,7 +184,9 @@ async function ProductShow({ id, locale }: { id: string; locale: string }) {
                       .join(", ") || t("standard")}
                   </TableCell>
                   <TableCell>{variant.sku ?? "-"}</TableCell>
-                  <TableCell>{t("sar")} {variant.price.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {t("sar")} {variant.price.toFixed(2)}
+                  </TableCell>
                   <TableCell>
                     {variant.available
                       ? t("inStock", { count: variant.stock_quantity })

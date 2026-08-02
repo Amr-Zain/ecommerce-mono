@@ -6,12 +6,7 @@ import { MediaService } from '@/media/media.service';
 import { Prisma } from '@prisma/client';
 import { AdvancedQueryDto } from '@/common/dto/advanced-query.dto';
 import { CreateProductDto } from '@/common/dto/product.dto';
-import {
-  ProductUpdatePlan,
-  VariantPriceUpdate,
-  SimpleVariantSyncData,
-  CatalogQuery,
-} from '@/common/interfaces';
+import { ProductUpdatePlan, VariantPriceUpdate, SimpleVariantSyncData, CatalogQuery } from '@/common/interfaces';
 import { PricingService } from './pricing.service';
 import { QueryBuilderService } from '@/common/services/query-builder.service';
 import { PaginatedResult } from '@/common/dto/pagination.dto';
@@ -145,7 +140,7 @@ export class ProductsRepository extends MediaAwareRepository<ProductType> {
       compareAtPrice: decimalToNumber(v.compareAtPrice),
       costPrice: decimalToNumber(v.costPrice),
       discountValue: decimalToNumber(v.discountValue),
-    })    ) as unknown as typeof product.variants;
+    })) as unknown as typeof product.variants;
 
     (product as Record<string, unknown>).discountValue = decimalToNumber(
       (product as Record<string, unknown>).discountValue as never,
@@ -447,7 +442,79 @@ export class ProductsRepository extends MediaAwareRepository<ProductType> {
     return [...related.values()];
   }
 
-  async findAll(query: AdvancedQueryDto, _langId?: string, options?: QueryOptions): Promise<PaginatedResult<ProductType> | ProductType[]> {
+  async findNavigation(id: number | bigint, langId: string = 'en', search = '', limit = 20) {
+    const product = await this.prisma.product.findFirst({
+      where: { id: BigInt(id), isActive: true },
+      select: {
+        collection: {
+          include: {
+            translations: { where: { langId }, take: 1 },
+            parent: {
+              include: {
+                translations: { where: { langId }, take: 1 },
+                parent: { include: { translations: { where: { langId }, take: 1 } } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!product) return { categories: [], products: [], meta: { search, limit, total: 0 } };
+    if (!product.collection) return { categories: [], products: [], meta: { search, limit, total: 0 } };
+
+    const path = [product.collection.parent?.parent, product.collection.parent, product.collection].filter(
+      (collection): collection is NonNullable<typeof collection> => Boolean(collection),
+    );
+
+    const categories = await Promise.all(
+      path.map(async (current, level) => {
+        const options = await this.prisma.collection.findMany({
+          where: { isActive: true, parentId: current.parentId },
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+          select: {
+            id: true,
+            slug: true,
+            translations: { where: { langId }, take: 1, select: { name: true } },
+          },
+        });
+        return {
+          id: current.id,
+          slug: current.slug,
+          name: current.translations[0]?.name ?? '',
+          level,
+          options: options.map((option) => ({
+            id: option.id,
+            slug: option.slug,
+            name: option.translations[0]?.name ?? '',
+          })),
+        };
+      }),
+    );
+
+    const catalog = (await this.findCatalog(
+      { collectionSlug: product.collection.slug, search: search || undefined, page: 1, limit, catalogSort: 'newest' },
+      langId,
+    )) as { items: Array<Record<string, unknown>>; meta: { total: number } };
+
+    return {
+      categories,
+      products: catalog.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        image: item.image ?? null,
+        price: item.price,
+        available: Boolean((item.representativeVariant as { available?: boolean } | undefined)?.available),
+      })),
+      meta: { search, limit, total: catalog.meta.total },
+    };
+  }
+
+  async findAll(
+    query: AdvancedQueryDto,
+    _langId?: string,
+    options?: QueryOptions,
+  ): Promise<PaginatedResult<ProductType> | ProductType[]> {
     if (options?.select) {
       const result = await this.paginate(query, undefined, { select: options.select });
       return result;

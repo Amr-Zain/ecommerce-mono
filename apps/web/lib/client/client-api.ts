@@ -46,6 +46,7 @@ const clientEndpoints = {
   orderCancel: (id: string) => `orders/${id}/cancel`,
   orders: "orders",
   product: (id: string) => `products/${id}`,
+  productNavigation: (id: string) => `products/${id}/navigation`,
   productReviewEligibility: (id: string) => `reviews/products/${id}/me`,
   productReviews: (id: string) => `reviews/products/${id}`,
   products: "products",

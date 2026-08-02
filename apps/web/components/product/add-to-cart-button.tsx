@@ -18,7 +18,6 @@ import {
   useRemoveCartItem,
   useUpdateCartItem,
 } from "@/hooks/api/use-cart"
-import { cn } from "@/lib/utils"
 
 function AddToCartButton({
   productId,
@@ -92,18 +91,13 @@ function AddToCartButton({
 
     return (
       <div
-        className="flex h-9 items-center gap-1"
+        className="flex h-10 w-full items-center gap-2"
         onClick={(event) => {
           event.preventDefault()
           event.stopPropagation()
         }}
       >
-        <div
-          className={cn(
-            "flex h-full flex-1 items-center justify-between gap-2 rounded-lg border bg-background px-1",
-            className
-          )}
-        >
+        <div className="flex h-full min-w-0 flex-1 items-center justify-between gap-2 rounded-lg border bg-background px-1">
           <Button
             type="button"
             variant="ghost"
@@ -132,7 +126,7 @@ function AddToCartButton({
           aria-label={t("removeFromCart", { name: productName })}
           disabled={pending}
           onClick={deleteFromCart}
-          className={'mt-4 h-full' }
+          className="size-10 shrink-0"
         >
           <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
         </Button>

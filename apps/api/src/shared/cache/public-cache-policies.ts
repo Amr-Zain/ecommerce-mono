@@ -63,6 +63,19 @@ export const PUBLIC_CACHE_POLICIES: PublicCachePolicy[] = [
   },
   {
     method: 'GET',
+    path: /^\/client\/products\/(?<id>[^/]+)\/navigation$/,
+    ttl: CACHE_TTL.public,
+    key: ({ langId, params, query }) =>
+      publicCacheKeys.productNavigation(
+        langId,
+        params.id,
+        one(query.search) ?? '',
+        normalizePositiveInt(query.limit, 20),
+      ),
+    tags: ({ params }) => [publicCacheTags.products, publicCacheTags.collections, publicCacheTags.product(params.id)],
+  },
+  {
+    method: 'GET',
     path: /^\/client\/products\/(?<id>[^/]+)$/,
     ttl: CACHE_TTL.public,
     key: ({ langId, params }) => publicCacheKeys.productDetail(langId, params.id),

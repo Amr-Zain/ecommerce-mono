@@ -73,17 +73,12 @@ async function CatalogListing({
       tags: [cacheTags.products],
       retries: 0,
     }),
-    collectionSlug
-      ? Promise.resolve([])
-      : publicBackendGet<{ data: CollectionTreeItem[] }>(
-          "/client/collections/tree",
-          {
-            headers: { "accept-language": locale },
-            revalidate: 60,
-            tags: [cacheTags.categories],
-            retries: 0,
-          }
-        ).then((result) => result.data),
+    publicBackendGet<{ data: CollectionTreeItem[] }>("/client/collections/tree", {
+      headers: { "accept-language": locale },
+      revalidate: 60,
+      tags: [cacheTags.categories],
+      retries: 0,
+    }).then((result) => result.data),
   ])
   const data = response.data
   const view = searchParams.view === "list" ? "list" : "grid"
@@ -98,8 +93,9 @@ async function CatalogListing({
     ...(data.collection?.ancestors.map((ancestor) => ({
       label: ancestor.name,
       href: ROUTES.collections.bySlug(ancestor.slug),
+      slug: ancestor.slug,
     })) ?? []),
-    { label: data.collection?.name ?? t("allProducts") },
+    ...(data.collection ? [{ label: data.collection.name, slug: data.collection.slug }] : [{ label: t("allProducts") }]),
   ]
 
   return (

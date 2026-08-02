@@ -61,7 +61,7 @@ export function ProductCard({ product }: { product: Product }) {
               ? Number(product.oldPrice.replace(/[^0-9.]/g, ""))
               : undefined
           }
-          className="mt-auto h-8 w-full rounded-full text-xs"
+          className="mt-auto h-10 w-full rounded-full text-xs"
         />
       </div>
     </article>

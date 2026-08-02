@@ -51,10 +51,26 @@ import type {
   CatalogResponse,
   CollectionTreeItem,
 } from "@/hooks/api/use-products"
+import { NavigationCombobox } from "./product-breadcrumbs"
 
 type SearchParams = Record<string, string | string[] | undefined>
 type Facets = CatalogResponse["data"]["facets"]
-type Breadcrumb = { label: string; href?: string }
+type Breadcrumb = { label: string; href?: string; slug?: string }
+
+function findCollectionContext(
+  nodes: CollectionTreeItem[],
+  slug: string,
+  siblings: CollectionTreeItem[] = nodes
+): { node: CollectionTreeItem; siblings: CollectionTreeItem[] } | null {
+  for (const node of nodes) {
+    if (node.slug === slug) return { node, siblings }
+    if (node.children?.length) {
+      const found = findCollectionContext(node.children, slug, node.children)
+      if (found) return found
+    }
+  }
+  return null
+}
 
 function values(params: SearchParams, key: string) {
   const value = params[key]
@@ -109,7 +125,26 @@ function CatalogControls({
               <React.Fragment key={crumb.label}>
                 {index > 0 ? <BreadcrumbSeparator /> : null}
                 <BreadcrumbItem>
-                  {crumb.href ? (
+                  {crumb.slug ? (
+                    <>
+                      <BreadcrumbPage className="max-w-40 truncate">
+                        {crumb.label}
+                      </BreadcrumbPage>
+                      <NavigationCombobox
+                        label={t("selectCategory")}
+                        value={findCollectionContext(collectionTree, crumb.slug)?.node.id ?? ""}
+                        options={(findCollectionContext(collectionTree, crumb.slug)?.siblings ?? []).map((item) => ({
+                          id: item.id,
+                          name: item.name,
+                          slug: item.slug,
+                        }))}
+                        onValueChange={(id) => {
+                          const option = findCollectionContext(collectionTree, crumb.slug)?.siblings.find((item) => item.id === id)
+                          if (option) router.push(ROUTES.collections.bySlug(option.slug))
+                        }}
+                      />
+                    </>
+                  ) : crumb.href ? (
                     <BreadcrumbLink render={<Link href={crumb.href} />}>
                       {crumb.label}
                     </BreadcrumbLink>
