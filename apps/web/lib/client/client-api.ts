@@ -50,6 +50,7 @@ const clientEndpoints = {
   productReviewEligibility: (id: string) => `reviews/products/${id}/me`,
   productReviews: (id: string) => `reviews/products/${id}`,
   products: "products",
+  searchSuggestions: "search/suggestions",
   review: (id: string) => `reviews/${id}`,
   reviews: "reviews",
   returns: "returns",

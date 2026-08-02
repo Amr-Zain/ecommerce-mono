@@ -49,7 +49,7 @@ export class CatalogQueryDto extends AdvancedQueryDto {
   minDiscount?: number;
 
   @IsOptional()
-  @IsIn(['newest', 'price_asc', 'price_desc', 'rating_desc'])
+  @IsIn(['relevance', 'newest', 'price_asc', 'price_desc', 'rating_desc'])
   @ApiPropertyOptional({ example: 'newest', description: 'catalogSort' })
-  catalogSort?: 'newest' | 'price_asc' | 'price_desc' | 'rating_desc' = 'newest';
+  catalogSort?: 'relevance' | 'newest' | 'price_asc' | 'price_desc' | 'rating_desc';
 }

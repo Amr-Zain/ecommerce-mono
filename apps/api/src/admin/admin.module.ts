@@ -22,6 +22,7 @@ import { AdminLoyaltyModule } from './loyalty/admin-loyalty.module';
 import { AdminPaymentGatewaysModule } from './payment-gateways/payment-gateways.module';
 import { RouterModule } from '@nestjs/core';
 import { DashboardPreferencesModule } from './dashboard-preferences/dashboard-preferences.module';
+import { AdminSearchModule } from './search/admin-search.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { DashboardPreferencesModule } from './dashboard-preferences/dashboard-pr
     AdminLoyaltyModule,
     AdminPaymentGatewaysModule,
     DashboardPreferencesModule,
+    AdminSearchModule,
 
     RouterModule.register([
       {
@@ -74,6 +76,7 @@ import { DashboardPreferencesModule } from './dashboard-preferences/dashboard-pr
           { path: '', module: AdminLoyaltyModule },
           { path: '', module: AdminPaymentGatewaysModule },
           { path: '', module: DashboardPreferencesModule },
+          { path: '', module: AdminSearchModule },
         ],
       },
     ]),
