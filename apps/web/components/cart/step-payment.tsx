@@ -62,7 +62,7 @@ function SuccessScreen({ result }: { result: PlaceOrderResult }) {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="mx-auto flex max-w-sm flex-col items-center gap-5 text-center">
-        <div className="flex size-24 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+        <div className="flex size-24 items-center justify-center rounded-full bg-success/10 text-success">
           <HugeiconsIcon icon={CheckmarkCircle01Icon} className="size-12" />
         </div>
         <div>
@@ -305,7 +305,7 @@ export function PaymentStep({
             </p>
           )}
           {redeemedPoints > 0 && (
-            <p className="mt-3 rounded-xl bg-emerald-500/10 p-3 text-xs font-medium text-emerald-700">
+          <p className="mt-3 rounded-xl bg-success/10 p-3 text-xs font-medium text-success">
               {redeemedPoints} points selected. Loyalty discount SAR{" "}
               {loyaltyDiscount.toFixed(2)}.
             </p>

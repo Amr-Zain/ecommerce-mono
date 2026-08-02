@@ -40,6 +40,7 @@ import {
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { cn } from "@/lib/utils"
+import { ROUTES } from "@/lib/routes"
 import {
   Sheet,
   SheetContent,
@@ -132,14 +133,14 @@ function CatalogControls({
                       </BreadcrumbPage>
                       <NavigationCombobox
                         label={t("selectCategory")}
-                        value={findCollectionContext(collectionTree, crumb.slug)?.node.id ?? ""}
-                        options={(findCollectionContext(collectionTree, crumb.slug)?.siblings ?? []).map((item) => ({
+                        value={findCollectionContext(collectionTree, crumb.slug ?? "")?.node.id ?? ""}
+                        options={(findCollectionContext(collectionTree, crumb.slug ?? "")?.siblings ?? []).map((item) => ({
                           id: item.id,
                           name: item.name,
                           slug: item.slug,
                         }))}
                         onValueChange={(id) => {
-                          const option = findCollectionContext(collectionTree, crumb.slug)?.siblings.find((item) => item.id === id)
+                          const option = (findCollectionContext(collectionTree, crumb.slug ?? "")?.siblings ?? []).find((item) => item.id === id)
                           if (option) router.push(ROUTES.collections.bySlug(option.slug))
                         }}
                       />

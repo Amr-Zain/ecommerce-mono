@@ -34,7 +34,7 @@ function CheckoutSuccessContent() {
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center gap-5 text-center">
-      <div className="flex size-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+      <div className="flex size-20 items-center justify-center rounded-full bg-success/10 text-success">
         <HugeiconsIcon
           icon={completed ? CheckmarkCircle01Icon : Loading03Icon}
           className={completed ? "size-10" : "size-10 animate-spin"}

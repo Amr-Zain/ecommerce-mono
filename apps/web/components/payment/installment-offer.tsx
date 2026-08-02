@@ -19,8 +19,8 @@ function providerTone(provider?: string | null) {
       title: "Split your payment",
       description:
         "Choose a monthly plan at checkout. Approval is handled by Tabby.",
-      className: "border-emerald-500/25 bg-emerald-500/10",
-      accent: "text-emerald-700",
+      className: "border-success/25 bg-success/10",
+      accent: "text-success",
     }
   }
 
@@ -30,8 +30,8 @@ function providerTone(provider?: string | null) {
       title: "Flexible payment options",
       description:
         "Available plans depend on Tap eligibility and the selected card/wallet.",
-      className: "border-sky-500/25 bg-sky-500/10",
-      accent: "text-sky-700",
+      className: "border-music-accent/25 bg-music-accent/10",
+      accent: "text-music-accent",
     }
   }
 

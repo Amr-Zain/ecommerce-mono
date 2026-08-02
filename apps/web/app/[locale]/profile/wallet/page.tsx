@@ -667,7 +667,7 @@ export default function WalletPage() {
                 <p
                   className={
                     item.direction === "credit"
-                      ? "font-bold text-emerald-600"
+                      ? "font-bold text-success"
                       : "font-bold text-destructive"
                   }
                 >

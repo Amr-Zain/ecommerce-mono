@@ -168,7 +168,7 @@ export function ProductCard({
                 "absolute start-2 top-2 z-10 rounded-full border-0 px-2 py-0.5 text-[10px] font-bold",
                 product.badge.toLowerCase().includes("off")
                   ? "animate-pulse bg-destructive text-destructive-foreground"
-                  : "bg-emerald-500 text-white"
+                  : "bg-success text-success-foreground"
               )}
             >
               {product.badge}
@@ -258,7 +258,7 @@ export function ProductCard({
               compact ? "start-2 top-2 px-2" : "start-3.5 top-3.5 px-2.5",
               product.badge.toLowerCase().includes("off")
                 ? "bg-destructive text-destructive-foreground"
-                : "bg-emerald-500 text-white"
+                : "bg-success text-success-foreground"
             )}
           >
             {product.badge}

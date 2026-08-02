@@ -38,23 +38,32 @@ export async function StorefrontHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 shadow-sm backdrop-blur">
       {storefront.announcement.enabled && storefront.announcement.text ? (
-        <div className="bg-secondary-foreground text-secondary">
+        <div className="bg-secondary text-secondary-foreground">
           <div className="storefront-marquee mx-auto h-8 overflow-hidden text-[11px] font-semibold">
             <div className="animate-storefront-marquee flex h-full w-max items-center">
-              {Array.from({ length: 12 }).map((_, index) => (
-                <Link
-                  key={index}
-                  href={storefront.announcement.url || ROUTES.products.root}
-                  className="flex min-w-max items-center gap-3 px-5 text-primary-foreground/90"
+              {[0, 1].map((copy) => (
+                <div
+                  key={copy}
+                  aria-hidden={copy === 1}
+                  className="flex shrink-0 items-center"
                 >
-                  <span>{storefront.announcement.text}</span>
-                  <span
-                    aria-hidden="true"
-                    className="text-primary-foreground/50"
-                  >
-                    •
-                  </span>
-                </Link>
+                  {Array.from({ length: 12 }).map((_, index) => (
+                    <Link
+                      key={`${copy}-${index}`}
+                      href={storefront.announcement.url || ROUTES.products.root}
+                      tabIndex={copy === 1 ? -1 : undefined}
+                      className="flex min-w-max items-center gap-3 px-5 text-secondary-foreground/90 transition-colors hover:text-secondary-foreground"
+                    >
+                      <span>{storefront.announcement.text}</span>
+                      <span
+                        aria-hidden="true"
+                        className="text-secondary-foreground/50"
+                      >
+                        •
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               ))}
             </div>
           </div>
@@ -93,7 +102,7 @@ export async function StorefrontHeader() {
       </div>
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
         <Link href={ROUTES.home} className="flex min-w-32 items-center gap-2">
-          <div className="grid size-8 place-items-center rounded-full bg-foreground text-background">
+          <div className="grid size-8 place-items-center rounded-full bg-brand text-brand-foreground">
             <HugeiconsIcon icon={Store04Icon} strokeWidth={2} />
           </div>
           <span className="text-base font-semibold">

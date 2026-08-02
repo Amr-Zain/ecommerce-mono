@@ -109,7 +109,7 @@ export default async function LocaleLayout({
       className={cn(
         "antialiased",
         fontSans.variable,
-        "font-mono",
+        "font-sans",
         jetbrainsMono.variable,
         notoKufiArabic.variable,
         direction === "rtl" && "font-arabic"

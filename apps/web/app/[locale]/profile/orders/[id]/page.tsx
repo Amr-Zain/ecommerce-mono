@@ -117,7 +117,7 @@ export default function OrderDetailsPage() {
           <PaymentMetric label={t("refundedOrReserved")} value={(data.refunded_amount ?? 0) + (data.reserved_refund_amount ?? 0)} />
         </div>
         {loyaltyPoints > 0 && (
-          <div className="mt-4 rounded-lg border bg-emerald-500/10 p-3 text-sm text-emerald-700">
+          <div className="mt-4 rounded-lg border border-success/25 bg-success/10 p-3 text-sm text-success">
             {t("loyaltyRedeemed", { points: loyaltyPoints, amount: money(loyaltyDiscount) })}
           </div>
         )}

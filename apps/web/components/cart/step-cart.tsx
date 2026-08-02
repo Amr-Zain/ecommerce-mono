@@ -105,13 +105,13 @@ export function PricingSummary({
     <div className="sticky top-40 space-y-4 rounded-2xl border bg-card p-6">
       <h3 className="text-base font-bold text-foreground">Order Summary</h3>
       <Separator />
-      <div className="space-y-2.5 text-sm">
+      <div className="flex flex-col gap-2.5 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Subtotal</span>
           <span className="font-semibold">${pricing.subtotal.toFixed(2)}</span>
         </div>
         {hasCoupon && (
-          <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300">
+          <div className="rounded-xl border border-success/25 bg-success/10 px-3 py-2 text-xs text-success">
             <div className="flex items-center justify-between gap-3">
               <span className="font-semibold">
                 Coupon {pricing.couponCode} applied
@@ -121,7 +121,7 @@ export function PricingSummary({
           </div>
         )}
         {(hasCoupon || couponDiscount > 0) && (
-          <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+          <div className="flex justify-between text-success">
             <span>{hasCoupon ? `Coupon Discount` : "Discount"}</span>
             <span className="font-semibold">
               {couponDiscount > 0
@@ -133,7 +133,7 @@ export function PricingSummary({
           </div>
         )}
         {loyaltyDiscount > 0 && (
-          <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+          <div className="flex justify-between text-success">
             <span>Loyalty Discount</span>
             <span className="font-semibold">
               - ${loyaltyDiscount.toFixed(2)}
@@ -146,7 +146,7 @@ export function PricingSummary({
             <span className="font-semibold">${pricing.vat!.toFixed(2)}</span>
           </div>
         )}
-        <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+        <div className="flex justify-between text-success">
           <span>Your Savings</span>
           <span className="font-semibold">- ${pricing.savings.toFixed(2)}</span>
         </div>
@@ -155,7 +155,7 @@ export function PricingSummary({
           <span
             className={cn(
               "font-semibold",
-              pricing.shipping === 0 && "text-emerald-600 dark:text-emerald-400"
+              pricing.shipping === 0 && "text-success"
             )}
           >
             {pricing.shipping === 0
