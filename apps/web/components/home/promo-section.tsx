@@ -52,19 +52,19 @@ export function PromoSection({ sliders }: { sliders: SliderItem[] }) {
                     >
                       {slider.title}
                     </h2>
-                    <Button
-                      render={<Link href={ROUTES.collections.root} />}
-                      data-motion-item
-                      size="sm"
-                      className="mt-6 rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
-                    >
-                      {t("shopNow")}
-                      <HugeiconsIcon
-                        icon={ArrowRight01Icon}
-                        data-icon="inline-end"
-                        className="rtl:rotate-180"
-                      />
-                    </Button>
+                    <Link href={ROUTES.collections.root} data-motion-item className="mt-6 inline-flex">
+                      <Button
+                        size="sm"
+                        className="rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
+                      >
+                        {t("shopNow")}
+                        <HugeiconsIcon
+                          icon={ArrowRight01Icon}
+                          data-icon="inline-end"
+                          className="rtl:rotate-180"
+                        />
+                      </Button>
+                    </Link>
                   </Stagger>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />

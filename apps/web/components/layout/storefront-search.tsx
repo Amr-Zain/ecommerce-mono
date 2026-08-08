@@ -91,8 +91,8 @@ function StorefrontSearch({
 }: {
   collections: CollectionTreeItem[]
 }) {
-  const t = useTranslations("Header")
   const locale = useLocale()
+  const t = useTranslations("Header")
   const router = useRouter()
   const desktop = useDesktop()
   const [open, setOpen] = React.useState(false)
@@ -185,6 +185,7 @@ function StorefrontSearch({
       variant="ghost"
       size="icon"
       aria-label={t("searchLabel")}
+      onClick={() => setOpen(true)}
     >
       <HugeiconsIcon icon={Search01Icon} strokeWidth={2} />
     </Button>
@@ -230,9 +231,7 @@ function StorefrontSearch({
 
   return (
     <div className="ms-auto md:hidden">
-      <button type="button" onClick={() => setOpen(true)} className="contents">
-        {trigger}
-      </button>
+      {trigger}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogHeader className="sr-only">
           <DialogTitle>{t("searchLabel")}</DialogTitle>

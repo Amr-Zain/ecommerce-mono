@@ -13,11 +13,20 @@ function safeReturnPath(value: string | null | undefined, fallback = "/") {
   }
 }
 
+function stripLocalePrefix(value: string, locale?: string) {
+  if (!locale) return value
+
+  const prefix = `/${locale}`
+  if (value === prefix) return "/"
+  return value.startsWith(`${prefix}/`) ? value.slice(prefix.length) : value
+}
+
 function loginPath(returnTo: string, locale?: string) {
-  const prefix = locale === "ar" ? "/ar" : ""
-  return `${prefix}/auth/login?returnTo=${encodeURIComponent(
-    safeReturnPath(returnTo, prefix || "/")
+  const localeRelativeReturnTo = stripLocalePrefix(returnTo, locale)
+
+  return `/auth/login?returnTo=${encodeURIComponent(
+    safeReturnPath(localeRelativeReturnTo)
   )}`
 }
 
-export { loginPath, safeReturnPath }
+export { loginPath, safeReturnPath, stripLocalePrefix }

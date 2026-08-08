@@ -207,3 +207,8 @@
 [dir="rtl"] .animate-storefront-marquee {
   animation-name: storefront-marquee-rtl;
 }
+
+.catalog-view-results[data-view="grid"] .catalog-product-list,
+.catalog-view-results[data-view="list"] .catalog-product-grid {
+  display: none;
+}

@@ -22,6 +22,10 @@ import { Button } from "@ecommerce/ui/components/button"
 import { Checkbox } from "@ecommerce/ui/components/checkbox"
 import { Input } from "@ecommerce/ui/components/input"
 import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@ecommerce/ui/components/toggle-group"
+import {
   RadioGroup,
   RadioGroupItem,
 } from "@ecommerce/ui/components/radio-group"
@@ -53,6 +57,7 @@ import type {
   CollectionTreeItem,
 } from "@/hooks/api/use-products"
 import { NavigationCombobox } from "./product-breadcrumbs"
+import { useCatalogView } from "./catalog-view-transition"
 
 type SearchParams = Record<string, string | string[] | undefined>
 type Facets = CatalogResponse["data"]["facets"]
@@ -145,7 +150,7 @@ function CatalogControls({
 }) {
   const router = useRouter()
   const pathname = usePathname()
-  const view = searchParams.view === "list" ? "list" : "grid"
+  const { view, setView } = useCatalogView()
   const t = useTranslations("Product")
   const currentSort = String(searchParams.catalog_sort ?? "newest")
   const sortItems = sortOptions(t)
@@ -154,9 +159,16 @@ function CatalogControls({
     t("sortBy")
   const [filtersOpen, setFiltersOpen] = React.useState(false)
   const update = (key: string, value: string) => {
+    if (key === "view") {
+      setView(value === "list" ? "list" : "grid")
+      return
+    }
+
     const params = toUrlSearchParams(searchParams)
     params.set(key, value)
-    if (key !== "view") params.set("page", "1")
+    if (view === "list") params.set("view", "list")
+    else params.delete("view")
+    params.set("page", "1")
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
 
@@ -204,25 +216,32 @@ function CatalogControls({
             <span aria-hidden>☷</span>
             {t("filter")}
           </Button>
-          <div className="flex items-center gap-1 rounded-lg border bg-background/50 p-1">
-            {(["grid", "list"] as const).map((mode) => (
-              <Button
-                key={mode}
-                type="button"
-                size="sm"
-                variant={view === mode ? "secondary" : "ghost"}
-                onClick={() => update("view", mode)}
-                className="size-7 p-0"
-                aria-label={t(mode === "grid" ? "gridView" : "listView")}
-                title={t(mode === "grid" ? "gridView" : "listView")}
-              >
-                <HugeiconsIcon
-                  icon={mode === "grid" ? GridViewIcon : Menu01Icon}
-                  className="size-4"
-                />
-              </Button>
-            ))}
-          </div>
+          <ToggleGroup
+            value={[view]}
+            onValueChange={(value) => value[0] && update("view", value[0])}
+            variant="outline"
+            size="sm"
+            spacing={0}
+            aria-label={t("gridView")}
+            className="rounded-lg bg-background/50 p-1"
+          >
+            <ToggleGroupItem
+              value="grid"
+              aria-label={t("gridView")}
+              title={t("gridView")}
+              className="size-7 p-0"
+            >
+              <HugeiconsIcon icon={GridViewIcon} data-icon="inline-start" />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="list"
+              aria-label={t("listView")}
+              title={t("listView")}
+              className="size-7 p-0"
+            >
+              <HugeiconsIcon icon={Menu01Icon} data-icon="inline-start" />
+            </ToggleGroupItem>
+          </ToggleGroup>
           <Select
             value={currentSort}
             onValueChange={(value) => value && update("catalog_sort", value)}

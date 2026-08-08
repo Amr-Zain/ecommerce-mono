@@ -7,6 +7,7 @@ import { ProductSection } from "./product-section"
 import { PromoSection, type SliderItem } from "./promo-section"
 import { getTranslations } from "next-intl/server"
 import { Motion } from "@ecommerce/ui/components/motion"
+import { ROUTES } from "@/lib/routes"
 
 type HomeProduct = {
   id: string
@@ -149,6 +150,7 @@ export async function StorefrontHome() {
           )}
           savings
           campaign={campaign}
+          viewAllHref={`${ROUTES.products.root}?catalog_sort=rating_desc&page=1`}
         />
       </Motion>
       <Motion preset="section" revealOnScroll>
@@ -159,6 +161,7 @@ export async function StorefrontHome() {
             productT("fallbackProductDescription")
           )}
           auto
+          viewAllHref={`${ROUTES.products.root}?catalog_sort=newest&page=1`}
         />
       </Motion>
       <Motion preset="section" revealOnScroll>

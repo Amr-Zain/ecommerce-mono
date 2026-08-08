@@ -74,10 +74,16 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
 
-  const port = process.env.PORT ?? 3000;
+  const port = Number(process.env.PORT ?? 3030);
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
 }
 bootstrap().catch((err) => {
-  console.error(err);
+  if (err?.code === 'EADDRINUSE') {
+    const port = Number(process.env.PORT ?? 3030);
+    console.error(`[api] Port ${port} is already in use. The API may already be running at http://localhost:${port}.`);
+  } else {
+    console.error(err);
+  }
+  process.exitCode = 1;
 });

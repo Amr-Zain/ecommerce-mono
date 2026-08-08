@@ -15,7 +15,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@ecommerce/ui/components/empty"
-import { ProductCard, type Product } from "@/components/product/product-card"
+import { ProductCardClient as ProductCard, type Product } from "@/components/product/product-card-client"
 import { useWishlist } from "@/hooks/api/use-wishlist"
 
 const FALLBACK_IMAGE =

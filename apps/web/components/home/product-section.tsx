@@ -1,57 +1,22 @@
 "use client"
 
-import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 
 import {
   CarouselContent,
   CarouselItem,
-  useCarousel,
 } from "@ecommerce/ui/components/carousel"
 import type { Product as HomeProduct } from "./data"
 import { AutoSlider } from "@/components/shared/auto-slider"
+import { CarouselInlineControls } from "@/components/shared/carousel-inline-controls"
 import {
-  ProductCard as NewProductCard,
+  ProductCardClient as NewProductCard,
   type Product as ProductCardProduct,
-} from "@/components/product/product-card"
+} from "@/components/product/product-card-client"
 import { SavingsCard } from "./savings-card"
 import type { Campaign } from "./savings-card"
 import { SectionHeader } from "./section-header"
-
-function InlineControls() {
-  const locale = useLocale()
-  const t = useTranslations("Product")
-  const { scrollNext, scrollPrev, canScrollNext, canScrollPrev } = useCarousel()
-  const isRtl = locale === "ar"
-
-  return (
-    <div className="flex gap-2">
-      <button
-        onClick={scrollPrev}
-        aria-label={t("previousSlide")}
-        disabled={!canScrollPrev}
-        className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-20"
-      >
-        <HugeiconsIcon
-          icon={isRtl ? ArrowRight01Icon : ArrowLeft01Icon}
-          strokeWidth={2.5}
-        />
-      </button>
-      <button
-        onClick={scrollNext}
-        aria-label={t("nextSlide")}
-        disabled={!canScrollNext}
-        className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-20"
-      >
-        <HugeiconsIcon
-          icon={isRtl ? ArrowLeft01Icon : ArrowRight01Icon}
-          strokeWidth={2.5}
-        />
-      </button>
-    </div>
-  )
-}
+import { ROUTES } from "@/lib/routes"
 
 export function ProductSection({
   title,
@@ -59,12 +24,14 @@ export function ProductSection({
   savings,
   campaign,
   auto = false,
+  viewAllHref,
 }: {
   title: string
   products: HomeProduct[]
   savings?: boolean
   campaign?: Campaign | null
   auto?: boolean
+  viewAllHref?: string
 }) {
   const t = useTranslations("Product")
   if (products.length === 0) return null
@@ -72,7 +39,12 @@ export function ProductSection({
   return (
     <section className="py-8">
       <AutoSlider auto={auto} delay={4500}>
-        <SectionHeader title={title} actions={<InlineControls />} />
+        <SectionHeader
+          title={title}
+          viewAll
+          viewAllHref={viewAllHref ?? ROUTES.products.root}
+          actions={<CarouselInlineControls />}
+        />
         <div
           className={
             savings && campaign ? "grid gap-4 md:grid-cols-[1.05fr_3fr]" : ""

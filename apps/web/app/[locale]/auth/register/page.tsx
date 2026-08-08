@@ -11,7 +11,7 @@ import {
 import { RegisterForm } from "@/components/auth/register-form"
 import type { Locale } from "@/i18n/routing"
 import { ROUTES } from "@/lib/routes"
-import { safeReturnPath } from "@/lib/return-path"
+import { safeReturnPath, stripLocalePrefix } from "@/lib/return-path"
 import { localeAlternates, noindexMetadata } from "@/lib/server/seo"
 
 export const metadata: Metadata = {
@@ -31,10 +31,10 @@ export default async function RegisterPage({
   setRequestLocale(locale)
 
   const t = await getTranslations("Auth")
-  const loginPath = locale === "ar" ? `/ar${ROUTES.auth.login}` : ROUTES.auth.login
+  const loginPath = ROUTES.auth.login
   const redirectTo = safeReturnPath(
-    query.returnTo,
-    locale === "ar" ? "/ar" : ROUTES.home
+    stripLocalePrefix(query.returnTo ?? ROUTES.home, locale),
+    ROUTES.home
   )
 
   return (

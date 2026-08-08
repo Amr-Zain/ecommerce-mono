@@ -11,7 +11,7 @@ import {
 import type { Locale } from "@/i18n/routing"
 import { ROUTES } from "@/lib/routes"
 import { OtpLoginForm } from "@/components/auth/otp-login-form"
-import { safeReturnPath } from "@/lib/return-path"
+import { safeReturnPath, stripLocalePrefix } from "@/lib/return-path"
 import { localeAlternates, noindexMetadata } from "@/lib/server/seo"
 
 export const metadata: Metadata = {
@@ -50,12 +50,10 @@ export default async function LoginPage({
             defaultIdentifier={query.identifier}
             defaultOtpSent={query.otpSent === "true"}
             defaultPhoneCode={query.phoneCode}
-            registerPath={
-              locale === "ar" ? `/ar${ROUTES.auth.register}` : ROUTES.auth.register
-            }
+            registerPath={ROUTES.auth.register}
             redirectTo={safeReturnPath(
-              query.returnTo,
-              locale === "ar" ? "/ar" : ROUTES.home
+              stripLocalePrefix(query.returnTo ?? ROUTES.home, locale),
+              ROUTES.home
             )}
           />
         </CardContent>

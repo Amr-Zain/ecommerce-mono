@@ -38,7 +38,11 @@ function StatePanel({
             </Button>
           )}
           {secondaryHref && secondaryLabel && (
-            <Button variant="outline" render={<Link href={secondaryHref} />}>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href={secondaryHref} />}
+            >
               <HugeiconsIcon icon={ArrowLeft01Icon} />
               {secondaryLabel}
             </Button>

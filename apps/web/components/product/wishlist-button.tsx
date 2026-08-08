@@ -6,7 +6,7 @@ import { FavouriteIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import * as React from "react"
 
-import { IconButton } from "@/components/home/icon-button"
+import { IconButton } from "@/components/layout/icon-button"
 import { useToggleWishlist, useWishlist } from "@/hooks/api/use-wishlist"
 import { cn } from "@/lib/utils"
 

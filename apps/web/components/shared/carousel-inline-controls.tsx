@@ -2,10 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl"
 
-import {
-  CircleArrowLeft02Icon,
-  CircleArrowRight02Icon,
-} from "@hugeicons/core-free-icons"
+import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { Button } from "@ecommerce/ui/components/button"
@@ -23,27 +20,27 @@ export function CarouselInlineControls() {
     <div className="flex items-center gap-2">
       <Button
         aria-label={t("previousSlide")}
-        variant="ghost"
+        variant="outline"
         size="icon-sm"
-        className="size-7 rounded-full text-foreground hover:bg-muted"
+        className="size-8 rounded-md bg-background text-foreground shadow-xs hover:bg-muted"
         disabled={!canScrollPrev}
         onClick={scrollPrev}
       >
         <HugeiconsIcon
-          icon={isRtl ? CircleArrowRight02Icon : CircleArrowLeft02Icon}
+          icon={isRtl ? ArrowRight01Icon : ArrowLeft01Icon}
           strokeWidth={2}
         />
       </Button>
       <Button
         aria-label={t("nextSlide")}
-        variant="ghost"
+        variant="outline"
         size="icon-sm"
-        className="size-7 rounded-full text-foreground hover:bg-muted"
+        className="size-8 rounded-md bg-background text-foreground shadow-xs hover:bg-muted"
         disabled={!canScrollNext}
         onClick={scrollNext}
       >
         <HugeiconsIcon
-          icon={isRtl ? CircleArrowLeft02Icon : CircleArrowRight02Icon}
+          icon={isRtl ? ArrowLeft01Icon : ArrowRight01Icon}
           strokeWidth={2}
         />
       </Button>

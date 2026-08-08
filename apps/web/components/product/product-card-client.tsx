@@ -1,3 +1,6 @@
+"use client"
+
+import { useTranslations } from "next-intl"
 import { AddToCartButton } from "@/components/product/add-to-cart-button"
 import { WishlistButton } from "@/components/product/wishlist-button"
 import { ProductCardImage } from "@/components/product/product-card-image"
@@ -9,19 +12,18 @@ import { cn } from "@/lib/utils"
 
 export type { Product } from "@/components/product/product-card-shell"
 
-export function ProductCard({
+export function ProductCardClient({
   product,
   view,
   hideActions = false,
   compact = false,
-  priceLabel = "SAR",
 }: {
   product: Product
   view: "grid" | "list"
   hideActions?: boolean
   compact?: boolean
-  priceLabel?: string
 }) {
+  const t = useTranslations("Product")
   const allImages = product.images?.length ? product.images : [product.image, product.image]
   const cartClassName =
     view === "list"
@@ -37,7 +39,7 @@ export function ProductCard({
       view={view}
       hideActions={hideActions}
       compact={compact}
-      priceLabel={priceLabel}
+      priceLabel={t("sar")}
       image={<ProductCardImage images={allImages} alt={product.name} productId={product.id} />}
       favorite={
         <WishlistButton

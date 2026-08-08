@@ -12,6 +12,8 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import * as React from "react"
 
 import { Button } from "@ecommerce/ui/components/button"
+import { Input } from "@ecommerce/ui/components/input"
+import { cn } from "@/lib/utils"
 import {
   useAddToCart,
   useCart,
@@ -26,6 +28,7 @@ function AddToCartButton({
   price,
   oldPrice,
   className,
+  cartClassName,
   available = true,
 }: {
   productId: string
@@ -34,6 +37,7 @@ function AddToCartButton({
   price: number
   oldPrice?: number
   className?: string
+  cartClassName?: string
   available?: boolean
 }) {
   const t = useTranslations("Product")
@@ -42,6 +46,7 @@ function AddToCartButton({
   const removeItem = useRemoveCartItem()
   const updateItem = useUpdateCartItem()
   const submitting = React.useRef(false)
+  const [quantityInput, setQuantityInput] = React.useState("")
   const numericProductId = Number(productId)
   const numericVariantId = variantId ? Number(variantId) : undefined
   const canAdd =
@@ -55,6 +60,10 @@ function AddToCartButton({
       item.productId === productId &&
       (!variantId || item.variantId === variantId)
   )
+
+  React.useEffect(() => {
+    if (cartItem) setQuantityInput(String(cartItem.quantity))
+  }, [cartItem?.id, cartItem?.quantity])
 
   const changeQuantity = (quantity: number) => {
     if (!cartItem || submitting.current) return
@@ -70,6 +79,21 @@ function AddToCartButton({
         },
       }
     )
+  }
+
+  const commitQuantity = (value: string) => {
+    if (!cartItem || submitting.current) return
+
+    const parsed = Number.parseInt(value, 10)
+    const maxQuantity = Math.max(1, cartItem.stockQuantity)
+    const quantity = Number.isFinite(parsed)
+      ? Math.min(Math.max(parsed, 1), maxQuantity)
+      : cartItem.quantity
+
+    setQuantityInput(String(quantity))
+    if (quantity === cartItem.quantity) return
+
+    changeQuantity(quantity)
   }
 
   const deleteFromCart = () => {
@@ -91,7 +115,10 @@ function AddToCartButton({
 
     return (
       <div
-        className="flex h-10 w-full items-center gap-2"
+        className={cn(
+          "flex h-10 min-h-10 w-full items-center gap-2",
+          cartClassName
+        )}
         onClick={(event) => {
           event.preventDefault()
           event.stopPropagation()
@@ -107,9 +134,28 @@ function AddToCartButton({
           >
             <HugeiconsIcon icon={MinusSignIcon} className="size-3.5" />
           </Button>
-          <span className="min-w-5 text-center text-sm font-semibold">
-            {cartItem.quantity}
-          </span>
+          <Input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            dir="ltr"
+            value={quantityInput}
+            aria-label={`${productName} quantity`}
+            disabled={pending}
+            className="h-8 w-12 border-0 px-0 text-center text-sm font-semibold shadow-none focus-visible:ring-0"
+            onChange={(event) => {
+              const value = event.target.value
+              if (/^\d*$/.test(value)) setQuantityInput(value)
+            }}
+            onBlur={(event) => commitQuantity(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur()
+              if (event.key === "Escape") {
+                setQuantityInput(String(cartItem.quantity))
+                event.currentTarget.blur()
+              }
+            }}
+          />
           <Button
             type="button"
             variant="ghost"

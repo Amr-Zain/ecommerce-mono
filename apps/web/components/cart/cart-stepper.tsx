@@ -3,30 +3,32 @@
 import * as React from "react"
 import type { Step } from "@/app/[locale]/cart/page"
 import { cn } from "@/lib/utils"
-
-const STEPS: { id: Step; label: string }[] = [
-  { id: "cart", label: "Cart" },
-  { id: "address", label: "Address" },
-  { id: "payment", label: "Payment" },
-]
+import { useTranslations } from "next-intl"
 
 interface CartStepperProps {
   currentStep: Step
 }
 
 export function CartStepper({ currentStep }: CartStepperProps) {
-  const currentIdx = STEPS.findIndex((s) => s.id === currentStep)
+  const t = useTranslations("Cart")
+  const steps = [
+    { id: "cart" as Step, label: t("cart") },
+    { id: "address" as Step, label: t("address") },
+    { id: "payment" as Step, label: t("payment") },
+  ]
+  const currentIdx = steps.findIndex((s) => s.id === currentStep)
+  const remainingProgress = ((steps.length - 1 - Math.max(currentIdx, 0)) / (steps.length - 1)) * 100
 
   return (
     <div className="relative flex items-center justify-between">
       {/* connector line */}
-      <div className="absolute inset-x-0 top-4 h-0.5 bg-border" />
+      <div className="absolute inset-x-4 top-4 h-0.5 bg-border" />
       <div
         className="absolute top-4 h-0.5 bg-primary transition-all duration-500"
-        style={{ left: 0, right: `${((STEPS.length - 1 - currentIdx) / (STEPS.length - 1)) * 100}%` }}
+        style={{ insetInlineStart: "1rem", insetInlineEnd: `calc(1rem + ${remainingProgress}%)` }}
       />
 
-      {STEPS.map((step, idx) => {
+      {steps.map((step, idx) => {
         const isDone = idx < currentIdx
         const isActive = idx === currentIdx
 

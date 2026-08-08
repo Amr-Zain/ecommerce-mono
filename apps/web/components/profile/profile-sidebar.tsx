@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Link, usePathname } from "@/i18n/navigation"
+import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { ROUTES } from "@/lib/routes"
 import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -26,6 +26,18 @@ import {
 } from "@hugeicons/core-free-icons"
 import { toast } from "@ecommerce/ui/components/sonner"
 import { useTranslations } from "next-intl"
+import { logoutAction } from "@/actions/auth"
+import { useCommerceSessionSync } from "@/hooks/api/use-commerce-session-sync"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@ecommerce/ui/components/alert-dialog"
 import {
   uploadCurrentUserImage,
   useCurrentUser,
@@ -91,11 +103,15 @@ function getProfileImage(
 export function ProfileSidebar() {
   const t = useTranslations("ProfileNav")
   const pathname = usePathname()
+  const router = useRouter()
   const { data: session, update: updateSession } = useSession()
   const { data: currentUser } = useCurrentUser()
   const updateImage = useUpdateCurrentUserImage()
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const [uploading, setUploading] = React.useState(false)
+  const [logoutOpen, setLogoutOpen] = React.useState(false)
+  const [loggingOut, startLogout] = React.useTransition()
+  const syncCommerceSession = useCommerceSessionSync()
   const profile = currentUser?.data
   const tier = profile?.tier ?? profile?.loyalty?.tier
   const image = getProfileImage(profile, session?.user.image)
@@ -107,6 +123,18 @@ export function ProfileSidebar() {
     .slice(0, 2)
     .toUpperCase()
   const imagePending = uploading || updateImage.isPending
+
+  function handleLogout() {
+    startLogout(async () => {
+      const result = await logoutAction("/")
+      if (!result.ok) return
+
+      await syncCommerceSession()
+      router.replace(result.data.redirectTo)
+      router.refresh()
+      setLogoutOpen(false)
+    })
+  }
 
   async function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -229,7 +257,12 @@ export function ProfileSidebar() {
         })}
 
         <div className="mt-auto border-t pt-4">
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground">
+          <button
+            type="button"
+            disabled={loggingOut}
+            onClick={() => setLogoutOpen(true)}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:bg-muted/50 hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+          >
             <HugeiconsIcon
               icon={Logout01Icon}
               className="size-4.5"
@@ -239,6 +272,28 @@ export function ProfileSidebar() {
           </button>
         </div>
       </nav>
+      <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("logoutConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("logoutConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loggingOut}>
+              {t("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={loggingOut}
+              onClick={handleLogout}
+            >
+              {loggingOut ? t("loggingOut") : t("logout")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   )
 }

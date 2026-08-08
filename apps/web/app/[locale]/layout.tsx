@@ -7,8 +7,8 @@ import { Suspense } from "react"
 
 import "../globals.css"
 import { SessionProvider } from "@/components/auth/session-provider"
-import { Footer } from "@/components/home/footer"
-import { StorefrontHeader } from "@/components/home/storefront-header"
+import { Footer } from "@/components/layout/footer"
+import { StorefrontHeader } from "@/components/layout/storefront-header"
 import { TanstackQueryProvider } from "@/components/providers/tanstack-query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { DirectionProvider } from "@ecommerce/ui/components/direction"
@@ -40,6 +40,22 @@ export function generateStaticParams() {
 
 function getTextDirection(locale: Locale) {
   return locale === "ar" ? "rtl" : "ltr"
+}
+
+async function LocaleIntlProvider({
+  children,
+  locale,
+}: {
+  children: React.ReactNode
+  locale: Locale
+}) {
+  const messages = await getMessages({ locale })
+
+  return (
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      {children}
+    </NextIntlClientProvider>
+  )
 }
 
 export async function generateMetadata({
@@ -99,7 +115,6 @@ export default async function LocaleLayout({
   setRequestLocale(locale)
 
   const direction = getTextDirection(locale)
-  const messages = await getMessages({ locale })
 
   return (
     <html
@@ -116,7 +131,8 @@ export default async function LocaleLayout({
       )}
     >
       <body>
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <Suspense fallback={<div className="min-h-screen bg-background" />}>
+          <LocaleIntlProvider locale={locale}>
           <SessionProvider>
             <TanstackQueryProvider>
                 <DirectionProvider direction={direction}>
@@ -141,7 +157,8 @@ export default async function LocaleLayout({
                 </DirectionProvider>
             </TanstackQueryProvider>
           </SessionProvider>
-        </NextIntlClientProvider>
+          </LocaleIntlProvider>
+        </Suspense>
       </body>
     </html>
   )

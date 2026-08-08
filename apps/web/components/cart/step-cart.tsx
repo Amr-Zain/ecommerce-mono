@@ -20,6 +20,7 @@ import {
 } from "@ecommerce/ui/components/select"
 import { Separator } from "@ecommerce/ui/components/separator"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 type CartItem = {
   id: string
@@ -54,6 +55,86 @@ function formatVariantOptionLabel(option: CartItem["variantOptions"][number]) {
   return `${label} - $${option.price.toFixed(2)}${!option.available ? " (out of stock)" : ""}`
 }
 
+function CartQuantityControl({
+  item,
+  onQuantityChange,
+}: {
+  item: CartItem
+  onQuantityChange: (id: string, quantity: number) => void
+}) {
+  const t = useTranslations("Cart")
+  const [inputValue, setInputValue] = React.useState(String(item.qty))
+  const maxQuantity = Math.max(1, item.stock)
+
+  React.useEffect(() => {
+    setInputValue(String(item.qty))
+  }, [item.id, item.qty])
+
+  const commitValue = (value: string) => {
+    const parsed = Number.parseInt(value, 10)
+    const quantity = Number.isFinite(parsed)
+      ? Math.min(Math.max(parsed, 1), maxQuantity)
+      : item.qty
+
+    setInputValue(String(quantity))
+    if (quantity !== item.qty) onQuantityChange(item.id, quantity)
+  }
+
+  return (
+    <div className="flex items-center gap-1 rounded-full border bg-background px-1 py-1">
+      <button
+        type="button"
+        onClick={() => commitValue(String(item.qty - 1))}
+        disabled={item.qty <= 1}
+        className="flex size-6 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label={t("decreaseQuantity")}
+      >
+        <HugeiconsIcon
+          icon={MinusSignIcon}
+          className="size-3"
+          strokeWidth={2.5}
+        />
+      </button>
+      <Input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        dir="ltr"
+        value={inputValue}
+        onChange={(event) => {
+          const value = event.target.value
+          if (/^\d*$/.test(value)) setInputValue(value)
+        }}
+        onBlur={(event) => commitValue(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.currentTarget.blur()
+          if (event.key === "Escape") {
+            setInputValue(String(item.qty))
+            event.currentTarget.blur()
+          }
+        }}
+        aria-label={`${item.name} quantity`}
+        className="h-6 w-8 border-0 px-0 text-center text-sm font-bold shadow-none focus-visible:ring-0"
+        min={1}
+        max={maxQuantity}
+      />
+      <button
+        type="button"
+        onClick={() => commitValue(String(item.qty + 1))}
+        disabled={item.qty >= maxQuantity}
+        className="flex size-6 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label={t("increaseQuantity")}
+      >
+        <HugeiconsIcon
+          icon={PlusSignIcon}
+          className="size-3"
+          strokeWidth={2.5}
+        />
+      </button>
+    </div>
+  )
+}
+
 export interface Pricing {
   subtotal: number
   savings: number
@@ -84,7 +165,7 @@ interface CartStepProps {
 export function PricingSummary({
   pricing,
   onNext,
-  actionLabel = "Proceed to Checkout",
+  actionLabel,
   disabled,
 }: {
   pricing: Pricing
@@ -92,6 +173,7 @@ export function PricingSummary({
   actionLabel?: string
   disabled?: boolean
 }) {
+  const t = useTranslations("Cart")
   const couponDiscount = Math.max(
     0,
     pricing.couponDiscount ?? pricing.discount ?? 0
@@ -103,38 +185,38 @@ export function PricingSummary({
 
   return (
     <div className="sticky top-40 space-y-4 rounded-2xl border bg-card p-6">
-      <h3 className="text-base font-bold text-foreground">Order Summary</h3>
+      <h3 className="text-base font-bold text-foreground">{t("orderSummary")}</h3>
       <Separator />
       <div className="flex flex-col gap-2.5 text-sm">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Subtotal</span>
+          <span className="text-muted-foreground">{t("subtotal")}</span>
           <span className="font-semibold">${pricing.subtotal.toFixed(2)}</span>
         </div>
         {hasCoupon && (
           <div className="rounded-xl border border-success/25 bg-success/10 px-3 py-2 text-xs text-success">
             <div className="flex items-center justify-between gap-3">
               <span className="font-semibold">
-                Coupon {pricing.couponCode} applied
+                {t("couponApplied", { code: pricing.couponCode ?? "" })}
               </span>
-              <span>{isFreeShippingCoupon ? "Free shipping" : "Active"}</span>
+              <span>{isFreeShippingCoupon ? t("freeShipping") : t("active")}</span>
             </div>
           </div>
         )}
         {(hasCoupon || couponDiscount > 0) && (
           <div className="flex justify-between text-success">
-            <span>{hasCoupon ? `Coupon Discount` : "Discount"}</span>
+            <span>{hasCoupon ? t("couponDiscount") : t("discount")}</span>
             <span className="font-semibold">
               {couponDiscount > 0
                 ? `- $${couponDiscount.toFixed(2)}`
                 : isFreeShippingCoupon
-                  ? "Free shipping"
-                  : "Applied"}
+                  ? t("freeShipping")
+                  : t("applied")}
             </span>
           </div>
         )}
         {loyaltyDiscount > 0 && (
           <div className="flex justify-between text-success">
-            <span>Loyalty Discount</span>
+            <span>{t("loyaltyDiscount")}</span>
             <span className="font-semibold">
               - ${loyaltyDiscount.toFixed(2)}
             </span>
@@ -142,16 +224,16 @@ export function PricingSummary({
         )}
         {(pricing.vat ?? 0) > 0 && (
           <div className="flex justify-between">
-            <span className="text-muted-foreground">VAT</span>
+            <span className="text-muted-foreground">{t("vat")}</span>
             <span className="font-semibold">${pricing.vat!.toFixed(2)}</span>
           </div>
         )}
         <div className="flex justify-between text-success">
-          <span>Your Savings</span>
+          <span>{t("yourSavings")}</span>
           <span className="font-semibold">- ${pricing.savings.toFixed(2)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Shipping</span>
+          <span className="text-muted-foreground">{t("shipping")}</span>
           <span
             className={cn(
               "font-semibold",
@@ -159,14 +241,14 @@ export function PricingSummary({
             )}
           >
             {pricing.shipping === 0
-              ? "Free"
+              ? t("free")
               : `$${pricing.shipping.toFixed(2)}`}
           </span>
         </div>
       </div>
       <Separator />
       <div className="flex justify-between text-base font-bold">
-        <span>Total</span>
+        <span>{t("total")}</span>
         <span>${pricing.total.toFixed(2)}</span>
       </div>
       <Button
@@ -174,7 +256,7 @@ export function PricingSummary({
         disabled={disabled}
         className="h-11 w-full rounded-xl bg-primary text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {actionLabel}
+        {actionLabel ?? t("proceedToCheckout")}
       </Button>
     </div>
   )
@@ -193,11 +275,7 @@ export function CartStep({
   onCouponChange,
   onApplyCoupon,
 }: CartStepProps) {
-  const updateQty = (id: string, delta: number) => {
-    const item = items.find((entry) => entry.id === id)
-    if (item)
-      onQuantityChange(id, Math.min(item.stock, Math.max(1, item.qty + delta)))
-  }
+  const t = useTranslations("Cart")
 
   const removeItem = (id: string) => {
     onRemove(id)
@@ -308,37 +386,10 @@ export function CartStep({
                   </div>
 
                   {/* Qty Controls */}
-                  <div className="flex items-center gap-1 rounded-full border bg-background px-1 py-1">
-                    <button
-                      onClick={() => updateQty(item.id, -1)}
-                      className="flex size-6 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
-                    >
-                      <HugeiconsIcon
-                        icon={MinusSignIcon}
-                        className="size-3"
-                        strokeWidth={2.5}
-                      />
-                    </button>
-                    <span className="w-7 text-center text-sm font-bold">
-                      {item.qty}
-                    </span>
-                    <button
-                      onClick={() => updateQty(item.id, 1)}
-                      disabled={item.qty >= item.stock}
-                      className="flex size-6 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label={
-                        item.qty >= item.stock
-                          ? "Maximum available stock reached"
-                          : "Increase quantity"
-                      }
-                    >
-                      <HugeiconsIcon
-                        icon={PlusSignIcon}
-                        className="size-3"
-                        strokeWidth={2.5}
-                      />
-                    </button>
-                  </div>
+                  <CartQuantityControl
+                    item={item}
+                    onQuantityChange={onQuantityChange}
+                  />
                 </div>
               </div>
             </div>
@@ -353,13 +404,13 @@ export function CartStep({
               className="size-4 text-muted-foreground"
               strokeWidth={2}
             />
-            Apply Coupon
+            {t("applyCoupon")}
           </p>
           <div className="flex gap-2">
             <Input
               value={couponCode}
               onChange={(e) => onCouponChange(e.target.value)}
-              placeholder="Enter coupon code"
+              placeholder={t("couponPlaceholder")}
               className="h-10 flex-1 rounded-xl text-sm"
             />
             <Button
@@ -369,10 +420,10 @@ export function CartStep({
               onClick={onApplyCoupon}
             >
               {couponPending
-                ? "Checking..."
+                ? t("checking")
                 : couponApplied
-                  ? "Applied"
-                  : "Apply"}
+                  ? t("applied")
+                  : t("apply")}
             </Button>
           </div>
         </div>

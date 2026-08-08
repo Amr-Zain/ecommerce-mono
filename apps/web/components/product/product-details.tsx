@@ -107,8 +107,9 @@ function ProductGallery({
               aria-pressed={image === selectedImage}
               onClick={() => onSelectImage(image)}
               className={cn(
-                "relative size-20 shrink-0 overflow-hidden p-1",
-                image === selectedImage && "ring-2 ring-ring ring-offset-2"
+                "relative size-20 shrink-0 overflow-hidden border-2 border-transparent bg-background p-1 transition-all hover:border-muted-foreground/50 hover:bg-muted/50",
+                image === selectedImage &&
+                "border-foreground bg-muted shadow-sm"
               )}
             >
               <Image
@@ -434,7 +435,7 @@ function ProductDetails({ product }: { product: ProductDetail }) {
             price={selected.price}
             oldPrice={selected.compare_at_price ?? undefined}
             available={selected.available}
-            className="h-10 w-full rounded-full"
+            className="h-10 w-full rounded-lg"
           />
           {session.status === "authenticated" && (
             <Button

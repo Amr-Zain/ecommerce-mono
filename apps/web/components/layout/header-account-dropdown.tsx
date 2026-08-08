@@ -31,6 +31,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ecommerce/ui/components/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@ecommerce/ui/components/alert-dialog"
 
 function initials(name: string) {
   return (
@@ -56,6 +66,7 @@ function HeaderAccountDropdown({
   const { data: currentUser } = useCurrentUser()
   const syncCommerceSession = useCommerceSessionSync()
   const [loggingOut, startLogout] = React.useTransition()
+  const [logoutOpen, setLogoutOpen] = React.useState(false)
   const profile = currentUser?.data
   const avatar =
     profile?.avatar?.path ??
@@ -76,12 +87,14 @@ function HeaderAccountDropdown({
         await syncCommerceSession()
         router.replace(result.data.redirectTo)
         router.refresh()
+        setLogoutOpen(false)
       }
     })
   }
 
   return (
-    <DropdownMenu>
+    <>
+      <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t("accountMenu")}
         render={
@@ -120,14 +133,37 @@ function HeaderAccountDropdown({
           <DropdownMenuItem
             variant="destructive"
             disabled={loggingOut}
-            onClick={logout}
+            onClick={() => setLogoutOpen(true)}
           >
             <HugeiconsIcon icon={Logout01Icon} />
             {loggingOut ? t("loggingOut") : t("logout")}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+      <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("logoutConfirmTitle")}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("logoutConfirmDescription")}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={loggingOut}>
+            {t("cancel")}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={loggingOut}
+            onClick={logout}
+          >
+            {loggingOut ? t("loggingOut") : t("logout")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
 
