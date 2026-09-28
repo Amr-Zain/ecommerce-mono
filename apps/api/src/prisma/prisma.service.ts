@@ -19,8 +19,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
 
     const connectionString = PrismaService.normalizeLocalDatabaseUrl(databaseUrl);
+    const schema = new URL(connectionString).searchParams.get('schema') ?? 'public';
     const pool = new Pool({
       connectionString,
+      options: `-c search_path=${schema.replace(/[^a-zA-Z0-9_]/g, '')}`,
       connectionTimeoutMillis: 10_000,
       idleTimeoutMillis: 30_000,
       keepAlive: true,
@@ -28,7 +30,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       max: 10,
       maxLifetimeSeconds: 300,
     });
-    const adapter = new PrismaPg(pool, { disposeExternalPool: true });
+    const adapter = new PrismaPg(pool, { schema, disposeExternalPool: true });
     super({ adapter });
   }
 

@@ -13,8 +13,12 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL not found in environment');
 }
 
-const pool = new pg.Pool({ connectionString: databaseUrl });
-const adapter = new PrismaPg(pool);
+const schema = new URL(databaseUrl).searchParams.get('schema') ?? 'public';
+const pool = new pg.Pool({
+  connectionString: databaseUrl,
+  options: `-c search_path=${schema.replace(/[^a-zA-Z0-9_]/g, '')}`,
+});
+const adapter = new PrismaPg(pool, { schema });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
