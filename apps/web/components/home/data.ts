@@ -5,6 +5,28 @@ import {
 } from "@hugeicons/core-free-icons"
 import type { IconSvgElement } from "@hugeicons/react"
 
+export type Category = {
+  id: string
+  name: string
+  slug?: string
+  image: string
+  background?: string
+}
+
+export type Product = {
+  id: string
+  name: string
+  brand?: string
+  description?: string
+  price: string
+  oldPrice?: string
+  badge?: string
+  badgeTone?: "default" | "destructive"
+  firstVariationId?: string
+  image: string
+  imageClassName?: string
+}
+
 export type Benefit = {
   icon: IconSvgElement
   titleKey: "freeDelivery" | "onlinePayment" | "easyReturns"
