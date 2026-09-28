@@ -27,13 +27,18 @@ export class EmailService implements OnModuleInit {
       host: required('SMTP_HOST'),
       port,
       secure: required('SMTP_SECURE').toLowerCase() === 'true',
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 30_000,
       auth: { user: required('SMTP_USER'), pass: required('SMTP_PASSWORD') },
     });
   }
 
   async onModuleInit() {
-    await this.transporter.verify();
-    this.logger.log('SMTP connection verified');
+    void this.transporter.verify().then(
+      () => this.logger.log('SMTP connection verified'),
+      () => this.logger.warn('SMTP connection unavailable; email delivery will retry when sending'),
+    );
   }
 
   async sendTemplate<T extends EmailTemplate>(input: SendTemplateEmailInput<T>): Promise<void> {

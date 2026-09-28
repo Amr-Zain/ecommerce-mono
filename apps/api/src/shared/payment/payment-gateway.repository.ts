@@ -95,6 +95,7 @@ export class PaymentGatewayRepository implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    if (this.configService.get<string>('NODE_ENV') === 'production') return;
     try {
       await this.ensureDefaultGateways({ throwOnMissing: false });
     } catch (error) {
