@@ -23,5 +23,8 @@
     "devDependencies": {
         "@turbo/windows-64": "^2.9.18",
         "turbo": "^2.9.14"
+    },
+    "dependencies": {
+        "@prisma/client-runtime-utils": "7.8.0"
     }
 }
