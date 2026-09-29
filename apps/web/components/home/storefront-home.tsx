@@ -5,7 +5,7 @@ import { type Category, type Product } from "./data"
 import { PhoneBanner } from "./phone-banner"
 import { ProductSection } from "./product-section"
 import { PromoSection, type SliderItem } from "./promo-section"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 import { Motion } from "@ecommerce/ui/components/motion"
 import { ROUTES } from "@/lib/routes"
 
@@ -95,11 +95,12 @@ function mapCollections(collections: HomeCollection[]): Category[] {
   }))
 }
 
-async function getHomeData() {
+async function getHomeData(locale: string) {
   try {
     return await publicBackendGet<HomeResponse>("/client/home", {
       revalidate: 60,
       retries: 0,
+      headers: { "accept-language": locale },
     })
   } catch {
     return null
@@ -107,8 +108,9 @@ async function getHomeData() {
 }
 
 export async function StorefrontHome() {
+  const locale = await getLocale()
   const [homeResponse, t, storefront, productT] = await Promise.all([
-    getHomeData(),
+    getHomeData(locale),
     getTranslations("Campaign"),
     getTranslations("Storefront"),
     getTranslations("Product"),

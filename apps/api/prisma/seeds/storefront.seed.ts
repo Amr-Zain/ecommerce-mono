@@ -42,16 +42,16 @@ const childCollectionSeeds = [
 ];
 
 const leafCollectionSeeds = [
-  { id: 1301n, parentId: 1101n, en: 'Pendant Necklaces', ar: 'Pendant Necklaces' },
-  { id: 1302n, parentId: 1101n, en: 'Chain Necklaces', ar: 'Chain Necklaces' },
-  { id: 1303n, parentId: 1102n, en: "Women's Rings", ar: "Women's Rings" },
-  { id: 1304n, parentId: 1102n, en: 'Earrings', ar: 'Earrings' },
-  { id: 1305n, parentId: 1103n, en: 'Signet Rings', ar: 'Signet Rings' },
-  { id: 1306n, parentId: 1104n, en: 'Chain Bracelets', ar: 'Chain Bracelets' },
-  { id: 1307n, parentId: 1105n, en: 'Metal Watches', ar: 'Metal Watches' },
-  { id: 1308n, parentId: 1105n, en: 'Leather Watches', ar: 'Leather Watches' },
-  { id: 1309n, parentId: 1106n, en: 'Jewellery Gifts', ar: 'Jewellery Gifts' },
-  { id: 1310n, parentId: 1106n, en: 'Accessory Gifts', ar: 'Accessory Gifts' },
+  { id: 1301n, parentId: 1101n, en: 'Pendant Necklaces', ar: 'قلادات بدلايات' },
+  { id: 1302n, parentId: 1101n, en: 'Chain Necklaces', ar: 'قلادات بسلسلة' },
+  { id: 1303n, parentId: 1102n, en: "Women's Rings", ar: 'خواتم نسائية' },
+  { id: 1304n, parentId: 1102n, en: 'Earrings', ar: 'أقراط' },
+  { id: 1305n, parentId: 1103n, en: 'Signet Rings', ar: 'خواتم رجالية' },
+  { id: 1306n, parentId: 1104n, en: 'Chain Bracelets', ar: 'أساور بسلسلة' },
+  { id: 1307n, parentId: 1105n, en: 'Metal Watches', ar: 'ساعات معدنية' },
+  { id: 1308n, parentId: 1105n, en: 'Leather Watches', ar: 'ساعات جلدية' },
+  { id: 1309n, parentId: 1106n, en: 'Jewellery Gifts', ar: 'هدايا مجوهرات' },
+  { id: 1310n, parentId: 1106n, en: 'Accessory Gifts', ar: 'هدايا إكسسوارات' },
 ];
 
 const attributeSeeds = [
@@ -308,15 +308,6 @@ const variantCombinations = [
   [1211n, 1222n],
   [1212n, 1223n],
 ] as const;
-const variantGalleryImages = [
-  'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=700&q=85',
-  'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=700&q=85',
-  'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=700&q=85',
-  'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=700&q=85',
-  'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=700&q=85',
-  'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=700&q=85',
-] as const;
-
 const reviewSeeds = [
   {
     name: 'Sara Ahmed',
@@ -1037,7 +1028,7 @@ export async function seedStorefront(prisma: PrismaClient) {
         'productvariant',
         variant.id,
         'image',
-        variantGalleryImages[(index + variantIndex) % variantGalleryImages.length],
+        image,
       );
       await upsertMedia(
         prisma,
@@ -1045,7 +1036,7 @@ export async function seedStorefront(prisma: PrismaClient) {
         'productvariant',
         variant.id,
         'gallery',
-        variantGalleryImages[(index + variantIndex + 1) % variantGalleryImages.length],
+        image,
         false,
       );
       const hasInventoryLog = await prisma.inventoryLog.findFirst({

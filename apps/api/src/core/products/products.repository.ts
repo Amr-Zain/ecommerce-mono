@@ -512,14 +512,20 @@ export class ProductsRepository extends MediaAwareRepository<ProductType> {
 
   async findAll(
     query: AdvancedQueryDto,
-    _langId?: string,
+    langId: string = 'en',
     options?: QueryOptions,
   ): Promise<PaginatedResult<ProductType> | ProductType[]> {
     if (options?.select) {
       const result = await this.paginate(query, undefined, { select: options.select });
       return result;
     }
-    const result = await this.paginate(query, undefined, { include: baseInclude });
+    const result = await this.paginate(query, undefined, {
+      include: {
+        ...baseInclude,
+        translations: { where: { langId }, take: 1 },
+        collection: { include: { translations: { where: { langId }, take: 1 } } },
+      },
+    });
     if (Array.isArray(result)) {
       const enriched = await Promise.all(result.map((p) => this.enrichProduct(p)));
       return enriched.filter(Boolean) as ProductType[];
