@@ -186,9 +186,117 @@ const productSeeds = [
     8,
     'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=700&q=85',
   ],
+  [
+    'Aurora Pendant Necklace',
+    'قلادة أورورا المرصعة',
+    1001n,
+    279,
+    329,
+    18,
+    'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Layered Gold Tone Chain',
+    'سلسلة ذهبية متعددة الطبقات',
+    1001n,
+    219,
+    269,
+    21,
+    'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Celeste Open Ring',
+    'خاتم سيليست المفتوح',
+    1001n,
+    169,
+    209,
+    23,
+    'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Luna Pearl Studs',
+    'أقراط لونا اللؤلؤية',
+    1001n,
+    129,
+    159,
+    27,
+    'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Noir Signet Ring',
+    'خاتم نوار الرجالي',
+    1002n,
+    199,
+    249,
+    17,
+    'https://images.unsplash.com/photo-1603561596112-db1d7d140b8c?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Braided Steel Bracelet',
+    'سوار فولاذي مضفر',
+    1002n,
+    159,
+    199,
+    20,
+    'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Meridian Steel Watch',
+    'ساعة ميريديان الفولاذية',
+    1003n,
+    429,
+    499,
+    14,
+    'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Heritage Leather Watch',
+    'ساعة هيريتج الجلدية',
+    1003n,
+    359,
+    429,
+    15,
+    'https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Keepsake Jewellery Set',
+    'طقم مجوهرات تذكاري',
+    1004n,
+    459,
+    529,
+    11,
+    'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Velvet Gift Case',
+    'علبة هدايا مخملية',
+    1004n,
+    59,
+    null,
+    45,
+    'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Twisted Silver Pendant',
+    'قلادة فضية ملتوية',
+    1001n,
+    239,
+    289,
+    19,
+    'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=700&q=85',
+  ],
+  [
+    'Pave Hoop Earrings',
+    'أقراط دائرية مرصعة',
+    1001n,
+    149,
+    189,
+    26,
+    'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=700&q=85',
+  ],
 ] as const;
 
-const variantCounts = [3, 7, 4, 6, 2, 8, 5, 3, 9, 1, 6, 4] as const;
+const variantCounts = [3, 7, 4, 6, 2, 8, 5, 3, 9, 1, 6, 4, 3, 3, 3, 2, 3, 3, 3, 3, 2, 1, 3, 2] as const;
 const variantCombinations = [
   [1211n, 1221n],
   [1212n, 1222n],
@@ -306,12 +414,24 @@ const staticPageSeeds = [
         ar: { title: 'مدة الإرجاع', content: 'يمكنك بدء طلب الإرجاع خلال 14 يوما من استلام الطلب.' },
       },
       {
-        en: { title: 'Item condition', content: 'Items must be unworn, undamaged, and returned with tags, certificates, and packaging.' },
-        ar: { title: 'حالة المنتج', content: 'يجب أن تكون المنتجات غير مستخدمة وغير تالفة ومعها البطاقات والشهادات والتغليف.' },
+        en: {
+          title: 'Item condition',
+          content: 'Items must be unworn, undamaged, and returned with tags, certificates, and packaging.',
+        },
+        ar: {
+          title: 'حالة المنتج',
+          content: 'يجب أن تكون المنتجات غير مستخدمة وغير تالفة ومعها البطاقات والشهادات والتغليف.',
+        },
       },
       {
-        en: { title: 'Refund timing', content: 'Approved refunds are processed to the original payment method within 5 to 7 business days.' },
-        ar: { title: 'وقت الاسترداد', content: 'تتم معالجة المبالغ المستردة المقبولة إلى وسيلة الدفع الأصلية خلال 5 إلى 7 أيام عمل.' },
+        en: {
+          title: 'Refund timing',
+          content: 'Approved refunds are processed to the original payment method within 5 to 7 business days.',
+        },
+        ar: {
+          title: 'وقت الاسترداد',
+          content: 'تتم معالجة المبالغ المستردة المقبولة إلى وسيلة الدفع الأصلية خلال 5 إلى 7 أيام عمل.',
+        },
       },
     ],
   },
@@ -329,11 +449,21 @@ const staticPageSeeds = [
     },
     sections: [
       {
-        en: { title: 'Secure checkout', content: 'Card payments are handled through encrypted payment providers and are never stored on our storefront.' },
-        ar: { title: 'دفع آمن', content: 'تتم معالجة مدفوعات البطاقات عبر مزودي دفع مشفرين ولا يتم تخزينها في المتجر.' },
+        en: {
+          title: 'Secure checkout',
+          content:
+            'Card payments are handled through encrypted payment providers and are never stored on our storefront.',
+        },
+        ar: {
+          title: 'دفع آمن',
+          content: 'تتم معالجة مدفوعات البطاقات عبر مزودي دفع مشفرين ولا يتم تخزينها في المتجر.',
+        },
       },
       {
-        en: { title: 'Order confirmation', content: 'You will receive an order confirmation once payment is authorized or your transfer is reviewed.' },
+        en: {
+          title: 'Order confirmation',
+          content: 'You will receive an order confirmation once payment is authorized or your transfer is reviewed.',
+        },
         ar: { title: 'تأكيد الطلب', content: 'سيصلك تأكيد الطلب بعد اعتماد الدفع أو مراجعة التحويل.' },
       },
     ],
@@ -352,15 +482,32 @@ const staticPageSeeds = [
     },
     sections: [
       {
-        en: { title: 'Coverage', content: 'Warranty covers manufacturing faults in clasps, settings, mechanisms, and materials under normal use.' },
-        ar: { title: 'التغطية', content: 'يشمل الضمان عيوب الصناعة في الأقفال والترصيع والآليات والمواد عند الاستخدام الطبيعي.' },
+        en: {
+          title: 'Coverage',
+          content:
+            'Warranty covers manufacturing faults in clasps, settings, mechanisms, and materials under normal use.',
+        },
+        ar: {
+          title: 'التغطية',
+          content: 'يشمل الضمان عيوب الصناعة في الأقفال والترصيع والآليات والمواد عند الاستخدام الطبيعي.',
+        },
       },
       {
-        en: { title: 'Exclusions', content: 'Damage from accidents, misuse, chemicals, unauthorized repair, or normal wear is not covered.' },
-        ar: { title: 'الاستثناءات', content: 'لا يشمل الضمان التلف الناتج عن الحوادث أو سوء الاستخدام أو المواد الكيميائية أو الإصلاح غير المعتمد أو الاستهلاك الطبيعي.' },
+        en: {
+          title: 'Exclusions',
+          content: 'Damage from accidents, misuse, chemicals, unauthorized repair, or normal wear is not covered.',
+        },
+        ar: {
+          title: 'الاستثناءات',
+          content:
+            'لا يشمل الضمان التلف الناتج عن الحوادث أو سوء الاستخدام أو المواد الكيميائية أو الإصلاح غير المعتمد أو الاستهلاك الطبيعي.',
+        },
       },
       {
-        en: { title: 'How to claim', content: 'Contact support with your order number, photos, and a short description of the issue.' },
+        en: {
+          title: 'How to claim',
+          content: 'Contact support with your order number, photos, and a short description of the issue.',
+        },
         ar: { title: 'طريقة المطالبة', content: 'تواصل مع الدعم مع رقم الطلب والصور ووصف مختصر للمشكلة.' },
       },
     ],
@@ -379,16 +526,35 @@ const staticPageSeeds = [
     },
     sections: [
       {
-        en: { title: 'Information we collect', content: 'We collect account, contact, order, payment-status, and support details needed to serve you.' },
-        ar: { title: 'المعلومات التي نجمعها', content: 'نجمع بيانات الحساب والتواصل والطلبات وحالة الدفع والدعم اللازمة لخدمتك.' },
+        en: {
+          title: 'Information we collect',
+          content: 'We collect account, contact, order, payment-status, and support details needed to serve you.',
+        },
+        ar: {
+          title: 'المعلومات التي نجمعها',
+          content: 'نجمع بيانات الحساب والتواصل والطلبات وحالة الدفع والدعم اللازمة لخدمتك.',
+        },
       },
       {
-        en: { title: 'How we use data', content: 'We use data to process orders, personalize service, prevent fraud, and communicate important updates.' },
-        ar: { title: 'كيف نستخدم البيانات', content: 'نستخدم البيانات لمعالجة الطلبات وتخصيص الخدمة ومنع الاحتيال وإرسال التحديثات المهمة.' },
+        en: {
+          title: 'How we use data',
+          content:
+            'We use data to process orders, personalize service, prevent fraud, and communicate important updates.',
+        },
+        ar: {
+          title: 'كيف نستخدم البيانات',
+          content: 'نستخدم البيانات لمعالجة الطلبات وتخصيص الخدمة ومنع الاحتيال وإرسال التحديثات المهمة.',
+        },
       },
       {
-        en: { title: 'Your choices', content: 'You may update your profile, notification preferences, or contact us about privacy requests.' },
-        ar: { title: 'اختياراتك', content: 'يمكنك تحديث ملفك الشخصي وتفضيلات الإشعارات أو التواصل معنا بخصوص طلبات الخصوصية.' },
+        en: {
+          title: 'Your choices',
+          content: 'You may update your profile, notification preferences, or contact us about privacy requests.',
+        },
+        ar: {
+          title: 'اختياراتك',
+          content: 'يمكنك تحديث ملفك الشخصي وتفضيلات الإشعارات أو التواصل معنا بخصوص طلبات الخصوصية.',
+        },
       },
     ],
   },
@@ -406,12 +572,21 @@ const staticPageSeeds = [
     },
     sections: [
       {
-        en: { title: 'Before shipping', content: 'Orders are inspected and packed to protect delicate finishes, stones, and watch components.' },
+        en: {
+          title: 'Before shipping',
+          content: 'Orders are inspected and packed to protect delicate finishes, stones, and watch components.',
+        },
         ar: { title: 'قبل الشحن', content: 'تتم مراجعة الطلبات وتغليفها لحماية التشطيبات والأحجار ومكونات الساعات.' },
       },
       {
-        en: { title: 'During delivery', content: 'Trackable shipping helps monitor your order until it reaches the selected address.' },
-        ar: { title: 'أثناء التسليم', content: 'يساعد الشحن القابل للتتبع على متابعة الطلب حتى وصوله إلى العنوان المحدد.' },
+        en: {
+          title: 'During delivery',
+          content: 'Trackable shipping helps monitor your order until it reaches the selected address.',
+        },
+        ar: {
+          title: 'أثناء التسليم',
+          content: 'يساعد الشحن القابل للتتبع على متابعة الطلب حتى وصوله إلى العنوان المحدد.',
+        },
       },
     ],
   },
@@ -429,12 +604,24 @@ const staticPageSeeds = [
     },
     sections: [
       {
-        en: { title: 'Using the storefront', content: 'Use the website lawfully and provide accurate details when creating an account or placing orders.' },
-        ar: { title: 'استخدام المتجر', content: 'استخدم الموقع بشكل نظامي وقدم بيانات دقيقة عند إنشاء الحساب أو إجراء الطلبات.' },
+        en: {
+          title: 'Using the storefront',
+          content: 'Use the website lawfully and provide accurate details when creating an account or placing orders.',
+        },
+        ar: {
+          title: 'استخدام المتجر',
+          content: 'استخدم الموقع بشكل نظامي وقدم بيانات دقيقة عند إنشاء الحساب أو إجراء الطلبات.',
+        },
       },
       {
-        en: { title: 'Product information', content: 'We work to keep product details accurate, but availability and prices may change before checkout.' },
-        ar: { title: 'معلومات المنتجات', content: 'نسعى للحفاظ على دقة تفاصيل المنتجات، لكن التوفر والأسعار قد تتغير قبل إتمام الدفع.' },
+        en: {
+          title: 'Product information',
+          content: 'We work to keep product details accurate, but availability and prices may change before checkout.',
+        },
+        ar: {
+          title: 'معلومات المنتجات',
+          content: 'نسعى للحفاظ على دقة تفاصيل المنتجات، لكن التوفر والأسعار قد تتغير قبل إتمام الدفع.',
+        },
       },
     ],
   },
@@ -452,11 +639,20 @@ const staticPageSeeds = [
     },
     sections: [
       {
-        en: { title: 'Essential cookies', content: 'Some cookies are needed for login, cart, checkout, language, and security features.' },
-        ar: { title: 'الملفات الأساسية', content: 'بعض الملفات ضرورية لتسجيل الدخول والسلة والدفع واللغة وميزات الأمان.' },
+        en: {
+          title: 'Essential cookies',
+          content: 'Some cookies are needed for login, cart, checkout, language, and security features.',
+        },
+        ar: {
+          title: 'الملفات الأساسية',
+          content: 'بعض الملفات ضرورية لتسجيل الدخول والسلة والدفع واللغة وميزات الأمان.',
+        },
       },
       {
-        en: { title: 'Preference cookies', content: 'Preference cookies remember settings such as language, theme, and shopping region.' },
+        en: {
+          title: 'Preference cookies',
+          content: 'Preference cookies remember settings such as language, theme, and shopping region.',
+        },
         ar: { title: 'ملفات التفضيلات', content: 'تحفظ ملفات التفضيلات إعدادات مثل اللغة والمظهر ومنطقة التسوق.' },
       },
     ],
@@ -466,8 +662,7 @@ const staticPageSeeds = [
     slug: 'size-guide',
     en: {
       title: 'Size Guide',
-      content:
-        'Use this guide to choose comfortable ring, bracelet, necklace, and watch sizes before ordering.',
+      content: 'Use this guide to choose comfortable ring, bracelet, necklace, and watch sizes before ordering.',
     },
     ar: {
       title: 'دليل المقاسات',
@@ -475,11 +670,18 @@ const staticPageSeeds = [
     },
     sections: [
       {
-        en: { title: 'Rings', content: 'Measure an existing ring inner diameter or wrap a strip around your finger and compare it to a size chart.' },
+        en: {
+          title: 'Rings',
+          content:
+            'Measure an existing ring inner diameter or wrap a strip around your finger and compare it to a size chart.',
+        },
         ar: { title: 'الخواتم', content: 'قس القطر الداخلي لخاتم مناسب أو لف شريطا حول الإصبع وقارنه بجدول المقاسات.' },
       },
       {
-        en: { title: 'Bracelets and watches', content: 'Measure around the wrist and add a little room based on how loose you prefer the fit.' },
+        en: {
+          title: 'Bracelets and watches',
+          content: 'Measure around the wrist and add a little room based on how loose you prefer the fit.',
+        },
         ar: { title: 'الأساور والساعات', content: 'قس محيط المعصم وأضف مساحة بسيطة حسب درجة الاتساع المفضلة لديك.' },
       },
     ],
@@ -730,7 +932,32 @@ export async function seedStorefront(prisma: PrismaClient) {
     }
   }
 
-  const productCollections = [1301n, 1303n, 1304n, 1302n, 1305n, 1306n, 1307n, 1307n, 1308n, 1310n, 1310n, 1309n];
+  const productCollections = [
+    1301n,
+    1303n,
+    1304n,
+    1302n,
+    1305n,
+    1306n,
+    1307n,
+    1307n,
+    1308n,
+    1310n,
+    1310n,
+    1309n,
+    1301n,
+    1302n,
+    1303n,
+    1304n,
+    1305n,
+    1306n,
+    1307n,
+    1308n,
+    1309n,
+    1310n,
+    1301n,
+    1304n,
+  ];
 
   for (const [index, product] of productSeeds.entries()) {
     const [en, ar, _collectionId, price, compareAtPrice, stock, image] = product;
@@ -856,58 +1083,60 @@ export async function seedStorefront(prisma: PrismaClient) {
     );
   }
 
-  const reviewerPassword = await bcrypt.hash('password123', 10);
-  const reviewers = [];
-  for (const reviewer of reviewSeeds) {
-    reviewers.push(
-      await prisma.user.upsert({
-        where: { email: reviewer.email },
-        update: {
-          name: reviewer.name,
-          password: reviewerPassword,
-          userType: 'client',
-          isEmailVerified: true,
-          isActive: true,
-        },
-        create: {
-          name: reviewer.name,
-          email: reviewer.email,
-          password: reviewerPassword,
-          userType: 'client',
-          isEmailVerified: true,
-          isActive: true,
-        },
-      }),
-    );
-  }
-  for (const [productIndex] of productSeeds.entries()) {
-    const productId = BigInt(2001 + productIndex);
-    const reviewCount = 3 + (productIndex % 3);
-    for (let reviewIndex = 0; reviewIndex < reviewCount; reviewIndex++) {
-      const reviewerIndex = (productIndex + reviewIndex) % reviewers.length;
-      const reviewSeed = reviewSeeds[reviewerIndex];
-      await prisma.review.upsert({
-        where: {
-          userId_productId: {
+  if (process.env.SEED_SCOPE !== 'storefront') {
+    const reviewerPassword = await bcrypt.hash('password123', 10);
+    const reviewers = [];
+    for (const reviewer of reviewSeeds) {
+      reviewers.push(
+        await prisma.user.upsert({
+          where: { email: reviewer.email },
+          update: {
+            name: reviewer.name,
+            password: reviewerPassword,
+            userType: 'client',
+            isEmailVerified: true,
+            isActive: true,
+          },
+          create: {
+            name: reviewer.name,
+            email: reviewer.email,
+            password: reviewerPassword,
+            userType: 'client',
+            isEmailVerified: true,
+            isActive: true,
+          },
+        }),
+      );
+    }
+    for (const [productIndex] of productSeeds.entries()) {
+      const productId = BigInt(2001 + productIndex);
+      const reviewCount = 3 + (productIndex % 3);
+      for (let reviewIndex = 0; reviewIndex < reviewCount; reviewIndex++) {
+        const reviewerIndex = (productIndex + reviewIndex) % reviewers.length;
+        const reviewSeed = reviewSeeds[reviewerIndex];
+        await prisma.review.upsert({
+          where: {
+            userId_productId: {
+              userId: reviewers[reviewerIndex].id,
+              productId,
+            },
+          },
+          update: {
+            rating: reviewSeed.rating,
+            comment: reviewSeed.comment,
+            isVerified: true,
+            isActive: true,
+          },
+          create: {
             userId: reviewers[reviewerIndex].id,
             productId,
+            rating: reviewSeed.rating,
+            comment: reviewSeed.comment,
+            isVerified: true,
+            isActive: true,
           },
-        },
-        update: {
-          rating: reviewSeed.rating,
-          comment: reviewSeed.comment,
-          isVerified: true,
-          isActive: true,
-        },
-        create: {
-          userId: reviewers[reviewerIndex].id,
-          productId,
-          rating: reviewSeed.rating,
-          comment: reviewSeed.comment,
-          isVerified: true,
-          isActive: true,
-        },
-      });
+        });
+      }
     }
   }
 
@@ -996,44 +1225,46 @@ export async function seedStorefront(prisma: PrismaClient) {
     }
   }
 
-  for (const showroom of showroomSeeds) {
-    await prisma.showRoom.upsert({
-      where: { id: showroom.id },
-      update: {
-        countryId: showroom.countryId,
-        phoneCode: showroom.phoneCode,
-        phone: showroom.phone,
-        email: showroom.email,
-        url: showroom.url,
-        lat: showroom.lat,
-        lng: showroom.lng,
-        isActive: true,
-      },
-      create: {
-        id: showroom.id,
-        countryId: showroom.countryId,
-        phoneCode: showroom.phoneCode,
-        phone: showroom.phone,
-        email: showroom.email,
-        url: showroom.url,
-        lat: showroom.lat,
-        lng: showroom.lng,
-        isActive: true,
-      },
-    });
-    for (const translation of [
-      { langId: 'en', ...showroom.en },
-      { langId: 'ar', ...showroom.ar },
-    ]) {
-      await prisma.showRoomTranslation.upsert({
-        where: { recordId_langId: { recordId: showroom.id, langId: translation.langId } },
+  if (process.env.SEED_SCOPE !== 'storefront') {
+    for (const showroom of showroomSeeds) {
+      await prisma.showRoom.upsert({
+        where: { id: showroom.id },
         update: {
-          name: translation.name,
-          address: translation.address,
-          city: translation.city,
+          countryId: showroom.countryId,
+          phoneCode: showroom.phoneCode,
+          phone: showroom.phone,
+          email: showroom.email,
+          url: showroom.url,
+          lat: showroom.lat,
+          lng: showroom.lng,
+          isActive: true,
         },
-        create: { recordId: showroom.id, ...translation },
+        create: {
+          id: showroom.id,
+          countryId: showroom.countryId,
+          phoneCode: showroom.phoneCode,
+          phone: showroom.phone,
+          email: showroom.email,
+          url: showroom.url,
+          lat: showroom.lat,
+          lng: showroom.lng,
+          isActive: true,
+        },
       });
+      for (const translation of [
+        { langId: 'en', ...showroom.en },
+        { langId: 'ar', ...showroom.ar },
+      ]) {
+        await prisma.showRoomTranslation.upsert({
+          where: { recordId_langId: { recordId: showroom.id, langId: translation.langId } },
+          update: {
+            name: translation.name,
+            address: translation.address,
+            city: translation.city,
+          },
+          create: { recordId: showroom.id, ...translation },
+        });
+      }
     }
   }
 

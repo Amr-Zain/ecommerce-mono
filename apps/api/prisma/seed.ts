@@ -24,6 +24,12 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('Seeding data...');
 
+  if (process.env.SEED_SCOPE === 'storefront') {
+    await seedStorefront(prisma);
+    console.log('Storefront seed completed successfully!');
+    return;
+  }
+
   await seedAdmin(prisma);
   await seedLoyalty(prisma);
   await seedStorefront(prisma);
