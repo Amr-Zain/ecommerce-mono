@@ -138,9 +138,9 @@ const STATIC_PATHS = [
 export default async function sitemap({
   id,
 }: {
-  id: string
+  id: Promise<string>
 }): Promise<MetadataRoute.Sitemap> {
-  const parsed = parseSitemapId(id)
+  const parsed = parseSitemapId(await id)
   if (!parsed) return []
   const { locale, kind } = parsed
 
