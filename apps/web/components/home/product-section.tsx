@@ -56,7 +56,7 @@ export function ProductSection({
               const mappedProduct: ProductCardProduct = {
                 id: product.id ?? `home-prod-${idx}`,
                 name: product.name,
-                brand: product.brand,
+                brand: product.brand ?? "",
                 description:
                   product.description ?? t("fallbackProductDescription"),
                 price: parseFloat(
