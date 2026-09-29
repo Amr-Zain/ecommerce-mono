@@ -121,7 +121,7 @@ const productSeeds = [
     179,
     219,
     20,
-    'https://images.unsplash.com/photo-1603561596112-db1d7d140b8c?auto=format&fit=crop&w=700&q=85',
+    'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=700&q=85',
   ],
   [
     'Minimal Chain Bracelet',
@@ -229,7 +229,7 @@ const productSeeds = [
     199,
     249,
     17,
-    'https://images.unsplash.com/photo-1603561596112-db1d7d140b8c?auto=format&fit=crop&w=700&q=85',
+    'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=700&q=85',
   ],
   [
     'Braided Steel Bracelet',
