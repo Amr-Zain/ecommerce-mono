@@ -30,6 +30,12 @@ async function main() {
     return;
   }
 
+  if (process.env.SEED_SCOPE === 'email-templates') {
+    await seedEmailTemplates(prisma);
+    console.log('Email template seed completed successfully!');
+    return;
+  }
+
   await seedAdmin(prisma);
   await seedLoyalty(prisma);
   await seedStorefront(prisma);
