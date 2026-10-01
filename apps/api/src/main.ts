@@ -7,6 +7,8 @@ import { setupSwagger } from './common/swagger/swagger.setup';
 
 import { SnakeToCamelPipe } from './common/pipes/snake-to-camel.pipe';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 (BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function (this: bigint) {
   return this.toString();
@@ -32,7 +34,23 @@ function isAllowedCorsOrigin(origin?: string) {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true });
+  const trustedProxies = (process.env.TRUSTED_PROXIES ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (trustedProxies.length) app.set('trust proxy', trustedProxies);
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: {
+        directives: {
+          upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+        },
+      },
+      strictTransportSecurity: process.env.NODE_ENV === 'production',
+    }),
+  );
 
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
@@ -44,7 +62,13 @@ async function bootstrap() {
     },
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    exposedHeaders: ['Content-Disposition'],
+    exposedHeaders: [
+      'Content-Disposition',
+      'Retry-After',
+      'X-RateLimit-Limit',
+      'X-RateLimit-Remaining',
+      'X-RateLimit-Reset',
+    ],
     allowedHeaders:
       'Content-Type, Accept, Accept-Language, Authorization, X-Requested-With, X-Platform, x-user-type, Cache-Control, Last-Event-ID, X-Anonymous-Session-Token',
   });

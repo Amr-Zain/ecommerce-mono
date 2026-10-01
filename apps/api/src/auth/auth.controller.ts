@@ -17,6 +17,7 @@ import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AUTH_COOKIE, AUTH_USER_TYPES, getRefreshTokenCookieName } from '../common/constants/auth.constants';
+import { Throttle } from '@nestjs/throttler';
 
 type RefreshRequest = Request & {
   refreshToken?: string;
@@ -42,18 +43,21 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async register(@Req() req: Request, @Body() registerDto: RegisterDto, @I18nLang() lang: string) {
     return this.authService.register(registerDto, req.ip, lang);
   }
 
   @Public()
   @Post('send-otp')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async sendOtp(@Req() req: Request, @Body() sendOtpDto: SendOtpDto, @I18nLang() lang: string) {
     return this.authService.sendOtp(sendOtpDto, req.ip, lang);
   }
 
   @Public()
   @Post('login-otp')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async loginOtp(
     @Req() req: Request,
     @Res() res: Response,
@@ -77,6 +81,7 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async login(@Req() req: Request, @Res() res: Response, @Body() _loginDto: LoginDto, @I18nLang() lang: string) {
     const deviceInfo = req.headers['user-agent'];
     const ipAddress = req.ip;
@@ -159,12 +164,14 @@ export class AuthController {
 
   @Public()
   @Post('forgot-password')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async forgotPassword(@Req() req: Request, @Body() forgotPasswordDto: ForgotPasswordDto, @I18nLang() lang: string) {
     return this.authService.forgotPassword(forgotPasswordDto.email, req.ip, lang);
   }
 
   @Public()
   @Post('reset-password')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto.email, resetPasswordDto.code, resetPasswordDto.newPassword);
   }

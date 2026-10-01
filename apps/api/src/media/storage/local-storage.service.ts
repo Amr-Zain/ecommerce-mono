@@ -3,6 +3,7 @@ import { StorageInterface } from './storage.interface';
 import * as fs from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
+import { assertStorageSegment, resolveStoragePath } from './storage-path';
 
 @Injectable()
 export class LocalStorageService implements StorageInterface {
@@ -16,12 +17,14 @@ export class LocalStorageService implements StorageInterface {
   }
 
   uploadFile(file: Express.Multer.File, model: string, idOrHash: string): Promise<{ path: string; filename: string }> {
+    assertStorageSegment(model);
+    assertStorageSegment(idOrHash);
     const now = new Date();
     const year = now.getFullYear().toString();
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
 
     // Structure: /uploads/{model}/{modelId or hash}/{yyyy}/{mm}/
-    const uploadDir = path.join(this.baseUploadsPath, model, idOrHash, year, month);
+    const uploadDir = resolveStoragePath(this.baseUploadsPath, model, idOrHash, year, month);
 
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -29,7 +32,7 @@ export class LocalStorageService implements StorageInterface {
 
     const extension = path.extname(file.originalname);
     const newFilename = `${randomUUID()}${extension}`;
-    const filePath = path.join(uploadDir, newFilename);
+    const filePath = resolveStoragePath(this.baseUploadsPath, model, idOrHash, year, month, newFilename);
 
     fs.writeFileSync(filePath, file.buffer);
 
@@ -43,8 +46,9 @@ export class LocalStorageService implements StorageInterface {
   }
 
   deleteFile(filePath: string): Promise<void> {
+    if (!filePath.startsWith('/uploads/')) throw new Error('Invalid media deletion path.');
+    const absolutePath = resolveStoragePath(this.baseUploadsPath, filePath.slice('/uploads/'.length));
     try {
-      const absolutePath = path.join(process.cwd(), filePath);
       if (fs.existsSync(absolutePath)) {
         fs.unlinkSync(absolutePath);
       }
@@ -84,11 +88,16 @@ export class LocalStorageService implements StorageInterface {
   }
 
   async moveDir(model: string, oldIdOrHash: string, newIdOrHash: string): Promise<string> {
-    const oldDir = path.join(this.baseUploadsPath, model, oldIdOrHash);
-    const newDir = path.join(this.baseUploadsPath, model, newIdOrHash);
+    [model, oldIdOrHash, newIdOrHash].forEach(assertStorageSegment);
+    const oldDir = resolveStoragePath(this.baseUploadsPath, model, oldIdOrHash);
+    const newDir = resolveStoragePath(this.baseUploadsPath, model, newIdOrHash);
+    if (oldDir === newDir) return `/uploads/${model}/${newIdOrHash}`;
 
     if (fs.existsSync(oldDir)) {
+      this.assertDirectoryTree(oldDir);
       if (fs.existsSync(newDir)) {
+        // Reject linked descendants before merging or recursively removing the source.
+        this.assertDirectoryTree(newDir);
         // Destination exists (multiple hashes → same entity) — merge contents
         await this.mergeDirContents(oldDir, newDir);
         await fs.promises.rm(oldDir, { recursive: true, force: true });
@@ -101,5 +110,16 @@ export class LocalStorageService implements StorageInterface {
     }
 
     return `/uploads/${model}/${newIdOrHash}`;
+  }
+
+  private assertDirectoryTree(directory: string): void {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const child = resolveStoragePath(
+        this.baseUploadsPath,
+        path.relative(this.baseUploadsPath, directory),
+        entry.name,
+      );
+      if (entry.isDirectory()) this.assertDirectoryTree(child);
+    }
   }
 }

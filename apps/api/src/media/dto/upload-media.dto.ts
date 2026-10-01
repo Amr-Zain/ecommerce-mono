@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNotEmpty, IsIn } from 'class-validator';
+import { IsOptional, IsString, IsNotEmpty, IsIn, Matches } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -98,6 +98,7 @@ export class UploadMediaDto {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({ example: '1', description: 'modelId' })
+  @Matches(/^[1-9][0-9]{0,18}$/)
   modelId?: string;
 
   @IsString()
@@ -113,6 +114,7 @@ export class UploadMediaDto {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional({ example: 'HASH_FROM_UPLOAD', description: 'attachHash' })
+  @Matches(/^[a-zA-Z0-9_-]{1,128}$/)
   attachHash?: string;
 
   @IsOptional()

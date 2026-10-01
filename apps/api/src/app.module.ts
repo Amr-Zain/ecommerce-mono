@@ -26,9 +26,12 @@ import { EmailModule } from './shared/email/email.module';
 import { CacheModule } from './shared/cache/cache.module';
 import { PublicCacheInterceptor } from './shared/cache/public-cache.interceptor';
 import { SearchModule } from './search/search.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottleGuard } from './common/guards/throttle.guard';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     ServeStaticModule.forRoot({
       rootPath: path.join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
@@ -86,6 +89,7 @@ import { SearchModule } from './search/search.module';
   controllers: [AppController],
   providers: [
     AppService,
+    { provide: APP_GUARD, useClass: ThrottleGuard },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
